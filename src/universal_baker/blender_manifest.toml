@@ -1,0 +1,21 @@
+schema_version = "1.0.0"
+
+id = "universal_baker"
+version = "1.0.0"
+name = "Universal Baker"
+tagline = "Blender Baking Made Easy"
+maintainer = "Tilapiatsu <tilapiatsu@hotmail.fr>"
+type = "add-on"
+
+website = "https://github.com/Tilapiatsu/blender-universal_baker"
+
+tags = ["Bake", "Render"]
+
+blender_version_min = "5.1.0"
+
+license = ["SPDX:GPL-3.0-or-later"]
+
+copyright = ["2026 Tilapiatsu"]
+
+[build]
+paths_exclude_pattern = ["/.git/", "__pycache__/", ".gitignore"]
