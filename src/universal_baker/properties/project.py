@@ -1,4 +1,6 @@
-from bpy.types import PropertyGroup, CollectionProperty, IntProperty, PointerProperty
+import bpy
+from bpy.types import PropertyGroup
+from bpy.props import CollectionProperty, PointerProperty
 from .object import UBK_Object
 from .output import UBK_Output
 
@@ -13,18 +15,18 @@ classes = (UBK_Project,)
 
 def register():
 
-    bpy.types.Scene.ubk_project = PointerProperty(type=UBK_Project)
-
     from bpy.utils import register_class
 
     for cls in classes:
         register_class(cls)
 
+    bpy.types.Scene.ubk_project = PointerProperty(type=UBK_Project)
+
 
 def unregister():
+    del bpy.types.Scene.ubk_project
+
     from bpy.utils import unregister_class
 
     for cls in reversed(classes):
         unregister_class(cls)
-
-    del bpy.types.Scene.ubk_project

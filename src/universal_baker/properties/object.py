@@ -1,12 +1,13 @@
 import bpy
-from bpy.types import PropertyGroup, BoolProperty, PointerProperty, CollectionProperty, IntProperty
-from .map import UB_Map
+from bpy.types import PropertyGroup
+from bpy.props import BoolProperty, PointerProperty, CollectionProperty, IntProperty
+from .map import UBK_Map
 
 
 class UBK_Object(PropertyGroup):
     enabled: BoolProperty(default=True)
     target: PointerProperty(type=bpy.types.Object)
-    maps: CollectionProperty(type=UB_Map)
+    maps: CollectionProperty(type=UBK_Map)
     active_map: IntProperty()
 
 

@@ -1,14 +1,19 @@
-from bpy.types import PropertyGroup, BoolProperty, EnumProperty, StringProperty, IntProperty, PointerProperty
-from .map import UB_Map
+from bpy.types import PropertyGroup
+from bpy.props import EnumProperty, PointerProperty
+from .map import UBK_Map
+
+
+def get_packing_types(self, context):
+    return [("R+G+B", "R+G+B", ""), ("RGB+A", "RGB+A", ""), ("R+G+B+A", "R+G+B+A", "")]
 
 
 class UBK_Packing(PropertyGroup):
     packing_type: EnumProperty(items=get_packing_types)
-    pack_r: PointerProperty(type=UB_Map)
-    pack_g: PointerProperty(type=UB_Map)
-    pack_b: PointerProperty(type=UB_Map)
-    pack_a: PointerProperty(type=UB_Map)
-    pack_rgb: PointerProperty(type=UB_Map)
+    pack_r: PointerProperty(type=UBK_Map)
+    pack_g: PointerProperty(type=UBK_Map)
+    pack_b: PointerProperty(type=UBK_Map)
+    pack_a: PointerProperty(type=UBK_Map)
+    pack_rgb: PointerProperty(type=UBK_Map)
 
 
 classes = (UBK_Packing,)

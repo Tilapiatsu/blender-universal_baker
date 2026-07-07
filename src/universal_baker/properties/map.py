@@ -1,4 +1,9 @@
-from bpy.types import PropertyGroup, BoolProperty, EnumProperty, StringProperty, IntProperty
+from bpy.types import PropertyGroup
+from bpy.props import BoolProperty, EnumProperty, StringProperty, IntProperty
+
+
+def get_registered_bakers(self, context):
+    return [("BAKER_01", "Baker 01", "")]
 
 
 class UBK_Map(PropertyGroup):
