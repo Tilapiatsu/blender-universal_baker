@@ -1,3 +1,4 @@
+from __future__ import annotations
 import bpy
 from bpy.types import PropertyGroup
 from bpy.props import BoolProperty, PointerProperty, CollectionProperty, IntProperty
@@ -5,10 +6,24 @@ from .map import UBK_Map
 
 
 class UBK_Object(PropertyGroup):
-    enabled: BoolProperty(default=True)
-    target: PointerProperty(type=bpy.types.Object)
-    maps: CollectionProperty(type=UBK_Map)
-    active_map: IntProperty()
+    """Bake settings for one target object."""
+
+    enabled: BoolProperty(
+        default=True,
+    )
+
+    target: PointerProperty(
+        name="Target",
+        type=bpy.types.Object,
+    )
+
+    maps: CollectionProperty(
+        type=UBK_Map,
+    )
+
+    active_map_index: IntProperty(
+        default=0,
+    )
 
 
 classes = (UBK_Object,)

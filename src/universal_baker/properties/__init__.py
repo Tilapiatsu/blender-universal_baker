@@ -1,6 +1,6 @@
-from . import map, packing, object, output, project
+from . import output, map, packing, object, project
 
-modules = (map, packing, object, output, project)
+modules = (output, map, packing, object, project)
 
 
 def register():

@@ -1,17 +1,46 @@
+from __future__ import annotations
 from bpy.types import PropertyGroup
-from bpy.props import BoolProperty, EnumProperty, StringProperty, IntProperty
+from bpy.props import BoolProperty, EnumProperty, StringProperty, PointerProperty
+from .output import UBK_Output
 
 
-def get_registered_bakers(self, context):
-    return [("BAKER_01", "Baker 01", "")]
+def bake_map_items(self, context):
+    """Dynamic enum.
+
+    Later this will query the Baker Registry.
+    """
+
+    return [
+        ("DIFFUSE", "Diffuse", ""),
+    ]
 
 
 class UBK_Map(PropertyGroup):
-    enabled: BoolProperty(default=True)
-    baker: EnumProperty(items=get_registered_bakers)
-    image_name: StringProperty(default="Bake")
-    resolution_x: IntProperty(default=2048)
-    resolution_y: IntProperty(default=2048)
+    """One Bake Map"""
+
+    enabled: BoolProperty(
+        name="Enabled",
+        default=True,
+    )
+
+    baker: EnumProperty(
+        name="Bake Type",
+        items=bake_map_items,
+    )
+
+    image_name: StringProperty(
+        name="Image",
+        default="Bake",
+    )
+
+    override_output: BoolProperty(
+        name="Override Output",
+        default=False,
+    )
+
+    output: PointerProperty(
+        type=UBK_Output,
+    )
 
 
 classes = (UBK_Map,)

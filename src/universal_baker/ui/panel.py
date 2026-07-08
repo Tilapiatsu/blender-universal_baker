@@ -1,0 +1,170 @@
+from __future__ import annotations
+
+import bpy
+
+from ..services.project import ProjectService
+from ..services.object import ObjectService
+
+
+class UBK_PT_MainPanel(bpy.types.Panel):
+    """Main Universal Baker panel."""
+
+    bl_idname = "UBK_PT_main_panel"
+    bl_label = "Universal Baker"
+
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category = "Universal Baker"
+
+    # -------------------------------------------------------------------------
+    # Draw
+    # -------------------------------------------------------------------------
+
+    def draw(self, context):
+        layout = self.layout
+        project = ProjectService.get(context)
+
+        self.draw_header(
+            layout,
+            project,
+        )
+
+        self.draw_objects(
+            layout,
+            project,
+        )
+
+        self.draw_maps(
+            layout,
+            project,
+        )
+
+        self.draw_footer(
+            layout,
+            project,
+        )
+
+    # -------------------------------------------------------------------------
+    # Header
+    # -------------------------------------------------------------------------
+
+    def draw_header(self, layout, project):
+        box = layout.box()
+
+        row = box.row()
+
+        row.label(
+            text="Bake Project",
+            icon="RENDER_STILL",
+        )
+
+    # -------------------------------------------------------------------------
+    # Objects
+    # -------------------------------------------------------------------------
+
+    def draw_objects(self, layout, project):
+        box = layout.box()
+
+        header = box.row()
+
+        header.label(
+            text="Target Objects",
+            icon="OUTLINER_OB_MESH",
+        )
+
+        box.template_list(
+            "UBK_UL_ObjectList",
+            "",
+            project,
+            "objects",
+            project,
+            "active_object_index",
+            rows=5,
+        )
+
+        row = box.row(align=True)
+
+        row.operator(
+            "ubk.add_object",
+            text="Add Selected",
+            icon="ADD",
+        )
+
+        row.operator(
+            "ubk.remove_object",
+            text="",
+            icon="REMOVE",
+        )
+
+    # -------------------------------------------------------------------------
+    # Maps
+    # -------------------------------------------------------------------------
+
+    def draw_maps(self, layout, project):
+        box = layout.box()
+
+        header = box.row()
+
+        header.label(
+            text="Bake Maps",
+            icon="TEXTURE",
+        )
+
+        active_object = ObjectService.active(project)
+
+        if active_object is None:
+            box.label(
+                text="Select a target object.",
+                icon="INFO",
+            )
+
+            return
+
+        box.template_list("UBK_UL_MapList", "", active_object, "maps", active_object, "active_map_index", rows=5)
+
+        row = box.row(align=True)
+
+        row.operator(
+            "ubk.add_map",
+            text="Add Map",
+            icon="ADD",
+        )
+
+        row.operator(
+            "ubk.remove_map",
+            text="",
+            icon="REMOVE",
+        )
+
+    # -------------------------------------------------------------------------
+    # Footer
+    # -------------------------------------------------------------------------
+
+    def draw_footer(self, layout, project):
+        layout.separator()
+
+        row = layout.row()
+
+        row.scale_y = 1.6
+
+        row.operator(
+            "ubk.bake_all",
+            icon="RENDER_STILL",
+        )
+
+
+classes = (UBK_PT_MainPanel,)
+
+
+def register():
+    from bpy.utils import register_class
+
+    for cls in classes:
+        register_class(cls)
+
+
+def unregister():
+    from bpy.utils import unregister_class
+
+    for cls in reversed(classes):
+        unregister_class(cls)

@@ -1,10 +1,59 @@
+from __future__ import annotations
 from bpy.types import PropertyGroup
-from bpy.props import BoolProperty, EnumProperty, StringProperty, IntProperty
+from bpy.props import EnumProperty, StringProperty, IntProperty
 
 
-# TODO: Need to set the proper output properties
 class UBK_Output(PropertyGroup):
-    enabled: BoolProperty(default=True)
+    """Global output settings.
+
+    These settings are inherited by every bake map unless
+    explicitly overridden.
+    """
+
+    directory: StringProperty(
+        name="Output Directory",
+        subtype="DIR_PATH",
+        default="//",
+    )
+
+    resolution_x: IntProperty(
+        name="Width",
+        default=2048,
+        min=1,
+    )
+
+    resolution_y: IntProperty(
+        name="Height",
+        default=2048,
+        min=1,
+    )
+
+    file_format: EnumProperty(
+        name="Format",
+        items=[
+            ("PNG", "PNG", ""),
+            ("OPEN_EXR", "OpenEXR", ""),
+            ("TIFF", "TIFF", ""),
+            ("JPEG", "JPEG", ""),
+        ],
+        default="PNG",
+    )
+
+    color_depth: EnumProperty(
+        name="Depth",
+        items=[
+            ("8", "8", ""),
+            ("16", "16", ""),
+            ("32", "32", ""),
+        ],
+        default="8",
+    )
+
+    margin: IntProperty(
+        name="Margin",
+        default=16,
+        min=0,
+    )
 
 
 classes = (UBK_Output,)

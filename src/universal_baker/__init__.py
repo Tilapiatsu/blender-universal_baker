@@ -11,9 +11,9 @@ bl_info = {
 #
 # modules = (registration,)
 
-from . import properties
+from . import properties, ui, operators
 
-modules = (properties,)
+modules = (properties, ui, operators)
 
 
 def register():

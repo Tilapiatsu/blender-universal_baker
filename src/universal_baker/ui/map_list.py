@@ -1,0 +1,149 @@
+from __future__ import annotations
+
+import bpy
+
+from ..maps.registry import registry
+
+
+class UBK_UL_MapList(bpy.types.UIList):
+    """UIList displaying the bake maps of the active object."""
+
+    bl_idname = "UBK_UL_MapList"
+
+    # -------------------------------------------------------------------------
+    # Filtering
+    # -------------------------------------------------------------------------
+
+    def filter_items(self, context, data, propname):
+        items = getattr(data, propname)
+
+        flags = [self.bitflag_filter_item] * len(items)
+        order = []
+
+        return flags, order
+
+    # -------------------------------------------------------------------------
+    # Draw
+    # -------------------------------------------------------------------------
+
+    def draw_item(self, context, layout, data, item, icon, active_data, active_property, index, flt_flag):
+        bake_map = item
+
+        if self.layout_type in {"DEFAULT", "COMPACT"}:
+            self.draw_default(
+                layout,
+                bake_map,
+            )
+
+        elif self.layout_type == {"GRID"}:
+            layout.alignment = "CENTER"
+            layout.label(icon="TEXTURE")
+
+    # -------------------------------------------------------------------------
+
+    def draw_default(self, layout, bake_map):
+        row = layout.row(align=True)
+
+        # --------------------------------------------------------------
+        # Enable
+        # --------------------------------------------------------------
+
+        row.prop(
+            bake_map,
+            "enabled",
+            text="",
+        )
+
+        # --------------------------------------------------------------
+        # Baker information
+        # --------------------------------------------------------------
+
+        baker = None
+
+        if registry.exists(bake_map.baker):
+            baker = registry.get(bake_map.baker)
+
+        if baker:
+            row.label(
+                text=baker.label,
+                icon=baker.icon,
+            )
+
+        else:
+            row.label(
+                text=bake_map.baker,
+                icon="QUESTION",
+            )
+
+        # --------------------------------------------------------------
+        # Output information
+        # --------------------------------------------------------------
+
+        info = row.row()
+        info.alignment = "RIGHT"
+        info.enabled = False
+
+        if bake_map.override_output:
+            resolution = f"{bake_map.output.resolution_x}×{bake_map.output.resolution_y}"
+
+            info.label(
+                text=resolution,
+                icon="IMAGE_DATA",
+            )
+
+        else:
+            info.label(
+                text="Global",
+                icon="SETTINGS",
+            )
+
+        # --------------------------------------------------------------
+        # Future Preview
+        # --------------------------------------------------------------
+
+        #
+        # preview = row.operator(
+        #     "ubk.preview_map",
+        #     text="",
+        #     icon='HIDE_OFF',
+        # )
+        #
+        # preview.index = index
+        #
+
+        # --------------------------------------------------------------
+        # Future Bake
+        # --------------------------------------------------------------
+
+        #
+        # bake = row.operator(
+        #     "ubk.bake_map",
+        #     text="",
+        #     icon='RENDER_STILL',
+        # )
+        #
+        # bake.index = index
+        #
+
+    # -------------------------------------------------------------------------
+
+    def draw_filter(self, context, layout):
+        """Reserved for future filtering."""
+        pass
+
+
+classes = (UBK_UL_MapList,)
+
+
+def register():
+    from bpy.utils import register_class
+
+    for cls in classes:
+        register_class(cls)
+
+
+def unregister():
+    from bpy.utils import unregister_class
+
+    for cls in reversed(classes):
+        unregister_class(cls)
