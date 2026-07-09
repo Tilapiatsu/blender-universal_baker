@@ -4,12 +4,17 @@ from dataclasses import dataclass, field
 
 import bpy
 
-from .base import BaseBaker
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..bakers.base import BaseBaker
+    from .task import BakeTask
+
 from ..ressources.image import ImageResource
 from ..ressources.material import MaterialResource
 
 from .session import BakeSession
-from .task import BakeTask
 
 
 @dataclass(slots=True)

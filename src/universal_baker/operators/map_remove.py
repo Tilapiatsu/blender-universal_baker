@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import bpy
 
-from ..baker.controller import BakeController
+from ..core.controller import BakeController
 from ..services.project import ProjectService
 from ..services.object import ObjectService
 from ..services.map import MapService

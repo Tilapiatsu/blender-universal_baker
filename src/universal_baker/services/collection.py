@@ -21,15 +21,10 @@ class PropertyCollectionService(ABC, Generic[T]):
     Everything else is generic.
     """
 
-    # ------------------------------------------------------------------
-    # Collection Access
-    # ------------------------------------------------------------------
-
     @classmethod
     @abstractmethod
     def collection(cls, owner):
         """Return the Blender CollectionProperty."""
-
         raise NotImplementedError
 
     @classmethod
@@ -42,10 +37,6 @@ class PropertyCollectionService(ABC, Generic[T]):
     def set_active_index(cls, owner, index: int):
         raise NotImplementedError
 
-    # ------------------------------------------------------------------
-    # Helpers
-    # ------------------------------------------------------------------
-
     @classmethod
     def count(cls, owner) -> int:
         return len(cls.collection(owner))
@@ -57,10 +48,6 @@ class PropertyCollectionService(ABC, Generic[T]):
     @classmethod
     def valid_index(cls, owner, index: int) -> bool:
         return 0 <= index < cls.count(owner)
-
-    # ------------------------------------------------------------------
-    # Active
-    # ------------------------------------------------------------------
 
     @classmethod
     def active(cls, owner) -> T | None:
@@ -92,10 +79,6 @@ class PropertyCollectionService(ABC, Generic[T]):
 
         cls.set_active_index(owner, index)
 
-    # ------------------------------------------------------------------
-    # Collection Manipulation
-    # ------------------------------------------------------------------
-
     @classmethod
     def remove(cls, owner, index: int):
         if not cls.valid_index(owner, index):
@@ -114,10 +97,6 @@ class PropertyCollectionService(ABC, Generic[T]):
 
         cls.set_active_index(owner, 0)
 
-    # ------------------------------------------------------------------
-    # Iteration
-    # ------------------------------------------------------------------
-
     @classmethod
     def iter(cls, owner) -> Iterator[T]:
         yield from cls.collection(owner)
@@ -127,10 +106,6 @@ class PropertyCollectionService(ABC, Generic[T]):
         for item in cls.collection(owner):
             if getattr(item, "enabled", True):
                 yield item
-
-    # ------------------------------------------------------------------
-    # Search
-    # ------------------------------------------------------------------
 
     @classmethod
     def first(cls, owner, predicate) -> T | None:

@@ -4,9 +4,9 @@ from typing import Optional
 
 import bpy
 
-from .executor_internal import InternalBakeExecutor
-from .job import BakeJob
-from .session import BakeSession
+from ..runtime.executor_internal import InternalBakeExecutor
+from ..runtime.job import BakeJob
+from ..runtime.session import BakeSession
 
 
 class BakeManager:

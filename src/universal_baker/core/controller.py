@@ -6,7 +6,7 @@ import bpy
 from universal_baker.services.object import ObjectService
 
 from .planner import BakePlanner
-from .job import BakeJob
+from ..runtime.job import BakeJob
 
 from ..services.project import ProjectService
 from ..services.map import MapService

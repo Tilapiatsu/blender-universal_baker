@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from .base import BaseBaker
 
-from ..baker.context import BakeContext
+from ..runtime.context import BakeContext
 from ..services.image import ImageService
 from ..services.material import MaterialService
 

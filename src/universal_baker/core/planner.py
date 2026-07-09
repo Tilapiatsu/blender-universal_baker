@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from .job import BakeJob
-from .task import BakeTask
+from ..runtime.job import BakeJob
+from ..runtime.task import BakeTask
 
 
 class BakePlanner:
@@ -21,9 +21,10 @@ class BakePlanner:
                     continue
 
                 task = BakeTask(
-                    object_name=obj.target.name,
-                    baker_id=bake_map.baker,
-                    image_name=bake_map.image_name,
+                    target=obj.target,
+                    sources=obj.sources,
+                    baker=bake_map.baker,
+                    output=bake_map.output,
                 )
 
                 job.add_task(task)

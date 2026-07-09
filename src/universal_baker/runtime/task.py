@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 import bpy
 
-from ..maps.base import BaseBaker
+from ..bakers.base import BaseBaker
 
 
 @dataclass(slots=True, frozen=True)
@@ -14,7 +14,7 @@ class BakeTask:
     target: bpy.types.Object
     sources: list[bpy.types.Object]
 
-    baker_id: str
+    baker: BaseBaker
 
     output: object
 
@@ -26,10 +26,10 @@ class BakeTask:
     def object_name(self) -> str:
         return self.target.name
 
-    # @property
-    # def baker_id(self) -> str:
-    #     return self.baker.id
-    #
-    # @property
-    # def baker_name(self) -> str:
-    #     return self.baker.label
+    @property
+    def baker_id(self) -> str:
+        return self.baker.id
+
+    @property
+    def baker_name(self) -> str:
+        return self.baker.label

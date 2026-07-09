@@ -8,7 +8,7 @@ import bpy
 from .context import BakeContext
 from .job import BakeJob
 from .session import BakeSession
-from ..maps.registry import registry
+from ..core.registry import registry
 
 
 class InternalBakeExecutor:

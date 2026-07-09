@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import bpy
 
-from ..maps.registry import registry
+from ..core.registry import registry
 
 
 class UBK_UL_MapList(bpy.types.UIList):

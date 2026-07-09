@@ -3,7 +3,10 @@ from __future__ import annotations
 from typing import Dict
 from typing import Iterable
 
-from .base import BaseBaker
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..bakers.base import BaseBaker
 
 
 class BakerRegistry:

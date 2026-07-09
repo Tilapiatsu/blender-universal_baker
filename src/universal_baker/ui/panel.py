@@ -11,7 +11,6 @@ class UBK_PT_MainPanel(bpy.types.Panel):
 
     bl_idname = "UBK_PT_main_panel"
     bl_label = "Universal Baker"
-
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category = "Universal Baker"
@@ -20,12 +19,12 @@ class UBK_PT_MainPanel(bpy.types.Panel):
         layout = self.layout
         project = ProjectService.get(context)
 
-        self.draw_header(layout, project)
+        self.draw_header(layout)
         self.draw_objects(layout, project)
         self.draw_maps(layout, project)
         self.draw_footer(layout, project)
 
-    def draw_header(self, layout, project):
+    def draw_header(self, layout):
         box = layout.box()
         row = box.row()
         row.label(text="Bake Project", icon="RENDER_STILL")

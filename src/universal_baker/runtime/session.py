@@ -5,8 +5,11 @@ from time import perf_counter
 
 import bpy
 
-from .job import BakeJob
-from .task import BakeTask
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .job import BakeJob
+    from .task import BakeTask
 
 
 class SessionContext:

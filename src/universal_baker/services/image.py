@@ -3,9 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import bpy
-from universal_baker.baker.planner import BakePlanner
-
-from ..baker.context import BakeContext
+from ..runtime.context import BakeContext
 from ..resources.image import ImageResource
 
 

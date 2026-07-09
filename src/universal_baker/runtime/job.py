@@ -37,3 +37,18 @@ class BakeJob:
 
     def cancel(self):
         self.status = BakeJobStatus.CANCELLED
+
+    def notify_started(self) -> None:
+        pass
+
+    def notify_finished(self) -> None:
+        pass
+
+    def notify_task_started(self, task: BakeTask) -> None:
+        pass
+
+    def notify_task_finished(self, task: BakeTask, log: bool, time_elapsed: float) -> None:
+        pass
+
+    def notify_task_failed(self, task: BakeTask, msg: str) -> None:
+        pass

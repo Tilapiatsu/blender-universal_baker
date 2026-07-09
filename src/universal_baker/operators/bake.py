@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import bpy
 
-from ..baker.controller import BakeController
-from ..baker.job import BakeJob
+from ..core.controller import BakeController
+from ..runtime.job import BakeJob
 from .base import UBK_OT_Base
 
 

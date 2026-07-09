@@ -6,12 +6,10 @@ from abc import abstractmethod
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..baker.context import BakeContext
+    from ..runtime.context import BakeContext
+    from ..runtime.task import BakeTask
 
 from ..services.renderer import RendererService
-
-
-from ..baker.task import BakeTask
 
 
 class BakerColorType(Enum):
