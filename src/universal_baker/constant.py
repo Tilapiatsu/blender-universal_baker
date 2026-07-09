@@ -1,0 +1,2 @@
+BAKE_IMAGE_NODE_NAME = "UBK_BakeImage"
+BAKE_IMAGE_NODE_LABEL = "Universal Baker"

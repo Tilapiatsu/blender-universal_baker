@@ -1,31 +1,23 @@
 from __future__ import annotations
 
 import bpy
-
-from ..baker.session import BakeSession
-from ..baker.task import BakeTask
+from ..baker.context import BakeContext
 
 
 class RendererService:
     """Wrapper around Blender's native baking system."""
 
     @classmethod
-    def execute(cls, session: BakeSession, task: BakeTask):
+    def execute(cls, ctx: BakeContext):
         """Execute a single bake task."""
-
-        cls.configure(session, task)
-        cls.prepare(session, task)
-        cls.bake(session, task)
-
-    # -------------------------------------------------------------------------
-    # Configure
-    # -------------------------------------------------------------------------
+        cls.configure(ctx)
+        cls.prepare(ctx)
+        cls.bake(ctx)
 
     @classmethod
-    def configure(cls, session: BakeSession, task: BakeTask):
+    def configure(cls, ctx: BakeContext):
         """Configure Blender for the bake."""
-
-        scene = session.context.scene
+        scene = ctx.session.context.scene
 
         #
         # MVP
@@ -41,46 +33,29 @@ class RendererService:
         bake.margin = 16
         bake.margin_type = "ADJACENT_FACES"
 
-        #
-        # Selected to Active
-        #
-
-        bake.use_selected_to_active = task.selected_to_active
+        bake.use_selected_to_active = ctx.task.selected_to_active
 
     # -------------------------------------------------------------------------
     # Prepare
     # -------------------------------------------------------------------------
 
     @classmethod
-    def prepare(cls, session: BakeSession, task: BakeTask):
+    def prepare(cls, ctx: BakeContext):
         """Prepare Blender selection."""
-
         bpy.ops.object.select_all(action="DESELECT")
 
-        #
-        # Sources
-        #
-
-        for obj in task.sources:
+        for obj in ctx.task.sources:
             obj.select_set(True)
 
-        #
-        # Target
-        #
+        ctx.task.target.select_set(True)
 
-        task.target.select_set(True)
+        ctx.session.context.view_layer.objects.active = ctx.task.target
 
-        session.context.view_layer.objects.active = task.target
-
-        #
-        # Force Object Mode
-        #
-
-        if session.context.mode != "OBJECT":
+        if ctx.session.context.mode != "OBJECT":
             bpy.ops.object.mode_set(mode="OBJECT")
 
     @classmethod
-    def bake(cls, session: BakeSession, task: BakeTask):
+    def bake(cls, ctx: BakeContext):
         """Execute Blender bake."""
 
-        bpy.ops.object.bake(type=task.blender_bake_type)
+        bpy.ops.object.bake(type=ctx.task.baker.blender_bake_type)

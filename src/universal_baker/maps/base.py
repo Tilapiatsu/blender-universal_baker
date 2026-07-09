@@ -3,8 +3,14 @@ from __future__ import annotations
 from enum import Enum, auto
 from abc import ABC
 from abc import abstractmethod
+from typing import TYPE_CHECKING
 
-from ..baker.context import BakeContext
+if TYPE_CHECKING:
+    from ..baker.context import BakeContext
+
+from ..services.renderer import RendererService
+
+
 from ..baker.task import BakeTask
 
 
@@ -25,48 +31,33 @@ class BaseBaker(ABC):
     Diffuse, etc.
     """
 
-    # ------------------------------------------------------------------
-    # Metadata
-    # ------------------------------------------------------------------
-
     id: str = ""
     label: str = ""
     description: str = ""
     icon: str = "RENDER_STILL"
     color_type: BakerColorType = BakerColorType.COLOR
-
-    # ------------------------------------------------------------------
-    # Optional
-    # ------------------------------------------------------------------
+    blender_bake_type = "DIFFUSE"
 
     def poll(self, task: BakeTask) -> bool:
         """Whether this baker can execute this task."""
         return True
 
-    # ------------------------------------------------------------------
-    # Mandatory
-    # ------------------------------------------------------------------
+    @abstractmethod
+    def execute(self, ctx: BakeContext) -> None:
+        """Prepare, bake and cleanup all at once."""
+        self.prepare(ctx)
+        self.bake(ctx)
+        self.cleanup(ctx)
 
     @abstractmethod
-    def prepare(
-        self,
-        context: BakeContext,
-        task: BakeTask,
-    ) -> None:
+    def prepare(self, ctx: BakeContext) -> None:
         """Prepare Blender before baking."""
 
     @abstractmethod
-    def bake(
-        self,
-        context: BakeContext,
-        task: BakeTask,
-    ) -> None:
+    def bake(self, ctx: BakeContext) -> None:
         """Execute the bake."""
+        RendererService.execute(ctx)
 
     @abstractmethod
-    def cleanup(
-        self,
-        context: BakeContext,
-        task: BakeTask,
-    ) -> None:
+    def cleanup(self, ctx: BakeContext) -> None:
         """Restore Blender."""

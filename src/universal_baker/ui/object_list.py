@@ -8,10 +8,6 @@ class UBK_UL_ObjectList(bpy.types.UIList):
 
     bl_idname = "UBK_UL_ObjectList"
 
-    # -------------------------------------------------------------------------
-    # Filtering
-    # -------------------------------------------------------------------------
-
     def filter_items(self, context, data, propname):
         items = getattr(data, propname)
 
@@ -20,68 +16,31 @@ class UBK_UL_ObjectList(bpy.types.UIList):
 
         return flags, order
 
-    # -------------------------------------------------------------------------
-    # Draw
-    # -------------------------------------------------------------------------
-
     def draw_item(self, context, layout, data, item, icon, active_data, active_property, index, flt_flag):
         obj_settings = item
 
         if self.layout_type in {"DEFAULT", "COMPACT"}:
-            self.draw_default(
-                layout,
-                obj_settings,
-            )
+            self.draw_default(layout, obj_settings)
 
         elif self.layout_type == "GRID":
             layout.alignment = "CENTER"
 
-            layout.label(
-                text="",
-                icon="MESH_CUBE",
-            )
-
-    # -------------------------------------------------------------------------
+            layout.label(text="", icon="MESH_CUBE")
 
     def draw_default(self, layout, obj_settings):
         """Draw one object row."""
 
         row = layout.row(align=True)
 
-        # --------------------------------------------------------------
-        # Enable Toggle
-        # --------------------------------------------------------------
-
-        row.prop(
-            obj_settings,
-            "enabled",
-            text="",
-        )
-
-        # --------------------------------------------------------------
-        # Object
-        # --------------------------------------------------------------
+        row.prop(obj_settings, "enabled", text="")
 
         obj = obj_settings.target
 
         if obj:
-            row.prop(
-                obj,
-                "name",
-                text="",
-                emboss=False,
-                icon="MESH_DATA",
-            )
+            row.prop(obj, "name", text="", emboss=False, icon="MESH_DATA")
 
         else:
-            row.label(
-                text="<Missing Object>",
-                icon="ERROR",
-            )
-
-        # --------------------------------------------------------------
-        # Statistics
-        # --------------------------------------------------------------
+            row.label(text="<Missing Object>", icon="ERROR")
 
         enabled_maps = sum(bake_map.enabled for bake_map in obj_settings.maps)
 
@@ -92,10 +51,7 @@ class UBK_UL_ObjectList(bpy.types.UIList):
 
         stats.enabled = False
 
-        stats.label(
-            text=f"{enabled_maps}/{total_maps}",
-            icon="RENDERLAYERS",
-        )
+        stats.label(text=f"{enabled_maps}/{total_maps}", icon="RENDERLAYERS")
 
         # --------------------------------------------------------------
         # Future Bake Button

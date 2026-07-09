@@ -10,10 +10,6 @@ class UBK_UL_MapList(bpy.types.UIList):
 
     bl_idname = "UBK_UL_MapList"
 
-    # -------------------------------------------------------------------------
-    # Filtering
-    # -------------------------------------------------------------------------
-
     def filter_items(self, context, data, propname):
         items = getattr(data, propname)
 
@@ -22,62 +18,30 @@ class UBK_UL_MapList(bpy.types.UIList):
 
         return flags, order
 
-    # -------------------------------------------------------------------------
-    # Draw
-    # -------------------------------------------------------------------------
-
     def draw_item(self, context, layout, data, item, icon, active_data, active_property, index, flt_flag):
         bake_map = item
 
         if self.layout_type in {"DEFAULT", "COMPACT"}:
-            self.draw_default(
-                layout,
-                bake_map,
-            )
+            self.draw_default(layout, bake_map)
 
         elif self.layout_type == {"GRID"}:
             layout.alignment = "CENTER"
             layout.label(icon="TEXTURE")
 
-    # -------------------------------------------------------------------------
-
     def draw_default(self, layout, bake_map):
         row = layout.row(align=True)
 
-        # --------------------------------------------------------------
-        # Enable
-        # --------------------------------------------------------------
-
-        row.prop(
-            bake_map,
-            "enabled",
-            text="",
-        )
-
-        # --------------------------------------------------------------
-        # Baker information
-        # --------------------------------------------------------------
-
+        row.prop(bake_map, "enabled", text="")
         baker = None
 
         if registry.exists(bake_map.baker):
             baker = registry.get(bake_map.baker)
 
         if baker:
-            row.label(
-                text=baker.label,
-                icon=baker.icon,
-            )
+            row.label(text=baker.label, icon=baker.icon)
 
         else:
-            row.label(
-                text=bake_map.baker,
-                icon="QUESTION",
-            )
-
-        # --------------------------------------------------------------
-        # Output information
-        # --------------------------------------------------------------
+            row.label(text=bake_map.baker, icon="QUESTION")
 
         info = row.row()
         info.alignment = "RIGHT"
@@ -86,16 +50,10 @@ class UBK_UL_MapList(bpy.types.UIList):
         if bake_map.override_output:
             resolution = f"{bake_map.output.resolution_x}×{bake_map.output.resolution_y}"
 
-            info.label(
-                text=resolution,
-                icon="IMAGE_DATA",
-            )
+            info.label(text=resolution, icon="IMAGE_DATA")
 
         else:
-            info.label(
-                text="Global",
-                icon="SETTINGS",
-            )
+            info.label(text="Global", icon="SETTINGS")
 
         # --------------------------------------------------------------
         # Future Preview

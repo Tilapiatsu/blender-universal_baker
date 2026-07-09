@@ -1,53 +1,35 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from enum import Enum, auto
-from pathlib import Path
-from typing import Any
+from dataclasses import dataclass
+
+import bpy
+
+from ..maps.base import BaseBaker
 
 
-class BakeTaskStatus(Enum):
-    """Execution state of a bake task."""
-
-    PENDING = auto()
-    RUNNING = auto()
-    COMPLETED = auto()
-    FAILED = auto()
-    CANCELLED = auto()
-
-
-@dataclass(slots=True)
-class BakeTaskState:
-    status: BakeTaskStatus = BakeTaskStatus.PENDING
-    progress: float = 0.0
-    image: Any | None = None
-    error: str = ""
-
-
-@dataclass(slots=True)
+@dataclass(slots=True, frozen=True)
 class BakeTask:
-    """A single bake operation.
+    """Immutable description of one bake operation."""
 
-    Example:
+    target: bpy.types.Object
+    sources: list[bpy.types.Object]
 
-        Cube
-            └── Diffuse
-
-    becomes one BakeTask.
-    """
-
-    object_name: str
     baker_id: str
-    image_name: str
-    enabled: bool = True
-    output_path: Path | None = None
-    state: BakeTaskState = BakeTaskState()
-    metadata: dict[str, Any] = field(default_factory=dict)
+
+    output: object
+
+    selected_to_active: bool = False
+    cage_object: bpy.types.Object | None = None
+    cage_extrusion: float = 0.0
 
     @property
-    def finished(self) -> bool:
-        return self.state.status in {
-            BakeTaskStatus.COMPLETED,
-            BakeTaskStatus.FAILED,
-            BakeTaskStatus.CANCELLED,
-        }
+    def object_name(self) -> str:
+        return self.target.name
+
+    # @property
+    # def baker_id(self) -> str:
+    #     return self.baker.id
+    #
+    # @property
+    # def baker_name(self) -> str:
+    #     return self.baker.label

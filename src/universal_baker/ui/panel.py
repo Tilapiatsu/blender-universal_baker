@@ -16,141 +16,50 @@ class UBK_PT_MainPanel(bpy.types.Panel):
     bl_region_type = "UI"
     bl_category = "Universal Baker"
 
-    # -------------------------------------------------------------------------
-    # Draw
-    # -------------------------------------------------------------------------
-
     def draw(self, context):
         layout = self.layout
         project = ProjectService.get(context)
 
-        self.draw_header(
-            layout,
-            project,
-        )
-
-        self.draw_objects(
-            layout,
-            project,
-        )
-
-        self.draw_maps(
-            layout,
-            project,
-        )
-
-        self.draw_footer(
-            layout,
-            project,
-        )
-
-    # -------------------------------------------------------------------------
-    # Header
-    # -------------------------------------------------------------------------
+        self.draw_header(layout, project)
+        self.draw_objects(layout, project)
+        self.draw_maps(layout, project)
+        self.draw_footer(layout, project)
 
     def draw_header(self, layout, project):
         box = layout.box()
-
         row = box.row()
-
-        row.label(
-            text="Bake Project",
-            icon="RENDER_STILL",
-        )
-
-    # -------------------------------------------------------------------------
-    # Objects
-    # -------------------------------------------------------------------------
+        row.label(text="Bake Project", icon="RENDER_STILL")
 
     def draw_objects(self, layout, project):
         box = layout.box()
-
         header = box.row()
-
-        header.label(
-            text="Target Objects",
-            icon="OUTLINER_OB_MESH",
-        )
-
-        box.template_list(
-            "UBK_UL_ObjectList",
-            "",
-            project,
-            "objects",
-            project,
-            "active_object_index",
-            rows=5,
-        )
-
+        header.label(text="Target Objects", icon="OUTLINER_OB_MESH")
+        box.template_list("UBK_UL_ObjectList", "", project, "objects", project, "active_object_index", rows=5)
         row = box.row(align=True)
-
-        row.operator(
-            "ubk.add_object",
-            text="Add Selected",
-            icon="ADD",
-        )
-
-        row.operator(
-            "ubk.remove_object",
-            text="",
-            icon="REMOVE",
-        )
-
-    # -------------------------------------------------------------------------
-    # Maps
-    # -------------------------------------------------------------------------
+        row.operator("ubk.add_object", text="Add Selected", icon="ADD")
+        row.operator("ubk.remove_object", text="", icon="REMOVE")
 
     def draw_maps(self, layout, project):
         box = layout.box()
-
         header = box.row()
-
-        header.label(
-            text="Bake Maps",
-            icon="TEXTURE",
-        )
-
+        header.label(text="Bake Maps", icon="TEXTURE")
         active_object = ObjectService.active(project)
 
         if active_object is None:
-            box.label(
-                text="Select a target object.",
-                icon="INFO",
-            )
+            box.label(text="Select a target object.", icon="INFO")
 
             return
 
         box.template_list("UBK_UL_MapList", "", active_object, "maps", active_object, "active_map_index", rows=5)
-
         row = box.row(align=True)
-
-        row.operator(
-            "ubk.add_map",
-            text="Add Map",
-            icon="ADD",
-        )
-
-        row.operator(
-            "ubk.remove_map",
-            text="",
-            icon="REMOVE",
-        )
-
-    # -------------------------------------------------------------------------
-    # Footer
-    # -------------------------------------------------------------------------
+        row.operator("ubk.add_map", text="Add Map", icon="ADD")
+        row.operator("ubk.remove_map", text="", icon="REMOVE")
 
     def draw_footer(self, layout, project):
         layout.separator()
-
         row = layout.row()
-
         row.scale_y = 1.6
-
-        row.operator(
-            "ubk.bake_all",
-            icon="RENDER_STILL",
-        )
+        row.operator("ubk.bake_all", icon="RENDER_STILL")
 
 
 classes = (UBK_PT_MainPanel,)
