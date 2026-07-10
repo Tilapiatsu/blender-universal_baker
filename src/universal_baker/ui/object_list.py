@@ -20,14 +20,14 @@ class UBK_UL_ObjectList(bpy.types.UIList):
         obj_settings = item
 
         if self.layout_type in {"DEFAULT", "COMPACT"}:
-            self.draw_default(layout, obj_settings)
+            self.draw_default(layout, obj_settings, index)
 
         elif self.layout_type == "GRID":
             layout.alignment = "CENTER"
 
             layout.label(text="", icon="MESH_CUBE")
 
-    def draw_default(self, layout, obj_settings):
+    def draw_default(self, layout, obj_settings, index: int):
         """Draw one object row."""
 
         row = layout.row(align=True)
@@ -53,22 +53,13 @@ class UBK_UL_ObjectList(bpy.types.UIList):
 
         stats.label(text=f"{enabled_maps}/{total_maps}", icon="RENDERLAYERS")
 
-        # --------------------------------------------------------------
-        # Future Bake Button
-        # --------------------------------------------------------------
-        #
-        # Uncomment later:
-        #
-        # op = row.operator(
-        #     "ubk.bake_object",
-        #     text="",
-        #     icon='RENDER_STILL',
-        # )
-        #
-        # op.index = index
-        #
+        op = row.operator(
+            "ubk.bake_object",
+            text="",
+            icon="RENDER_STILL",
+        )
 
-    # -------------------------------------------------------------------------
+        op.index = index
 
     def draw_filter(self, context, layout):
         """Reserved for future filtering options."""

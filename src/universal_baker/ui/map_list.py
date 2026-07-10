@@ -22,13 +22,13 @@ class UBK_UL_MapList(bpy.types.UIList):
         bake_map = item
 
         if self.layout_type in {"DEFAULT", "COMPACT"}:
-            self.draw_default(layout, bake_map)
+            self.draw_default(layout, bake_map, index)
 
         elif self.layout_type == {"GRID"}:
             layout.alignment = "CENTER"
             layout.label(icon="TEXTURE")
 
-    def draw_default(self, layout, bake_map):
+    def draw_default(self, layout, bake_map, index: int):
         row = layout.row(align=True)
 
         row.prop(bake_map, "enabled", text="")
@@ -69,21 +69,13 @@ class UBK_UL_MapList(bpy.types.UIList):
         # preview.index = index
         #
 
-        # --------------------------------------------------------------
-        # Future Bake
-        # --------------------------------------------------------------
+        bake = row.operator(
+            "ubk.bake_map",
+            text="",
+            icon="RENDER_STILL",
+        )
 
-        #
-        # bake = row.operator(
-        #     "ubk.bake_map",
-        #     text="",
-        #     icon='RENDER_STILL',
-        # )
-        #
-        # bake.index = index
-        #
-
-    # -------------------------------------------------------------------------
+        bake.index = index
 
     def draw_filter(self, context, layout):
         """Reserved for future filtering."""

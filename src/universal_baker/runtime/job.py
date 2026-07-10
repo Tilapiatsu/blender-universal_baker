@@ -52,3 +52,22 @@ class BakeJob:
 
     def notify_task_failed(self, task: BakeTask, msg: str) -> None:
         pass
+
+    def __repr__(self) -> str:
+        result = f"""
+            {"=" * 60}
+            Universal Baker
+            Bake Job
+            {"=" * 60}\n
+            """
+
+        for index, task in enumerate(self.tasks):
+            result += f"{index + 1:03d} | {task.object_name:20} | {task.baker_id}\n"
+
+        result += "-" * 60 + "\n"
+
+        result += f"Total Tasks : {self.total_tasks}\n"
+
+        result += "=" * 60 + "\n"
+
+        return result

@@ -19,12 +19,13 @@ class UBK_PT_MainPanel(bpy.types.Panel):
         layout = self.layout
         project = ProjectService.get(context)
 
-        self.draw_header(layout)
+        self.draw_header(context)
         self.draw_objects(layout, project)
         self.draw_maps(layout, project)
         self.draw_footer(layout, project)
 
-    def draw_header(self, layout):
+    def draw_header(self, context):
+        layout = self.layout
         box = layout.box()
         row = box.row()
         row.label(text="Bake Project", icon="RENDER_STILL")

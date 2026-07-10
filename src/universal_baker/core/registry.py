@@ -22,14 +22,20 @@ class BakerRegistry:
     def unregister(self, baker_id: str) -> None:
         self._bakers.pop(baker_id, None)
 
-    def get(self, baker_id: str) -> BaseBaker:
+    def __getitem__(self, baker_id: str) -> BaseBaker:
         return self._bakers[baker_id]
 
     def exists(self, baker_id: str) -> bool:
         return baker_id in self._bakers
 
     def items(self):
+        return self._bakers.items()
+
+    def values(self):
         return self._bakers.values()
+
+    def keys(self):
+        return self._bakers.keys()
 
     def enum_items(self):
         items = []

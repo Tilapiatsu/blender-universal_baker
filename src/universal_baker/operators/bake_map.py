@@ -5,15 +5,19 @@ import bpy
 from ..core.controller import BakeController
 from ..runtime.job import BakeJob
 from .base import UBK_OT_Base
+from ..services.project import ProjectService
+from ..services.object import ObjectService
 
 
-class UBK_OT_BakeAll(UBK_OT_Base):
-    """Bake every enabled map of every enabled target object."""
+class UBK_OT_BakeMap(UBK_OT_Base):
+    """Bake selected map."""
 
-    bl_idname = "ubk.bake_all"
-    bl_label = "Bake All"
-    bl_description = "Bake every enabled map of every enabled target object"
+    bl_idname = "ubk.bake_map"
+    bl_label = "Bake Map"
+    bl_description = "Bake current Map"
     bl_options = {"REGISTER"}
+
+    index: bpy.props.IntProperty(name="Index", default=0)
 
     @classmethod
     def poll(cls, context):
@@ -24,7 +28,7 @@ class UBK_OT_BakeAll(UBK_OT_Base):
         return True
 
     def execute(self, context):
-        success, result = BakeController.bake_all(context)
+        success, result = BakeController.bake_object(context, self.index)
 
         if not success:
             for error in result:
@@ -47,7 +51,7 @@ class UBK_OT_BakeAll(UBK_OT_Base):
         return {"FINISHED"}
 
 
-classes = (UBK_OT_BakeAll,)
+classes = (UBK_OT_BakeMap,)
 
 
 def register():

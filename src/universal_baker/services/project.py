@@ -57,3 +57,8 @@ class ProjectService:
         project = ProjectService.get(context)
         project.objects.clear()
         project.active_object_index = 0
+
+    @staticmethod
+    def get_active_object_index(context) -> int:
+        project = ProjectService.get(context)
+        return project.active_object_index

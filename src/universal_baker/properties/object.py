@@ -5,6 +5,12 @@ from bpy.props import BoolProperty, PointerProperty, CollectionProperty, IntProp
 from .map import UBK_Map
 
 
+class UBK_SourceObject(PropertyGroup):
+    """Source object property"""
+
+    source: PointerProperty(name="Source Object", type=bpy.types.Object)
+
+
 class UBK_Object(PropertyGroup):
     """Bake settings for one target object."""
 
@@ -17,6 +23,8 @@ class UBK_Object(PropertyGroup):
         type=bpy.types.Object,
     )
 
+    sources: CollectionProperty(type=UBK_SourceObject)
+
     maps: CollectionProperty(
         type=UBK_Map,
     )
@@ -26,7 +34,10 @@ class UBK_Object(PropertyGroup):
     )
 
 
-classes = (UBK_Object,)
+classes = (
+    UBK_SourceObject,
+    UBK_Object,
+)
 
 
 def register():

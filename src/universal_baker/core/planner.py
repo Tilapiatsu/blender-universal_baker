@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from ..runtime.job import BakeJob
 from ..runtime.task import BakeTask
+from ..core.registry import registry
 
 
 class BakePlanner:
@@ -23,7 +24,7 @@ class BakePlanner:
                 task = BakeTask(
                     target=obj.target,
                     sources=obj.sources,
-                    baker=bake_map.baker,
+                    baker=registry[bake_map.baker],
                     output=bake_map.output,
                 )
 
