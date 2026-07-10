@@ -35,7 +35,7 @@ class UBK_UL_MapList(bpy.types.UIList):
         baker = None
 
         if registry.exists(bake_map.baker):
-            baker = registry.get(bake_map.baker)
+            baker = registry[bake_map.baker]
 
         if baker:
             row.label(text=baker.label, icon=baker.icon)

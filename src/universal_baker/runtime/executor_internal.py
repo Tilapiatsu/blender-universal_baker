@@ -11,7 +11,7 @@ from .session import BakeSession
 from ..core.registry import registry
 
 
-class InternalBakeExecutor:
+class BakeExecutorInternal:
     """
     Executes a BakeJob inside the current Blender instance.
     """
@@ -25,10 +25,12 @@ class InternalBakeExecutor:
 
         Returns the BakeSession containing execution statistics.
         """
+        # ISSUE : Nothing happens if the target object has no material,
+        # if there is a material there is an error accessing ctx.image.image
+        # universal_baker/services/material.py", line 114, in assign_image
+        # resource.image_node.image = ctx.image.image
         session = BakeSession(context=context, job=job)
-
         session.initialize(context)
-
         job.notify_started()
 
         try:
@@ -55,28 +57,22 @@ class InternalBakeExecutor:
         session.current_context = BakeContext(
             session=session,
             task=task,
-            baker=registry.get(task.baker_id),
+            baker=registry[task.baker_id],
         )
         ctx = session.current_context
-
         session.current_task = task
         session.job.notify_task_started(task)
         start = perf_counter()
 
         try:
             self.before_task(ctx)
-
             task.baker.execute(ctx)
-
             ctx.succeed()
-
             session.job.notify_task_finished(task, True, perf_counter() - start)
 
         except Exception as exc:
             traceback.print_exc()
-
             ctx.fail(str(exc))
-
             session.job.notify_task_failed(task, str(exc))
 
         finally:

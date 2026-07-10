@@ -7,9 +7,11 @@ import bpy
 
 from typing import TYPE_CHECKING
 
+
 if TYPE_CHECKING:
     from .job import BakeJob
     from .task import BakeTask
+    from .context import BakeContext
 
 
 class SessionContext:
@@ -32,6 +34,7 @@ class BakeSession:
     job: BakeJob
     context: bpy.types.Context
     current_task: BakeTask | None = None
+    current_context: BakeContext | None = None
     cancelled: bool = False
     start_time: float = field(default_factory=perf_counter)
     original_mode: str = "OBJECT"

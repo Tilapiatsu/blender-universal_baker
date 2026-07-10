@@ -26,11 +26,13 @@ class UBK_OT_BakeAll(UBK_OT_Base):
     def execute(self, context):
         success, result = BakeController.bake_all(context)
 
-        if not success:
+        if not success and isinstance(result, list):
             for error in result:
                 self.error(error)
 
             return {"CANCELLED"}
+
+        assert isinstance(result, BakeJob)
 
         job: BakeJob = result
 

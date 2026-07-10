@@ -4,7 +4,7 @@ from pathlib import Path
 
 import bpy
 from ..runtime.context import BakeContext
-from ..resources.image import ImageResource
+from ..ressources.image import ImageResource
 
 
 class ImageService:

@@ -27,8 +27,9 @@ class UBK_Preferences(bpy.types.AddonPreferences):
     )
 
     def draw(self, context):
-
         layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False  # No animation.
 
         col = layout.column()
 
@@ -45,3 +46,17 @@ class UBK_Preferences(bpy.types.AddonPreferences):
 
 
 classes = (UBK_Preferences,)
+
+
+def register():
+    from bpy.utils import register_class
+
+    for cls in classes:
+        register_class(cls)
+
+
+def unregister():
+    from bpy.utils import unregister_class
+
+    for cls in reversed(classes):
+        unregister_class(cls)

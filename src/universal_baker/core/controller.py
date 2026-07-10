@@ -10,6 +10,9 @@ from ..runtime.job import BakeJob
 
 from ..services.project import ProjectService
 from ..services.map import MapService
+from ..constant import get_prefs
+from ..runtime.executor_internal import BakeExecutorInternal
+from ..runtime.executor_external import BakeExecutorExternal
 
 
 class BakeController:
@@ -101,10 +104,10 @@ class BakeController:
 
                 continue
 
-            enabled_maps = [bake_map for bake_map in obj.maps if bake_map.enabled]
-
-            if not enabled_maps:
-                errors.append(f"{obj.target.name} has no enabled bake maps.")
+            # enabled_maps = [bake_map for bake_map in obj.maps if bake_map.enabled]
+            #
+            # if not enabled_maps:
+            #     errors.append(f"{obj.target.name} has no enabled bake maps.")
 
         return errors
 
@@ -133,6 +136,15 @@ class BakeController:
             )
 
         job = cls.create_job(context)
+
+        preferences = get_prefs()
+
+        if preferences.use_background_blender:
+            executor = BakeExecutorExternal()
+        else:
+            executor = BakeExecutorInternal()
+
+        executor.execute(context, job)
 
         #
         # MVP

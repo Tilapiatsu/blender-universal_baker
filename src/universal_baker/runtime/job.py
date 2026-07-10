@@ -55,14 +55,14 @@ class BakeJob:
 
     def __repr__(self) -> str:
         result = f"""
-            {"=" * 60}
-            Universal Baker
-            Bake Job
-            {"=" * 60}\n
-            """
+{"=" * 60}
+Universal Baker
+Bake Job
+{"=" * 60}\n
+"""
 
         for index, task in enumerate(self.tasks):
-            result += f"{index + 1:03d} | {task.object_name:20} | {task.baker_id}\n"
+            result += f"{index + 1:03d} | {task.object_name:40} | {task.baker_id}\n"
 
         result += "-" * 60 + "\n"
 

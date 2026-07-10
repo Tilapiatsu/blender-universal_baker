@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import bpy
 
-from ..baker.context import BakeContext
-from ..resources.material import MaterialResource
+from ..runtime.context import BakeContext
+from ..ressources.material import MaterialResource
 from ..constant import BAKE_IMAGE_NODE_LABEL, BAKE_IMAGE_NODE_NAME
 
 
