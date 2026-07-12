@@ -83,8 +83,8 @@ class ImageService:
         #
 
         resource.name = f"{task.object_name}_{task.baker_id.lower()}"
-        resource.width = 2048
-        resource.height = 2048
+        resource.width = 256
+        resource.height = 256
         resource.alpha = False
         resource.float_buffer = False
         resource.colorspace = "sRGB"
@@ -101,7 +101,6 @@ class ImageService:
 
     @classmethod
     def create(cls, resource: ImageResource) -> bpy.types.Image:
-
         image = bpy.data.images.new(
             name=resource.name,
             width=resource.width,
@@ -113,11 +112,7 @@ class ImageService:
         return image
 
     @classmethod
-    def apply_settings(
-        cls,
-        resource: ImageResource,
-    ) -> None:
-
+    def apply_settings(cls, resource: ImageResource) -> None:
         image = resource.image
 
         if image is None:
