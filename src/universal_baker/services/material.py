@@ -4,7 +4,7 @@ import bpy
 
 from ..runtime.context import BakeContext
 from ..ressources.material import MaterialResource
-from ..constant import BAKE_IMAGE_NODE_LABEL, BAKE_IMAGE_NODE_NAME
+from ..constant import BAKE_IMAGE_NODE_LABEL, BAKE_IMAGE_NODE_NAME, BAKE_MATERIAL_NAME
 
 
 class MaterialService:
@@ -50,14 +50,16 @@ class MaterialService:
         obj = ctx.target
 
         if not obj.material_slots:
-            raise RuntimeError(f"'{obj.name}' has no material.")
+            cls._create_bake_material(obj, None)
+            # raise RuntimeError(f"'{obj.name}' has no material.")
 
         slot = obj.material_slots[0]
 
         material = slot.material
 
         if material is None:
-            raise RuntimeError(f"Material slot is empty.")
+            cls._create_bake_material(obj, 0)
+            # raise RuntimeError(f"Material slot is empty.")
 
         resource.object = obj
         resource.material_index = 0
@@ -111,7 +113,7 @@ class MaterialService:
         if resource.image_node is None:
             return
 
-        resource.image_node.image = ctx.image.image
+        resource.image_node.image = ctx.image
 
     @classmethod
     def activate_image_node(cls, resource: MaterialResource) -> None:
@@ -149,3 +151,16 @@ class MaterialService:
         tree.nodes.remove(resource.image_node)
 
         resource.image_node = None
+
+    @classmethod
+    def _create_bake_material(cls, obj: bpy.types.Object, slot: int | None):
+        material = bpy.data.materials.new(
+            name=f"{obj.name}_{BAKE_MATERIAL_NAME}_{str(len(obj.material_slots)).zfill(2)}"
+        )
+        if slot is None:
+            obj.data.materials.append(material)
+        elif isinstance(slot, int):
+            obj.material_slots[slot].material = material
+        else:
+            raise AttributeError
+        return material
