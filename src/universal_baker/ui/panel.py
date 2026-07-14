@@ -57,22 +57,6 @@ class UBK_PT_MainPanel(bpy.types.Panel):
         row.operator("ubk.add_map", text="Add Map", icon="ADD")
         row.operator("ubk.remove_map", text="", icon="REMOVE")
 
-        active_map = MapService.active(project)
-
-        self.draw_bake_settings(layout, active_object, active_map)
-
-    def draw_bake_settings(self, layout, obj, map):
-        box = layout.box()
-        header = box.row()
-        if map is None:
-            header.label(text="Select a map.", icon="INFO")
-
-            return
-
-        header.label(text=f"{obj.target.name} | {map.image_name} settings")
-
-        # layout.panel("UBK_PT_bake_output_panel")
-
     def draw_footer(self, layout, project):
         layout.separator()
         row = layout.row()
