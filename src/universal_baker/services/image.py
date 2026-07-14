@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import bpy
+from universal_baker import ressources
 from ..runtime.context import BakeContext
 from ..ressources.image import ImageResource
 
@@ -26,7 +27,10 @@ class ImageService:
 
         if image is None:
             image = cls.create(resource)
+            resource.created = True
 
+        elif cls.is_image_settings_changed(image, resource):
+            image = cls.create(resource)
             resource.created = True
 
         resource.image = image
@@ -47,10 +51,14 @@ class ImageService:
 
         image = resource.image
         image.filepath_raw = str(resource.filepath)
-        image.file_format = resource.file_format
+        image.file_format = resource.image_format_settings.file_format
         image.save()
 
         resource.mark_saved()
+
+    @classmethod
+    def remove(cls, image: bpy.types.Image) -> None:
+        bpy.data.images.remove(bpy.data.images[image.name])
 
     @classmethod
     def release(cls, ctx: BakeContext) -> None:
@@ -82,11 +90,8 @@ class ImageService:
         resource.name = f"{task.object_name}_{task.baker_id.lower()}"
         resource.width = image_settings.width
         resource.height = image_settings.height
-        resource.alpha = image_settings.alpha
-        resource.float_buffer = image_settings.float_buffer
         resource.colorspace = color_settings.colorspace
-        resource.file_format = image_settings.file_format
-        resource.color_depth = image_settings.color_depth
+        resource.image_format_settings = image_settings
 
         #
         # TODO:
@@ -97,15 +102,34 @@ class ImageService:
 
     @classmethod
     def create(cls, resource: ImageResource) -> bpy.types.Image:
-        image = bpy.data.images.new(
-            name=resource.name,
-            width=resource.width,
-            height=resource.height,
-            alpha=resource.alpha,
-            float_buffer=resource.float_buffer,
-        )
+        if resource.name not in bpy.data.images:
+            image = bpy.data.images.new(
+                name=resource.name,
+                width=resource.width,
+                height=resource.height,
+                alpha=resource.image_format_settings.alpha,
+                float_buffer=resource.image_format_settings.float_buffer,
+            )
+        else:
+            image = cls.find(resource.name)
+            assert image is not None
+            image.scale(resource.width, resource.height)
+            # image.update()
+            image.pack()
 
         return image
+
+    @classmethod
+    def is_image_settings_changed(cls, image: bpy.types.Image, resource: ImageResource) -> bool:
+        if (
+            image.size[0] != resource.width
+            or image.size[1] != resource.height
+            or ((image.channels == 4) != resource.image_format_settings.alpha)
+            # or image.colorspace_settings.name != ressources.image_format_settings.colorspace
+        ):
+            return True
+
+        return False
 
     @classmethod
     def apply_settings(cls, resource: ImageResource) -> None:
@@ -115,7 +139,7 @@ class ImageService:
             return
 
         image.colorspace_settings.name = resource.colorspace
-        image.alpha_mode = "STRAIGHT" if resource.alpha else "NONE"
+        image.alpha_mode = "STRAIGHT" if resource.image_format_settings.alpha else "NONE"
 
     @classmethod
     def clear(cls, ctx: BakeContext) -> None:

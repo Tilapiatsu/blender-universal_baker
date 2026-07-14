@@ -30,7 +30,7 @@ class UBK_Map(PropertyGroup):
     )
 
     image_name: StringProperty(
-        name="Image",
+        name="Image Name",
         default="Bake",
     )
 

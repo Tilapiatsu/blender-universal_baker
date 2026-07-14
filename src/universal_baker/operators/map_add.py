@@ -4,6 +4,8 @@ import bpy
 
 from ..core.controller import BakeController
 from ..services.project import ProjectService
+from ..services.object import ObjectService
+from ..services.internal_data import InternalDataService
 from .base import UBK_OT_Base
 
 
@@ -31,6 +33,14 @@ class UBK_OT_MapAdd(UBK_OT_Base):
             self.warning("Unable to add bake map. Select a target object first.")
 
             return {"CANCELLED"}
+
+        project = ProjectService.get(context)
+        InternalDataService.ensure_output_node(project.bake_settings.internal_name)
+
+        obj = ObjectService.active(project)
+        assert obj is not None
+        bake_map.bake_settings.internal_name = f"{obj.target.name}_{self.baker_id}"
+        InternalDataService.ensure_output_node(bake_map.bake_settings.internal_name)
 
         self.info(f"Added bake map '{self.baker_id}'.")
 

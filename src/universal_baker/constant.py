@@ -3,6 +3,8 @@ import bpy
 BAKE_IMAGE_NODE_NAME = "UBK_BakeImage"
 BAKE_IMAGE_NODE_LABEL = "Universal Baker"
 BAKE_MATERIAL_NAME = "UBK_BakeMaterial"
+INTERNAL_DATA_NAME = "UBK_INTERNAL_DO_NOT_TOUCH"
+
 ADDON_PACKAGE = __package__
 
 

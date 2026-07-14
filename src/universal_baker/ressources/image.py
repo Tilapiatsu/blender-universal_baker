@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 import bpy
+from universal_baker.runtime.bake_settings import ImageSettings
 
 
 @dataclass(slots=True)
@@ -22,8 +23,6 @@ class ImageResource:
 
     width: int = 2048
     height: int = 2048
-    alpha: bool = False
-    float_buffer: bool = False
     generated_type: str = "BLANK"
 
     object_name: str = ""
@@ -32,10 +31,7 @@ class ImageResource:
     colorspace: str = "sRGB"
     is_data: bool = False
 
-    file_format: str = "PNG"
-    color_depth: str = "8"
-    compression: int = 15
-    quality: int = 90
+    image_format_settings: ImageSettings | None = None
 
     created: bool = False
     loaded: bool = False

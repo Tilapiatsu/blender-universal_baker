@@ -1,16 +1,56 @@
 from __future__ import annotations
 
 import bpy
+from ..services.internal_data import InternalDataService
 
 
 def get_colorspace_items(self, context):
     items = []
     for i in bpy.types.Image.bl_rna.properties["colorspace_settings"].fixed_type.properties["name"].enum_items:
-        items.append((i.name.upper(), i.name, ""))
+        items.append((i.name, i.name, ""))
+    return items
+
+
+def get_color_depth(self, context):
+    items = []
+    if self.file_format in ["PNG", "TIFF", "TARGA"]:
+        items.append(
+            ("8", "8", ""),
+        )
+        items.append(
+            ("16", "16", ""),
+        )
+    elif self.file_format in ["OPEN_EXR"]:
+        items.append(
+            ("16", "16", ""),
+        )
+        items.append(
+            ("32", "32", ""),
+        )
+    elif self.file_format in ["DPX"]:
+        items.append(
+            ("8", "8", ""),
+        )
+        items.append(
+            ("10", "10", ""),
+        )
+        items.append(
+            ("12", "12", ""),
+        )
+        items.append(
+            ("16", "16", ""),
+        )
+    elif self.file_format in ["JPEG", "BMP", "CINEON"]:
+        items.append(
+            ("8", "8", ""),
+        )
+
     return items
 
 
 class UBK_BakeSettings(bpy.types.PropertyGroup):
+    internal_name: bpy.props.StringProperty(default="Default")
+
     inherit: bpy.props.BoolProperty(
         name="Inherit Global Settings",
         default=True,
@@ -23,43 +63,40 @@ class UBK_BakeSettings(bpy.types.PropertyGroup):
         name="Width",
         default=2048,
         min=1,
+        subtype="PIXEL",
     )
 
     resolution_y: bpy.props.IntProperty(
         name="Height",
         default=2048,
         min=1,
+        subtype="PIXEL",
     )
 
-    file_format: bpy.props.EnumProperty(
-        name="Format",
-        items=[
-            ("PNG", "PNG", ""),
-            ("TIFF", "TIFF", ""),
-            ("OPEN_EXR", "OpenEXR", ""),
-            ("CINEON", "Cineon", ""),
-            ("TARGA", "TGA", ""),
-            ("DPX", "DPX", ""),
-            ("BMP", "BMP", ""),
-            ("JPEG", "JPEG", ""),
-        ],
-        default="PNG",
-    )
-
-    color_depth: bpy.props.EnumProperty(
-        name="Depth",
-        items=[
-            ("8", "8", ""),
-            ("16", "16", ""),
-            ("32", "32", ""),
-        ],
-        default="8",
-    )
-
-    alpha: bpy.props.BoolProperty(
-        default=False,
-    )
-
+    # file_format: bpy.props.EnumProperty(
+    #     name="Format",
+    #     items=[
+    #         ("PNG", "PNG", ""),
+    #         ("TIFF", "TIFF", ""),
+    #         ("OPEN_EXR", "OpenEXR", ""),
+    #         ("CINEON", "Cineon", ""),
+    #         ("TARGA", "TGA", ""),
+    #         ("DPX", "DPX", ""),
+    #         ("BMP", "BMP", ""),
+    #         ("JPEG", "JPEG", ""),
+    #     ],
+    #     default="PNG",
+    # )
+    #
+    # color_depth: bpy.props.EnumProperty(
+    #     name="Depth",
+    #     items=get_color_depth,
+    # )
+    #
+    # alpha: bpy.props.BoolProperty(
+    #     default=False,
+    # )
+    #
     # -------------------------------------------------------------------------
     # Bake
     # -------------------------------------------------------------------------
@@ -137,6 +174,14 @@ class UBK_BakeSettings(bpy.types.PropertyGroup):
     colorspace: bpy.props.EnumProperty(
         items=get_colorspace_items,
     )
+
+    @property
+    def file_format_settings(self):
+        node = InternalDataService.get_output_node(self.internal_name)
+        if node is None:
+            return
+
+        return node.format
 
 
 classes = (UBK_BakeSettings,)

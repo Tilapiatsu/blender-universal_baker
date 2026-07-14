@@ -4,7 +4,6 @@ import bpy
 
 from ..services.project import ProjectService
 from ..services.object import ObjectService
-from ..services.map import MapService
 
 
 class UBK_PT_MainPanel(bpy.types.Panel):
