@@ -7,12 +7,15 @@ import bpy
 
 from typing import TYPE_CHECKING
 
+
 if TYPE_CHECKING:
     from ..bakers.base import BaseBaker
     from .task import BakeTask
 
 from ..ressources.image import ImageResource
 from ..ressources.material import MaterialResource
+from .bake_settings import BakeSettings
+from .cage_settings import CageSettings
 
 from .session import BakeSession
 
@@ -47,16 +50,24 @@ class BakeContext:
         return self.task.target
 
     @property
-    def sources(self) -> list[bpy.types.Object]:
+    def sources(self) -> tuple[bpy.types.Object]:
         return self.task.sources
 
-    @property
-    def output(self):
-        return self.task.output
+    # @property
+    # def output_path(self):
+    #     return self.task.output_path
 
     @property
     def selected_to_active(self) -> bool:
         return self.task.selected_to_active
+
+    @property
+    def bake_settings(self) -> BakeSettings:
+        return self.task.bake_settings
+
+    @property
+    def cage_settings(self) -> CageSettings:
+        return self.task.cage_settings
 
     def succeed(self, message: str = "") -> None:
         self.finished = True

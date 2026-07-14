@@ -25,10 +25,6 @@ class BakeExecutorInternal:
 
         Returns the BakeSession containing execution statistics.
         """
-        # ISSUE : Nothing happens if the target object has no material,
-        # if there is a material there is an error accessing ctx.image.image
-        # universal_baker/services/material.py", line 114, in assign_image
-        # resource.image_node.image = ctx.image.image
         session = BakeSession(context=context, job=job)
         session.initialize(context)
         job.notify_started()

@@ -1,26 +1,25 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 
 import bpy
 
 from ..bakers.base import BaseBaker
+from ..runtime.bake_settings import BakeSettings
+from ..runtime.cage_settings import CageSettings
 
 
 @dataclass(slots=True, frozen=True)
 class BakeTask:
-    """Immutable description of one bake operation."""
-
     target: bpy.types.Object
-    sources: list[bpy.types.Object]
-
+    sources: tuple[bpy.types.Object]
     baker: BaseBaker
-
-    output: object
-
-    selected_to_active: bool = False
-    cage_object: bpy.types.Object | None = None
-    cage_extrusion: float = 0.0
+    bake_settings: BakeSettings
+    image_name: str
+    # output_path: Path
+    cage_object: bpy.types.Object | None
+    cage_settings: CageSettings
 
     @property
     def object_name(self) -> str:
@@ -33,3 +32,7 @@ class BakeTask:
     @property
     def baker_name(self) -> str:
         return self.baker.label
+
+    @property
+    def selected_to_active(self) -> bool:
+        return len(self.sources) > 0

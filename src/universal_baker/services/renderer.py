@@ -18,20 +18,26 @@ class RendererService:
     def configure(cls, ctx: BakeContext):
         """Configure Blender for the bake."""
         scene = ctx.session.context.scene
-
-        #
-        # MVP
-        #
-        # Later these values will come from the
-        # Output Settings.
-        #
+        bake_settings = ctx.bake_settings.bake
+        sampling_settings = ctx.bake_settings.sampling
 
         scene.render.engine = "CYCLES"
         cycles = scene.cycles
-        cycles.samples = 64
+
+        cycles.use_adaptive_sampling = sampling_settings.adaptive_sampling
+
+        if sampling_settings.adaptive_sampling:
+            cycles.adaptive_threshold = sampling_settings.noise_threshold
+            cycles.samples = sampling_settings.max_samples
+        else:
+            cycles.samples = sampling_settings.samples
+
+        cycles.use_denoising = sampling_settings.denoise
+
         bake = scene.render.bake
-        bake.margin = 16
-        bake.margin_type = "ADJACENT_FACES"
+        bake.margin = bake_settings.margin
+        bake.margin_type = bake_settings.margin_type
+        bake.target = bake_settings.target
 
         bake.use_selected_to_active = ctx.task.selected_to_active
 

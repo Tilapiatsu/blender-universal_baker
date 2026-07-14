@@ -1,6 +1,11 @@
-from . import map_list, object_list, panel
+from . import bake_settings_panel, map_list, object_list, panel
 
-modules = (map_list, object_list, panel)
+modules = (
+    map_list,
+    object_list,
+    panel,
+    bake_settings_panel,
+)
 
 
 def register():

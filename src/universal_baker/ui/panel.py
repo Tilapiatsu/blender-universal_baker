@@ -4,6 +4,7 @@ import bpy
 
 from ..services.project import ProjectService
 from ..services.object import ObjectService
+from ..services.map import MapService
 
 
 class UBK_PT_MainPanel(bpy.types.Panel):
@@ -51,9 +52,26 @@ class UBK_PT_MainPanel(bpy.types.Panel):
             return
 
         box.template_list("UBK_UL_MapList", "", active_object, "maps", active_object, "active_map_index", rows=5)
+
         row = box.row(align=True)
         row.operator("ubk.add_map", text="Add Map", icon="ADD")
         row.operator("ubk.remove_map", text="", icon="REMOVE")
+
+        active_map = MapService.active(project)
+
+        self.draw_bake_settings(layout, active_object, active_map)
+
+    def draw_bake_settings(self, layout, obj, map):
+        box = layout.box()
+        header = box.row()
+        if map is None:
+            header.label(text="Select a map.", icon="INFO")
+
+            return
+
+        header.label(text=f"{obj.target.name} | {map.image_name} settings")
+
+        # layout.panel("UBK_PT_bake_output_panel")
 
     def draw_footer(self, layout, project):
         layout.separator()

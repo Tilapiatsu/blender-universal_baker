@@ -4,7 +4,7 @@ from typing import Optional
 
 import bpy
 
-from ..runtime.executor_internal import InternalBakeExecutor
+from ..runtime.executor_internal import BakeExecutorInternal
 from ..runtime.job import BakeJob
 from ..runtime.session import BakeSession
 
@@ -26,7 +26,7 @@ class BakeManager:
         return cls._instance
 
     def _initialize(self):
-        self._executor = InternalBakeExecutor()
+        self._executor = BakeExecutorInternal()
         self._active_session: BakeSession | None = None
         self._is_running = False
 

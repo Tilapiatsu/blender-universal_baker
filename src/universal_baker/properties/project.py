@@ -3,7 +3,8 @@ import bpy
 from bpy.types import PropertyGroup
 from bpy.props import CollectionProperty, PointerProperty
 from .object import UBK_Object
-from .output import UBK_Output
+from .bake_settings import UBK_BakeSettings
+from .cage_settings import UBK_CageSettings
 
 
 class UBK_Project(PropertyGroup):
@@ -17,7 +18,8 @@ class UBK_Project(PropertyGroup):
     active_object_index: bpy.props.IntProperty(
         default=0,
     )
-    output: PointerProperty(type=UBK_Output)
+    bake_settings: PointerProperty(type=UBK_BakeSettings)
+    cage_settings: PointerProperty(type=UBK_CageSettings)
 
 
 classes = (UBK_Project,)

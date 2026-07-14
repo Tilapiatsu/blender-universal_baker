@@ -77,23 +77,19 @@ class ImageService:
         """
         task = ctx.task
 
-        #
-        # MVP defaults.
-        # Later these will come from OutputSettings.
-        #
-
+        image_settings = ctx.bake_settings.image
+        color_settings = ctx.bake_settings.color
         resource.name = f"{task.object_name}_{task.baker_id.lower()}"
-        resource.width = 256
-        resource.height = 256
-        resource.alpha = False
-        resource.float_buffer = False
-        resource.colorspace = "sRGB"
-        resource.file_format = "PNG"
-        resource.color_depth = "8"
+        resource.width = image_settings.width
+        resource.height = image_settings.height
+        resource.alpha = image_settings.alpha
+        resource.float_buffer = image_settings.float_buffer
+        resource.colorspace = color_settings.colorspace
+        resource.file_format = image_settings.file_format
+        resource.color_depth = image_settings.color_depth
 
         #
-        # TODO
-        #
+        # TODO:
         # Output directory service.
         #
 

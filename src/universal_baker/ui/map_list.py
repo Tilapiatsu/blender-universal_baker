@@ -47,8 +47,8 @@ class UBK_UL_MapList(bpy.types.UIList):
         info.alignment = "RIGHT"
         info.enabled = False
 
-        if bake_map.override_output:
-            resolution = f"{bake_map.output.resolution_x}×{bake_map.output.resolution_y}"
+        if bake_map.override_bake_settings:
+            resolution = f"{bake_map.bake_settings.resolution_x}×{bake_map.bake_settings.resolution_y}"
 
             info.label(text=resolution, icon="IMAGE_DATA")
 
