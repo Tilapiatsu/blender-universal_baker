@@ -139,25 +139,7 @@ class UBK_UL_BakeSettingsOutputPanel(UBK_UL_SettingsPanel, bpy.types.Panel):
     bl_label = "Output"
 
     def draw(self, context):
-        project = BakeController.project(context)
-        if project is None:
-            return
-
-        active_map = BakeController.active_map(context)
-        if active_map is None:
-            return
-
-        layout = self.layout
-        layout.use_property_split = True
-        layout.use_property_decorate = False
-
-        if active_map.override_bake_settings:
-            bake_settings = active_map.bake_settings
-        else:
-            bake_settings = project.bake_settings
-            layout.enabled = False
-
-        draw_output_settings(layout, bake_settings)
+        draw_map_settings(self, context, draw_output_settings)
 
 
 class UBK_UL_GlobalBakeSettingsOutputPanel(UBK_UL_GlobalSettingsPanel, bpy.types.Panel):
@@ -165,15 +147,7 @@ class UBK_UL_GlobalBakeSettingsOutputPanel(UBK_UL_GlobalSettingsPanel, bpy.types
     bl_label = "Output"
 
     def draw(self, context):
-        project = BakeController.project(context)
-        if project is None:
-            return
-
-        layout = self.layout
-
-        bake_settings = project.bake_settings
-
-        draw_output_settings(layout, bake_settings)
+        draw_global_settings(self, context, draw_output_settings)
 
 
 # -------------------------------------------------------------------------
@@ -201,23 +175,7 @@ class UBK_UL_BakeSettingsBakingPanel(UBK_UL_SettingsPanel, bpy.types.Panel):
     bl_label = "Baking"
 
     def draw(self, context):
-        project = BakeController.project(context)
-        if project is None:
-            return
-
-        active_map = BakeController.active_map(context)
-        if active_map is None:
-            return
-
-        layout = self.layout
-
-        if active_map.override_bake_settings:
-            bake_settings = active_map.bake_settings
-        else:
-            bake_settings = project.bake_settings
-            layout.enabled = False
-
-        draw_baking_settings(layout, bake_settings)
+        draw_map_settings(self, context, draw_baking_settings)
 
 
 class UBK_UL_GlobalBakeSettingsBakingPanel(UBK_UL_GlobalSettingsPanel, bpy.types.Panel):
@@ -225,15 +183,7 @@ class UBK_UL_GlobalBakeSettingsBakingPanel(UBK_UL_GlobalSettingsPanel, bpy.types
     bl_label = "Baking"
 
     def draw(self, context):
-        project = BakeController.project(context)
-        if project is None:
-            return
-
-        layout = self.layout
-
-        bake_settings = project.bake_settings
-
-        draw_baking_settings(layout, bake_settings)
+        draw_global_settings(self, context, draw_baking_settings)
 
 
 # -------------------------------------------------------------------------
@@ -250,11 +200,13 @@ def draw_sampling_settings(layout, bake_settings):
         layout.label(text="Add a Target object and a Map first.", icon="INFO")
     else:
         layout.prop(bake_settings, "adaptive_sampling")
-        layout.prop(bake_settings, "samples")
-        layout.prop(bake_settings, "noise_threshold")
-        layout.prop(bake_settings, "min_samples")
-        layout.prop(bake_settings, "max_samples")
-        layout.prop(bake_settings, "denoise")
+        if bake_settings.adaptive_sampling:
+            layout.prop(bake_settings, "noise_threshold")
+            layout.prop(bake_settings, "min_samples")
+            layout.prop(bake_settings, "max_samples")
+        else:
+            layout.prop(bake_settings, "samples")
+        # layout.prop(bake_settings, "denoise")
 
 
 class UBK_UL_BakeSettingsSamplingPanel(UBK_UL_SettingsPanel, bpy.types.Panel):
@@ -262,23 +214,7 @@ class UBK_UL_BakeSettingsSamplingPanel(UBK_UL_SettingsPanel, bpy.types.Panel):
     bl_label = "Sampling"
 
     def draw(self, context):
-        project = BakeController.project(context)
-        if project is None:
-            return
-
-        active_map = BakeController.active_map(context)
-        if active_map is None:
-            return
-
-        layout = self.layout
-
-        if active_map.override_bake_settings:
-            bake_settings = active_map.bake_settings
-        else:
-            bake_settings = project.bake_settings
-            layout.enabled = False
-
-        draw_sampling_settings(layout, bake_settings)
+        draw_map_settings(self, context, draw_sampling_settings)
 
 
 class UBK_UL_GlobalBakeSettingsSamplingPanel(UBK_UL_GlobalSettingsPanel, bpy.types.Panel):
@@ -286,15 +222,7 @@ class UBK_UL_GlobalBakeSettingsSamplingPanel(UBK_UL_GlobalSettingsPanel, bpy.typ
     bl_label = "Sampling"
 
     def draw(self, context):
-        project = BakeController.project(context)
-        if project is None:
-            return
-
-        layout = self.layout
-
-        bake_settings = project.bake_settings
-
-        draw_sampling_settings(layout, bake_settings)
+        draw_global_settings(self, context, draw_sampling_settings)
 
 
 classes = (
