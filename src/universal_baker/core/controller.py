@@ -3,13 +3,14 @@ from __future__ import annotations
 from typing import List
 
 import bpy
-from universal_baker.services.object import ObjectService
 
 from .planner import BakePlanner
 from ..runtime.job import BakeJob
 
 from ..services.project import ProjectService
+from ..services.object import ObjectService
 from ..services.map import MapService
+from ..services.internal_data import InternalDataService
 from ..constant import get_prefs
 from ..runtime.executor_internal import BakeExecutorInternal
 from ..runtime.executor_external import BakeExecutorExternal
@@ -27,6 +28,14 @@ class BakeController:
     @staticmethod
     def project(context: bpy.types.Context):
         return ProjectService.get(context)
+
+    @classmethod
+    def active_object(cls, context):
+        return ObjectService.active(cls.project(context))
+
+    @classmethod
+    def active_map(cls, context):
+        return MapService.active(cls.project(context))
 
     # ---------------------------------------------------------
     # Object Operations
@@ -77,6 +86,14 @@ class BakeController:
             return
 
         MapService.remove(project, obj.active_map_index)
+
+    # ---------------------------------------------------------
+    # Internal Data
+    # ---------------------------------------------------------
+
+    @classmethod
+    def ensure_output_node(cls, name: str):
+        InternalDataService.ensure_output_node(name)
 
     # ---------------------------------------------------------
     # Validation

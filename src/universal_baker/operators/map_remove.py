@@ -3,9 +3,6 @@ from __future__ import annotations
 import bpy
 
 from ..core.controller import BakeController
-from ..services.project import ProjectService
-from ..services.object import ObjectService
-from ..services.map import MapService
 from .base import UBK_OT_Base
 
 
@@ -21,8 +18,7 @@ class UBK_OT_MapRemove(UBK_OT_Base):
     def poll(cls, context):
         """Only available when the active bake object contains maps."""
 
-        project = ProjectService.get(context)
-        obj = ObjectService.active(project)
+        obj = BakeController.active_object(context)
 
         if obj is None:
             return False
@@ -31,8 +27,7 @@ class UBK_OT_MapRemove(UBK_OT_Base):
 
     def execute(self, context):
 
-        project = ProjectService.get(context)
-        bake_map = MapService.active(project)
+        bake_map = BakeController.active_map(context)
 
         if bake_map is None:
             self.warning("No bake map selected.")

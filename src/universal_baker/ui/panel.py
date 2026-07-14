@@ -2,8 +2,7 @@ from __future__ import annotations
 
 import bpy
 
-from ..services.project import ProjectService
-from ..services.object import ObjectService
+from ..core.controller import BakeController
 
 
 class UBK_PT_MainPanel(bpy.types.Panel):
@@ -17,12 +16,12 @@ class UBK_PT_MainPanel(bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
-        project = ProjectService.get(context)
+        project = BakeController.project(context)
 
         self.draw_header(context)
-        self.draw_objects(layout, project)
-        self.draw_maps(layout, project)
-        self.draw_footer(layout, project)
+        self.draw_objects(layout, context, project)
+        self.draw_maps(layout, context, project)
+        self.draw_footer(layout, context, project)
 
     def draw_header(self, context):
         layout = self.layout
@@ -30,7 +29,7 @@ class UBK_PT_MainPanel(bpy.types.Panel):
         row = box.row()
         row.label(text="Bake Project", icon="RENDER_STILL")
 
-    def draw_objects(self, layout, project):
+    def draw_objects(self, layout, context, project):
         box = layout.box()
         header = box.row()
         header.label(text="Target Objects", icon="OUTLINER_OB_MESH")
@@ -39,11 +38,11 @@ class UBK_PT_MainPanel(bpy.types.Panel):
         row.operator("ubk.add_object", text="Add Selected", icon="ADD")
         row.operator("ubk.remove_object", text="", icon="REMOVE")
 
-    def draw_maps(self, layout, project):
+    def draw_maps(self, layout, context, project):
         box = layout.box()
         header = box.row()
         header.label(text="Bake Maps", icon="TEXTURE")
-        active_object = ObjectService.active(project)
+        active_object = BakeController.active_object(context)
 
         if active_object is None:
             box.label(text="Select a target object.", icon="INFO")
@@ -56,7 +55,7 @@ class UBK_PT_MainPanel(bpy.types.Panel):
         row.operator("ubk.add_map", text="Add Map", icon="ADD")
         row.operator("ubk.remove_map", text="", icon="REMOVE")
 
-    def draw_footer(self, layout, project):
+    def draw_footer(self, layout, context, project):
         layout.separator()
         row = layout.row()
         row.scale_y = 1.6

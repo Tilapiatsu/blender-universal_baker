@@ -73,30 +73,6 @@ class UBK_BakeSettings(bpy.types.PropertyGroup):
         subtype="PIXEL",
     )
 
-    # file_format: bpy.props.EnumProperty(
-    #     name="Format",
-    #     items=[
-    #         ("PNG", "PNG", ""),
-    #         ("TIFF", "TIFF", ""),
-    #         ("OPEN_EXR", "OpenEXR", ""),
-    #         ("CINEON", "Cineon", ""),
-    #         ("TARGA", "TGA", ""),
-    #         ("DPX", "DPX", ""),
-    #         ("BMP", "BMP", ""),
-    #         ("JPEG", "JPEG", ""),
-    #     ],
-    #     default="PNG",
-    # )
-    #
-    # color_depth: bpy.props.EnumProperty(
-    #     name="Depth",
-    #     items=get_color_depth,
-    # )
-    #
-    # alpha: bpy.props.BoolProperty(
-    #     default=False,
-    # )
-    #
     # -------------------------------------------------------------------------
     # Bake
     # -------------------------------------------------------------------------

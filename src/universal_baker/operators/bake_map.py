@@ -5,8 +5,6 @@ import bpy
 from ..core.controller import BakeController
 from ..runtime.job import BakeJob
 from .base import UBK_OT_Base
-from ..services.project import ProjectService
-from ..services.object import ObjectService
 
 
 class UBK_OT_BakeMap(UBK_OT_Base):

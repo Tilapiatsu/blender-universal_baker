@@ -2,9 +2,7 @@ from __future__ import annotations
 
 import bpy
 
-from ..services.object import ObjectService
-from ..services.project import ProjectService
-from ..services.map import MapService
+from ..core.controller import BakeController
 from ..services.internal_data import InternalDataService
 
 
@@ -21,7 +19,7 @@ class UBK_UL_BakeSettingsPanel(UBK_UL_SettingsPanel, bpy.types.Panel):
     bl_label = "Map Bake Settings"
 
     def draw(self, context):
-        project = ProjectService.get(context)
+        project = BakeController.project(context)
         if project is None:
             return
 
@@ -29,12 +27,13 @@ class UBK_UL_BakeSettingsPanel(UBK_UL_SettingsPanel, bpy.types.Panel):
         box = layout.box()
         header = box.row()
 
-        active_object = ObjectService.active(project)
+        active_object = BakeController.active_object(context)
+
         if active_object is None:
             header.label(text="Add a target Object.", icon="INFO")
             return
 
-        active_map = MapService.active(project)
+        active_map = BakeController.active_map(context)
         if active_map is None:
             header.label(text="Add a Bake Map.", icon="INFO")
             return
@@ -62,11 +61,11 @@ class UBK_UL_BakeSettingsOutputPanel(UBK_UL_SettingsPanel, bpy.types.Panel):
     bl_label = "Output"
 
     def draw(self, context):
-        project = ProjectService.get(context)
+        project = BakeController.project(context)
         if project is None:
             return
 
-        active_map = MapService.active(project)
+        active_map = BakeController.active_map(context)
         if active_map is None:
             return
 
@@ -108,7 +107,7 @@ class UBK_UL_GlobalBakeSettingsOutputPanel(UBK_UL_GlobalSettingsPanel, bpy.types
     bl_label = "Output"
 
     def draw(self, context):
-        project = ProjectService.get(context)
+        project = BakeController.project(context)
         if project is None:
             return
 
