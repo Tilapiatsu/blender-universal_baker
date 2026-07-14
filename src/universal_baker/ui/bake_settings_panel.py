@@ -66,10 +66,10 @@ class UBK_UL_BakeSettingsPanel(UBK_UL_SettingsPanel, bpy.types.Panel):
             return
 
         layout = self.layout
-        layout.use_property_split = True
-        layout.use_property_decorate = False
         box = layout.box()
         header = box.row()
+        box.use_property_split = True
+        box.use_property_decorate = False
 
         active_object = BakeController.active_object(context)
 
@@ -83,7 +83,7 @@ class UBK_UL_BakeSettingsPanel(UBK_UL_SettingsPanel, bpy.types.Panel):
             return
 
         box.prop(active_map, "image_name")
-        box.prop(active_map, "override_bake_settings")
+        layout.prop(active_map, "override_bake_settings", toggle=1)
         if active_map.override_bake_settings:
             box.label(text=f"{active_object.target.name}_{active_map.image_name} settings")
         else:
@@ -173,6 +173,7 @@ def draw_baking_settings(layout, bake_settings):
 class UBK_UL_BakeSettingsBakingPanel(UBK_UL_SettingsPanel, bpy.types.Panel):
     bl_parent_id = "UBK_PT_bake_settings_panel"
     bl_label = "Baking"
+    bl_options = {"DEFAULT_CLOSED"}
 
     def draw(self, context):
         draw_map_settings(self, context, draw_baking_settings)
@@ -181,6 +182,7 @@ class UBK_UL_BakeSettingsBakingPanel(UBK_UL_SettingsPanel, bpy.types.Panel):
 class UBK_UL_GlobalBakeSettingsBakingPanel(UBK_UL_GlobalSettingsPanel, bpy.types.Panel):
     bl_parent_id = "UBK_PT_global_bake_settings_panel"
     bl_label = "Baking"
+    bl_options = {"DEFAULT_CLOSED"}
 
     def draw(self, context):
         draw_global_settings(self, context, draw_baking_settings)
@@ -212,6 +214,7 @@ def draw_sampling_settings(layout, bake_settings):
 class UBK_UL_BakeSettingsSamplingPanel(UBK_UL_SettingsPanel, bpy.types.Panel):
     bl_parent_id = "UBK_PT_bake_settings_panel"
     bl_label = "Sampling"
+    bl_options = {"DEFAULT_CLOSED"}
 
     def draw(self, context):
         draw_map_settings(self, context, draw_sampling_settings)
@@ -220,6 +223,7 @@ class UBK_UL_BakeSettingsSamplingPanel(UBK_UL_SettingsPanel, bpy.types.Panel):
 class UBK_UL_GlobalBakeSettingsSamplingPanel(UBK_UL_GlobalSettingsPanel, bpy.types.Panel):
     bl_parent_id = "UBK_PT_global_bake_settings_panel"
     bl_label = "Sampling"
+    bl_options = {"DEFAULT_CLOSED"}
 
     def draw(self, context):
         draw_global_settings(self, context, draw_sampling_settings)
