@@ -95,6 +95,10 @@ class BakeController:
     def ensure_output_node(cls, name: str):
         InternalDataService.ensure_output_node(name)
 
+    @classmethod
+    def get_output_node(cls, name: str):
+        return InternalDataService.get_output_node(name)
+
     # ---------------------------------------------------------
     # Validation
     # ---------------------------------------------------------

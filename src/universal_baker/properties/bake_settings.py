@@ -83,12 +83,14 @@ class UBK_BakeSettings(bpy.types.PropertyGroup):
     )
 
     margin: bpy.props.IntProperty(
+        name="Margin",
         default=16,
         min=0,
         subtype="PIXEL",
     )
 
     margin_type: bpy.props.EnumProperty(
+        name="Margin Type",
         items=[
             ("ADJACENT_FACES", "Adjacent Faces", ""),
             ("EXTEND", "Extend", ""),
@@ -97,6 +99,7 @@ class UBK_BakeSettings(bpy.types.PropertyGroup):
     )
 
     target: bpy.props.EnumProperty(
+        name="Target",
         items=[
             ("IMAGE_TEXTURES", "Image Testures", ""),
             ("VERTEX_COLORS", "Active Color Attribute", ""),
@@ -113,30 +116,36 @@ class UBK_BakeSettings(bpy.types.PropertyGroup):
     # -------------------------------------------------------------------------
 
     adaptive_sampling: bpy.props.BoolProperty(
+        name="Adaptive Sampling",
         default=False,
     )
 
     samples: bpy.props.IntProperty(
+        name="Samples",
         default=64,
         min=1,
     )
 
     noise_threshold: bpy.props.FloatProperty(
+        name="Noise Threashold",
         default=0.01,
         min=0,
     )
 
     min_samples: bpy.props.IntProperty(
+        name="Min Samples",
         default=0,
         min=0,
     )
 
     max_samples: bpy.props.IntProperty(
+        name="Max Samples",
         default=512,
         min=1,
     )
 
     denoise: bpy.props.BoolProperty(
+        name="Denoise",
         default=False,
     )
 
