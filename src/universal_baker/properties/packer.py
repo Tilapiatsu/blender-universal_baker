@@ -8,10 +8,10 @@ from bpy.types import PropertyGroup
 from bpy.props import EnumProperty, PointerProperty, BoolProperty, StringProperty
 from .map import UBK_Map
 from .settings_pack import UBK_PackSettings
-from ..packing.channels import CHANNEL_ITEMS
+from ..packers.channels import CHANNEL_ITEMS
 
 
-def packing_types(self, context):
+def packer_types(self, context):
     return [("R+G+B", "R+G+B", ""), ("RGB+A", "RGB+A", ""), ("R+G+B+A", "R+G+B+A", "")]
 
 
@@ -33,21 +33,23 @@ class UBK_ChannelMapping(PropertyGroup):
     )
 
 
-class UBK_ChannelPacking(PropertyGroup):
+class UBK_Pack(PropertyGroup):
     """Packing settings from output maps"""
 
-    # packing_type: EnumProperty(name="Packing Type", items=packing_types)
+    # packer_type: EnumProperty(name="Packing Type", items=packer_types)
     uuid: bpy.props.StringProperty()
+    packer: bpy.props.StringProperty(name="Packer")
     enabled: BoolProperty(name="Enabled", default=True)
+    override_settings_pack: BoolProperty(name="Override Settings", default=False)
     name: StringProperty(name="Name", default="Channel Packing")
     active_mapping_index: bpy.props.IntProperty(default=0)
     mappings: bpy.props.CollectionProperty(type=UBK_ChannelMapping)
-    pack_settings: bpy.props.PointerProperty(type=UBK_PackSettings)
+    settings: bpy.props.PointerProperty(type=UBK_PackSettings)
 
 
 classes = (
     UBK_ChannelMapping,
-    UBK_ChannelPacking,
+    UBK_Pack,
 )
 
 

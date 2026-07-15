@@ -1,6 +1,30 @@
-from . import object_add, object_remove, map_add, map_remove, bake_all, bake_object, bake_map
+from . import (
+    object_add,
+    object_remove,
+    map_add,
+    map_remove,
+    bake_all,
+    bake_object,
+    bake_map,
+    pack_add,
+    pack_remove,
+    pack_all,
+    pack_selected,
+)
 
-modules = (object_add, object_remove, map_add, map_remove, bake_all, bake_object, bake_map)
+modules = (
+    object_add,
+    object_remove,
+    map_add,
+    map_remove,
+    bake_all,
+    bake_object,
+    bake_map,
+    pack_add,
+    pack_remove,
+    pack_all,
+    pack_selected,
+)
 
 
 def register():

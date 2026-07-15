@@ -5,7 +5,7 @@ from .base import BaseBaker
 from ..runtime.context import BakeContext
 from ..services.image import ImageService
 from ..services.material import MaterialService
-from ..core.registry import registry
+from ..core.registry_baker import registry_baker
 
 
 class DiffuseBaker(BaseBaker):
@@ -43,7 +43,7 @@ classes = (DiffuseBaker,)
 
 def register():
     for c in classes:
-        registry.register(c())
+        registry_baker.register(c())
 
 
 def unregister():

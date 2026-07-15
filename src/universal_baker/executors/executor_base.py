@@ -1,10 +1,18 @@
-from abc import ABC, abstractmethod
+from __future__ import annotations
 
-from .session import ExecutionSession
-from .context import ExecutionContext
+import bpy
+
+from abc import ABC, abstractmethod
+from ..runtime.session import ExecutionSession
+from ..runtime.context import ExecutionContext
+from ..runtime.job import Job
 
 
 class TaskExecutor(ABC):
+    id: str
+
+    def execute(self, context: bpy.types.Context, job: Job) -> ExecutionSession: ...
+
     def before_job(self, session: ExecutionSession) -> None:
         """
         Hook called before the first task.

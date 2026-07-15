@@ -1,8 +1,15 @@
-from . import bake_settings_panel, map_list, object_list, panel
+from . import (
+    map_list,
+    object_list,
+    packer_list,
+    panel,
+    bake_settings_panel,
+)
 
 modules = (
     map_list,
     object_list,
+    packer_list,
     panel,
     bake_settings_panel,
 )

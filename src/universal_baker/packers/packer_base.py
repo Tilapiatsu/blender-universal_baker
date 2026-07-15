@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from ..runtime.context import ExecutionContext
-from .packer_base import Packer
 
 
-class PackerInternal(Packer):
+class Packer:
+    id: str
+
     def execute(self, ctx: ExecutionContext):
         pass

@@ -11,9 +11,23 @@ bl_info = {
 #
 # modules = (registration,)
 
-from . import preferences, properties, ui, operators, bakers
+from . import (
+    preferences,
+    properties,
+    ui,
+    operators,
+    bakers,
+    executors,
+)
 
-modules = (preferences, properties, ui, operators, bakers)
+modules = (
+    preferences,
+    properties,
+    ui,
+    operators,
+    bakers,
+    executors,
+)
 
 
 def register():

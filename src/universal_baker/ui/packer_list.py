@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import bpy
 
-from ..core.registry_baker import registry_baker
+# from ..core.registry_baker import registry_baker
 
 
-class UBK_UL_MapList(bpy.types.UIList):
-    """UIList displaying the bake maps of the active object."""
+class UBK_UL_PackList(bpy.types.UIList):
+    """UIList displaying the packer items."""
 
-    bl_idname = "UBK_UL_MapList"
+    bl_idname = "UBK_UL_PackList"
 
     def filter_items(self, context, data, propname):
         items = getattr(data, propname)
@@ -19,36 +19,28 @@ class UBK_UL_MapList(bpy.types.UIList):
         return flags, order
 
     def draw_item(self, context, layout, data, item, icon, active_data, active_property, index, flt_flag):
-        bake_map = item
+        pack_item = item
 
         if self.layout_type in {"DEFAULT", "COMPACT"}:
-            self.draw_default(layout, bake_map, index)
+            self.draw_default(layout, pack_item, index)
 
         elif self.layout_type == {"GRID"}:
             layout.alignment = "CENTER"
             layout.label(icon="TEXTURE")
 
-    def draw_default(self, layout, bake_map, index: int):
+    def draw_default(self, layout, pack_item, index: int):
         row = layout.row(align=True)
 
-        row.prop(bake_map, "enabled", text="")
-        baker = None
+        row.prop(pack_item, "enabled", text="")
 
-        if registry_baker.exists(bake_map.baker):
-            baker = registry_baker[bake_map.baker]
-
-        if baker:
-            row.label(text=baker.label, icon=baker.icon)
-
-        else:
-            row.label(text=bake_map.baker, icon="QUESTION")
+        row.label(text=pack_item.name, icon="NODE_COMPOSITING")
 
         info = row.row()
         info.alignment = "RIGHT"
         info.enabled = False
 
-        if bake_map.override_settings_bake:
-            resolution = f"{bake_map.settings_bake.resolution_x}×{bake_map.settings_bake.resolution_y}"
+        if pack_item.override_settings_bake:
+            resolution = f"{pack_item.settings.resolution_x}×{pack_item.settings.resolution_y}"
 
             info.label(text=resolution, icon="IMAGE_DATA")
 
@@ -56,10 +48,8 @@ class UBK_UL_MapList(bpy.types.UIList):
             info.label(text="Global", icon="SETTINGS")
 
         # --------------------------------------------------------------
-        # Future Preview
+        # TODO : add preview operator ?
         # --------------------------------------------------------------
-
-        #
         # preview = row.operator(
         #     "ubk.preview_map",
         #     text="",
@@ -69,20 +59,20 @@ class UBK_UL_MapList(bpy.types.UIList):
         # preview.index = index
         #
 
-        bake = row.operator(
-            "ubk.bake_map",
+        pack = row.operator(
+            "ubk.pack_selected",
             text="",
-            icon="RENDER_STILL",
+            icon="NODE_COMPOSITING",
         )
 
-        bake.index = index
+        pack.index = index
 
     def draw_filter(self, context, layout):
         """Reserved for future filtering."""
         pass
 
 
-classes = (UBK_UL_MapList,)
+classes = (UBK_UL_PackList,)
 
 
 def register():

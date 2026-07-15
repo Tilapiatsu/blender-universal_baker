@@ -3,18 +3,18 @@ from __future__ import annotations
 
 from uuid import uuid4
 
-from universal_baker.packing.packer_internal import PackerInternal
 from ..runtime.job import Job
 from ..runtime.task_bake import BakeTask
 from ..runtime.task_pack import PackingTask, PackingChannel
-from ..packing.channels import Channel
-from ..core.registry import registry
+from ..packers.channels import Channel
+from ..packers.packer_internal import PackerInternal
+from ..core.registry_baker import registry_baker
 from ..factories.settings_bake import BakeSettingsResolver
 from ..factories.settings_cage import CageSettingsResolver
 from ..factories.settings_pack import PackSettingsResolver
 
 
-class BakePlanner:
+class ExecutionPlanner:
     """Converts the project into executable bake tasks."""
 
     def build_job(self, project) -> Job:
@@ -44,7 +44,7 @@ class BakePlanner:
                     enabled=True,
                     target=obj.target,
                     sources=obj.sources,
-                    baker=registry[bake_map.baker],
+                    baker=registry_baker[bake_map.baker],
                     settings_bake=settings_bake,
                     image_name=bake_map.image_name,
                     cage_object=None,
@@ -53,7 +53,7 @@ class BakePlanner:
 
                 job.add_task(task)
 
-        for pack in project.packings:
+        for pack in project.packers:
             if not pack.enabled:
                 continue
 

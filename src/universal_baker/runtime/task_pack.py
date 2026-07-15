@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ..packing.packer_base import Packer
+from ..packers.packer_base import Packer
 
 from .task import Task
-from ..packing.channels import Channel
+from ..packers.channels import Channel
 
 
 @dataclass(slots=True)

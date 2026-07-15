@@ -5,19 +5,22 @@ import traceback
 
 import bpy
 
-from .context import BakeContext, ExecutionContext, PackContext
-from .job import Job
-from .session import ExecutionSession
-from .executor_base import TaskExecutor
+from ..runtime.context import BakeContext, ExecutionContext, PackContext
+from ..runtime.job import Job
+from ..runtime.session import ExecutionSession
 from ..runtime.task_bake import BakeTask
 from ..runtime.task_pack import PackingTask
-from ..core.registry import registry
+from ..core.registry_baker import registry_baker
+from ..core.registry_executor import registry_executor
+from .executor_base import TaskExecutor
 
 
 class BakeExecutorInternal(TaskExecutor):
     """
     Executes a Job inside the current Blender instance.
     """
+
+    id: str = "BakeInternal"
 
     def __init__(self):
         self._cancel_requested = False
@@ -58,7 +61,7 @@ class BakeExecutorInternal(TaskExecutor):
         session.current_context = BakeContext(
             session=session,
             task=task,
-            baker=registry[task.baker_id],
+            baker=registry_baker[task.baker_id],
         )
         ctx = session.current_context
         session.current_task = task
@@ -115,6 +118,8 @@ class PackExecutorInternal(TaskExecutor):
     """
     Executes a Job inside the current Blender instance.
     """
+
+    id: str = "PackInternal"
 
     def __init__(self):
         self._cancel_requested = False
@@ -205,3 +210,18 @@ class PackExecutorInternal(TaskExecutor):
     @property
     def cancelled(self) -> bool:
         return self._cancel_requested
+
+
+classes = (
+    BakeExecutorInternal,
+    PackExecutorInternal,
+)
+
+
+def register():
+    for c in classes:
+        registry_executor.register(c())
+
+
+def unregister():
+    pass

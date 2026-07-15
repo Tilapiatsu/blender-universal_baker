@@ -4,16 +4,16 @@ from typing import List
 
 import bpy
 
-from .planner import BakePlanner
+from .planner import ExecutionPlanner
 from ..runtime.job import Job
 
 from ..services.project import ProjectService
 from ..services.object import ObjectService
+from ..services.packer import PackService
 from ..services.map import MapService
 from ..services.internal_data import InternalDataService
 from ..constant import get_prefs
-from ..runtime.executor_internal import BakeExecutorInternal
-from ..runtime.executor_external import BakeExecutorExternal
+from ..core.registry_executor import registry_executor
 
 
 class BakeController:
@@ -36,6 +36,10 @@ class BakeController:
     @classmethod
     def active_map(cls, context):
         return MapService.active(cls.project(context))
+
+    @classmethod
+    def active_pack(cls, context):
+        return PackService.active(cls.project(context))
 
     # ---------------------------------------------------------
     # Object Operations
@@ -97,6 +101,29 @@ class BakeController:
         return None
 
     # ---------------------------------------------------------
+    # Pack Operations
+    # ---------------------------------------------------------
+
+    @classmethod
+    def add_pack(cls, context, packer_id: str = "INTERNAL"):
+        project = cls.project(context)
+
+        if not project.objects:
+            return None
+
+        packer = project.packers.add()
+        packer.packer = packer_id
+        project.active_packer_index = len(project.packers) - 1
+
+        return packer
+
+    @classmethod
+    def remove_pack(cls, context, index: int = 0):
+        project = cls.project(context)
+
+        PackService.remove(project, index)
+
+    # ---------------------------------------------------------
     # Internal Data
     # ---------------------------------------------------------
 
@@ -147,7 +174,7 @@ class BakeController:
 
     @classmethod
     def create_job(cls, context) -> Job:
-        planner = BakePlanner()
+        planner = ExecutionPlanner()
 
         return planner.build_job(cls.project(context))
 
@@ -170,9 +197,9 @@ class BakeController:
         preferences = get_prefs()
 
         if preferences.use_background_blender:
-            executor = BakeExecutorExternal()
+            executor = registry_executor["BakeExternal"]
         else:
-            executor = BakeExecutorInternal()
+            executor = registry_executor["BakeInternal"]
 
         executor.execute(context, job)
 
@@ -197,6 +224,50 @@ class BakeController:
 
     @classmethod
     def bake_map(cls, context, object_index: int, map_index: int):
+
+        #
+        # TODO
+        #
+        raise NotImplementedError()
+
+    # ---------------------------------------------------------
+    # Paking
+    # ---------------------------------------------------------
+
+    @classmethod
+    def pack_all(cls, context) -> tuple[bool, Job | list[str]]:
+        errors = cls.validate(context)
+
+        if errors:
+            return (
+                False,
+                errors,
+            )
+
+        job = cls.create_job(context)
+
+        preferences = get_prefs()
+
+        if preferences.use_background_blender:
+            executor = registry_executor["PackExternal"]
+        else:
+            executor = registry_executor["PackInternal"]
+
+        executor.execute(context, job)
+
+        #
+        # MVP
+        #
+        # Executor will be added later.
+        #
+
+        return (
+            True,
+            job,
+        )
+
+    @classmethod
+    def pack_selected(cls, context, object_index: int):
 
         #
         # TODO

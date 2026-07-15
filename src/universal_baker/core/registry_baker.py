@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from typing import Dict
-from typing import Iterable
 
 from typing import TYPE_CHECKING
 
@@ -54,4 +53,4 @@ class BakerRegistry:
         return items
 
 
-registry = BakerRegistry()
+registry_baker = BakerRegistry()

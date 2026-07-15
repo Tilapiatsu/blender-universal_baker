@@ -4,7 +4,7 @@ from typing import Optional
 
 import bpy
 
-from ..runtime.executor_internal import BakeExecutorInternal
+from ..executors.executor_internal import BakeExecutorInternal
 from ..runtime.job import Job
 from ..runtime.session import ExecutionSession
 
