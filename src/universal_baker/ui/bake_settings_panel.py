@@ -137,6 +137,7 @@ def draw_output_settings(layout, bake_settings):
 class UBK_UL_BakeSettingsOutputPanel(UBK_UL_SettingsPanel, bpy.types.Panel):
     bl_parent_id = "UBK_PT_bake_settings_panel"
     bl_label = "Output"
+    bl_options = {"DEFAULT_CLOSED"}
 
     def draw(self, context):
         draw_map_settings(self, context, draw_output_settings)
@@ -145,6 +146,7 @@ class UBK_UL_BakeSettingsOutputPanel(UBK_UL_SettingsPanel, bpy.types.Panel):
 class UBK_UL_GlobalBakeSettingsOutputPanel(UBK_UL_GlobalSettingsPanel, bpy.types.Panel):
     bl_parent_id = "UBK_PT_global_bake_settings_panel"
     bl_label = "Output"
+    bl_options = {"DEFAULT_CLOSED"}
 
     def draw(self, context):
         draw_global_settings(self, context, draw_output_settings)
