@@ -5,15 +5,15 @@ from typing import Optional
 import bpy
 
 from ..runtime.executor_internal import BakeExecutorInternal
-from ..runtime.job import BakeJob
-from ..runtime.session import BakeSession
+from ..runtime.job import Job
+from ..runtime.session import ExecutionSession
 
 
 class BakeManager:
     """
     Central manager responsible for executing bake jobs.
 
-    Only one BakeSession may run at a time.
+    Only one ExecutionSession may run at a time.
     """
 
     _instance: Optional["BakeManager"] = None
@@ -27,12 +27,12 @@ class BakeManager:
 
     def _initialize(self):
         self._executor = BakeExecutorInternal()
-        self._active_session: BakeSession | None = None
+        self._active_session: ExecutionSession | None = None
         self._is_running = False
 
-    def start(self, context: bpy.types.Context, job: BakeJob) -> BakeSession:
+    def start(self, context: bpy.types.Context, job: Job) -> ExecutionSession:
         """
-        Execute a BakeJob.
+        Execute a Job.
         """
         if self._is_running:
             raise RuntimeError("A bake session is already running.")
@@ -55,7 +55,7 @@ class BakeManager:
         self._executor.cancel()
 
     @property
-    def active_session(self) -> BakeSession | None:
+    def active_session(self) -> ExecutionSession | None:
         return self._active_session
 
     @property

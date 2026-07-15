@@ -1,8 +1,8 @@
 from __future__ import annotations
 from bpy.types import PropertyGroup
 from bpy.props import BoolProperty, EnumProperty, StringProperty, PointerProperty
-from .cage_settings import UBK_CageSettings
-from .bake_settings import UBK_BakeSettings
+from .settings_cage import UBK_CageSettings
+from .settings_bake import UBK_BakeSettings
 
 
 def bake_map_items(self, context):
@@ -19,6 +19,8 @@ def bake_map_items(self, context):
 class UBK_Map(PropertyGroup):
     """One Bake Map"""
 
+    uuid: StringProperty()
+
     enabled: BoolProperty(
         name="Enabled",
         default=True,
@@ -34,21 +36,21 @@ class UBK_Map(PropertyGroup):
         default="Bake",
     )
 
-    override_bake_settings: BoolProperty(
+    override_settings_bake: BoolProperty(
         name="Override Bake Settings",
         default=False,
     )
 
-    bake_settings: PointerProperty(
+    settings_bake: PointerProperty(
         type=UBK_BakeSettings,
     )
 
-    override_cage_settings: BoolProperty(
+    override_settings_cage: BoolProperty(
         name="Override Cage",
         default=False,
     )
 
-    cage_settings: PointerProperty(
+    settings_cage: PointerProperty(
         type=UBK_CageSettings,
     )
 

@@ -10,21 +10,28 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..bakers.base import BaseBaker
-    from .task import BakeTask
+    from .task_bake import BakeTask
+    from .task_pack import PackingTask
 
 from ..ressources.image import ImageResource
 from ..ressources.material import MaterialResource
-from .bake_settings import BakeSettings
-from .cage_settings import CageSettings
+from .settings_bake import BakeSettings
+from .settings_cage import CageSettings
 
-from .session import BakeSession
+from .session import ExecutionSession
 
 
 @dataclass(slots=True)
-class BakeContext:
+class ExecutionContext:
+    def __init__(self, session) -> None:
+        self.session = session
+
+
+@dataclass(slots=True)
+class BakeContext(ExecutionContext):
     """Runtime context used while executing a single BakeTask."""
 
-    session: BakeSession
+    session: ExecutionSession
     task: BakeTask
     baker: BaseBaker
 
@@ -62,12 +69,35 @@ class BakeContext:
         return self.task.selected_to_active
 
     @property
-    def bake_settings(self) -> BakeSettings:
-        return self.task.bake_settings
+    def settings_bake(self) -> BakeSettings:
+        return self.task.settings_bake
 
     @property
-    def cage_settings(self) -> CageSettings:
-        return self.task.cage_settings
+    def settings_cage(self) -> CageSettings:
+        return self.task.settings_cage
+
+    def succeed(self, message: str = "") -> None:
+        self.finished = True
+        self.success = True
+        self.message = message
+
+    def fail(self, message: str) -> None:
+        self.finished = True
+        self.success = False
+        self.message = message
+
+
+@dataclass(slots=True)
+class PackContext(ExecutionContext):
+    session: ExecutionSession
+    task: PackingTask
+    image: ImageResource = field(default_factory=ImageResource)
+    node_tree: bpy.types.NodeTree | None = None
+    image_node: bpy.types.ShaderNodeTexImage | None = None
+
+    finished: bool = False
+    success: bool = False
+    message: str = ""
 
     def succeed(self, message: str = "") -> None:
         self.finished = True

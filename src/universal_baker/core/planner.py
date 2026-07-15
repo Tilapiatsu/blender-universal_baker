@@ -1,17 +1,24 @@
 from __future__ import annotations
 
-from ..runtime.job import BakeJob
-from ..runtime.task import BakeTask
+
+from uuid import uuid4
+
+from universal_baker.packing.packer_internal import PackerInternal
+from ..runtime.job import Job
+from ..runtime.task_bake import BakeTask
+from ..runtime.task_pack import PackingTask, PackingChannel
+from ..packing.channels import Channel
 from ..core.registry import registry
-from ..factories.bake_settings import BakeSettingsResolver
-from ..factories.cage_settings import CageSettingsResolver
+from ..factories.settings_bake import BakeSettingsResolver
+from ..factories.settings_cage import CageSettingsResolver
+from ..factories.settings_pack import PackSettingsResolver
 
 
 class BakePlanner:
     """Converts the project into executable bake tasks."""
 
-    def build_job(self, project) -> BakeJob:
-        job = BakeJob()
+    def build_job(self, project) -> Job:
+        job = Job()
         for obj in project.objects:
             if not obj.enabled:
                 continue
@@ -23,25 +30,69 @@ class BakePlanner:
                 if not bake_map.enabled:
                     continue
 
-                bake_settings = BakeSettingsResolver.resolve(
-                    project.bake_settings,
-                    bake_map.bake_settings if bake_map.override_bake_settings else None,
+                settings_bake = BakeSettingsResolver.resolve(
+                    project.settings_bake,
+                    bake_map.settings_bake if bake_map.override_settings_bake else None,
                 )
-                cage_settings = CageSettingsResolver.resolve(
-                    project.cage_settings,
-                    bake_map.cage_settings if bake_map.override_cage_settings else None,
+                settings_cage = CageSettingsResolver.resolve(
+                    project.settings_cage,
+                    bake_map.settings_cage if bake_map.override_settings_cage else None,
                 )
 
                 task = BakeTask(
+                    id=str(uuid4()),
+                    enabled=True,
                     target=obj.target,
                     sources=obj.sources,
                     baker=registry[bake_map.baker],
-                    bake_settings=bake_settings,
+                    settings_bake=settings_bake,
                     image_name=bake_map.image_name,
                     cage_object=None,
-                    cage_settings=cage_settings,
+                    settings_cage=settings_cage,
                 )
 
                 job.add_task(task)
+
+        for pack in project.packings:
+            if not pack.enabled:
+                continue
+
+            red = PackingChannel(
+                source_map_uuid=pack.mappings[0].source_map_uuid,
+                source_channel=Channel(pack.mappings[0].source_map),
+                destination_channel=Channel(pack.mappings[0].destination_channel),
+            )
+            green = PackingChannel(
+                source_map_uuid=pack.mappings[1].source_map_uuid,
+                source_channel=Channel(pack.mappings[1].source_map),
+                destination_channel=Channel(pack.mappings[1].destination_channel),
+            )
+            blue = PackingChannel(
+                source_map_uuid=pack.mappings[2].source_map_uuid,
+                source_channel=Channel(pack.mappings[2].source_map),
+                destination_channel=Channel(pack.mappings[2].destination_channel),
+            )
+            alpha = PackingChannel(
+                source_map_uuid=pack.mappings[3].source_map_uuid,
+                source_channel=Channel(pack.mappings[3].source_map),
+                destination_channel=Channel(pack.mappings[3].destination_channel),
+            )
+
+            pack_settings = PackSettingsResolver.resolve(
+                project.pack_settings,
+                pack.pack_settings if pack.override_pack_settings else None,
+            )
+
+            task = PackingTask(
+                id=str(uuid4()),
+                enabled=True,
+                packer=PackerInternal(),
+                output_name=pack.name,
+                settings=pack_settings,
+                red=red,
+                green=green,
+                blue=blue,
+                alpha=alpha,
+            )
 
         return job

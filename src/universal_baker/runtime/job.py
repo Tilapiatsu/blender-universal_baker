@@ -4,10 +4,12 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from uuid import uuid4
 
-from .task import BakeTask
+from .task import Task
+from .task_bake import BakeTask
+from .task_pack import PackingTask
 
 
-class BakeJobStatus(Enum):
+class JobStatus(Enum):
     """Execution state of a bake job."""
 
     WAITING = auto()
@@ -18,12 +20,12 @@ class BakeJobStatus(Enum):
 
 
 @dataclass(slots=True)
-class BakeJob:
-    """A bake job contains every bake task."""
+class Job:
+    """A job contains every bake task."""
 
-    tasks: list[BakeTask] = field(default_factory=list)
+    tasks: list[Task] = field(default_factory=list)
     uid: str = field(default_factory=lambda: str(uuid4()))
-    status: BakeJobStatus = BakeJobStatus.WAITING
+    status: JobStatus = JobStatus.WAITING
     current_task: int = 0
     progress: float = 0.0
     errors: list[str] = field(default_factory=list)
@@ -32,11 +34,11 @@ class BakeJob:
     def total_tasks(self) -> int:
         return len(self.tasks)
 
-    def add_task(self, task: BakeTask):
+    def add_task(self, task: Task):
         self.tasks.append(task)
 
     def cancel(self):
-        self.status = BakeJobStatus.CANCELLED
+        self.status = JobStatus.CANCELLED
 
     def notify_started(self) -> None:
         pass
@@ -44,13 +46,13 @@ class BakeJob:
     def notify_finished(self) -> None:
         pass
 
-    def notify_task_started(self, task: BakeTask) -> None:
+    def notify_task_started(self, task: Task) -> None:
         pass
 
-    def notify_task_finished(self, task: BakeTask, log: bool, time_elapsed: float) -> None:
+    def notify_task_finished(self, task: Task, log: bool, time_elapsed: float) -> None:
         pass
 
-    def notify_task_failed(self, task: BakeTask, msg: str) -> None:
+    def notify_task_failed(self, task: Task, msg: str) -> None:
         pass
 
     def __repr__(self) -> str:
@@ -62,7 +64,10 @@ Bake Job
 """
 
         for index, task in enumerate(self.tasks):
-            result += f"{index + 1:03d} | {task.object_name:40} | {task.baker_id}\n"
+            if isinstance(task, BakeTask):
+                result += f"{index + 1:03d} | {task.object_name:40} | {task.baker_id}\n"
+            elif isinstance(task, PackingTask):
+                result += f"{index + 1:03d} | {task:40}\n"
 
         result += "-" * 60 + "\n"
 

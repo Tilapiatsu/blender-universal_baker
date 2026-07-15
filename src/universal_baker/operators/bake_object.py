@@ -3,9 +3,8 @@ from __future__ import annotations
 import bpy
 
 from ..core.controller import BakeController
-from ..runtime.job import BakeJob
+from ..runtime.job import Job
 from .base import UBK_OT_Base
-from ..services.project import ProjectService
 
 
 class UBK_OT_BakeObject(UBK_OT_Base):
@@ -35,7 +34,7 @@ class UBK_OT_BakeObject(UBK_OT_Base):
 
             return {"CANCELLED"}
 
-        job: BakeJob = result
+        job: Job = result
 
         self.info(f"Created bake job with {job.total_tasks} task(s).")
 

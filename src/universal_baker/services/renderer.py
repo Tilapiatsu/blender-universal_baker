@@ -18,8 +18,8 @@ class RendererService:
     def configure(cls, ctx: BakeContext):
         """Configure Blender for the bake."""
         scene = ctx.session.context.scene
-        bake_settings = ctx.bake_settings.bake
-        sampling_settings = ctx.bake_settings.sampling
+        settings_bake = ctx.settings_bake.bake
+        sampling_settings = ctx.settings_bake.sampling
 
         scene.render.engine = "CYCLES"
         cycles = scene.cycles
@@ -35,9 +35,9 @@ class RendererService:
         cycles.use_denoising = sampling_settings.denoise
 
         bake = scene.render.bake
-        bake.margin = bake_settings.margin
-        bake.margin_type = bake_settings.margin_type
-        bake.target = bake_settings.target
+        bake.margin = settings_bake.margin
+        bake.margin_type = settings_bake.margin_type
+        bake.target = settings_bake.target
 
         bake.use_selected_to_active = ctx.task.selected_to_active
 

@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import bpy
-from universal_baker import ressources
 from ..runtime.context import BakeContext
 from ..ressources.image import ImageResource
 
@@ -85,8 +84,8 @@ class ImageService:
         """
         task = ctx.task
 
-        image_settings = ctx.bake_settings.image
-        color_settings = ctx.bake_settings.color
+        image_settings = ctx.settings_bake.image
+        color_settings = ctx.settings_bake.color
         resource.name = f"{task.object_name}_{task.baker_id.lower()}"
         resource.width = image_settings.width
         resource.height = image_settings.height

@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 import bpy
-from universal_baker.runtime.bake_settings import ImageSettings
+from ..runtime.settings_image import ImageSettings
 
 
 @dataclass(slots=True)

@@ -21,13 +21,13 @@ def draw_map_settings(self, context, draw: Callable):
 
     layout = self.layout
 
-    if active_map.override_bake_settings:
-        bake_settings = active_map.bake_settings
+    if active_map.override_settings_bake:
+        settings_bake = active_map.settings_bake
     else:
-        bake_settings = project.bake_settings
+        settings_bake = project.settings_bake
         layout.enabled = False
 
-    draw(layout, bake_settings)
+    draw(layout, settings_bake)
 
 
 def draw_global_settings(self, context, draw: Callable):
@@ -37,9 +37,9 @@ def draw_global_settings(self, context, draw: Callable):
 
     layout = self.layout
 
-    bake_settings = project.bake_settings
+    settings_bake = project.settings_bake
 
-    draw(layout, bake_settings)
+    draw(layout, settings_bake)
 
 
 # -------------------------------------------------------------------------
@@ -56,7 +56,7 @@ class UBK_UL_SettingsPanel:
 
 
 class UBK_UL_BakeSettingsPanel(UBK_UL_SettingsPanel, bpy.types.Panel):
-    bl_idname = "UBK_PT_bake_settings_panel"
+    bl_idname = "UBK_PT_settings_bake_panel"
     bl_label = "Map Bake Settings"
 
     def draw(self, context):
@@ -83,8 +83,8 @@ class UBK_UL_BakeSettingsPanel(UBK_UL_SettingsPanel, bpy.types.Panel):
             return
 
         box.prop(active_map, "image_name")
-        layout.prop(active_map, "override_bake_settings", toggle=1)
-        if active_map.override_bake_settings:
+        layout.prop(active_map, "override_settings_bake", toggle=1)
+        if active_map.override_settings_bake:
             box.label(text=f"{active_object.target.name}_{active_map.image_name} settings")
         else:
             box.label(text="Inherited from Global Settings")
@@ -104,7 +104,7 @@ class UBK_UL_GlobalSettingsPanel:
 
 
 class UBK_UL_GlobalBakeSettingsPanel(UBK_UL_GlobalSettingsPanel, bpy.types.Panel):
-    bl_idname = "UBK_PT_global_bake_settings_panel"
+    bl_idname = "UBK_PT_global_settings_bake_panel"
     bl_label = "Global Bake Settings"
     bl_category = "Universal Baker"
     bl_options = {"DEFAULT_CLOSED"}
@@ -122,20 +122,20 @@ class UBK_UL_GlobalBakeSettingsPanel(UBK_UL_GlobalSettingsPanel, bpy.types.Panel
 # -------------------------------------------------------------------------
 
 
-def draw_output_settings(layout, bake_settings):
+def draw_output_settings(layout, settings_bake):
     layout.use_property_split = True
     layout.use_property_decorate = False
-    internal_data = BakeController.get_output_node(bake_settings.internal_name)
+    internal_data = BakeController.get_output_node(settings_bake.internal_name)
     if internal_data is None:
         layout.label(text="Add a Target object and a Map first.", icon="INFO")
     else:
-        layout.prop(bake_settings, "resolution_x")
-        layout.prop(bake_settings, "resolution_y")
+        layout.prop(settings_bake, "resolution_x")
+        layout.prop(settings_bake, "resolution_y")
         layout.template_image_settings(internal_data.format, color_management=False)
 
 
 class UBK_UL_BakeSettingsOutputPanel(UBK_UL_SettingsPanel, bpy.types.Panel):
-    bl_parent_id = "UBK_PT_bake_settings_panel"
+    bl_parent_id = "UBK_PT_settings_bake_panel"
     bl_label = "Output"
     bl_options = {"DEFAULT_CLOSED"}
 
@@ -144,7 +144,7 @@ class UBK_UL_BakeSettingsOutputPanel(UBK_UL_SettingsPanel, bpy.types.Panel):
 
 
 class UBK_UL_GlobalBakeSettingsOutputPanel(UBK_UL_GlobalSettingsPanel, bpy.types.Panel):
-    bl_parent_id = "UBK_PT_global_bake_settings_panel"
+    bl_parent_id = "UBK_PT_global_settings_bake_panel"
     bl_label = "Output"
     bl_options = {"DEFAULT_CLOSED"}
 
@@ -157,23 +157,23 @@ class UBK_UL_GlobalBakeSettingsOutputPanel(UBK_UL_GlobalSettingsPanel, bpy.types
 # -------------------------------------------------------------------------
 
 
-def draw_baking_settings(layout, bake_settings):
+def draw_baking_settings(layout, settings_bake):
     layout.use_property_split = True
     layout.use_property_decorate = False
 
-    internal_data = BakeController.get_output_node(bake_settings.internal_name)
+    internal_data = BakeController.get_output_node(settings_bake.internal_name)
     if internal_data is None:
         layout.label(text="Add a Target object and a Map first.", icon="INFO")
     else:
-        layout.prop(bake_settings, "use_multires")
-        layout.prop(bake_settings, "margin")
-        layout.prop(bake_settings, "margin_type")
-        layout.prop(bake_settings, "target")
-        layout.prop(bake_settings, "use_clear")
+        layout.prop(settings_bake, "use_multires")
+        layout.prop(settings_bake, "margin")
+        layout.prop(settings_bake, "margin_type")
+        layout.prop(settings_bake, "target")
+        layout.prop(settings_bake, "use_clear")
 
 
 class UBK_UL_BakeSettingsBakingPanel(UBK_UL_SettingsPanel, bpy.types.Panel):
-    bl_parent_id = "UBK_PT_bake_settings_panel"
+    bl_parent_id = "UBK_PT_settings_bake_panel"
     bl_label = "Baking"
     bl_options = {"DEFAULT_CLOSED"}
 
@@ -182,7 +182,7 @@ class UBK_UL_BakeSettingsBakingPanel(UBK_UL_SettingsPanel, bpy.types.Panel):
 
 
 class UBK_UL_GlobalBakeSettingsBakingPanel(UBK_UL_GlobalSettingsPanel, bpy.types.Panel):
-    bl_parent_id = "UBK_PT_global_bake_settings_panel"
+    bl_parent_id = "UBK_PT_global_settings_bake_panel"
     bl_label = "Baking"
     bl_options = {"DEFAULT_CLOSED"}
 
@@ -195,26 +195,26 @@ class UBK_UL_GlobalBakeSettingsBakingPanel(UBK_UL_GlobalSettingsPanel, bpy.types
 # -------------------------------------------------------------------------
 
 
-def draw_sampling_settings(layout, bake_settings):
+def draw_sampling_settings(layout, settings_bake):
     layout.use_property_split = True
     layout.use_property_decorate = False
 
-    internal_data = BakeController.get_output_node(bake_settings.internal_name)
+    internal_data = BakeController.get_output_node(settings_bake.internal_name)
     if internal_data is None:
         layout.label(text="Add a Target object and a Map first.", icon="INFO")
     else:
-        layout.prop(bake_settings, "adaptive_sampling")
-        if bake_settings.adaptive_sampling:
-            layout.prop(bake_settings, "noise_threshold")
-            layout.prop(bake_settings, "min_samples")
-            layout.prop(bake_settings, "max_samples")
+        layout.prop(settings_bake, "adaptive_sampling")
+        if settings_bake.adaptive_sampling:
+            layout.prop(settings_bake, "noise_threshold")
+            layout.prop(settings_bake, "min_samples")
+            layout.prop(settings_bake, "max_samples")
         else:
-            layout.prop(bake_settings, "samples")
-        # layout.prop(bake_settings, "denoise")
+            layout.prop(settings_bake, "samples")
+        # layout.prop(settings_bake, "denoise")
 
 
 class UBK_UL_BakeSettingsSamplingPanel(UBK_UL_SettingsPanel, bpy.types.Panel):
-    bl_parent_id = "UBK_PT_bake_settings_panel"
+    bl_parent_id = "UBK_PT_settings_bake_panel"
     bl_label = "Sampling"
     bl_options = {"DEFAULT_CLOSED"}
 
@@ -223,7 +223,7 @@ class UBK_UL_BakeSettingsSamplingPanel(UBK_UL_SettingsPanel, bpy.types.Panel):
 
 
 class UBK_UL_GlobalBakeSettingsSamplingPanel(UBK_UL_GlobalSettingsPanel, bpy.types.Panel):
-    bl_parent_id = "UBK_PT_global_bake_settings_panel"
+    bl_parent_id = "UBK_PT_global_settings_bake_panel"
     bl_label = "Sampling"
     bl_options = {"DEFAULT_CLOSED"}
 

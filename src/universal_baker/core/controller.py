@@ -5,7 +5,7 @@ from typing import List
 import bpy
 
 from .planner import BakePlanner
-from ..runtime.job import BakeJob
+from ..runtime.job import Job
 
 from ..services.project import ProjectService
 from ..services.object import ObjectService
@@ -87,6 +87,15 @@ class BakeController:
 
         MapService.remove(project, obj.active_map_index)
 
+    @staticmethod
+    def resolve_map_uuid(project, uuid):
+        for obj in project.objects:
+            for map in obj.maps:
+                if map.uuid == uuid:
+                    return map
+
+        return None
+
     # ---------------------------------------------------------
     # Internal Data
     # ---------------------------------------------------------
@@ -137,7 +146,7 @@ class BakeController:
     # ---------------------------------------------------------
 
     @classmethod
-    def create_job(cls, context) -> BakeJob:
+    def create_job(cls, context) -> Job:
         planner = BakePlanner()
 
         return planner.build_job(cls.project(context))
@@ -147,7 +156,7 @@ class BakeController:
     # ---------------------------------------------------------
 
     @classmethod
-    def bake_all(cls, context) -> tuple[bool, BakeJob | list[str]]:
+    def bake_all(cls, context) -> tuple[bool, Job | list[str]]:
         errors = cls.validate(context)
 
         if errors:

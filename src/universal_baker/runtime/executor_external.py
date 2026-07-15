@@ -2,40 +2,40 @@ from __future__ import annotations
 
 import bpy
 
-from .session import BakeSession
+from .session import ExecutionSession
 from .context import BakeContext
-from .job import BakeJob
+from .job import Job
 
 
 class BakeExecutorExternal:
     """
-    Executes a BakeJob inside the current Blender instance.
+    Executes a Job inside the current Blender instance.
     """
 
     def __init__(self):
         self._cancel_requested = False
 
-    def execute(self, context: bpy.types.Context, job: BakeJob) -> BakeSession:
+    def execute(self, context: bpy.types.Context, job: Job) -> ExecutionSession:
         """
-        Execute a BakeJob.
+        Execute a Job.
 
-        Returns the BakeSession containing execution statistics.
+        Returns the ExecutionSession containing execution statistics.
         """
         print("execute external job")
         raise NotImplementedError
 
-    def execute_task(self, session: BakeSession, task) -> None:
+    def execute_task(self, session: ExecutionSession, task) -> None:
         print("execute external Task")
 
         raise NotImplementedError
 
-    def before_job(self, session: BakeSession) -> None:
+    def before_job(self, session: ExecutionSession) -> None:
         """
         Hook called before the first task.
         """
         pass
 
-    def after_job(self, session: BakeSession) -> None:
+    def after_job(self, session: ExecutionSession) -> None:
         """
         Hook called after the last task.
         """

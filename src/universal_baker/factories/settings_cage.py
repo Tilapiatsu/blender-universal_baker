@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from ..runtime.cage_settings import (
+from ..runtime.settings_cage import (
     CageSettings,
 )
 

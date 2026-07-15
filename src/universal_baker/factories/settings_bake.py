@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-from ..runtime.bake_settings import (
+from ..runtime.settings_bake import (
     BakeSettings,
-    ImageSettings,
     BakeRenderSettings,
     SamplingSettings,
     ColorManagementSettings,
+)
+from ..runtime.settings_image import (
+    ImageSettings,
 )
 
 

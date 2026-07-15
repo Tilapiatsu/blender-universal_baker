@@ -9,13 +9,13 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from .job import BakeJob
-    from .task import BakeTask
-    from .context import BakeContext
+    from .job import Job
+    from .task import Task
+    from .context import ExecutionContext
 
 
 class SessionContext:
-    def __init__(self, session: BakeSession):
+    def __init__(self, session: ExecutionSession):
         self.session = session
 
     @property
@@ -28,13 +28,13 @@ class SessionContext:
 
 
 @dataclass(slots=True)
-class BakeSession:
-    """Runtime execution state for a BakeJob."""
+class ExecutionSession:
+    """Runtime execution state for a Job."""
 
-    job: BakeJob
+    job: Job
     context: bpy.types.Context
-    current_task: BakeTask | None = None
-    current_context: BakeContext | None = None
+    current_task: Task | None = None
+    current_context: ExecutionContext | None = None
     cancelled: bool = False
     start_time: float = field(default_factory=perf_counter)
     original_mode: str = "OBJECT"

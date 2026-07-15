@@ -1,6 +1,6 @@
-from . import bake_settings, cage_settings, map, packing, object, project
+from . import settings_bake, settings_cage, settings_pack, map, packing, object, project
 
-modules = (bake_settings, cage_settings, map, packing, object, project)
+modules = (settings_bake, settings_cage, settings_pack, map, packing, object, project)
 
 
 def register():

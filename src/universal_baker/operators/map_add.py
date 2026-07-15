@@ -32,12 +32,12 @@ class UBK_OT_MapAdd(UBK_OT_Base):
             return {"CANCELLED"}
 
         project = BakeController.project(context)
-        BakeController.ensure_output_node(project.bake_settings.internal_name)
+        BakeController.ensure_output_node(project.settings_bake.internal_name)
 
         obj = BakeController.active_object(context)
         assert obj is not None
-        bake_map.bake_settings.internal_name = f"{obj.target.name}_{self.baker_id}"
-        BakeController.ensure_output_node(bake_map.bake_settings.internal_name)
+        bake_map.settings_bake.internal_name = f"{obj.target.name}_{self.baker_id}"
+        BakeController.ensure_output_node(bake_map.settings_bake.internal_name)
 
         self.info(f"Added bake map '{self.baker_id}'.")
 

@@ -3,8 +3,10 @@ import bpy
 from bpy.types import PropertyGroup
 from bpy.props import CollectionProperty, PointerProperty
 from .object import UBK_Object
-from .bake_settings import UBK_BakeSettings
-from .cage_settings import UBK_CageSettings
+from .settings_bake import UBK_BakeSettings
+from .settings_cage import UBK_CageSettings
+from .settings_pack import UBK_PackSettings
+from .packing import UBK_ChannelPacking
 
 
 class UBK_Project(PropertyGroup):
@@ -18,8 +20,13 @@ class UBK_Project(PropertyGroup):
     active_object_index: bpy.props.IntProperty(
         default=0,
     )
-    bake_settings: PointerProperty(type=UBK_BakeSettings)
-    cage_settings: PointerProperty(type=UBK_CageSettings)
+    packings: CollectionProperty(type=UBK_ChannelPacking)
+    active_packing_index: bpy.props.IntProperty(
+        default=0,
+    )
+    settings_bake: PointerProperty(type=UBK_BakeSettings)
+    settings_cage: PointerProperty(type=UBK_CageSettings)
+    pack_settings: PointerProperty(type=UBK_PackSettings)
 
 
 classes = (UBK_Project,)
