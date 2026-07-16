@@ -6,13 +6,21 @@ import bpy
 
 from bpy.types import PropertyGroup
 from bpy.props import EnumProperty, PointerProperty, BoolProperty, StringProperty
+from ..core import registry_baker
 from .map import UBK_Map
 from .settings_pack import UBK_PackSettings
 from ..packers.channels import CHANNEL_ITEMS
 
 
-def packer_types(self, context):
-    return [("R+G+B", "R+G+B", ""), ("RGB+A", "RGB+A", ""), ("R+G+B+A", "R+G+B+A", "")]
+def get_source_maps_items(self, context):
+    items = [("NONE", "None", "")]
+
+    bakers = registry_baker.registry_baker
+
+    for m in bakers.keys():
+        items.append((m, m, ""))
+
+    return items
 
 
 class UBK_ChannelMapping(PropertyGroup):
@@ -20,6 +28,10 @@ class UBK_ChannelMapping(PropertyGroup):
 
     enabled: BoolProperty(name="Enabled", default=True)
     source_map_uuid: bpy.props.StringProperty()
+    source_map_items: bpy.props.EnumProperty(
+        name="Source Map",
+        items=get_source_maps_items,
+    )
     source_map: PointerProperty(type=UBK_Map)
     source_channel: EnumProperty(
         name="SRC",
@@ -40,7 +52,7 @@ class UBK_Pack(PropertyGroup):
     uuid: bpy.props.StringProperty()
     packer: bpy.props.StringProperty(name="Packer")
     enabled: BoolProperty(name="Enabled", default=True)
-    override_settings_pack: BoolProperty(name="Override Settings", default=False)
+    override_settings: BoolProperty(name="Override Settings", default=False)
     image_name: StringProperty(name="Name", default="Channel Packing")
     active_mapping_index: bpy.props.IntProperty(default=0)
     mappings: bpy.props.CollectionProperty(type=UBK_ChannelMapping)

@@ -8,13 +8,11 @@ class Channel(str, Enum):
     G = "G"
     B = "B"
     A = "A"
-    RGB = "RGB"
 
 
 CHANNEL_ITEMS = [
-    (Channel.R.value, "Red", ""),
-    (Channel.G.value, "Green", ""),
-    (Channel.B.value, "Blue", ""),
-    (Channel.A.value, "Alpha", ""),
-    (Channel.RGB.value, "RGB", ""),
+    (Channel.R.value, Channel.R.value, ""),
+    (Channel.G.value, Channel.G.value, ""),
+    (Channel.B.value, Channel.B.value, ""),
+    (Channel.A.value, Channel.A.value, ""),
 ]

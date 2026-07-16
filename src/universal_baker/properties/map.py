@@ -36,8 +36,8 @@ class UBK_Map(PropertyGroup):
         default="Bake",
     )
 
-    override_settings_bake: BoolProperty(
-        name="Override Bake Settings",
+    override_settings: BoolProperty(
+        name="Override Settings",
         default=False,
     )
 

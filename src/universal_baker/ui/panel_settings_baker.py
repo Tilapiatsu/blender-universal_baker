@@ -21,7 +21,7 @@ def draw_map_settings(self, context, draw: Callable):
 
     layout = self.layout
 
-    if active_map.override_settings_bake:
+    if active_map.override_settings:
         settings_bake = active_map.settings_bake
     else:
         settings_bake = project.settings_bake
@@ -71,8 +71,8 @@ class UBK_UL_BakerSettingsPanel(UBK_UL_SettingsPanel, bpy.types.Panel):
             return
 
         box.prop(active_map, "image_name")
-        layout.prop(active_map, "override_settings_bake", toggle=1)
-        if active_map.override_settings_bake:
+        layout.prop(active_map, "override_settings", toggle=1)
+        if active_map.override_settings:
             box.label(text=f"{active_object.target.name}_{active_map.image_name} settings")
         else:
             box.label(text="Inherited from Global Settings")

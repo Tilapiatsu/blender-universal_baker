@@ -10,7 +10,7 @@ class UBK_OT_PackMappingFix(UBK_OT_Base):
     """Add Pack item."""
 
     bl_idname = "ubk.packer_mapping_fix"
-    bl_label = "Add Packer"
+    bl_label = "Fix Packer"
     bl_description = "Add Packer item to Universal Baker project"
     bl_options = {"REGISTER", "UNDO"}
 

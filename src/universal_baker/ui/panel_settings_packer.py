@@ -32,7 +32,7 @@ def draw_pack_settings(self, context, draw: Callable):
 
     layout = self.layout
 
-    if active_pack.override_settings_pack:
+    if active_pack.override_settings:
         settings_pack = active_pack.settings_pack
     else:
         settings_pack = project.settings_pack
@@ -85,7 +85,7 @@ class UBK_UL_PackerPanel(UBK_UL_PackersPanel, bpy.types.Panel):
 
 class UBK_UL_PackerSettingsPanel(UBK_UL_PackersPanel, bpy.types.Panel):
     bl_idname = "UBK_PT_settings_packer_panel"
-    bl_label = "Settings"
+    bl_label = "Packing"
     bl_parent_id = "UBK_PT_packer_panel"
     bl_options = {"DEFAULT_CLOSED"}
 
@@ -98,8 +98,8 @@ class UBK_UL_PackerSettingsPanel(UBK_UL_PackersPanel, bpy.types.Panel):
         layout = self.layout
         box = layout.box()
         header = box.row()
-        box.use_property_split = True
-        box.use_property_decorate = False
+        # box.use_property_split = True
+        # box.use_property_decorate = False
 
         active_packer = BakeController.active_packer(context)
 
@@ -109,7 +109,7 @@ class UBK_UL_PackerSettingsPanel(UBK_UL_PackersPanel, bpy.types.Panel):
 
         box.prop(active_packer, "image_name")
         if len(active_packer.mappings) != 4:
-            box.label(text="Invalid Mapping.", icon="WARNING")
+            box.label(text="Invalid Mapping.", icon="STATUS_WARNING_FILLED")
             box.operator("ubk.packer_mapping_fix", icon="MODIFIER")
             return
 
@@ -118,39 +118,32 @@ class UBK_UL_PackerSettingsPanel(UBK_UL_PackersPanel, bpy.types.Panel):
         blue = active_packer.mappings[2]
         alpha = active_packer.mappings[3]
 
-        col1 = box.column(align=True)
-        col2 = box.column(align=True)
-        col3 = box.column(align=True)
-        col4 = box.column(align=True)
-        col5 = box.column(align=True)
+        main_row = box.row(align=True)
+        col1 = main_row.column(align=True)
+        sep = main_row.separator()
+        col2 = main_row.column(align=True)
+        col3 = main_row.column(align=True)
 
-        row1 = col1.row()
-        row2 = col2.row()
+        col1.ui_units_x = 1.5
+        col1.alignment = "LEFT"
+        col2.alignment = "RIGHT"
+        col3.ui_units_x = 3
+        col3.alignment = "RIGHT"
 
-        grid_layout(row1, alignment="CENTER", size=4).prop(red, "enabled", text="R")
-        grid_layout(row1, alignment="CENTER", size=4).prop(green, "enabled", text="G")
-        grid_layout(row1, alignment="CENTER", size=4).prop(blue, "enabled", text="B")
-        grid_layout(row1, alignment="CENTER", size=4).prop(alpha, "enabled", text="A")
+        col1.prop(red, "enabled", text="R", toggle=1)
+        col1.prop(green, "enabled", text="G", toggle=1)
+        col1.prop(blue, "enabled", text="B", toggle=1)
+        col1.prop(alpha, "enabled", text="A", toggle=1)
 
-        grid_layout(row2, alignment="CENTER", size=4).label(text="_____")
-        grid_layout(row2, alignment="CENTER", size=4).label(text="_____")
-        grid_layout(row2, alignment="CENTER", size=4).label(text="_____")
-        grid_layout(row2, alignment="CENTER", size=4).label(text="_____")
+        col2.prop(red, "source_map_items", text="Map")
+        col2.prop(green, "source_map_items", text="Map")
+        col2.prop(blue, "source_map_items", text="Map")
+        col2.prop(alpha, "source_map_items", text="Map")
 
-        grid_layout(col3, alignment="CENTER", size=4).prop(red, "source_map", text="Map")
-        grid_layout(col3, alignment="CENTER", size=4).prop(green, "source_map", text="Map")
-        grid_layout(col3, alignment="CENTER", size=4).prop(blue, "source_map", text="Map")
-        grid_layout(col3, alignment="CENTER", size=4).prop(alpha, "source_map", text="Map")
-
-        grid_layout(col4, alignment="CENTER", size=4).prop(red, "source_channel")
-        grid_layout(col4, alignment="CENTER", size=4).prop(green, "source_channel")
-        grid_layout(col4, alignment="CENTER", size=4).prop(blue, "source_channel")
-        grid_layout(col4, alignment="CENTER", size=4).prop(alpha, "source_channel")
-
-        # grid_layout(col4, alignment="CENTER", size=4).prop(red, "destination_channel")
-        # grid_layout(col4, alignment="CENTER", size=4).prop(green, "destination_channel")
-        # grid_layout(col4, alignment="CENTER", size=4).prop(blue, "destination_channel")
-        # grid_layout(col4, alignment="CENTER", size=4).prop(alpha, "destination_channel")
+        col3.prop(red, "source_channel", text="")
+        col3.prop(green, "source_channel", text="")
+        col3.prop(blue, "source_channel", text="")
+        col3.prop(alpha, "source_channel", text="")
 
 
 # --------------------------------------------------------------------------
@@ -182,8 +175,8 @@ class UBK_UL_PackerSettingsOutputPanel(UBK_UL_PackersPanel, bpy.types.Panel):
             header.label(text="Add a Packer.", icon="INFO")
             return
 
-        layout.prop(active_packer, "override_settings_pack", toggle=1)
-        if active_packer.override_settings_pack:
+        layout.prop(active_packer, "override_settings", toggle=1)
+        if active_packer.override_settings:
             box.label(text=f"{active_packer.image_name} settings")
         else:
             box.label(text="Inherited from Global Settings")

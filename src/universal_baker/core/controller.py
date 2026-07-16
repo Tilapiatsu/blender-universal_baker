@@ -109,6 +109,16 @@ class BakeController:
         project = cls.project(context)
         packer = project.packers.add()
         packer.packer = packer_id
+        red = packer.mappings.add()
+        green = packer.mappings.add()
+        blue = packer.mappings.add()
+        alpha = packer.mappings.add()
+
+        red.source_channel = "R"
+        green.source_channel = "G"
+        blue.source_channel = "B"
+        alpha.source_channel = "A"
+
         project.active_packer_index = len(project.packers) - 1
 
         return packer

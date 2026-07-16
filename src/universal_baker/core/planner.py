@@ -32,7 +32,7 @@ class ExecutionPlanner:
 
                 settings_bake = BakeSettingsResolver.resolve(
                     project.settings_bake,
-                    bake_map.settings_bake if bake_map.override_settings_bake else None,
+                    bake_map.settings_bake if bake_map.override_settings else None,
                 )
                 settings_cage = CageSettingsResolver.resolve(
                     project.settings_cage,

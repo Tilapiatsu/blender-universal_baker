@@ -7,12 +7,12 @@ from .collection import PropertyCollectionService
 class PackService(PropertyCollectionService[UBK_Pack]):
     @classmethod
     def collection(cls, owner):
-        return owner.objects
+        return owner.packers
 
     @classmethod
     def get_active_index(cls, owner):
-        return owner.active_object_index
+        return owner.active_packer_index
 
     @classmethod
     def set_active_index(cls, owner, index):
-        owner.active_object_index = index
+        owner.active_packer_index = index
