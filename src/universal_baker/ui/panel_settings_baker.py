@@ -4,10 +4,10 @@ from typing import Callable
 import bpy
 
 from ..core.controller import BakeController
-
-# -------------------------------------------------------------------------
-# Draw Settings Functions
-# -------------------------------------------------------------------------
+from .panel_settings_output import (
+    draw_global_output_settings,
+    draw_output_settings,
+)
 
 
 def draw_map_settings(self, context, draw: Callable):
@@ -30,18 +30,6 @@ def draw_map_settings(self, context, draw: Callable):
     draw(layout, settings_bake)
 
 
-def draw_global_settings(self, context, draw: Callable):
-    project = BakeController.project(context)
-    if project is None:
-        return
-
-    layout = self.layout
-
-    settings_bake = project.settings_bake
-
-    draw(layout, settings_bake)
-
-
 # -------------------------------------------------------------------------
 # Main Settings Panel
 # -------------------------------------------------------------------------
@@ -55,9 +43,9 @@ class UBK_UL_SettingsPanel:
     bl_category = "Universal Baker"
 
 
-class UBK_UL_BakeSettingsPanel(UBK_UL_SettingsPanel, bpy.types.Panel):
-    bl_idname = "UBK_PT_settings_bake_panel"
-    bl_label = "Map Bake Settings"
+class UBK_UL_BakerSettingsPanel(UBK_UL_SettingsPanel, bpy.types.Panel):
+    bl_idname = "UBK_PT_settings_baker_panel"
+    bl_label = "Map Baker Settings"
 
     def draw(self, context):
 
@@ -103,8 +91,8 @@ class UBK_UL_GlobalSettingsPanel:
     bl_category = "Universal Baker"
 
 
-class UBK_UL_GlobalBakeSettingsPanel(UBK_UL_GlobalSettingsPanel, bpy.types.Panel):
-    bl_idname = "UBK_PT_global_settings_bake_panel"
+class UBK_UL_GlobalBakerSettingsPanel(UBK_UL_GlobalSettingsPanel, bpy.types.Panel):
+    bl_idname = "UBK_PT_global_settings_baker_panel"
     bl_label = "Global Bake Settings"
     bl_category = "Universal Baker"
     bl_options = {"DEFAULT_CLOSED"}
@@ -122,20 +110,8 @@ class UBK_UL_GlobalBakeSettingsPanel(UBK_UL_GlobalSettingsPanel, bpy.types.Panel
 # -------------------------------------------------------------------------
 
 
-def draw_output_settings(layout, settings_bake):
-    layout.use_property_split = True
-    layout.use_property_decorate = False
-    internal_data = BakeController.get_output_node(settings_bake.internal_name)
-    if internal_data is None:
-        layout.label(text="Add a Target object and a Map first.", icon="INFO")
-    else:
-        layout.prop(settings_bake, "resolution_x")
-        layout.prop(settings_bake, "resolution_y")
-        layout.template_image_settings(internal_data.format, color_management=False)
-
-
-class UBK_UL_BakeSettingsOutputPanel(UBK_UL_SettingsPanel, bpy.types.Panel):
-    bl_parent_id = "UBK_PT_settings_bake_panel"
+class UBK_UL_BakerSettingsOutputPanel(UBK_UL_SettingsPanel, bpy.types.Panel):
+    bl_parent_id = "UBK_PT_settings_baker_panel"
     bl_label = "Output"
     bl_options = {"DEFAULT_CLOSED"}
 
@@ -143,13 +119,13 @@ class UBK_UL_BakeSettingsOutputPanel(UBK_UL_SettingsPanel, bpy.types.Panel):
         draw_map_settings(self, context, draw_output_settings)
 
 
-class UBK_UL_GlobalBakeSettingsOutputPanel(UBK_UL_GlobalSettingsPanel, bpy.types.Panel):
-    bl_parent_id = "UBK_PT_global_settings_bake_panel"
+class UBK_UL_GlobalBakerSettingsOutputPanel(UBK_UL_GlobalSettingsPanel, bpy.types.Panel):
+    bl_parent_id = "UBK_PT_global_settings_baker_panel"
     bl_label = "Output"
     bl_options = {"DEFAULT_CLOSED"}
 
     def draw(self, context):
-        draw_global_settings(self, context, draw_output_settings)
+        draw_global_output_settings(self, context, draw_output_settings)
 
 
 # -------------------------------------------------------------------------
@@ -172,8 +148,8 @@ def draw_baking_settings(layout, settings_bake):
         layout.prop(settings_bake, "use_clear")
 
 
-class UBK_UL_BakeSettingsBakingPanel(UBK_UL_SettingsPanel, bpy.types.Panel):
-    bl_parent_id = "UBK_PT_settings_bake_panel"
+class UBK_UL_BakerSettingsBakingPanel(UBK_UL_SettingsPanel, bpy.types.Panel):
+    bl_parent_id = "UBK_PT_settings_baker_panel"
     bl_label = "Baking"
     bl_options = {"DEFAULT_CLOSED"}
 
@@ -181,13 +157,13 @@ class UBK_UL_BakeSettingsBakingPanel(UBK_UL_SettingsPanel, bpy.types.Panel):
         draw_map_settings(self, context, draw_baking_settings)
 
 
-class UBK_UL_GlobalBakeSettingsBakingPanel(UBK_UL_GlobalSettingsPanel, bpy.types.Panel):
-    bl_parent_id = "UBK_PT_global_settings_bake_panel"
+class UBK_UL_GlobalBakerSettingsBakingPanel(UBK_UL_GlobalSettingsPanel, bpy.types.Panel):
+    bl_parent_id = "UBK_PT_global_settings_baker_panel"
     bl_label = "Baking"
     bl_options = {"DEFAULT_CLOSED"}
 
     def draw(self, context):
-        draw_global_settings(self, context, draw_baking_settings)
+        draw_global_output_settings(self, context, draw_baking_settings)
 
 
 # -------------------------------------------------------------------------
@@ -213,8 +189,8 @@ def draw_sampling_settings(layout, settings_bake):
         # layout.prop(settings_bake, "denoise")
 
 
-class UBK_UL_BakeSettingsSamplingPanel(UBK_UL_SettingsPanel, bpy.types.Panel):
-    bl_parent_id = "UBK_PT_settings_bake_panel"
+class UBK_UL_BakerSettingsSamplingPanel(UBK_UL_SettingsPanel, bpy.types.Panel):
+    bl_parent_id = "UBK_PT_settings_baker_panel"
     bl_label = "Sampling"
     bl_options = {"DEFAULT_CLOSED"}
 
@@ -222,24 +198,24 @@ class UBK_UL_BakeSettingsSamplingPanel(UBK_UL_SettingsPanel, bpy.types.Panel):
         draw_map_settings(self, context, draw_sampling_settings)
 
 
-class UBK_UL_GlobalBakeSettingsSamplingPanel(UBK_UL_GlobalSettingsPanel, bpy.types.Panel):
-    bl_parent_id = "UBK_PT_global_settings_bake_panel"
+class UBK_UL_GlobalBakerSettingsSamplingPanel(UBK_UL_GlobalSettingsPanel, bpy.types.Panel):
+    bl_parent_id = "UBK_PT_global_settings_baker_panel"
     bl_label = "Sampling"
     bl_options = {"DEFAULT_CLOSED"}
 
     def draw(self, context):
-        draw_global_settings(self, context, draw_sampling_settings)
+        draw_global_output_settings(self, context, draw_sampling_settings)
 
 
 classes = (
-    UBK_UL_BakeSettingsPanel,
-    UBK_UL_GlobalBakeSettingsPanel,
-    UBK_UL_BakeSettingsBakingPanel,
-    UBK_UL_BakeSettingsSamplingPanel,
-    UBK_UL_BakeSettingsOutputPanel,
-    UBK_UL_GlobalBakeSettingsBakingPanel,
-    UBK_UL_GlobalBakeSettingsSamplingPanel,
-    UBK_UL_GlobalBakeSettingsOutputPanel,
+    UBK_UL_BakerSettingsPanel,
+    UBK_UL_GlobalBakerSettingsPanel,
+    UBK_UL_BakerSettingsBakingPanel,
+    UBK_UL_BakerSettingsSamplingPanel,
+    UBK_UL_BakerSettingsOutputPanel,
+    UBK_UL_GlobalBakerSettingsBakingPanel,
+    UBK_UL_GlobalBakerSettingsSamplingPanel,
+    UBK_UL_GlobalBakerSettingsOutputPanel,
 )
 
 

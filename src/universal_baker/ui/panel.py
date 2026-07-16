@@ -49,7 +49,7 @@ class UBK_PT_MainPanel(bpy.types.Panel):
 
             return
 
-        box.template_list("UBK_UL_MapList", "", active_object, "maps", active_object, "active_map_index", rows=5)
+        box.template_list("UBK_UL_BakerList", "", active_object, "maps", active_object, "active_map_index", rows=5)
 
         row = box.row(align=True)
         row.operator("ubk.add_map", text="Add Map", icon="ADD")

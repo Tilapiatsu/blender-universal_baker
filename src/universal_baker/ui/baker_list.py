@@ -5,10 +5,10 @@ import bpy
 from ..core.registry_baker import registry_baker
 
 
-class UBK_UL_MapList(bpy.types.UIList):
+class UBK_UL_BakerList(bpy.types.UIList):
     """UIList displaying the bake maps of the active object."""
 
-    bl_idname = "UBK_UL_MapList"
+    bl_idname = "UBK_UL_BakerList"
 
     def filter_items(self, context, data, propname):
         items = getattr(data, propname)
@@ -82,7 +82,7 @@ class UBK_UL_MapList(bpy.types.UIList):
         pass
 
 
-classes = (UBK_UL_MapList,)
+classes = (UBK_UL_BakerList,)
 
 
 def register():

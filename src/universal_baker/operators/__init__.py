@@ -10,6 +10,7 @@ from . import (
     pack_remove,
     pack_all,
     pack_selected,
+    pack_mapping_fix,
 )
 
 modules = (
@@ -24,6 +25,7 @@ modules = (
     pack_remove,
     pack_all,
     pack_selected,
+    pack_mapping_fix,
 )
 
 

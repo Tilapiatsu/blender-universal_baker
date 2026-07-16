@@ -1,17 +1,19 @@
 from . import (
-    map_list,
+    baker_list,
     object_list,
     packer_list,
     panel,
-    bake_settings_panel,
+    panel_settings_baker,
+    panel_settings_packer,
 )
 
 modules = (
-    map_list,
+    baker_list,
     object_list,
     packer_list,
     panel,
-    bake_settings_panel,
+    panel_settings_baker,
+    panel_settings_packer,
 )
 
 

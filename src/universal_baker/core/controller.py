@@ -107,10 +107,6 @@ class BakeController:
     @classmethod
     def add_packer(cls, context, packer_id: str = "INTERNAL"):
         project = cls.project(context)
-
-        if not project.objects:
-            return None
-
         packer = project.packers.add()
         packer.packer = packer_id
         project.active_packer_index = len(project.packers) - 1

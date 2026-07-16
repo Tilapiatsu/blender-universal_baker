@@ -39,7 +39,7 @@ class UBK_UL_PackList(bpy.types.UIList):
         info.alignment = "RIGHT"
         info.enabled = False
 
-        if pack_item.override_settings_bake:
+        if pack_item.override_settings_pack:
             resolution = f"{pack_item.settings.resolution_x}×{pack_item.settings.resolution_y}"
 
             info.label(text=resolution, icon="IMAGE_DATA")

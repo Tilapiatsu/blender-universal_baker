@@ -22,12 +22,12 @@ class UBK_ChannelMapping(PropertyGroup):
     source_map_uuid: bpy.props.StringProperty()
     source_map: PointerProperty(type=UBK_Map)
     source_channel: EnumProperty(
-        name="channel",
+        name="SRC",
         items=CHANNEL_ITEMS,
         default="R",
     )
     destination_channel: EnumProperty(
-        name="Destination",
+        name="DST",
         items=CHANNEL_ITEMS,
         default="R",
     )
