@@ -38,7 +38,7 @@ class BakeController:
         return MapService.active(cls.project(context))
 
     @classmethod
-    def active_pack(cls, context):
+    def active_packer(cls, context):
         return PackService.active(cls.project(context))
 
     # ---------------------------------------------------------
@@ -105,7 +105,7 @@ class BakeController:
     # ---------------------------------------------------------
 
     @classmethod
-    def add_pack(cls, context, packer_id: str = "INTERNAL"):
+    def add_packer(cls, context, packer_id: str = "INTERNAL"):
         project = cls.project(context)
 
         if not project.objects:
@@ -118,7 +118,7 @@ class BakeController:
         return packer
 
     @classmethod
-    def remove_pack(cls, context, index: int = 0):
+    def remove_packer(cls, context, index: int = 0):
         project = cls.project(context)
 
         PackService.remove(project, index)

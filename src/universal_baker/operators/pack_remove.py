@@ -9,14 +9,14 @@ from .base import UBK_OT_Base
 class UBK_OT_ObjectRemove(UBK_OT_Base):
     """Remove the selected bake target object."""
 
-    bl_idname = "ubk.remove_pack"
-    bl_label = "Remove pack item"
-    bl_description = "Remove the active pack from the Universal Baker project"
+    bl_idname = "ubk.remove_packer"
+    bl_label = "Remove packer item"
+    bl_description = "Remove the active packer from the Universal Baker project"
     bl_options = {"REGISTER", "UNDO"}
 
     @classmethod
     def poll(cls, context):
-        """Only enable the button when an object exists."""
+        """Only enable the button when packer exists."""
 
         project = BakeController.project(context)
         return bool(project.packers)
@@ -27,13 +27,13 @@ class UBK_OT_ObjectRemove(UBK_OT_Base):
         active_index = project.active_packer_index
 
         if active_index < 0:
-            self.warning("No pack item selected.")
+            self.warning("No packer item selected.")
 
             return {"CANCELLED"}
 
-        BakeController.remove_pack(context, active_index)
+        BakeController.remove_packer(context, active_index)
 
-        self.info("Bake object removed.")
+        self.info("Packer item removed.")
 
         return {"FINISHED"}
 

@@ -41,7 +41,7 @@ class UBK_Pack(PropertyGroup):
     packer: bpy.props.StringProperty(name="Packer")
     enabled: BoolProperty(name="Enabled", default=True)
     override_settings_pack: BoolProperty(name="Override Settings", default=False)
-    name: StringProperty(name="Name", default="Channel Packing")
+    image_name: StringProperty(name="Name", default="Channel Packing")
     active_mapping_index: bpy.props.IntProperty(default=0)
     mappings: bpy.props.CollectionProperty(type=UBK_ChannelMapping)
     settings: bpy.props.PointerProperty(type=UBK_PackSettings)

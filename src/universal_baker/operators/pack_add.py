@@ -9,20 +9,20 @@ from .base import UBK_OT_Base
 class UBK_OT_PackAdd(UBK_OT_Base):
     """Add Pack item."""
 
-    bl_idname = "ubk.add_pack"
-    bl_label = "Add Pack"
-    bl_description = "Add Pack item to Universal Baker project"
+    bl_idname = "ubk.add_packer"
+    bl_label = "Add Packer"
+    bl_description = "Add Packer item to Universal Baker project"
     bl_options = {"REGISTER", "UNDO"}
 
     def execute(self, context):
-        pack = BakeController.add_pack(context)
+        pack = BakeController.add_packer(context)
 
         if not pack:
-            self.report({"WARNING"}, "No pack item were added.")
+            self.report({"WARNING"}, "No packer item were added.")
 
             return {"CANCELLED"}
 
-        self.report({"INFO"}, f"Added {pack.name} bake target(s).")
+        self.report({"INFO"}, f"Added {pack.name} packer Item.")
 
         return {"FINISHED"}
 
