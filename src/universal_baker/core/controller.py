@@ -126,6 +126,11 @@ class BakeController:
         blue.source_channel = "B"
         alpha.source_channel = "A"
 
+        red.destination_channel = "R"
+        green.destination_channel = "G"
+        blue.destination_channel = "B"
+        alpha.destination_channel = "A"
+
         obj.active_packer_index = len(obj.packers) - 1
 
         return packer

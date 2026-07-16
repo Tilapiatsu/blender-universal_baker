@@ -6,12 +6,12 @@ from ..core.controller import BakeController
 from .base import UBK_OT_Base
 
 
-class UBK_OT_MapAdd(UBK_OT_Base):
+class UBK_OT_BakerAdd(UBK_OT_Base):
     """Add a bake map to the active bake object."""
 
-    bl_idname = "ubk.add_map"
-    bl_label = "Add Bake Map"
-    bl_description = "Add a new bake map to the active Universal Baker object"
+    bl_idname = "ubk.add_baker"
+    bl_label = "Add Baker"
+    bl_description = "Add a new baker map to the active Universal Baker object"
     bl_options = {"REGISTER", "UNDO"}
 
     baker_id: bpy.props.StringProperty(name="Baker", description="Identifier of the baker to add", default="DIFFUSE")
@@ -44,7 +44,7 @@ class UBK_OT_MapAdd(UBK_OT_Base):
         return {"FINISHED"}
 
 
-classes = (UBK_OT_MapAdd,)
+classes = (UBK_OT_BakerAdd,)
 
 
 def register():

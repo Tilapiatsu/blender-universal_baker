@@ -6,7 +6,7 @@ from ..core.controller import BakeController
 from .base import UBK_OT_Base
 
 
-class UBK_OT_ObjectRemove(UBK_OT_Base):
+class UBK_OT_PackerRemove(UBK_OT_Base):
     """Remove the selected bake target object."""
 
     bl_idname = "ubk.remove_packer"
@@ -27,6 +27,9 @@ class UBK_OT_ObjectRemove(UBK_OT_Base):
 
     def execute(self, context):
         obj = BakeController.active_object(context)
+        if obj is None:
+            self.error("No Target Objects found.")
+            return {"CANCELLED"}
 
         active_index = obj.active_packer_index
 
@@ -42,7 +45,7 @@ class UBK_OT_ObjectRemove(UBK_OT_Base):
         return {"FINISHED"}
 
 
-classes = (UBK_OT_ObjectRemove,)
+classes = (UBK_OT_PackerRemove,)
 
 
 def register():

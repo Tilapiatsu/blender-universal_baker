@@ -11,6 +11,7 @@ from ..packers.channels import Channel
 @dataclass(slots=True)
 class PackingChannel:
     source_map_uuid: str
+    source_map_name: str
     source_channel: Channel
     destination_channel: Channel
 
@@ -27,28 +28,35 @@ class PackingTask(Task):
     alpha: PackingChannel | None
 
     def __repr__(self) -> str:
-        result = "R : "
+        result = ""
         if self.red is None:
-            result += "Empty"
+            result += "R -> Empty"
         else:
-            result += self.red.source_channel + " : " + self.red.destination_channel
+            result += self.red.source_map_name + "_" + self.red.source_channel + " -> " + self.red.destination_channel
         result += " | "
-        result = " G : "
-        if self.green is None:
-            result += "Empty"
-        else:
-            result += self.green.source_channel + " : " + self.green.destination_channel
-        result += " | "
-        result = " B : "
-        if self.blue is None:
-            result += "Empty"
-        else:
-            result += self.blue.source_channel + " : " + self.blue.destination_channel
-        result += " | "
-        result = " A : "
-        if self.alpha is None:
-            result += "Empty"
-        else:
-            result += self.alpha.source_channel + " : " + self.alpha.destination_channel
 
-        return result
+        if self.green is None:
+            result += "G -> Empty"
+        else:
+            result += (
+                self.green.source_map_name + "_" + self.green.source_channel + " -> " + self.green.destination_channel
+            )
+        result += " | "
+
+        if self.blue is None:
+            result += "B -> Empty"
+            result += "Empty"
+        else:
+            result += (
+                self.blue.source_map_name + "_" + self.blue.source_channel + " -> " + self.blue.destination_channel
+            )
+        result += " | "
+
+        if self.alpha is None:
+            result += "A -> Empty"
+        else:
+            result += (
+                self.alpha.source_map_name + "_" + self.alpha.source_channel + " -> " + self.alpha.destination_channel
+            )
+
+        return f"{result:100} | PACKER_{self.packer.id}"

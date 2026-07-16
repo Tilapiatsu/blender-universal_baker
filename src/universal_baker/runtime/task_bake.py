@@ -37,3 +37,7 @@ class BakeTask(Task):
     @property
     def selected_to_active(self) -> bool:
         return len(self.sources) > 0
+
+    def __repr__(self) -> str:
+        result = f"{self.object_name:100} | BAKER_{self.baker_id}"
+        return result

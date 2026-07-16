@@ -64,10 +64,7 @@ Bake Job
 """
 
         for index, task in enumerate(self.tasks):
-            if isinstance(task, BakeTask):
-                result += f"{index + 1:03d} | {task.object_name:40} | {task.baker_id}\n"
-            elif isinstance(task, PackingTask):
-                result += f"{index + 1:03d} | {task:40}\n"
+            result += f"{index + 1:03d} | {str(task)}\n"
 
         result += "-" * 60 + "\n"
 

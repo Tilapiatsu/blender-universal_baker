@@ -119,7 +119,7 @@ class UBK_PT_MainPanel(bpy.types.Panel):
     def draw_maps(self, layout, context, project):
         box = layout.box()
         header = box.row()
-        header.label(text="Bake Maps", icon="TEXTURE")
+        header.label(text="Baker", icon="TEXTURE")
         active_object = BakeController.active_object(context)
 
         if active_object is None:
@@ -130,8 +130,8 @@ class UBK_PT_MainPanel(bpy.types.Panel):
         box.template_list("UBK_UL_BakerList", "", active_object, "maps", active_object, "active_baker_index", rows=5)
 
         row = box.row(align=True)
-        row.operator("ubk.add_map", text="Add Map", icon="ADD")
-        row.operator("ubk.remove_map", text="", icon="REMOVE")
+        row.operator("ubk.add_baker", icon="ADD")
+        row.operator("ubk.remove_baker", text="", icon="REMOVE")
 
     def draw_footer(self, layout, context, project):
         layout.separator()

@@ -53,46 +53,51 @@ class ExecutionPlanner:
 
                 job.add_task(task)
 
-        for pack in project.packers:
-            if not pack.enabled:
-                continue
+            for pack in obj.packers:
+                if not pack.enabled:
+                    continue
 
-            red = PackingChannel(
-                source_map_uuid=pack.mappings[0].source_map_uuid,
-                source_channel=Channel(pack.mappings[0].source_map),
-                destination_channel=Channel(pack.mappings[0].destination_channel),
-            )
-            green = PackingChannel(
-                source_map_uuid=pack.mappings[1].source_map_uuid,
-                source_channel=Channel(pack.mappings[1].source_map),
-                destination_channel=Channel(pack.mappings[1].destination_channel),
-            )
-            blue = PackingChannel(
-                source_map_uuid=pack.mappings[2].source_map_uuid,
-                source_channel=Channel(pack.mappings[2].source_map),
-                destination_channel=Channel(pack.mappings[2].destination_channel),
-            )
-            alpha = PackingChannel(
-                source_map_uuid=pack.mappings[3].source_map_uuid,
-                source_channel=Channel(pack.mappings[3].source_map),
-                destination_channel=Channel(pack.mappings[3].destination_channel),
-            )
+                red = PackingChannel(
+                    source_map_uuid=pack.mappings[0].source_map_uuid,
+                    source_map_name=pack.mappings[0].source_map_items,
+                    source_channel=Channel(pack.mappings[0].source_channel),
+                    destination_channel=Channel(pack.mappings[0].destination_channel),
+                )
+                green = PackingChannel(
+                    source_map_uuid=pack.mappings[1].source_map_uuid,
+                    source_map_name=pack.mappings[1].source_map_items,
+                    source_channel=Channel(pack.mappings[1].source_channel),
+                    destination_channel=Channel(pack.mappings[1].destination_channel),
+                )
+                blue = PackingChannel(
+                    source_map_uuid=pack.mappings[2].source_map_uuid,
+                    source_map_name=pack.mappings[2].source_map_items,
+                    source_channel=Channel(pack.mappings[2].source_channel),
+                    destination_channel=Channel(pack.mappings[2].destination_channel),
+                )
+                alpha = PackingChannel(
+                    source_map_uuid=pack.mappings[3].source_map_uuid,
+                    source_map_name=pack.mappings[3].source_map_items,
+                    source_channel=Channel(pack.mappings[3].source_channel),
+                    destination_channel=Channel(pack.mappings[3].destination_channel),
+                )
 
-            pack_settings = PackSettingsResolver.resolve(
-                project.settings_pack,
-                pack.settings if pack.override_pack_settings else None,
-            )
+                pack_settings = PackSettingsResolver.resolve(
+                    project.settings_pack,
+                    pack.settings if pack.override_settings else None,
+                )
 
-            task = PackingTask(
-                id=str(uuid4()),
-                enabled=True,
-                packer=PackerInternal(),
-                output_name=pack.name,
-                settings=pack_settings,
-                red=red,
-                green=green,
-                blue=blue,
-                alpha=alpha,
-            )
+                task = PackingTask(
+                    id=str(uuid4()),
+                    enabled=True,
+                    packer=PackerInternal(),
+                    output_name=pack.name,
+                    settings=pack_settings,
+                    red=red,
+                    green=green,
+                    blue=blue,
+                    alpha=alpha,
+                )
+                job.add_task(task)
 
         return job

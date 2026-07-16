@@ -6,12 +6,12 @@ from ..core.controller import BakeController
 from .base import UBK_OT_Base
 
 
-class UBK_OT_MapRemove(UBK_OT_Base):
-    """Remove the active bake map."""
+class UBK_OT_BakerRemove(UBK_OT_Base):
+    """Remove the active baker map."""
 
-    bl_idname = "ubk.remove_map"
-    bl_label = "Remove Bake Map"
-    bl_description = "Remove the active bake map from the selected bake object"
+    bl_idname = "ubk.remove_baker"
+    bl_label = "Remove Baker"
+    bl_description = "Remove the active baker map from the selected bake object"
     bl_options = {"REGISTER", "UNDO"}
 
     @classmethod
@@ -41,7 +41,7 @@ class UBK_OT_MapRemove(UBK_OT_Base):
         return {"FINISHED"}
 
 
-classes = (UBK_OT_MapRemove,)
+classes = (UBK_OT_BakerRemove,)
 
 
 def register():

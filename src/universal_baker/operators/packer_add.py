@@ -6,7 +6,7 @@ from ..core.controller import BakeController
 from .base import UBK_OT_Base
 
 
-class UBK_OT_PackAdd(UBK_OT_Base):
+class UBK_OT_PackerAdd(UBK_OT_Base):
     """Add Pack item."""
 
     bl_idname = "ubk.add_packer"
@@ -27,7 +27,7 @@ class UBK_OT_PackAdd(UBK_OT_Base):
         return {"FINISHED"}
 
 
-classes = (UBK_OT_PackAdd,)
+classes = (UBK_OT_PackerAdd,)
 
 
 def register():
