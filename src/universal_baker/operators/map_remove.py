@@ -27,7 +27,7 @@ class UBK_OT_MapRemove(UBK_OT_Base):
 
     def execute(self, context):
 
-        bake_map = BakeController.active_map(context)
+        bake_map = BakeController.active_baker(context)
 
         if bake_map is None:
             self.warning("No bake map selected.")

@@ -8,6 +8,7 @@ from .panel_settings_output import (
     draw_global_output_settings,
     draw_output_settings,
 )
+from .panel import baker_needed
 
 
 def draw_map_settings(self, context, draw: Callable):
@@ -15,14 +16,14 @@ def draw_map_settings(self, context, draw: Callable):
     if project is None:
         return
 
-    active_map = BakeController.active_map(context)
-    if active_map is None:
+    active_baker = BakeController.active_baker(context)
+    if active_baker is None:
         return
 
     layout = self.layout
 
-    if active_map.override_settings:
-        settings_bake = active_map.settings_bake
+    if active_baker.override_settings:
+        settings_bake = active_baker.settings_bake
     else:
         settings_bake = project.settings_bake
         layout.enabled = False
@@ -47,33 +48,23 @@ class UBK_UL_BakerSettingsPanel(UBK_UL_SettingsPanel, bpy.types.Panel):
     bl_idname = "UBK_PT_settings_baker_panel"
     bl_label = "Map Baker Settings"
 
+    @baker_needed
     def draw(self, context):
-
-        project = BakeController.project(context)
-        if project is None:
-            return
-
         layout = self.layout
         box = layout.box()
-        header = box.row()
         box.use_property_split = True
         box.use_property_decorate = False
 
         active_object = BakeController.active_object(context)
+        assert active_object is not None
 
-        if active_object is None:
-            header.label(text="Add a target Object.", icon="INFO")
-            return
+        active_baker = BakeController.active_baker(context)
+        assert active_baker is not None
 
-        active_map = BakeController.active_map(context)
-        if active_map is None:
-            header.label(text="Add a Bake Map.", icon="INFO")
-            return
-
-        box.prop(active_map, "image_name")
-        layout.prop(active_map, "override_settings", toggle=1)
-        if active_map.override_settings:
-            box.label(text=f"{active_object.target.name}_{active_map.image_name} settings")
+        box.prop(active_baker, "image_name")
+        layout.prop(active_baker, "override_settings", toggle=1)
+        if active_baker.override_settings:
+            box.label(text=f"{active_object.target.name}_{active_baker.image_name} settings")
         else:
             box.label(text="Inherited from Global Settings")
 

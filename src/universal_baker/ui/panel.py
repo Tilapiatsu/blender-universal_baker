@@ -5,6 +5,84 @@ import bpy
 from ..core.controller import BakeController
 
 
+def object_needed(func):
+    def wrapper(self, context):
+        project = BakeController.project(context)
+        if project is None:
+            return
+
+        active_object = BakeController.active_object(context)
+
+        if active_object is None:
+            layout = self.layout
+            box = layout.box()
+            header = box.row()
+            header.label(text="Add a Target Object.", icon="INFO")
+            return
+
+        func(self, context)
+
+    return wrapper
+
+
+def baker_needed(func):
+    def wrapper(self, context):
+        project = BakeController.project(context)
+        if project is None:
+            return
+
+        active_object = BakeController.active_object(context)
+
+        if active_object is None:
+            layout = self.layout
+            box = layout.box()
+            header = box.row()
+            header.label(text="Add a Target Object.", icon="INFO")
+            return
+
+        active_baker = BakeController.active_baker(context)
+
+        if active_baker is None:
+            layout = self.layout
+            box = layout.box()
+            header = box.row()
+            header.label(text="Add a Baker.", icon="INFO")
+            return
+
+        func(self, context)
+
+    return wrapper
+
+
+def packer_needed(func):
+    def wrapper(self, context):
+        project = BakeController.project(context)
+        if project is None:
+            return
+
+        active_object = BakeController.active_object(context)
+
+        if active_object is None:
+            layout = self.layout
+            box = layout.box()
+            header = box.row()
+            header.label(text="Add a Target Object.", icon="INFO")
+            return
+
+        active_packer = BakeController.active_packer(context)
+
+        if active_packer is None:
+            layout = self.layout
+            box = layout.box()
+            header = box.row()
+            header.label(text="Add a Packer.", icon="INFO")
+            return
+
+        func(self, context)
+
+    return wrapper
+
+
 class UBK_PT_MainPanel(bpy.types.Panel):
     """Main Universal Baker panel."""
 
@@ -49,7 +127,7 @@ class UBK_PT_MainPanel(bpy.types.Panel):
 
             return
 
-        box.template_list("UBK_UL_BakerList", "", active_object, "maps", active_object, "active_map_index", rows=5)
+        box.template_list("UBK_UL_BakerList", "", active_object, "maps", active_object, "active_baker_index", rows=5)
 
         row = box.row(align=True)
         row.operator("ubk.add_map", text="Add Map", icon="ADD")

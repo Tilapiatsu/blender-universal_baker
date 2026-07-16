@@ -34,12 +34,12 @@ class BakeController:
         return ObjectService.active(cls.project(context))
 
     @classmethod
-    def active_map(cls, context):
+    def active_baker(cls, context):
         return MapService.active(cls.project(context))
 
     @classmethod
     def active_packer(cls, context):
-        return PackService.active(cls.project(context))
+        return PackService.active(cls.active_object(context))
 
     # ---------------------------------------------------------
     # Object Operations
@@ -68,7 +68,7 @@ class BakeController:
         bake_map = object_settings.maps.add()
         bake_map.baker = baker_id
         bake_map.image_name = baker_id.title()
-        object_settings.active_map_index = len(object_settings.maps) - 1
+        object_settings.active_baker_index = len(object_settings.maps) - 1
 
         return bake_map
 
@@ -76,20 +76,18 @@ class BakeController:
     def remove_map(cls, context):
         project = cls.project(context)
 
-        obj = ObjectService.active(project)
-
         if not project.objects:
             return
+
+        obj = ObjectService.active(project)
 
         if obj is None:
             return
 
-        object_settings = project.objects[project.active_object_index]
-
-        if not object_settings.maps:
+        if not obj.maps:
             return
 
-        MapService.remove(project, obj.active_map_index)
+        MapService.remove(project, obj.active_baker_index)
 
     @staticmethod
     def resolve_map_uuid(project, uuid):
@@ -107,7 +105,16 @@ class BakeController:
     @classmethod
     def add_packer(cls, context, packer_id: str = "INTERNAL"):
         project = cls.project(context)
-        packer = project.packers.add()
+
+        if not project.objects:
+            return
+
+        obj = ObjectService.active(project)
+
+        if obj is None:
+            return
+
+        packer = obj.packers.add()
         packer.packer = packer_id
         red = packer.mappings.add()
         green = packer.mappings.add()
@@ -119,7 +126,7 @@ class BakeController:
         blue.source_channel = "B"
         alpha.source_channel = "A"
 
-        project.active_packer_index = len(project.packers) - 1
+        obj.active_packer_index = len(obj.packers) - 1
 
         return packer
 
@@ -127,7 +134,15 @@ class BakeController:
     def remove_packer(cls, context, index: int = 0):
         project = cls.project(context)
 
-        PackService.remove(project, index)
+        if not project.objects:
+            return
+
+        obj = ObjectService.active(project)
+
+        if obj is None:
+            return
+
+        PackService.remove(obj, index)
 
     # ---------------------------------------------------------
     # Internal Data

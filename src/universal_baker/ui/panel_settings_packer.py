@@ -7,6 +7,7 @@ from ..core.controller import BakeController
 from .panel_settings_output import (
     draw_output_settings,
 )
+from .panel import object_needed, packer_needed
 
 
 def grid_layout(layout, alignment, size):
@@ -59,19 +60,14 @@ class UBK_UL_PackerPanel(UBK_UL_PackersPanel, bpy.types.Panel):
     bl_label = "Packers"
     bl_options = {"DEFAULT_CLOSED"}
 
+    @object_needed
     def draw(self, context):
-
-        project = BakeController.project(context)
-        if project is None:
-            return
-
         layout = self.layout
         box = layout.box()
-        # header = box.row()
-        # box.use_property_split = True
-        # box.use_property_decorate = False
 
-        box.template_list("UBK_UL_PackList", "", project, "packers", project, "active_packer_index", rows=5)
+        active_object = BakeController.active_object(context)
+
+        box.template_list("UBK_UL_PackList", "", active_object, "packers", active_object, "active_packer_index", rows=5)
 
         row = box.row(align=True)
         row.operator("ubk.add_packer", text="Add Packer", icon="ADD")
@@ -89,23 +85,13 @@ class UBK_UL_PackerSettingsPanel(UBK_UL_PackersPanel, bpy.types.Panel):
     bl_parent_id = "UBK_PT_packer_panel"
     bl_options = {"DEFAULT_CLOSED"}
 
+    @packer_needed
     def draw(self, context):
-
-        project = BakeController.project(context)
-        if project is None:
-            return
-
         layout = self.layout
         box = layout.box()
-        header = box.row()
-        # box.use_property_split = True
-        # box.use_property_decorate = False
 
         active_packer = BakeController.active_packer(context)
-
-        if active_packer is None:
-            header.label(text="Add a Packer.", icon="INFO")
-            return
+        assert active_packer is not None
 
         box.prop(active_packer, "image_name")
         if len(active_packer.mappings) != 4:
@@ -120,7 +106,7 @@ class UBK_UL_PackerSettingsPanel(UBK_UL_PackersPanel, bpy.types.Panel):
 
         main_row = box.row(align=True)
         col1 = main_row.column(align=True)
-        sep = main_row.separator()
+        main_row.separator()
         col2 = main_row.column(align=True)
         col3 = main_row.column(align=True)
 
@@ -157,23 +143,15 @@ class UBK_UL_PackerSettingsOutputPanel(UBK_UL_PackersPanel, bpy.types.Panel):
     bl_parent_id = "UBK_PT_packer_panel"
     bl_options = {"DEFAULT_CLOSED"}
 
+    @packer_needed
     def draw(self, context):
-
-        project = BakeController.project(context)
-        if project is None:
-            return
-
         layout = self.layout
         box = layout.box()
-        header = box.row()
         box.use_property_split = True
         box.use_property_decorate = False
 
         active_packer = BakeController.active_packer(context)
-
-        if active_packer is None:
-            header.label(text="Add a Packer.", icon="INFO")
-            return
+        assert active_packer is not None
 
         layout.prop(active_packer, "override_settings", toggle=1)
         if active_packer.override_settings:

@@ -3,6 +3,7 @@ import bpy
 from bpy.types import PropertyGroup
 from bpy.props import BoolProperty, PointerProperty, CollectionProperty, IntProperty
 from .map import UBK_Map
+from .packer import UBK_Pack
 
 
 class UBK_SourceObject(PropertyGroup):
@@ -29,7 +30,12 @@ class UBK_Object(PropertyGroup):
         type=UBK_Map,
     )
 
-    active_map_index: IntProperty(
+    active_baker_index: IntProperty(
+        default=0,
+    )
+
+    packers: CollectionProperty(type=UBK_Pack)
+    active_packer_index: bpy.props.IntProperty(
         default=0,
     )
 

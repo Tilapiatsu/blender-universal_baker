@@ -6,7 +6,6 @@ from .object import UBK_Object
 from .settings_bake import UBK_BakeSettings
 from .settings_cage import UBK_CageSettings
 from .settings_pack import UBK_PackSettings
-from .packer import UBK_Pack
 
 
 class UBK_Project(PropertyGroup):
@@ -20,13 +19,9 @@ class UBK_Project(PropertyGroup):
     active_object_index: bpy.props.IntProperty(
         default=0,
     )
-    packers: CollectionProperty(type=UBK_Pack)
-    active_packer_index: bpy.props.IntProperty(
-        default=0,
-    )
     settings_bake: PointerProperty(type=UBK_BakeSettings)
     settings_cage: PointerProperty(type=UBK_CageSettings)
-    pack_settings: PointerProperty(type=UBK_PackSettings)
+    settings_pack: PointerProperty(type=UBK_PackSettings)
 
 
 classes = (UBK_Project,)

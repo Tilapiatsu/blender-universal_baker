@@ -79,8 +79,8 @@ class ExecutionPlanner:
             )
 
             pack_settings = PackSettingsResolver.resolve(
-                project.pack_settings,
-                pack.pack_settings if pack.override_pack_settings else None,
+                project.settings_pack,
+                pack.settings if pack.override_pack_settings else None,
             )
 
             task = PackingTask(

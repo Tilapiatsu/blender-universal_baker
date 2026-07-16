@@ -16,11 +16,11 @@ class MapService(PropertyCollectionService[UBK_Map]):
     def get_active_index(cls, owner):
         obj = ObjectService.active(owner)
 
-        return obj.active_map_index if obj else 0
+        return obj.active_baker_index if obj else 0
 
     @classmethod
     def set_active_index(cls, owner, index):
         obj = ObjectService.active(owner)
 
         if obj:
-            obj.active_map_index = index
+            obj.active_baker_index = index
