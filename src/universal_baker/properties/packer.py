@@ -7,7 +7,7 @@ import bpy
 from bpy.types import PropertyGroup
 from bpy.props import EnumProperty, PointerProperty, BoolProperty, StringProperty
 from ..core import registry_baker
-from .map import UBK_Map
+from .baker import UBK_Baker
 from .settings_pack import UBK_PackSettings
 from ..packers.channels import CHANNEL_ITEMS
 
@@ -32,7 +32,7 @@ class UBK_ChannelMapping(PropertyGroup):
         name="Source Map",
         items=get_source_maps_items,
     )
-    source_map: PointerProperty(type=UBK_Map)
+    source_map: PointerProperty(type=UBK_Baker)
     source_channel: EnumProperty(
         name="SRC",
         items=CHANNEL_ITEMS,

@@ -5,7 +5,9 @@ from . import (
     panel,
     panel_settings_baker,
     panel_settings_packer,
+    panel_settings_output,
 )
+
 
 modules = (
     baker_list,
@@ -14,6 +16,7 @@ modules = (
     panel,
     panel_settings_baker,
     panel_settings_packer,
+    panel_settings_output,
 )
 
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 import bpy
 from bpy.types import PropertyGroup
 from bpy.props import BoolProperty, PointerProperty, CollectionProperty, IntProperty
-from .map import UBK_Map
+from .baker import UBK_Baker
 from .packer import UBK_Pack
 
 
@@ -27,7 +27,7 @@ class UBK_Object(PropertyGroup):
     sources: CollectionProperty(type=UBK_SourceObject)
 
     maps: CollectionProperty(
-        type=UBK_Map,
+        type=UBK_Baker,
     )
 
     active_baker_index: IntProperty(

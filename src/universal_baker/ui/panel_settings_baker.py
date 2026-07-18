@@ -49,7 +49,16 @@ class UBK_UL_SettingsPanel:
 
 class UBK_PT_BakerSettingsPanel(UBK_UL_SettingsPanel, bpy.types.Panel):
     bl_idname = "UBK_PT_settings_baker_panel"
-    bl_label = "Map Baker Settings"
+    bl_label = ""
+
+    def draw_header(self, context):
+        layout = self.layout
+        active_baker = BakeController.active_baker(context)
+        if active_baker is None:
+            layout.label(text="Baker Settings", icon="TEXTURE")
+            return
+
+        layout.label(text=f"{active_baker.baker.capitalize()} Settings", icon="TEXTURE")
 
     @baker_needed
     def draw(self, context):

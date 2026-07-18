@@ -16,7 +16,7 @@ def bake_map_items(self, context):
     ]
 
 
-class UBK_Map(PropertyGroup):
+class UBK_Baker(PropertyGroup):
     """One Bake Map"""
 
     uuid: StringProperty()
@@ -55,7 +55,7 @@ class UBK_Map(PropertyGroup):
     )
 
 
-classes = (UBK_Map,)
+classes = (UBK_Baker,)
 
 
 def register():

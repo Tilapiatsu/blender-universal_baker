@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from ..properties.map import UBK_Map
+from ..properties.baker import UBK_Baker
 from .collection import PropertyCollectionService
 from .object import ObjectService
 
 
-class MapService(PropertyCollectionService[UBK_Map]):
+class MapService(PropertyCollectionService[UBK_Baker]):
     @classmethod
     def collection(cls, owner):
         obj = ObjectService.active(owner)

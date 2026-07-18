@@ -58,9 +58,13 @@ class UBK_UL_GlobalSettingsPanel:
 
 class UBK_PT_GlobalBakerSettingsPanel(UBK_UL_GlobalSettingsPanel, bpy.types.Panel):
     bl_idname = "UBK_PT_global_settings_baker_panel"
-    bl_label = "Global Bake Settings"
+    bl_label = ""
     bl_category = "Universal Baker"
     bl_options = {"DEFAULT_CLOSED"}
+
+    def draw_header(self, context):
+        layout = self.layout
+        layout.label(text="Global Settings", icon="MODIFIER")
 
     def draw(self, context):
         layout = self.layout

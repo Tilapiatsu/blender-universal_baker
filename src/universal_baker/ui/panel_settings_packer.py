@@ -57,8 +57,12 @@ class UBK_UL_PackersPanel:
 
 class UBK_UL_PackerPanel(UBK_UL_PackersPanel, bpy.types.Panel):
     bl_idname = "UBK_PT_packer_panel"
-    bl_label = "Packers"
+    bl_label = ""
     bl_options = {"DEFAULT_CLOSED"}
+
+    def draw_header(self, context):
+        layout = self.layout
+        layout.label(text="Packers", icon="NODE_COMPOSITING")
 
     @object_needed
     def draw(self, context):

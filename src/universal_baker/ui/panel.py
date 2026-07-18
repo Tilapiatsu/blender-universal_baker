@@ -87,6 +87,25 @@ def packer_needed(func):
     return wrapper
 
 
+def draw_baker_settings(self, layout, context):
+    box = layout.box()
+    box.use_property_split = True
+    box.use_property_decorate = False
+
+    active_object = BakeController.active_object(context)
+    assert active_object is not None
+
+    active_baker = BakeController.active_baker(context)
+    assert active_baker is not None
+
+    box.prop(active_baker, "image_name")
+    layout.prop(active_baker, "override_settings", toggle=1)
+    if active_baker.override_settings:
+        box.label(text=f"{active_object.target.name}_{active_baker.image_name} settings")
+    else:
+        box.label(text="Inherited from Global Settings")
+
+
 # -------------------------------------------------------------------------
 # Bake Settings Panel
 # -------------------------------------------------------------------------
@@ -150,8 +169,8 @@ class UBK_PT_MainPanel(bpy.types.Panel):
 
         self.draw_header(context)
         self.draw_objects(context, project)
-        self.draw_maps(context)
-        self.draw_settings(context)
+        self.draw_bakers(context)
+        # self.draw_settings(context)
         self.draw_footer(context)
 
     def draw_header(self, context):
@@ -170,10 +189,10 @@ class UBK_PT_MainPanel(bpy.types.Panel):
         row.operator("ubk.remove_object", text="", icon="REMOVE")
 
     @object_needed
-    def draw_maps(self, context):
+    def draw_bakers(self, context):
         box = self.layout.box()
         header = box.row()
-        header.label(text="Baker", icon="TEXTURE")
+        header.label(text="Bakers", icon="TEXTURE")
         active_object = BakeController.active_object(context)
 
         box.template_list("UBK_UL_BakerList", "", active_object, "maps", active_object, "active_baker_index", rows=5)
@@ -182,10 +201,15 @@ class UBK_PT_MainPanel(bpy.types.Panel):
         row.operator("ubk.add_baker", icon="ADD")
         row.operator("ubk.remove_baker", text="", icon="REMOVE")
 
-    @baker_needed
     def draw_settings(self, context):
-        pass
-        # self.layout.panel("UBK_PT_settings_baker_panel", default_closed=True)
+        # pass
+        active_baker = BakeController.active_baker(context)
+        if active_baker is None:
+            return
+        header, panel = self.layout.panel("UBK_PT_settings_baker", default_closed=True)
+        header.label(text=f"{active_baker.baker} Settings", icon="TEXTURE")
+        if panel:
+            draw_baker_settings(self, panel, context)
 
     def draw_footer(self, context):
         self.layout.separator()
