@@ -4,6 +4,10 @@ import bpy
 
 from ..core.controller import BakeController
 
+# -------------------------------------------------------------------------
+# Decorators
+# -------------------------------------------------------------------------
+
 
 def object_needed(func):
     def wrapper(self, context):
@@ -81,6 +85,49 @@ def packer_needed(func):
         func(self, context)
 
     return wrapper
+
+
+# -------------------------------------------------------------------------
+# Bake Settings Panel
+# -------------------------------------------------------------------------
+
+
+def draw_baking_settings(layout, settings_bake):
+    layout.use_property_split = True
+    layout.use_property_decorate = False
+
+    internal_data = BakeController.get_output_node(settings_bake.internal_name)
+    if internal_data is None:
+        layout.label(text="Add a Target object and a Map first.", icon="INFO")
+    else:
+        layout.prop(settings_bake, "use_multires")
+        layout.prop(settings_bake, "margin")
+        layout.prop(settings_bake, "margin_type")
+        layout.prop(settings_bake, "target")
+        layout.prop(settings_bake, "use_clear")
+
+
+# -------------------------------------------------------------------------
+# Sampling Settings Panel
+# -------------------------------------------------------------------------
+
+
+def draw_sampling_settings(layout, settings_bake):
+    layout.use_property_split = True
+    layout.use_property_decorate = False
+
+    internal_data = BakeController.get_output_node(settings_bake.internal_name)
+    if internal_data is None:
+        layout.label(text="Add a Target object and a Map first.", icon="INFO")
+    else:
+        layout.prop(settings_bake, "adaptive_sampling")
+        if settings_bake.adaptive_sampling:
+            layout.prop(settings_bake, "noise_threshold")
+            layout.prop(settings_bake, "min_samples")
+            layout.prop(settings_bake, "max_samples")
+        else:
+            layout.prop(settings_bake, "samples")
+        # layout.prop(settings_bake, "denoise")
 
 
 class UBK_PT_MainPanel(bpy.types.Panel):
