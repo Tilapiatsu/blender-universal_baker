@@ -130,6 +130,11 @@ def draw_sampling_settings(layout, settings_bake):
         # layout.prop(settings_bake, "denoise")
 
 
+# -------------------------------------------------------------------------
+# Main Panel
+# -------------------------------------------------------------------------
+
+
 class UBK_PT_MainPanel(bpy.types.Panel):
     """Main Universal Baker panel."""
 
@@ -144,18 +149,19 @@ class UBK_PT_MainPanel(bpy.types.Panel):
         project = BakeController.project(context)
 
         self.draw_header(context)
-        self.draw_objects(layout, context, project)
-        self.draw_maps(layout, context, project)
-        self.draw_footer(layout, context, project)
+        self.draw_objects(context, project)
+        self.draw_maps(context)
+        self.draw_settings(context)
+        self.draw_footer(context)
 
     def draw_header(self, context):
         layout = self.layout
-        box = layout.box()
-        row = box.row()
-        row.label(text="Bake Project", icon="RENDER_STILL")
+        # box = layout.box()
+        # row = box.row()
+        # row.label(text="Bake Project", icon="RENDER_STILL")
 
-    def draw_objects(self, layout, context, project):
-        box = layout.box()
+    def draw_objects(self, context, project):
+        box = self.layout.box()
         header = box.row()
         header.label(text="Target Objects", icon="OUTLINER_OB_MESH")
         box.template_list("UBK_UL_ObjectList", "", project, "objects", project, "active_object_index", rows=5)
@@ -163,16 +169,12 @@ class UBK_PT_MainPanel(bpy.types.Panel):
         row.operator("ubk.add_object", text="Add Selected", icon="ADD")
         row.operator("ubk.remove_object", text="", icon="REMOVE")
 
-    def draw_maps(self, layout, context, project):
-        box = layout.box()
+    @object_needed
+    def draw_maps(self, context):
+        box = self.layout.box()
         header = box.row()
         header.label(text="Baker", icon="TEXTURE")
         active_object = BakeController.active_object(context)
-
-        if active_object is None:
-            box.label(text="Select a target object.", icon="INFO")
-
-            return
 
         box.template_list("UBK_UL_BakerList", "", active_object, "maps", active_object, "active_baker_index", rows=5)
 
@@ -180,9 +182,14 @@ class UBK_PT_MainPanel(bpy.types.Panel):
         row.operator("ubk.add_baker", icon="ADD")
         row.operator("ubk.remove_baker", text="", icon="REMOVE")
 
-    def draw_footer(self, layout, context, project):
-        layout.separator()
-        row = layout.row()
+    @baker_needed
+    def draw_settings(self, context):
+        pass
+        # self.layout.panel("UBK_PT_settings_baker_panel", default_closed=True)
+
+    def draw_footer(self, context):
+        self.layout.separator()
+        row = self.layout.row()
         row.scale_y = 1.6
         row.operator("ubk.bake_all", icon="RENDER_STILL")
 

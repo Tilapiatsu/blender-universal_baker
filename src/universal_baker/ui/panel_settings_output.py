@@ -56,7 +56,7 @@ class UBK_UL_GlobalSettingsPanel:
     bl_category = "Universal Baker"
 
 
-class UBK_UL_GlobalBakerSettingsPanel(UBK_UL_GlobalSettingsPanel, bpy.types.Panel):
+class UBK_PT_GlobalBakerSettingsPanel(UBK_UL_GlobalSettingsPanel, bpy.types.Panel):
     bl_idname = "UBK_PT_global_settings_baker_panel"
     bl_label = "Global Bake Settings"
     bl_category = "Universal Baker"
@@ -75,7 +75,7 @@ class UBK_UL_GlobalBakerSettingsPanel(UBK_UL_GlobalSettingsPanel, bpy.types.Pane
 # -------------------------------------------------------------------------
 
 
-class UBK_UL_GlobalBakerSettingsOutputPanel(UBK_UL_GlobalSettingsPanel, bpy.types.Panel):
+class UBK_PT_GlobalBakerSettingsOutputPanel(UBK_UL_GlobalSettingsPanel, bpy.types.Panel):
     bl_parent_id = "UBK_PT_global_settings_baker_panel"
     bl_label = "Output"
     bl_options = {"DEFAULT_CLOSED"}
@@ -89,7 +89,7 @@ class UBK_UL_GlobalBakerSettingsOutputPanel(UBK_UL_GlobalSettingsPanel, bpy.type
 # -------------------------------------------------------------------------
 
 
-class UBK_UL_GlobalBakerSettingsBakingPanel(UBK_UL_GlobalSettingsPanel, bpy.types.Panel):
+class UBK_PT_GlobalBakerSettingsBakingPanel(UBK_UL_GlobalSettingsPanel, bpy.types.Panel):
     bl_parent_id = "UBK_PT_global_settings_baker_panel"
     bl_label = "Baking"
     bl_options = {"DEFAULT_CLOSED"}
@@ -103,7 +103,7 @@ class UBK_UL_GlobalBakerSettingsBakingPanel(UBK_UL_GlobalSettingsPanel, bpy.type
 # -------------------------------------------------------------------------
 
 
-class UBK_UL_GlobalBakerSettingsSamplingPanel(UBK_UL_GlobalSettingsPanel, bpy.types.Panel):
+class UBK_PT_GlobalBakerSettingsSamplingPanel(UBK_UL_GlobalSettingsPanel, bpy.types.Panel):
     bl_parent_id = "UBK_PT_global_settings_baker_panel"
     bl_label = "Sampling"
     bl_options = {"DEFAULT_CLOSED"}
@@ -113,10 +113,10 @@ class UBK_UL_GlobalBakerSettingsSamplingPanel(UBK_UL_GlobalSettingsPanel, bpy.ty
 
 
 classes = (
-    UBK_UL_GlobalBakerSettingsPanel,
-    UBK_UL_GlobalBakerSettingsBakingPanel,
-    UBK_UL_GlobalBakerSettingsSamplingPanel,
-    UBK_UL_GlobalBakerSettingsOutputPanel,
+    UBK_PT_GlobalBakerSettingsPanel,
+    UBK_PT_GlobalBakerSettingsBakingPanel,
+    UBK_PT_GlobalBakerSettingsSamplingPanel,
+    UBK_PT_GlobalBakerSettingsOutputPanel,
 )
 
 
