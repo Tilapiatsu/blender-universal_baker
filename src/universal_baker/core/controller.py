@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import List
 
 import bpy
+from uuid import uuid4
 
 from .planner import ExecutionPlanner
 from ..runtime.job import Job
@@ -68,6 +69,7 @@ class BakeController:
         bake_map = object_settings.bakers.add()
         bake_map.baker = baker_id
         bake_map.image_name = baker_id.title()
+        bake_map.uuid = str(uuid4())
         object_settings.active_baker_index = len(object_settings.bakers) - 1
 
         return bake_map

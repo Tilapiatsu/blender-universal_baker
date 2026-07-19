@@ -15,10 +15,15 @@ from ..packers.channels import CHANNEL_ITEMS
 def get_source_bakers_items(self, context):
     items = [("NONE", "None", "")]
 
-    bakers = registry_baker.registry_baker
+    from ..core.controller import BakeController
 
-    for m in bakers.keys():
-        items.append((m, m, ""))
+    active_object = BakeController.active_object(context)
+
+    if active_object is None:
+        return items
+
+    for b in active_object.bakers:
+        items.append((b.uuid, f"{b.baker}_{b.image_name}", ""))
 
     return items
 
