@@ -11,6 +11,7 @@ from .panel import (
     baker_needed,
     draw_sampling_settings,
     draw_baking_settings,
+    UBK_PT_MainPanel,
 )
 
 
@@ -39,17 +40,10 @@ def draw_map_settings(self, context, draw: Callable):
 # -------------------------------------------------------------------------
 
 
-class UBK_UL_SettingsPanel:
-    """Bake Settings panel."""
-
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-    bl_category = "Universal Baker"
-
-
-class UBK_PT_BakerSettingsPanel(UBK_UL_SettingsPanel, bpy.types.Panel):
+class UBK_PT_BakerSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
     bl_idname = "UBK_PT_settings_baker_panel"
     bl_label = ""
+    bl_parent_id = "UBK_PT_UniversalBakerPanel"
 
     def draw_header(self, context):
         layout = self.layout
@@ -86,7 +80,7 @@ class UBK_PT_BakerSettingsPanel(UBK_UL_SettingsPanel, bpy.types.Panel):
 # -------------------------------------------------------------------------
 
 
-class UBK_PT_BakerSettingsOutputPanel(UBK_UL_SettingsPanel, bpy.types.Panel):
+class UBK_PT_BakerSettingsOutputPanel(UBK_PT_MainPanel, bpy.types.Panel):
     bl_parent_id = "UBK_PT_settings_baker_panel"
     bl_label = "Output"
     bl_options = {"DEFAULT_CLOSED"}
@@ -100,7 +94,7 @@ class UBK_PT_BakerSettingsOutputPanel(UBK_UL_SettingsPanel, bpy.types.Panel):
 # -------------------------------------------------------------------------
 
 
-class UBK_PT_BakerSettingsBakingPanel(UBK_UL_SettingsPanel, bpy.types.Panel):
+class UBK_PT_BakerSettingsBakingPanel(UBK_PT_MainPanel, bpy.types.Panel):
     bl_parent_id = "UBK_PT_settings_baker_panel"
     bl_label = "Baking"
     bl_options = {"DEFAULT_CLOSED"}
@@ -114,7 +108,7 @@ class UBK_PT_BakerSettingsBakingPanel(UBK_UL_SettingsPanel, bpy.types.Panel):
 # -------------------------------------------------------------------------
 
 
-class UBK_PT_BakerSettingsSamplingPanel(UBK_UL_SettingsPanel, bpy.types.Panel):
+class UBK_PT_BakerSettingsSamplingPanel(UBK_PT_MainPanel, bpy.types.Panel):
     bl_parent_id = "UBK_PT_settings_baker_panel"
     bl_label = "Sampling"
     bl_options = {"DEFAULT_CLOSED"}

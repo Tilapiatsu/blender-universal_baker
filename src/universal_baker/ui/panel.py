@@ -154,7 +154,7 @@ def draw_sampling_settings(layout, settings_bake):
 # -------------------------------------------------------------------------
 
 
-class UBK_PT_MainPanel(bpy.types.Panel):
+class UBK_PT_MainPanel:
     """Main Universal Baker panel."""
 
     bl_idname = "UBK_PT_main_panel"
@@ -163,53 +163,37 @@ class UBK_PT_MainPanel(bpy.types.Panel):
     bl_region_type = "UI"
     bl_category = "Universal Baker"
 
+
+class UBK_PT_UniversalBakerPanel(UBK_PT_MainPanel, bpy.types.Panel):
+    bl_idname = "UBK_PT_UniversalBakerPanel"
+    bl_label = "Universal Baker"
+
+    def draw(self, context):
+        pass
+
+
+class UBK_PT_ObjectPanel(UBK_PT_MainPanel, bpy.types.Panel):
+    bl_idname = "UBK_PT_ObjectPanel"
+    bl_label = ""
+    bl_parent_id = "UBK_PT_UniversalBakerPanel"
+
     def draw(self, context):
         layout = self.layout
         project = BakeController.project(context)
 
-        self.draw_header(context)
         self.draw_objects(context, project)
-        self.draw_bakers(context)
-        # self.draw_settings(context)
         self.draw_footer(context)
 
     def draw_header(self, context):
         layout = self.layout
-        # box = layout.box()
-        # row = box.row()
-        # row.label(text="Bake Project", icon="RENDER_STILL")
+        layout.label(text="Target Objects", icon="OUTLINER_OB_MESH")
 
     def draw_objects(self, context, project):
         box = self.layout.box()
-        header = box.row()
-        header.label(text="Target Objects", icon="OUTLINER_OB_MESH")
         box.template_list("UBK_UL_ObjectList", "", project, "objects", project, "active_object_index", rows=5)
         row = box.row(align=True)
         row.operator("ubk.add_object", text="Add Selected", icon="ADD")
         row.operator("ubk.remove_object", text="", icon="REMOVE")
-
-    @object_needed
-    def draw_bakers(self, context):
-        box = self.layout.box()
-        header = box.row()
-        header.label(text="Bakers", icon="TEXTURE")
-        active_object = BakeController.active_object(context)
-
-        box.template_list("UBK_UL_BakerList", "", active_object, "maps", active_object, "active_baker_index", rows=5)
-
-        row = box.row(align=True)
-        row.operator("ubk.add_baker", icon="ADD")
-        row.operator("ubk.remove_baker", text="", icon="REMOVE")
-
-    def draw_settings(self, context):
-        # pass
-        active_baker = BakeController.active_baker(context)
-        if active_baker is None:
-            return
-        header, panel = self.layout.panel("UBK_PT_settings_baker", default_closed=True)
-        header.label(text=f"{active_baker.baker} Settings", icon="TEXTURE")
-        if panel:
-            draw_baker_settings(self, panel, context)
 
     def draw_footer(self, context):
         self.layout.separator()
@@ -218,7 +202,35 @@ class UBK_PT_MainPanel(bpy.types.Panel):
         row.operator("ubk.bake_all", icon="RENDER_STILL")
 
 
-classes = (UBK_PT_MainPanel,)
+class UBK_PT_BakerPanel(UBK_PT_MainPanel, bpy.types.Panel):
+    bl_idname = "UBK_PT_BakerPanel"
+    bl_label = ""
+    bl_parent_id = "UBK_PT_UniversalBakerPanel"
+
+    def draw_header(self, context):
+        layout = self.layout
+        layout.label(text="Bakers", icon="TEXTURE")
+
+    def draw(self, context):
+        self.draw_bakers(context)
+
+    @object_needed
+    def draw_bakers(self, context):
+        box = self.layout.box()
+        active_object = BakeController.active_object(context)
+
+        box.template_list("UBK_UL_BakerList", "", active_object, "maps", active_object, "active_baker_index", rows=5)
+
+        row = box.row(align=True)
+        row.operator("ubk.add_baker", icon="ADD")
+        row.operator("ubk.remove_baker", text="", icon="REMOVE")
+
+
+classes = (
+    UBK_PT_UniversalBakerPanel,
+    UBK_PT_ObjectPanel,
+    UBK_PT_BakerPanel,
+)
 
 
 def register():
