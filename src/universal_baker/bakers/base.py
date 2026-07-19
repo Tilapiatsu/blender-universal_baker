@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..runtime.context import BakeContext
-    from ..runtime.task import BakeTask
+    from ..runtime.task import Task
 
 from ..services.renderer import RendererService
 
@@ -19,7 +19,7 @@ class BakerColorType(Enum):
     VECTOR = auto()
 
 
-class BaseBaker(ABC):
+class BakerBase(ABC):
     """Abstract baker interface.
 
     Every baker is responsible for preparing Blender,
@@ -36,7 +36,7 @@ class BaseBaker(ABC):
     color_type: BakerColorType = BakerColorType.COLOR
     blender_bake_type = "DIFFUSE"
 
-    def poll(self, task: BakeTask) -> bool:
+    def poll(self, task: Task) -> bool:
         """Whether this baker can execute this task."""
         return True
 

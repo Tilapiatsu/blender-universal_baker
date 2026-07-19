@@ -26,29 +26,29 @@ class ExecutionPlanner:
             if obj.target is None:
                 continue
 
-            for bake_map in obj.maps:
+            for bake_map in obj.bakers:
                 if not bake_map.enabled:
                     continue
 
-                settings_bake = BakeSettingsResolver.resolve(
+                settings = BakeSettingsResolver.resolve(
                     project.settings_bake,
                     bake_map.settings_bake if bake_map.override_settings else None,
                 )
-                settings_cage = CageSettingsResolver.resolve(
-                    project.settings_cage,
-                    bake_map.settings_cage if bake_map.override_settings_cage else None,
-                )
-
+                # settings_cage = CageSettingsResolver.resolve(
+                #     project.settings_cage,
+                #     bake_map.settings_cage if bake_map.override_settings_cage else None,
+                # )
+                #
                 task = BakeTask(
                     id=str(uuid4()),
                     enabled=True,
                     target=obj.target,
                     sources=obj.sources,
                     baker=registry_baker[bake_map.baker],
-                    settings_bake=settings_bake,
+                    settings=settings,
                     image_name=bake_map.image_name,
-                    cage_object=None,
-                    settings_cage=settings_cage,
+                    # cage_object=None,
+                    # settings_cage=settings_cage,
                 )
 
                 job.add_task(task)
@@ -91,7 +91,7 @@ class ExecutionPlanner:
                     id=str(uuid4()),
                     enabled=True,
                     packer=PackerInternal(),
-                    output_name=pack.name,
+                    image_name=pack.image_name,
                     settings=pack_settings,
                     red=red,
                     green=green,

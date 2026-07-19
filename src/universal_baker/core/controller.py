@@ -10,7 +10,7 @@ from ..runtime.job import Job
 from ..services.project import ProjectService
 from ..services.object import ObjectService
 from ..services.packer import PackService
-from ..services.map import MapService
+from ..services.map import BakerService
 from ..services.internal_data import InternalDataService
 from ..constant import get_prefs
 from ..core.registry_executor import registry_executor
@@ -35,7 +35,7 @@ class BakeController:
 
     @classmethod
     def active_baker(cls, context):
-        return MapService.active(cls.project(context))
+        return BakerService.active(cls.project(context))
 
     @classmethod
     def active_packer(cls, context):
@@ -65,10 +65,10 @@ class BakeController:
             return None
 
         object_settings = project.objects[project.active_object_index]
-        bake_map = object_settings.maps.add()
+        bake_map = object_settings.bakers.add()
         bake_map.baker = baker_id
         bake_map.image_name = baker_id.title()
-        object_settings.active_baker_index = len(object_settings.maps) - 1
+        object_settings.active_baker_index = len(object_settings.bakers) - 1
 
         return bake_map
 
@@ -84,15 +84,15 @@ class BakeController:
         if obj is None:
             return
 
-        if not obj.maps:
+        if not obj.bakers:
             return
 
-        MapService.remove(project, obj.active_baker_index)
+        BakerService.remove(project, obj.active_baker_index)
 
     @staticmethod
     def resolve_map_uuid(project, uuid):
         for obj in project.objects:
-            for map in obj.maps:
+            for map in obj.bakers:
                 if map.uuid == uuid:
                     return map
 

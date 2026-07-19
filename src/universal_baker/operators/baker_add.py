@@ -36,8 +36,8 @@ class UBK_OT_BakerAdd(UBK_OT_Base):
 
         obj = BakeController.active_object(context)
         assert obj is not None
-        bake_map.settings_bake.internal_name = f"{obj.target.name}_{self.baker_id}"
-        BakeController.ensure_output_node(bake_map.settings_bake.internal_name)
+        bake_map.settings.internal_name = f"{obj.target.name}_{self.baker_id}"
+        BakeController.ensure_output_node(bake_map.settings.internal_name)
 
         self.info(f"Added bake map '{self.baker_id}'.")
 

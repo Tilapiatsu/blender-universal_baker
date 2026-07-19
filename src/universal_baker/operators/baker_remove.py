@@ -23,7 +23,7 @@ class UBK_OT_BakerRemove(UBK_OT_Base):
         if obj is None:
             return False
 
-        return bool(obj.maps)
+        return bool(obj.bakers)
 
     def execute(self, context):
 

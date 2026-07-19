@@ -27,7 +27,7 @@ def draw_map_settings(self, context, draw: Callable):
     layout = self.layout
 
     if active_baker.override_settings:
-        settings_bake = active_baker.settings_bake
+        settings_bake = active_baker.settings
     else:
         settings_bake = project.settings_bake
         layout.enabled = False
@@ -43,7 +43,11 @@ def draw_map_settings(self, context, draw: Callable):
 class UBK_PT_BakerSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
     bl_idname = "UBK_PT_settings_baker_panel"
     bl_label = ""
-    bl_parent_id = "UBK_PT_UniversalBakerPanel"
+    bl_parent_id = "UBK_PT_BakerPanel"
+
+    @classmethod
+    def poll(cls, context):
+        return BakeController.active_baker(context) is not None
 
     def draw_header(self, context):
         layout = self.layout

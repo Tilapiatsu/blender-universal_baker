@@ -4,10 +4,10 @@ from ..runtime.settings_bake import (
     BakeSettings,
     BakeRenderSettings,
     SamplingSettings,
-    ColorManagementSettings,
 )
 from ..runtime.settings_image import (
     ImageSettings,
+    ColorManagementSettings,
 )
 
 

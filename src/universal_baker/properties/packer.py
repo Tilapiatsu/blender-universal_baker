@@ -12,7 +12,7 @@ from .settings_pack import UBK_PackSettings
 from ..packers.channels import CHANNEL_ITEMS
 
 
-def get_source_maps_items(self, context):
+def get_source_bakers_items(self, context):
     items = [("NONE", "None", "")]
 
     bakers = registry_baker.registry_baker
@@ -29,8 +29,8 @@ class UBK_ChannelMapping(PropertyGroup):
     enabled: BoolProperty(name="Enabled", default=True)
     source_map_uuid: bpy.props.StringProperty()
     source_map_items: bpy.props.EnumProperty(
-        name="Source Map",
-        items=get_source_maps_items,
+        name="Source Baker",
+        items=get_source_bakers_items,
     )
     source_map: PointerProperty(type=UBK_Baker)
     source_channel: EnumProperty(
@@ -54,7 +54,7 @@ class UBK_Pack(PropertyGroup):
     enabled: BoolProperty(name="Enabled", default=True)
     override_settings: BoolProperty(name="Override Settings", default=False)
     image_name: StringProperty(name="Name", default="Channel Packing")
-    active_bakerping_index: bpy.props.IntProperty(default=0)
+    active_packer_index: bpy.props.IntProperty(default=0)
     mappings: bpy.props.CollectionProperty(type=UBK_ChannelMapping)
     settings: bpy.props.PointerProperty(type=UBK_PackSettings)
 

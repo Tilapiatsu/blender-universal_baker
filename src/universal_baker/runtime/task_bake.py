@@ -6,21 +6,19 @@ from pathlib import Path
 import bpy
 
 from .task import Task
-from ..bakers.base import BaseBaker
+from ..bakers.base import BakerBase
 from ..runtime.settings_bake import BakeSettings
-from ..runtime.settings_cage import CageSettings
 
 
 @dataclass(slots=True, frozen=True)
 class BakeTask(Task):
     target: bpy.types.Object
     sources: tuple[bpy.types.Object]
-    baker: BaseBaker
-    settings_bake: BakeSettings
+    baker: BakerBase
+    settings: BakeSettings
     image_name: str
     # output_path: Path
-    cage_object: bpy.types.Object | None
-    settings_cage: CageSettings
+    # cage_object: bpy.types.Object | None
 
     @property
     def object_name(self) -> str:
@@ -29,6 +27,10 @@ class BakeTask(Task):
     @property
     def baker_id(self) -> str:
         return self.baker.id
+
+    @property
+    def output_name(self) -> str:
+        return f"{self.object_name}_{self.baker_id.lower()}"
 
     @property
     def baker_name(self) -> str:

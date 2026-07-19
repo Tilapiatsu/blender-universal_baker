@@ -26,7 +26,7 @@ class UBK_Object(PropertyGroup):
 
     sources: CollectionProperty(type=UBK_SourceObject)
 
-    maps: CollectionProperty(
+    bakers: CollectionProperty(
         type=UBK_Baker,
     )
 

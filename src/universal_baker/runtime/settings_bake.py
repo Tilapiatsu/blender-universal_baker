@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal
 
-from .settings_image import ImageSettings
+from .settings_output import OutputSettings
 
 
 @dataclass(slots=True)
@@ -28,13 +27,6 @@ class SamplingSettings:
 
 
 @dataclass(slots=True)
-class ColorManagementSettings:
-    colorspace: str = "sRGB"
-
-
-@dataclass(slots=True)
-class BakeSettings:
-    image: ImageSettings
+class BakeSettings(OutputSettings):
     bake: BakeRenderSettings
     sampling: SamplingSettings
-    color: ColorManagementSettings

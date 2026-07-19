@@ -37,3 +37,8 @@ class ImageSettings:
     @property
     def alpha(self):
         return self.color_mode == "RGBA" and self.file_format in ["PNG", "TIFF", "TARGA", "OPEN_EXR", "XDP"]
+
+
+@dataclass(slots=True)
+class ColorManagementSettings:
+    colorspace: str = "sRGB"

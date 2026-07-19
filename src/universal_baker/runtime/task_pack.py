@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ..packers.packer_base import Packer
+from ..packers.packer_base import PackerBase
 
 from .task import Task
+from .settings_pack import PackSettings
 from ..packers.channels import Channel
 
 
@@ -18,14 +19,18 @@ class PackingChannel:
 
 @dataclass(slots=True, frozen=True)
 class PackingTask(Task):
-    packer: Packer
-    output_name: str
-    settings: object
+    packer: PackerBase
+    settings: PackSettings
+    image_name: str
 
     red: PackingChannel | None
     green: PackingChannel | None
     blue: PackingChannel | None
     alpha: PackingChannel | None
+
+    @property
+    def output_name(self) -> str:
+        return self.image_name
 
     def __repr__(self) -> str:
         result = ""
@@ -45,7 +50,6 @@ class PackingTask(Task):
 
         if self.blue is None:
             result += "B -> Empty"
-            result += "Empty"
         else:
             result += (
                 self.blue.source_map_name + "_" + self.blue.source_channel + " -> " + self.blue.destination_channel

@@ -1,8 +1,8 @@
-from .base import BaseBaker
+from .base import BakerBase
 from ..runtime.context import BakeContext
 
 
-class Baker(BaseBaker):
+class Baker(BakerBase):
     def prepare(self, ctx: BakeContext):
         return super().prepare(ctx)
 

@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from ..bakers.base import BaseBaker
+    from ..bakers.base import BakerBase
     from .task_bake import BakeTask
     from .task_pack import PackingTask
 
@@ -17,6 +17,7 @@ from ..ressources.image import ImageResource
 from ..ressources.material import MaterialResource
 from .settings_bake import BakeSettings
 from .settings_cage import CageSettings
+from .settings_pack import PackSettings
 
 from .session import ExecutionSession
 
@@ -33,9 +34,9 @@ class BakeContext(ExecutionContext):
 
     session: ExecutionSession
     task: BakeTask
-    baker: BaseBaker
-
+    baker: BakerBase
     image: ImageResource = field(default_factory=ImageResource)
+
     material: MaterialResource = field(default_factory=MaterialResource)
     node_tree: bpy.types.NodeTree | None = None
     image_node: bpy.types.ShaderNodeTexImage | None = None
@@ -69,12 +70,8 @@ class BakeContext(ExecutionContext):
         return self.task.selected_to_active
 
     @property
-    def settings_bake(self) -> BakeSettings:
-        return self.task.settings_bake
-
-    @property
-    def settings_cage(self) -> CageSettings:
-        return self.task.settings_cage
+    def settings(self) -> BakeSettings:
+        return self.task.settings
 
     def succeed(self, message: str = "") -> None:
         self.finished = True
@@ -91,13 +88,17 @@ class BakeContext(ExecutionContext):
 class PackContext(ExecutionContext):
     session: ExecutionSession
     task: PackingTask
-    image: ImageResource = field(default_factory=ImageResource)
     node_tree: bpy.types.NodeTree | None = None
     image_node: bpy.types.ShaderNodeTexImage | None = None
+    image: ImageResource = field(default_factory=ImageResource)
 
     finished: bool = False
     success: bool = False
     message: str = ""
+
+    @property
+    def settings(self) -> PackSettings:
+        return self.task.settings
 
     def succeed(self, message: str = "") -> None:
         self.finished = True

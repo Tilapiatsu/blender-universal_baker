@@ -48,7 +48,7 @@ class UBK_UL_BakerList(bpy.types.UIList):
         info.enabled = False
 
         if bake_map.override_settings:
-            resolution = f"{bake_map.settings_bake.resolution_x}×{bake_map.settings_bake.resolution_y}"
+            resolution = f"{bake_map.settings.resolution_x}×{bake_map.settings.resolution_y}"
 
             info.label(text=resolution, icon="IMAGE_DATA")
 

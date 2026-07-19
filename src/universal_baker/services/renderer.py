@@ -18,8 +18,8 @@ class RendererService:
     def configure(cls, ctx: BakeContext):
         """Configure Blender for the bake."""
         scene = ctx.session.context.scene
-        settings_bake = ctx.settings_bake.bake
-        sampling_settings = ctx.settings_bake.sampling
+        settings_bake = ctx.settings.bake
+        sampling_settings = ctx.settings.sampling
 
         scene.render.engine = "CYCLES"
         cycles = scene.cycles

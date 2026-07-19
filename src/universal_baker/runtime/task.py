@@ -19,6 +19,9 @@ class Task:
             enabled=True,
         )
 
+    @property
+    def output_name(self) -> str: ...
+
 
 @dataclass(slots=True)
 class TaskResult:

@@ -7,7 +7,7 @@ from ..core.controller import BakeController
 from .panel_settings_output import (
     draw_output_settings,
 )
-from .panel import object_needed, packer_needed
+from .panel import object_needed, packer_needed, UBK_PT_MainPanel
 
 
 def grid_layout(layout, alignment, size):
@@ -22,7 +22,7 @@ def grid_layout(layout, alignment, size):
 # -------------------------------------------------------------------------
 
 
-def draw_pack_settings(self, context, draw: Callable):
+def draw_pack_settings(layout, context, draw: Callable):
     project = BakeController.project(context)
     if project is None:
         return
@@ -31,10 +31,8 @@ def draw_pack_settings(self, context, draw: Callable):
     if active_pack is None:
         return
 
-    layout = self.layout
-
     if active_pack.override_settings:
-        settings_pack = active_pack.settings_pack
+        settings_pack = active_pack.settings
     else:
         settings_pack = project.settings_pack
         layout.enabled = False
@@ -47,17 +45,10 @@ def draw_pack_settings(self, context, draw: Callable):
 # -------------------------------------------------------------------------
 
 
-class UBK_UL_PackersPanel:
-    """Packers Main panel."""
-
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-    bl_category = "Universal Baker"
-
-
-class UBK_UL_PackerPanel(UBK_UL_PackersPanel, bpy.types.Panel):
+class UBK_UL_PackerPanel(UBK_PT_MainPanel, bpy.types.Panel):
     bl_idname = "UBK_PT_packer_panel"
     bl_label = ""
+    bl_parent_id = "UBK_PT_UniversalBakerPanel"
     bl_options = {"DEFAULT_CLOSED"}
 
     def draw_header(self, context):
@@ -83,11 +74,15 @@ class UBK_UL_PackerPanel(UBK_UL_PackersPanel, bpy.types.Panel):
 # -------------------------------------------------------------------------
 
 
-class UBK_UL_PackerSettingsPanel(UBK_UL_PackersPanel, bpy.types.Panel):
+class UBK_UL_PackerSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
     bl_idname = "UBK_PT_settings_packer_panel"
     bl_label = "Packing"
     bl_parent_id = "UBK_PT_packer_panel"
     bl_options = {"DEFAULT_CLOSED"}
+
+    @classmethod
+    def poll(cls, context):
+        return BakeController.active_packer(context) is not None
 
     @packer_needed
     def draw(self, context):
@@ -141,11 +136,15 @@ class UBK_UL_PackerSettingsPanel(UBK_UL_PackersPanel, bpy.types.Panel):
 # -------------------------------------------------------------------------
 
 
-class UBK_UL_PackerSettingsOutputPanel(UBK_UL_PackersPanel, bpy.types.Panel):
+class UBK_UL_PackerSettingsOutputPanel(UBK_PT_MainPanel, bpy.types.Panel):
     bl_idname = "UBK_PT_settings_bake_panel"
     bl_label = "Output"
     bl_parent_id = "UBK_PT_packer_panel"
     bl_options = {"DEFAULT_CLOSED"}
+
+    @classmethod
+    def poll(cls, context):
+        return BakeController.active_packer(context) is not None
 
     @packer_needed
     def draw(self, context):
@@ -163,7 +162,9 @@ class UBK_UL_PackerSettingsOutputPanel(UBK_UL_PackersPanel, bpy.types.Panel):
         else:
             box.label(text="Inherited from Global Settings")
 
-        draw_pack_settings(self, context, draw_output_settings)
+        col = layout.column(align=True)
+
+        draw_pack_settings(col, context, draw_output_settings)
 
 
 classes = (

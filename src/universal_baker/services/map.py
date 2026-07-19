@@ -5,12 +5,12 @@ from .collection import PropertyCollectionService
 from .object import ObjectService
 
 
-class MapService(PropertyCollectionService[UBK_Baker]):
+class BakerService(PropertyCollectionService[UBK_Baker]):
     @classmethod
     def collection(cls, owner):
         obj = ObjectService.active(owner)
 
-        return obj.maps if obj else []
+        return obj.bakers if obj else []
 
     @classmethod
     def get_active_index(cls, owner):

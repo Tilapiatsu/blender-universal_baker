@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import bpy
 from ..services.internal_data import InternalDataService
+from .settings_base import get_colorspace_items
 
 
 class UBK_PackSettings(bpy.types.PropertyGroup):
@@ -27,6 +28,10 @@ class UBK_PackSettings(bpy.types.PropertyGroup):
         default=2048,
         min=1,
         subtype="PIXEL",
+    )
+
+    colorspace: bpy.props.EnumProperty(
+        items=get_colorspace_items,
     )
 
     @property

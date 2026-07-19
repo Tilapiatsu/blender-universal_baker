@@ -56,6 +56,11 @@ class ImageResource:
             return None
         return self.filepath.parent
 
+    def scale(self, width: int, height: int) -> None:
+        if self.image is None:
+            return
+        self.image.scale(width, height)
+
     def mark_dirty(self) -> None:
         self.dirty = True
 

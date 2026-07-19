@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-from .base import BaseBaker
+from .base import BakerBase
 
 from ..runtime.context import BakeContext
-from ..services.image import ImageService
+from ..services.image_bake import ImageServiceBake
 from ..services.material import MaterialService
 from ..core.registry_baker import registry_baker
 
 
-class DiffuseBaker(BaseBaker):
+class DiffuseBaker(BakerBase):
     """Bake the diffuse/albedo color."""
 
     id = "DIFFUSE"
@@ -24,7 +24,7 @@ class DiffuseBaker(BaseBaker):
         """
         Prepare everything required before Blender's bake.
         """
-        ctx.image = ImageService.acquire(ctx)
+        ctx.image = ImageServiceBake.acquire(ctx.image, ctx.settings, ctx.task)
         MaterialService.prepare_target(ctx)
 
     def bake(self, ctx: BakeContext) -> None:
@@ -35,7 +35,7 @@ class DiffuseBaker(BaseBaker):
         Cleanup after baking.
         """
         MaterialService.restore_target(ctx)
-        ImageService.cleanup(ctx)
+        ImageServiceBake.cleanup(ctx.image)
 
 
 classes = (DiffuseBaker,)

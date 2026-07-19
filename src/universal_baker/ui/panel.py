@@ -157,7 +157,6 @@ def draw_sampling_settings(layout, settings_bake):
 class UBK_PT_MainPanel:
     """Main Universal Baker panel."""
 
-    bl_idname = "UBK_PT_main_panel"
     bl_label = "Universal Baker"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
@@ -219,7 +218,7 @@ class UBK_PT_BakerPanel(UBK_PT_MainPanel, bpy.types.Panel):
         box = self.layout.box()
         active_object = BakeController.active_object(context)
 
-        box.template_list("UBK_UL_BakerList", "", active_object, "maps", active_object, "active_baker_index", rows=5)
+        box.template_list("UBK_UL_BakerList", "", active_object, "bakers", active_object, "active_baker_index", rows=5)
 
         row = box.row(align=True)
         row.operator("ubk.add_baker", icon="ADD")

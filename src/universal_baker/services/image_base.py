@@ -3,24 +3,24 @@ from __future__ import annotations
 from pathlib import Path
 
 import bpy
-from ..runtime.context import BakeContext
+from ..runtime.settings_output import OutputSettings
 from ..ressources.image import ImageResource
+from ..runtime.task import Task
 
 
-class ImageService:
-    """Manage bake destination images."""
+class ImageServiceBase:
+    """Manage destination images."""
 
     @classmethod
-    def acquire(cls, ctx: BakeContext) -> bpy.types.Image:
+    def acquire(cls, resource: ImageResource, settings: OutputSettings, task: Task) -> bpy.types.Image:
         """
         Acquire the destination image for this bake.
         """
-        resource = ctx.image
 
         if resource.image is not None:
             return resource.image
 
-        cls.configure(resource, ctx)
+        cls.configure(resource, settings, task)
 
         image = bpy.data.images.get(resource.name)
 
@@ -39,9 +39,7 @@ class ImageService:
         return image
 
     @classmethod
-    def save(cls, ctx: BakeContext) -> None:
-        resource = ctx.image
-
+    def save(cls, resource: ImageResource) -> None:
         if resource.image is None:
             return
 
@@ -60,11 +58,10 @@ class ImageService:
         bpy.data.images.remove(bpy.data.images[image.name])
 
     @classmethod
-    def release(cls, ctx: BakeContext) -> None:
+    def release(cls, resource: ImageResource) -> None:
         """
         Release temporary images.
         """
-        resource = ctx.image
 
         if not resource.temporary:
             return
@@ -78,15 +75,14 @@ class ImageService:
         resource.image = None
 
     @classmethod
-    def configure(cls, resource: ImageResource, ctx: BakeContext) -> None:
+    def configure(cls, resource: ImageResource, settings: OutputSettings, task: Task) -> None:
         """
-        Populate the resource from the BakeTask.
+        Populate the resource from the Task.
         """
-        task = ctx.task
 
-        image_settings = ctx.settings_bake.image
-        color_settings = ctx.settings_bake.color
-        resource.name = f"{task.object_name}_{task.baker_id.lower()}"
+        image_settings = settings.image
+        color_settings = settings.color
+        resource.name = task.output_name
         resource.width = image_settings.width
         resource.height = image_settings.height
         resource.colorspace = color_settings.colorspace
@@ -141,11 +137,11 @@ class ImageService:
         image.alpha_mode = "STRAIGHT" if resource.image_format_settings.alpha else "NONE"
 
     @classmethod
-    def clear(cls, ctx: BakeContext) -> None:
+    def clear(cls, resource: ImageResource) -> None:
         """
         Clear the bake target before rendering.
         """
-        image = ctx.image.image
+        image = resource.image
 
         if image is None:
             return
@@ -154,13 +150,29 @@ class ImageService:
         image.update()
 
     @classmethod
-    def mark_dirty(cls, ctx: BakeContext) -> None:
-        ctx.image.mark_dirty()
+    def mark_dirty(cls, resource: ImageResource) -> None:
+        resource.mark_dirty()
 
     @classmethod
     def find(cls, name: str) -> bpy.types.Image | None:
         return bpy.data.images.get(name)
 
     @classmethod
-    def cleanup(cls, ctx: BakeContext) -> None:
+    def cleanup(cls, resource: ImageResource) -> None:
         pass
+
+    @classmethod
+    def ensure_image_sizes(cls, *resources: ImageResource) -> None:
+        """Ensure all imputed resources have the same size by scaling them to the highest resolution"""
+        if not resources:
+            return
+
+        width: int = 0
+        height: int = 0
+        for r in resources:
+            width = max(width, r.width)
+            height = max(height, r.height)
+
+        for r in resources:
+            if r.width != width or r.height != height:
+                r.scale(width, height)

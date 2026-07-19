@@ -41,7 +41,7 @@ class UBK_Baker(PropertyGroup):
         default=False,
     )
 
-    settings_bake: PointerProperty(
+    settings: PointerProperty(
         type=UBK_BakeSettings,
     )
 

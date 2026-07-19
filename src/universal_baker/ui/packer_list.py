@@ -33,7 +33,7 @@ class UBK_UL_PackList(bpy.types.UIList):
 
         row.prop(pack_item, "enabled", text="")
 
-        row.label(text=pack_item.name, icon="NODE_COMPOSITING")
+        row.label(text=pack_item.image_name, icon="NODE_COMPOSITING")
 
         info = row.row()
         info.alignment = "RIGHT"

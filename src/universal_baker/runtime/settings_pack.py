@@ -1,9 +1,9 @@
 from __future__ import annotations
 from dataclasses import dataclass
 
-from .settings_image import ImageSettings
+from .settings_output import OutputSettings
 
 
 @dataclass(slots=True)
-class PackSettings:
-    image: ImageSettings
+class PackSettings(OutputSettings):
+    """Settings for packing Images"""

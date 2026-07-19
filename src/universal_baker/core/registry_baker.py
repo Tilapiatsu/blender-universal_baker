@@ -5,14 +5,14 @@ from typing import Dict
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..bakers.base import BaseBaker
+    from ..bakers.base import BakerBase
 
 
 class BakerRegistry:
     def __init__(self):
-        self._bakers: Dict[str, BaseBaker] = {}
+        self._bakers: Dict[str, BakerBase] = {}
 
-    def register(self, baker: BaseBaker) -> None:
+    def register(self, baker: BakerBase) -> None:
         if baker.id in self._bakers:
             raise ValueError(f"Baker '{baker.id}' already registered.")
 
@@ -21,7 +21,7 @@ class BakerRegistry:
     def unregister(self, baker_id: str) -> None:
         self._bakers.pop(baker_id, None)
 
-    def __getitem__(self, baker_id: str) -> BaseBaker:
+    def __getitem__(self, baker_id: str) -> BakerBase:
         return self._bakers[baker_id]
 
     def exists(self, baker_id: str) -> bool:
