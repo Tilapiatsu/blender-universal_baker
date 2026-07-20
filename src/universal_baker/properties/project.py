@@ -21,7 +21,6 @@ class UBK_Project(PropertyGroup):
     )
     settings_bake: PointerProperty(type=UBK_BakeSettings)
     settings_cage: PointerProperty(type=UBK_CageSettings)
-    settings_pack: PointerProperty(type=UBK_PackSettings)
 
 
 classes = (UBK_Project,)

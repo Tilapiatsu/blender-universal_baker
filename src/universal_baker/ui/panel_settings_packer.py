@@ -34,7 +34,7 @@ def draw_pack_settings(layout, context, draw: Callable):
     if active_pack.override_settings:
         settings_pack = active_pack.settings
     else:
-        settings_pack = project.settings_pack
+        settings_pack = project.settings_bake
         layout.enabled = False
 
     draw(layout, settings_pack)

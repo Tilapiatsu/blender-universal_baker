@@ -35,7 +35,7 @@ class ExecutionPlanner:
 
                     settings = BakeSettingsResolver.resolve(
                         project.settings_bake,
-                        baker.settings_bake if baker.override_settings else None,
+                        baker.settings if baker.override_settings else None,
                     )
                     # settings_cage = CageSettingsResolver.resolve(
                     #     project.settings_cage,
@@ -95,7 +95,7 @@ class ExecutionPlanner:
                 )
 
                 pack_settings = PackSettingsResolver.resolve(
-                    project.settings_pack,
+                    project.settings_bake,
                     pack.settings if pack.override_settings else None,
                 )
 

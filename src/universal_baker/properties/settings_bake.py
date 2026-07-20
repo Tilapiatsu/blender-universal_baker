@@ -45,10 +45,6 @@ def get_color_depth(self, context):
 class UBK_BakeSettings(bpy.types.PropertyGroup):
     internal_name: bpy.props.StringProperty(default="Default")
 
-    inherit: bpy.props.BoolProperty(
-        name="Inherit Global Settings",
-        default=True,
-    )
     # -------------------------------------------------------------------------
     # Image
     # -------------------------------------------------------------------------
@@ -147,10 +143,8 @@ class UBK_BakeSettings(bpy.types.PropertyGroup):
     # Color
     # -------------------------------------------------------------------------
 
-    # colorspace: bpy.props.StringProperty(
-    #     default="sRGB",
-    # )
     colorspace: bpy.props.EnumProperty(
+        name="Colorspace",
         items=get_colorspace_items,
     )
 

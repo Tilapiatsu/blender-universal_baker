@@ -91,6 +91,9 @@ class ExecutionSession:
         scene.render.bake.margin_type = self.original_margin_type
 
     def restore_scene(self, context: bpy.types.Context) -> None:
+        if context.mode != "OBJECT":
+            bpy.ops.object.mode_set(mode="OBJECT")
+
         bpy.ops.object.select_all(action="DESELECT")
 
         for obj in self.original_selected_objects:

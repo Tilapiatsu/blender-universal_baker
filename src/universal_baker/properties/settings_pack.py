@@ -8,10 +8,6 @@ from .settings_base import get_colorspace_items
 class UBK_PackSettings(bpy.types.PropertyGroup):
     internal_name: bpy.props.StringProperty(default="Default")
 
-    inherit: bpy.props.BoolProperty(
-        name="Inherit Global Settings",
-        default=True,
-    )
     # -------------------------------------------------------------------------
     # Image
     # -------------------------------------------------------------------------
@@ -31,6 +27,7 @@ class UBK_PackSettings(bpy.types.PropertyGroup):
     )
 
     colorspace: bpy.props.EnumProperty(
+        name="Colorspace",
         items=get_colorspace_items,
     )
 

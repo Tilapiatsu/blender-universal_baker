@@ -13,9 +13,6 @@ class PackSettingsResolver:
         if override_settings is None:
             settings = global_settings
 
-        elif override_settings.inherit:
-            settings = global_settings
-
         else:
             settings = override_settings
 
