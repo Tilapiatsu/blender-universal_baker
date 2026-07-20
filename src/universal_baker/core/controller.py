@@ -5,7 +5,7 @@ from typing import List
 import bpy
 from uuid import uuid4
 
-from universal_baker.ressources.image import ImageResource
+from ..resources.image import ImageResource
 
 from .planner import ExecutionPlanner
 from ..runtime.job import Job
@@ -17,6 +17,11 @@ from ..services.map import BakerService
 from ..services.internal_data import InternalDataService
 from ..constant import get_prefs
 from ..core.registry_executor import registry_executor
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..properties.baker import UBK_Baker
 
 
 class BakeController:
@@ -119,12 +124,26 @@ class BakeController:
                         name=b.image_name,
                     )
                     if b.image is not None:
-                        resource.width = b.image.width
-                        resource.height = b.image.height
+                        resource.width = b.image.size[0]
+                        resource.height = b.image.size[1]
                     else:
                         return None
 
                     return resource
+
+    @classmethod
+    def get_baker_from_uuid(cls, uuid: str) -> UBK_Baker | None:
+        project = cls.project(bpy.context)
+        if project is None:
+            return None
+
+        for o in project.objects:
+            if not len(o.bakers):
+                continue
+
+            for b in o.bakers:
+                if b.uuid == uuid:
+                    return b
 
     # ---------------------------------------------------------
     # Pack Operations
@@ -227,10 +246,10 @@ class BakeController:
     # ---------------------------------------------------------
 
     @classmethod
-    def create_job(cls, context) -> Job:
+    def create_job(cls, context, register_bakers: bool = False, register_packers: bool = False) -> Job:
         planner = ExecutionPlanner()
 
-        return planner.build_job(cls.project(context))
+        return planner.build_job(cls.project(context), register_bakers, register_packers)
 
     # ---------------------------------------------------------
     # Baking
@@ -246,7 +265,7 @@ class BakeController:
                 errors,
             )
 
-        job = cls.create_job(context)
+        job = cls.create_job(context, register_bakers=True)
 
         preferences = get_prefs()
 
@@ -298,7 +317,7 @@ class BakeController:
                 errors,
             )
 
-        job = cls.create_job(context)
+        job = cls.create_job(context, register_packers=True)
 
         preferences = get_prefs()
 
@@ -319,6 +338,18 @@ class BakeController:
             True,
             job,
         )
+
+    @classmethod
+    def bake_and_pack_all(cls, context) -> tuple[bool, Job | list[str]]:
+        success_bake, job_bake = cls.bake_all(context)
+        if not success_bake:
+            return success_bake, job_bake
+
+        success_pack, job_pack = cls.pack_all(context)
+        if not success_pack:
+            return success_pack, job_pack
+
+        return success_pack, job_pack
 
     @classmethod
     def pack_selected(cls, context, object_index: int):

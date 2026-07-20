@@ -12,9 +12,11 @@ if TYPE_CHECKING:
     from ..bakers.base import BakerBase
     from .task_bake import BakeTask
     from .task_pack import PackingTask
+    from .image_buffer import ImageBuffer
+    from ..resources.pack import PackResource
 
-from ..ressources.image import ImageResource
-from ..ressources.material import MaterialResource
+from ..resources.image import ImageResource
+from ..resources.material import MaterialResource
 from .settings_bake import BakeSettings
 from .settings_cage import CageSettings
 from .settings_pack import PackSettings
@@ -91,6 +93,14 @@ class PackContext(ExecutionContext):
     node_tree: bpy.types.NodeTree | None = None
     image_node: bpy.types.ShaderNodeTexImage | None = None
     image: ImageResource = field(default_factory=ImageResource)
+
+    red_resource: ImageResource | None = None
+    green_resource: ImageResource | None = None
+    blue_resource: ImageResource | None = None
+    alpha_resource: ImageResource | None = None
+
+    output_buffer: ImageBuffer | None = None
+    pack_resource: PackResource | None = None
 
     finished: bool = False
     success: bool = False

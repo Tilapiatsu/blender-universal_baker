@@ -3,8 +3,9 @@ from __future__ import annotations
 from pathlib import Path
 
 import bpy
+from universal_baker.bakers.base import BakerBase
 from ..runtime.settings_output import OutputSettings
-from ..ressources.image import ImageResource
+from ..resources.image import ImageResource
 from ..runtime.task import Task
 
 
@@ -82,6 +83,7 @@ class ImageServiceBase:
 
         image_settings = settings.image
         color_settings = settings.color
+
         resource.name = task.output_name
         resource.width = image_settings.width
         resource.height = image_settings.height
@@ -115,12 +117,30 @@ class ImageServiceBase:
         return image
 
     @classmethod
+    def copy(cls, resource: ImageResource) -> ImageResource:
+        image_copy = resource.image.copy() if resource.image is not None else None
+        resources_copy = ImageResource(
+            image=image_copy,
+            name=image_copy.name if image_copy is not None else "",
+            filepath=resource.filepath,
+            generated_type=resource.generated_type,
+            object_name=resource.object_name,
+            map_name=resource.map_name,
+            colorspace=resource.colorspace,
+            is_data=resource.is_data,
+            image_format_settings=resource.image_format_settings,
+            is_copy=True,
+        )
+
+        return resources_copy
+
+    @classmethod
     def is_image_settings_changed(cls, image: bpy.types.Image, resource: ImageResource) -> bool:
         if (
             image.size[0] != resource.width
             or image.size[1] != resource.height
             or ((image.channels == 4) != resource.image_format_settings.alpha)
-            # or image.colorspace_settings.name != ressources.image_format_settings.colorspace
+            # or image.colorspace_settings.name != resources.image_format_settings.colorspace
         ):
             return True
 
@@ -175,4 +195,11 @@ class ImageServiceBase:
 
         for r in resources:
             if r.width != width or r.height != height:
+                r = cls.copy(r)
                 r.scale(width, height)
+
+    @classmethod
+    def get_baker_from_uuid(cls, uuid: str) -> BakerBase | None:
+        from ..core.controller import BakeController
+
+        return BakeController.get_baker_from_uuid(uuid)

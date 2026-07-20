@@ -30,7 +30,7 @@ class BakerBase(ABC):
     """
 
     id: str = ""
-    label: str = ""
+    name: str = ""
     description: str = ""
     icon: str = "RENDER_STILL"
     color_type: BakerColorType = BakerColorType.COLOR
@@ -46,6 +46,7 @@ class BakerBase(ABC):
         self.prepare(ctx)
         self.bake(ctx)
         self.cleanup(ctx)
+        self.update_baker(ctx)
 
     @abstractmethod
     def prepare(self, ctx: BakeContext) -> None:
@@ -59,3 +60,14 @@ class BakerBase(ABC):
     @abstractmethod
     def cleanup(self, ctx: BakeContext) -> None:
         """Restore Blender."""
+
+    @abstractmethod
+    def update_baker(self, ctx: BakeContext) -> None:
+        from ..core.controller import BakeController
+
+        baker = BakeController.get_baker_from_uuid(ctx.task.uuid)
+
+        if baker is None:
+            return
+
+        baker.image = ctx.image

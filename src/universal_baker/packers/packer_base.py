@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from ..runtime.context import PackContext
     from ..runtime.task import Task
-    from ..runtime.image_buffer import ImageBuffer
 
 
 class PackerBase(ABC):
@@ -22,8 +21,6 @@ class PackerBase(ABC):
     label: str = ""
     description: str = ""
     icon: str = "NODE_COMPOSITING"
-    input_buffers: tuple | None = None
-    output_buffer: ImageBuffer | None = None
 
     def poll(self, task: Task) -> bool:
         """Whether this packer can execute this task."""

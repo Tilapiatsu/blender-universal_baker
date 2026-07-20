@@ -32,8 +32,7 @@ class UBK_ChannelMapping(PropertyGroup):
     """Map one channel to another"""
 
     enabled: BoolProperty(name="Enabled", default=True)
-    source_map_uuid: bpy.props.StringProperty()
-    source_map_items: bpy.props.EnumProperty(
+    source_map_uuid: bpy.props.EnumProperty(
         name="Source Baker",
         items=get_source_bakers_items,
     )

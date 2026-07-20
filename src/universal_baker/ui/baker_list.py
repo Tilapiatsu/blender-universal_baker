@@ -38,7 +38,7 @@ class UBK_UL_BakerList(bpy.types.UIList):
             baker = registry_baker[bake_map.baker]
 
         if baker:
-            row.label(text=baker.label, icon=baker.icon)
+            row.label(text=baker.name, icon=baker.icon)
 
         else:
             row.label(text=bake_map.baker, icon="QUESTION")

@@ -12,7 +12,7 @@ class DiffuseBaker(BakerBase):
     """Bake the diffuse/albedo color."""
 
     id = "DIFFUSE"
-    label = "Diffuse"
+    name = "Diffuse"
     description = "Bake diffuse color"
     icon = "TEXTURE"
     blender_type = "DIFFUSE"
@@ -36,6 +36,9 @@ class DiffuseBaker(BakerBase):
         """
         MaterialService.restore_target(ctx)
         ImageServiceBake.cleanup(ctx.image)
+
+    def update_baker(self, ctx: BakeContext) -> None:
+        return super().update_baker(ctx)
 
 
 classes = (DiffuseBaker,)

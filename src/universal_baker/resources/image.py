@@ -17,12 +17,12 @@ class ImageResource:
     """
 
     image: bpy.types.Image | None = None
+    _width: int = 2048
+    _height: int = 2048
 
     name: str = ""
     filepath: Path | None = None
 
-    width: int = 2048
-    height: int = 2048
     generated_type: str = "BLANK"
 
     object_name: str = ""
@@ -39,6 +39,27 @@ class ImageResource:
     dirty: bool = False
     temporary: bool = False
     packed: bool = False
+    is_copy: bool = False
+
+    @property
+    def width(self) -> int:
+        if self.image is None:
+            return self._width
+        return self.image.size[0]
+
+    @width.setter
+    def width(self, value) -> None:
+        self._width = value
+
+    @property
+    def height(self) -> int:
+        if self.image is None:
+            return self._height
+        return self.image.size[1]
+
+    @height.setter
+    def height(self, value) -> None:
+        self._height = value
 
     @property
     def exists(self) -> bool:

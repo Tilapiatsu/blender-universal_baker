@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from ..runtime.settings_image import ImageSettings
+from ..runtime.settings_image import ColorManagementSettings, ImageSettings
 from ..runtime.settings_pack import (
     PackSettings,
 )
@@ -45,5 +45,7 @@ class PackSettingsResolver:
                 use_preview=settings.file_format_settings.use_preview,
                 views_format=settings.file_format_settings.views_format,
             ),
-            color=settings.colorspace,
+            color=ColorManagementSettings(
+                colorspace=settings.colorspace,
+            ),
         )

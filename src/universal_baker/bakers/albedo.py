@@ -11,3 +11,6 @@ class Baker(BakerBase):
 
     def cleanup(self, ctx: BakeContext):
         return super().cleanup(ctx)
+
+    def update_baker(self, ctx: BakeContext) -> None:
+        return super().update_baker(ctx)

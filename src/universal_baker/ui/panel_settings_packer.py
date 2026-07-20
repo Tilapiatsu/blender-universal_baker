@@ -120,10 +120,10 @@ class UBK_UL_PackerSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
         col1.prop(blue, "enabled", text="B", toggle=1)
         col1.prop(alpha, "enabled", text="A", toggle=1)
 
-        col2.prop(red, "source_map_items", text="Map")
-        col2.prop(green, "source_map_items", text="Map")
-        col2.prop(blue, "source_map_items", text="Map")
-        col2.prop(alpha, "source_map_items", text="Map")
+        col2.prop(red, "source_map_uuid", text="Map")
+        col2.prop(green, "source_map_uuid", text="Map")
+        col2.prop(blue, "source_map_uuid", text="Map")
+        col2.prop(alpha, "source_map_uuid", text="Map")
 
         col3.prop(red, "source_channel", text="")
         col3.prop(green, "source_channel", text="")

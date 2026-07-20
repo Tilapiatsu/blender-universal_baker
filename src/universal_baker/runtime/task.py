@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from uuid import uuid4
 from pathlib import Path
 
 
@@ -10,14 +9,8 @@ class Task:
     """Base Task Class. This is the base class that each executor uses."""
 
     id: str
+    uuid: str
     enabled: bool
-
-    @classmethod
-    def create(cls):
-        return cls(
-            id=str(uuid4()),
-            enabled=True,
-        )
 
     @property
     def output_name(self) -> str: ...

@@ -16,7 +16,7 @@ class ImageBuffer:
     width: int
     height: int
 
-    pixels: array | np.array
+    pixels: np.array
 
     channels: int = 4
 
@@ -47,13 +47,12 @@ class ImageBuffer:
     @classmethod
     def clear(cls): ...
 
-    @classmethod
     def reshape(self):
 
         if np is None:
             raise RuntimeError("NumPy unavailable.")
 
-        return self.pixels.reshape((self.height, self.width, 4))
+        return np.reshape(self.pixels, (self.height, self.width, 4))
 
     @classmethod
     def clone(cls): ...

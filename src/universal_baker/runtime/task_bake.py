@@ -34,7 +34,7 @@ class BakeTask(Task):
 
     @property
     def baker_name(self) -> str:
-        return self.baker.label
+        return self.baker.name
 
     @property
     def selected_to_active(self) -> bool:

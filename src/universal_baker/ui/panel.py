@@ -181,7 +181,6 @@ class UBK_PT_ObjectPanel(UBK_PT_MainPanel, bpy.types.Panel):
         project = BakeController.project(context)
 
         self.draw_objects(context, project)
-        self.draw_footer(context)
 
     def draw_header(self, context):
         layout = self.layout
@@ -193,12 +192,6 @@ class UBK_PT_ObjectPanel(UBK_PT_MainPanel, bpy.types.Panel):
         row = box.row(align=True)
         row.operator("ubk.add_object", text="Add Selected", icon="ADD")
         row.operator("ubk.remove_object", text="", icon="REMOVE")
-
-    def draw_footer(self, context):
-        self.layout.separator()
-        row = self.layout.row()
-        row.scale_y = 1.6
-        row.operator("ubk.bake_all", icon="RENDER_STILL")
 
 
 class UBK_PT_BakerPanel(UBK_PT_MainPanel, bpy.types.Panel):
@@ -225,10 +218,31 @@ class UBK_PT_BakerPanel(UBK_PT_MainPanel, bpy.types.Panel):
         row.operator("ubk.remove_baker", text="", icon="REMOVE")
 
 
+class UBK_PT_ProcessPanel(UBK_PT_MainPanel, bpy.types.Panel):
+    bl_idname = "UBK_PT_ProcessPanel"
+    bl_label = "Process"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category = "Universal Baker"
+
+    def draw_header(self, context):
+        layout = self.layout
+        layout.label(text="Process", icon="SETTINGS")
+
+    def draw(self, context):
+        layout = self.layout
+        col = layout.column()
+        col.scale_y = 1.6
+        col.operator("ubk.bake_all", icon="RENDER_STILL")
+        col.operator("ubk.pack_all", icon="NODE_COMPOSITING")
+        col.operator("ubk.bake_and_pack_all", icon="LONGDISPLAY")
+
+
 classes = (
     UBK_PT_UniversalBakerPanel,
     UBK_PT_ObjectPanel,
     UBK_PT_BakerPanel,
+    UBK_PT_ProcessPanel,
 )
 
 

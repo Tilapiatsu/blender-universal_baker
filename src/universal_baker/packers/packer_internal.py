@@ -1,10 +1,13 @@
 from __future__ import annotations
 from abc import abstractmethod
 
+from universal_baker.resources.pack import ImageResource
+
 from ..runtime.context import PackContext
 from .packer_base import PackerBase
 
 from ..runtime.image_buffer import ImageBuffer
+from ..services.image_pack import ImageServicePack
 from ..services.image_io import ImageIOService
 from .channels import Channel
 
@@ -30,16 +33,89 @@ class PackerInternal(PackerBase):
 
     def prepare(self, ctx: PackContext) -> None:
         """Prepare Blender before packing."""
-        # TODO : Prepare and run the pack
         task = ctx.task
-        ImageIOService.ensure_image_sizes()
-        self.output_buffer = self.create_buffer(256, 256)
+        ctx.pack_resource = ImageServicePack.create_pack_resource(task)
+
+        ctx.red_resource = ctx.pack_resource.red_resource
+        ctx.green_resource = ctx.pack_resource.green_resource
+        ctx.blue_resource = ctx.pack_resource.blue_resource
+        ctx.alpha_resource = ctx.pack_resource.alpha_resource
+
+        resources: tuple[ImageResource, ...] = tuple([])
+
+        if ctx.red_resource is not None:
+            resources += (ctx.red_resource,)
+        if ctx.green_resource is not None:
+            resources += (ctx.green_resource,)
+        if ctx.blue_resource is not None:
+            resources += (ctx.blue_resource,)
+        if ctx.alpha_resource is not None:
+            resources += (ctx.alpha_resource,)
+
+        if not len(resources):
+            print("No Image Resource Found")
+            return
+
+        ImageIOService.ensure_image_sizes(*resources)
+
+        ctx.output_buffer = self.create_buffer(resources[0].width, resources[0].height)
 
     def pack(self, ctx: PackContext) -> None:
         """Execute the packing."""
 
+        if ctx.output_buffer:
+            if (
+                ctx.red_resource
+                and ctx.pack_resource
+                and ctx.pack_resource.red_channel_mapping
+                and ctx.red_resource.exists
+            ):
+                image_buffer = ImageIOService.read(ctx.red_resource)
+                self.copy_channel(ctx.output_buffer, ctx.pack_resource.red_channel_mapping, image_buffer, Channel.R)
+            if (
+                ctx.green_resource
+                and ctx.pack_resource
+                and ctx.pack_resource.green_channel_mapping
+                and ctx.green_resource.exists
+            ):
+                image_buffer = ImageIOService.read(ctx.green_resource)
+                self.copy_channel(ctx.output_buffer, ctx.pack_resource.green_channel_mapping, image_buffer, Channel.G)
+            if (
+                ctx.blue_resource
+                and ctx.pack_resource
+                and ctx.pack_resource.blue_channel_mapping
+                and ctx.blue_resource.exists
+            ):
+                image_buffer = ImageIOService.read(ctx.blue_resource)
+                self.copy_channel(ctx.output_buffer, ctx.pack_resource.red_channel_mapping, image_buffer, Channel.B)
+            if (
+                ctx.alpha_resource
+                and ctx.pack_resource
+                and ctx.pack_resource.alpha_channel_mapping
+                and ctx.alpha_resource.exists
+            ):
+                image_buffer = ImageIOService.read(ctx.alpha_resource)
+                self.copy_channel(ctx.output_buffer, ctx.pack_resource.alpha_channel_mapping, image_buffer, Channel.A)
+
+            ImageIOService.acquire(ctx.image, ctx.settings, ctx.task)
+            ImageIOService.write(ctx.image, ctx.output_buffer)
+
+        else:
+            print("Missing output buffer")
+
     def cleanup(self, ctx: PackContext) -> None:
         """Restore Blender."""
+        if ctx.red_resource and ctx.red_resource.exists and ctx.red_resource.is_copy:
+            ImageServicePack.remove(ctx.red_resource.image)
+
+        if ctx.green_resource and ctx.green_resource.exists and ctx.green_resource.is_copy:
+            ImageServicePack.remove(ctx.green_resource.image)
+
+        if ctx.blue_resource and ctx.blue_resource.exists and ctx.blue_resource.is_copy:
+            ImageServicePack.remove(ctx.blue_resource.image)
+
+        if ctx.alpha_resource and ctx.alpha_resource.exists and ctx.alpha_resource.is_copy:
+            ImageServicePack.remove(ctx.alpha_resource.image)
 
     # -------------------------------------------------------------------------
     # Validation
@@ -73,11 +149,7 @@ class PackerInternal(PackerBase):
 
     @classmethod
     def copy_channel(
-        cls,
-        destination: ImageBuffer,
-        destination_channel: Channel,
-        source: ImageBuffer,
-        source_channel: Channel,
+        cls, destination: ImageBuffer, destination_channel: Channel, source: ImageBuffer, source_channel: Channel
     ) -> None:
         """Copy a channel from source ImageBuffer to a destination ImageBuffer"""
         cls.validate_same_size(destination, source)
@@ -98,12 +170,7 @@ class PackerInternal(PackerBase):
             )
 
     @classmethod
-    def fill_channel(
-        cls,
-        destination: ImageBuffer,
-        destination_channel: Channel,
-        value: float,
-    ) -> None:
+    def fill_channel(cls, destination: ImageBuffer, destination_channel: Channel, value: float) -> None:
         """Write a value to the inputed channel of the ImageBuffer"""
         if np is not None:
             pixels = destination.reshape()
@@ -122,11 +189,7 @@ class PackerInternal(PackerBase):
 
     @classmethod
     def _copy_numpy(
-        cls,
-        destination: ImageBuffer,
-        destination_channel: Channel,
-        source: ImageBuffer,
-        source_channel: Channel,
+        cls, destination: ImageBuffer, destination_channel: Channel, source: ImageBuffer, source_channel: Channel
     ) -> None:
         """Copy a channel from source ImageBuffer to a destination ImageBuffer using numpy"""
 
@@ -144,11 +207,7 @@ class PackerInternal(PackerBase):
 
     @classmethod
     def _copy_python(
-        cls,
-        destination: ImageBuffer,
-        destination_channel: Channel,
-        source: ImageBuffer,
-        source_channel: Channel,
+        cls, destination: ImageBuffer, destination_channel: Channel, source: ImageBuffer, source_channel: Channel
     ) -> None:
         """Copy a channel from source ImageBuffer to a destination ImageBuffer using python"""
 
