@@ -43,7 +43,7 @@ class BakerRegistry:
             items.append(
                 (
                     baker.id,
-                    baker.label,
+                    baker.name,
                     baker.description,
                     baker.icon,
                     len(items),

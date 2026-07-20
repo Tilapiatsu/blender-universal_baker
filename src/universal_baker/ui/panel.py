@@ -214,7 +214,8 @@ class UBK_PT_BakerPanel(UBK_PT_MainPanel, bpy.types.Panel):
         box.template_list("UBK_UL_BakerList", "", active_object, "bakers", active_object, "active_baker_index", rows=5)
 
         row = box.row(align=True)
-        row.operator("ubk.add_baker", icon="ADD")
+        row.menu("UBK_MT_BakerAddMenu", icon="ADD")
+        # row.operator("ubk.add_baker", icon="ADD")
         row.operator("ubk.remove_baker", text="", icon="REMOVE")
 
 

@@ -73,13 +73,13 @@ class BakeController:
             return None
 
         object_settings = project.objects[project.active_object_index]
-        bake_map = object_settings.bakers.add()
-        bake_map.baker = baker_id
-        bake_map.image_name = baker_id.title()
-        bake_map.uuid = str(uuid4())
+        baker = object_settings.bakers.add()
+        baker.baker = baker_id
+        baker.image_name = baker_id.title()
+        baker.uuid = str(uuid4())
         object_settings.active_baker_index = len(object_settings.bakers) - 1
 
-        return bake_map
+        return baker
 
     @classmethod
     def remove_map(cls, context):

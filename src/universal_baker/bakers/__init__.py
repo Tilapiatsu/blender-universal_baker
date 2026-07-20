@@ -1,6 +1,12 @@
-from . import diffuse
+from . import (
+    diffuse,
+    ao,
+)
 
-modules = (diffuse,)
+modules = (
+    diffuse,
+    ao,
+)
 
 
 def register():

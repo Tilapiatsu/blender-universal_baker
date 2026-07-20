@@ -7,14 +7,9 @@ from .settings_bake import UBK_BakeSettings
 
 
 def bake_map_items(self, context):
-    """Dynamic enum.
+    from ..core.registry_baker import registry_baker
 
-    Later this will query the Baker Registry.
-    """
-
-    return [
-        ("DIFFUSE", "Diffuse", ""),
-    ]
+    return registry_baker.enum_items()
 
 
 class UBK_Baker(PropertyGroup):
