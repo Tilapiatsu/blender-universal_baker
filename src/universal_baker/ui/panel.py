@@ -220,7 +220,7 @@ class UBK_PT_BakerPanel(UBK_PT_MainPanel, bpy.types.Panel):
 
 class UBK_PT_ProcessPanel(UBK_PT_MainPanel, bpy.types.Panel):
     bl_idname = "UBK_PT_ProcessPanel"
-    bl_label = "Process"
+    bl_label = ""
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category = "Universal Baker"

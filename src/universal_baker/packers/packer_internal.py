@@ -87,7 +87,7 @@ class PackerInternal(PackerBase):
                 and ctx.blue_resource.exists
             ):
                 image_buffer = ImageIOService.read(ctx.blue_resource)
-                self.copy_channel(ctx.output_buffer, ctx.pack_resource.red_channel_mapping, image_buffer, Channel.B)
+                self.copy_channel(ctx.output_buffer, ctx.pack_resource.blue_channel_mapping, image_buffer, Channel.B)
             if (
                 ctx.alpha_resource
                 and ctx.pack_resource

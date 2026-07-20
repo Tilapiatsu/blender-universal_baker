@@ -31,7 +31,7 @@ class ImageIOService(ImageServiceBase):
         image = resource.image
         assert image is not None
 
-        if image.width != resource.width or image.height != resource.height:
+        if image.size[0] != resource.width or image.size[1] != resource.height:
             image.scale(buffer.width, buffer.height)
 
         image.pixels.foreach_set(buffer.pixels)
