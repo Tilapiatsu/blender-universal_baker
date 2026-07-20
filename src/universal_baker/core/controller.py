@@ -5,6 +5,8 @@ from typing import List
 import bpy
 from uuid import uuid4
 
+from universal_baker.ressources.image import ImageResource
+
 from .planner import ExecutionPlanner
 from ..runtime.job import Job
 
@@ -99,6 +101,30 @@ class BakeController:
                     return map
 
         return None
+
+    @classmethod
+    def get_resource_from_uuid(cls, uuid: str) -> ImageResource | None:
+        project = cls.project(bpy.context)
+        if project is None:
+            return None
+
+        for o in project.objects:
+            if not len(o.bakers):
+                continue
+
+            for b in o.bakers:
+                if b.uuid == uuid:
+                    resource = ImageResource(
+                        image=b.image,
+                        name=b.image_name,
+                    )
+                    if b.image is not None:
+                        resource.width = b.image.width
+                        resource.height = b.image.height
+                    else:
+                        return None
+
+                    return resource
 
     # ---------------------------------------------------------
     # Pack Operations

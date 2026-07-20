@@ -1,4 +1,5 @@
 from __future__ import annotations
+import bpy
 from bpy.types import PropertyGroup
 from bpy.props import BoolProperty, EnumProperty, StringProperty, PointerProperty
 from .settings_cage import UBK_CageSettings
@@ -34,6 +35,10 @@ class UBK_Baker(PropertyGroup):
     image_name: StringProperty(
         name="Image Name",
         default="Bake",
+    )
+
+    image: PointerProperty(
+        type=bpy.types.Image,
     )
 
     override_settings: BoolProperty(

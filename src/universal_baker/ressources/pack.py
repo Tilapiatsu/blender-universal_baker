@@ -7,7 +7,6 @@ import bpy
 from ..runtime.task_pack import PackingTask
 
 from .image import ImageResource
-from ..runtime.settings_image import ImageSettings
 from ..packers.channels import Channel
 
 
@@ -45,24 +44,34 @@ class PackResource:
             self.alpha_channel_mapping = task.alpha.source_channel
 
     @property
-    def red_image(self) -> ImageResource | None:
+    def red_resource(self) -> ImageResource | None:
         if self.red_uuid is None:
             return None
 
+        return self.get_resource_from_uuid(self.red_uuid)
+
     @property
-    def green_image(self) -> ImageResource | None:
+    def green_resource(self) -> ImageResource | None:
         if self.green_uuid is None:
             return None
 
+        return self.get_resource_from_uuid(self.green_uuid)
+
     @property
-    def blue_image(self) -> ImageResource | None:
+    def blue_resource(self) -> ImageResource | None:
         if self.blue_uuid is None:
             return None
 
+        return self.get_resource_from_uuid(self.blue_uuid)
+
     @property
-    def alpha_image(self) -> ImageResource | None:
+    def alpha_resource(self) -> ImageResource | None:
         if self.alpha_uuid is None:
             return None
 
+        return self.get_resource_from_uuid(self.alpha_uuid)
+
     def get_resource_from_uuid(self, uuid: str) -> ImageResource | None:
-        pass
+        from ..core.controller import BakeController
+
+        return BakeController.get_resource_from_uuid(uuid)
