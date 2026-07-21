@@ -2,67 +2,11 @@ from __future__ import annotations
 
 import bpy
 from ..services.internal_data import InternalDataService
-from .settings_base import get_colorspace_items
+from .settings_output import UBK_Output
+from .settings_base import UBK_Settings
 
 
-def get_color_depth(self, context):
-    items = []
-    if self.file_format in ["PNG", "TIFF", "TARGA"]:
-        items.append(
-            ("8", "8", ""),
-        )
-        items.append(
-            ("16", "16", ""),
-        )
-    elif self.file_format in ["OPEN_EXR"]:
-        items.append(
-            ("16", "16", ""),
-        )
-        items.append(
-            ("32", "32", ""),
-        )
-    elif self.file_format in ["DPX"]:
-        items.append(
-            ("8", "8", ""),
-        )
-        items.append(
-            ("10", "10", ""),
-        )
-        items.append(
-            ("12", "12", ""),
-        )
-        items.append(
-            ("16", "16", ""),
-        )
-    elif self.file_format in ["JPEG", "BMP", "CINEON"]:
-        items.append(
-            ("8", "8", ""),
-        )
-
-    return items
-
-
-class UBK_BakeSettings(bpy.types.PropertyGroup):
-    internal_name: bpy.props.StringProperty(default="Default")
-
-    # -------------------------------------------------------------------------
-    # Image
-    # -------------------------------------------------------------------------
-
-    resolution_x: bpy.props.IntProperty(
-        name="Width",
-        default=2048,
-        min=1,
-        subtype="PIXEL",
-    )
-
-    resolution_y: bpy.props.IntProperty(
-        name="Height",
-        default=2048,
-        min=1,
-        subtype="PIXEL",
-    )
-
+class UBK_BakeSettings(UBK_Settings, UBK_Output):
     # -------------------------------------------------------------------------
     # Bake
     # -------------------------------------------------------------------------
@@ -137,15 +81,6 @@ class UBK_BakeSettings(bpy.types.PropertyGroup):
     denoise: bpy.props.BoolProperty(
         name="Denoise",
         default=False,
-    )
-
-    # -------------------------------------------------------------------------
-    # Color
-    # -------------------------------------------------------------------------
-
-    colorspace: bpy.props.EnumProperty(
-        name="Colorspace",
-        items=get_colorspace_items,
     )
 
     @property

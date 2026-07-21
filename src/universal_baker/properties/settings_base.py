@@ -1,4 +1,12 @@
+from __future__ import annotations
+
 import bpy
+
+from bpy.types import PropertyGroup
+
+
+class UBK_Settings(PropertyGroup):
+    internal_name: bpy.props.StringProperty(default="Default")
 
 
 def get_colorspace_items(self, context):

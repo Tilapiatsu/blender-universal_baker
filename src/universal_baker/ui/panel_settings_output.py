@@ -42,6 +42,7 @@ def draw_output_settings(layout, settings):
         layout.prop(settings, "resolution_y")
         layout.template_image_settings(internal_data.format, color_management=False)
         layout.prop(settings, "colorspace")
+        layout.prop(settings, "output_path")
 
 
 # -------------------------------------------------------------------------
