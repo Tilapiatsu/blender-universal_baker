@@ -45,9 +45,9 @@ class BakerBase(ABC):
         """Prepare, bake and cleanup all at once."""
         self.prepare(ctx)
         self.bake(ctx)
-        self.cleanup(ctx)
         self.update_baker(ctx)
         self.export_file(ctx)
+        self.cleanup(ctx)
 
     @abstractmethod
     def prepare(self, ctx: BakeContext) -> None:
