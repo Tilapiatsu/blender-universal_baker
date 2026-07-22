@@ -6,7 +6,6 @@ import bpy
 
 from bpy.types import PropertyGroup
 from bpy.props import EnumProperty, PointerProperty, BoolProperty, StringProperty
-from ..core import registry_baker
 from .baker import UBK_Baker
 from .settings_pack import UBK_PackerSettings
 from ..packers.channels import CHANNEL_ITEMS
