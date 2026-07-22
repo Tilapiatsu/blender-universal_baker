@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from ..properties.packer import UBK_Pack
+from ..properties.packer import UBK_Packer
 from .collection import PropertyCollectionService
 
 
-class PackService(PropertyCollectionService[UBK_Pack]):
+class PackService(PropertyCollectionService[UBK_Packer]):
     @classmethod
     def collection(cls, owner):
         return owner.packers

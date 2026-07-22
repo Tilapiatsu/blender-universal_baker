@@ -11,6 +11,7 @@ from ..packers.channels import Channel
 
 @dataclass(slots=True)
 class PackingChannel:
+    enabled: bool
     source_map_uuid: str
     source_map_name: str
     source_channel: Channel

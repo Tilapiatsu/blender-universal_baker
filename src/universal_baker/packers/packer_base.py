@@ -32,6 +32,7 @@ class PackerBase(ABC):
         self.prepare(ctx)
         self.pack(ctx)
         self.cleanup(ctx)
+        self.export_file(ctx)
 
     @abstractmethod
     def prepare(self, ctx: PackContext) -> None:
@@ -44,3 +45,7 @@ class PackerBase(ABC):
     @abstractmethod
     def cleanup(self, ctx: PackContext) -> None:
         """Restore Blender."""
+
+    @abstractmethod
+    def export_file(self, ctx: PackContext):
+        """Save Pack to disk."""

@@ -24,7 +24,7 @@ class DiffuseBaker(BakerBase):
         """
         Prepare everything required before Blender's bake.
         """
-        ctx.image = ImageServiceBake.acquire(ctx.image, ctx.settings, ctx.task)
+        ctx.image = ImageServiceBake.acquire(ctx.image, ctx.task)
         MaterialService.prepare_target(ctx)
 
     def bake(self, ctx: BakeContext) -> None:
@@ -39,6 +39,10 @@ class DiffuseBaker(BakerBase):
 
     def update_baker(self, ctx: BakeContext) -> None:
         return super().update_baker(ctx)
+
+    def export_file(self, ctx: BakeContext):
+        """Save Pack to disk."""
+        ImageServiceBake.save(ctx.image)
 
 
 classes = (DiffuseBaker,)

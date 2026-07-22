@@ -3,8 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import bpy
-from universal_baker.bakers.base import BakerBase
-from ..runtime.settings_output import OutputSettings
 from ..resources.image import ImageResource
 from ..runtime.task import Task
 
@@ -13,7 +11,7 @@ class ImageServiceBase:
     """Manage destination images."""
 
     @classmethod
-    def acquire(cls, resource: ImageResource, settings: OutputSettings, task: Task) -> bpy.types.Image:
+    def acquire(cls, resource: ImageResource, task: Task) -> bpy.types.Image:
         """
         Acquire the destination image for this bake.
         """
@@ -21,7 +19,7 @@ class ImageServiceBase:
         if resource.image is not None:
             return resource.image
 
-        cls.configure(resource, settings, task)
+        cls.configure(resource, task)
 
         image = bpy.data.images.get(resource.name)
 
@@ -76,13 +74,13 @@ class ImageServiceBase:
         resource.image = None
 
     @classmethod
-    def configure(cls, resource: ImageResource, settings: OutputSettings, task: Task) -> None:
+    def configure(cls, resource: ImageResource, task: Task) -> None:
         """
         Populate the resource from the Task.
         """
 
-        image_settings = settings.image
-        color_settings = settings.color
+        image_settings = task.output_context.output_settings.image
+        color_settings = task.output_context.output_settings.color
 
         resource.name = task.output_name
         resource.width = image_settings.width
@@ -90,12 +88,11 @@ class ImageServiceBase:
         resource.colorspace = color_settings.colorspace
         resource.image_format_settings = image_settings
 
-        #
-        # TODO:
-        # Output directory service.
-        #
+        from ..core.output_resolver import OutputResolver
 
-        resource.filepath = Path(bpy.path.abspath("//")) / f"{resource.name}.png"
+        file_output = OutputResolver.resolve(task.output_context)
+
+        resource.filepath = file_output.absolute_path
 
     @classmethod
     def create(cls, resource: ImageResource) -> bpy.types.Image:
@@ -197,9 +194,3 @@ class ImageServiceBase:
             if r.width != width or r.height != height:
                 r = cls.copy(r)
                 r.scale(width, height)
-
-    @classmethod
-    def get_baker_from_uuid(cls, uuid: str) -> BakerBase | None:
-        from ..core.controller import BakeController
-
-        return BakeController.get_baker_from_uuid(uuid)

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import bpy
 
 from uuid import uuid4
 
@@ -12,6 +13,9 @@ from ..core.registry_baker import registry_baker
 from ..factories.settings_bake import BakeSettingsResolver
 from ..factories.settings_cage import CageSettingsResolver
 from ..factories.settings_pack import PackSettingsResolver
+from ..factories.settings_output import OutputSettingsResolver
+from ..output.output_tokens import get_variables
+from ..runtime.output_context import OutputContext
 
 
 class ExecutionPlanner:
@@ -41,11 +45,31 @@ class ExecutionPlanner:
                     #     project.settings_cage,
                     #     bake_map.settings_cage if bake_map.override_settings_cage else None,
                     # )
-                    #
+
+                    output_settings = OutputSettingsResolver.resolve(
+                        project.settings_bake,
+                        baker.settings if baker.override_settings else None,
+                    )
+                    output_context = OutputContext(
+                        directory_template=baker.settings.output_settings.output_path,
+                        filename_template=baker.settings.output_settings.filename_template,
+                        extension=output_settings.image.file_format,
+                        variables=get_variables(
+                            obj=obj.target,
+                            baker=baker,
+                            packer=None,
+                            image_name=baker.image_name,
+                            scene=bpy.context.scene,
+                            extension=output_settings.image.file_format,
+                        ),
+                        output_settings=output_settings,
+                    )
+
                     task = BakeTask(
                         id=baker.name,
                         uuid=baker.uuid,
                         enabled=True,
+                        output_context=output_context,
                         target=obj.target,
                         sources=obj.sources,
                         baker=registry_baker[baker.baker],
@@ -60,51 +84,75 @@ class ExecutionPlanner:
             if not regiter_packers:
                 continue
 
-            for pack in obj.packers:
-                if not pack.enabled:
+            for packer in obj.packers:
+                if not packer.enabled:
                     continue
 
-                red_baker = BakeController.get_baker_from_uuid(pack.mappings[0].source_map_uuid)
-                green_baker = BakeController.get_baker_from_uuid(pack.mappings[1].source_map_uuid)
-                blue_baker = BakeController.get_baker_from_uuid(pack.mappings[2].source_map_uuid)
-                alpha_baker = BakeController.get_baker_from_uuid(pack.mappings[3].source_map_uuid)
+                red_baker = BakeController.get_baker_from_uuid(packer.mappings[0].source_map_uuid)
+                green_baker = BakeController.get_baker_from_uuid(packer.mappings[1].source_map_uuid)
+                blue_baker = BakeController.get_baker_from_uuid(packer.mappings[2].source_map_uuid)
+                alpha_baker = BakeController.get_baker_from_uuid(packer.mappings[3].source_map_uuid)
 
                 red = PackingChannel(
-                    source_map_uuid=pack.mappings[0].source_map_uuid,
-                    source_map_name=red_baker.name if red_baker else "",
-                    source_channel=Channel(pack.mappings[0].source_channel),
-                    destination_channel=Channel(pack.mappings[0].destination_channel),
+                    enabled=packer.mappings[0].enabled,
+                    source_map_uuid=packer.mappings[0].source_map_uuid,
+                    source_map_name=red_baker.baker if red_baker else "NONE",
+                    source_channel=Channel(packer.mappings[0].source_channel),
+                    destination_channel=Channel(packer.mappings[0].destination_channel),
                 )
                 green = PackingChannel(
-                    source_map_uuid=pack.mappings[1].source_map_uuid,
-                    source_map_name=green_baker.name if green_baker else "",
-                    source_channel=Channel(pack.mappings[1].source_channel),
-                    destination_channel=Channel(pack.mappings[1].destination_channel),
+                    enabled=packer.mappings[1].enabled,
+                    source_map_uuid=packer.mappings[1].source_map_uuid,
+                    source_map_name=green_baker.baker if green_baker else "NONE",
+                    source_channel=Channel(packer.mappings[1].source_channel),
+                    destination_channel=Channel(packer.mappings[1].destination_channel),
                 )
                 blue = PackingChannel(
-                    source_map_uuid=pack.mappings[2].source_map_uuid,
-                    source_map_name=blue_baker.name if blue_baker else "",
-                    source_channel=Channel(pack.mappings[2].source_channel),
-                    destination_channel=Channel(pack.mappings[2].destination_channel),
+                    enabled=packer.mappings[2].enabled,
+                    source_map_uuid=packer.mappings[2].source_map_uuid,
+                    source_map_name=blue_baker.baker if blue_baker else "NONE",
+                    source_channel=Channel(packer.mappings[2].source_channel),
+                    destination_channel=Channel(packer.mappings[2].destination_channel),
                 )
                 alpha = PackingChannel(
-                    source_map_uuid=pack.mappings[3].source_map_uuid,
-                    source_map_name=alpha_baker.name if alpha_baker else "",
-                    source_channel=Channel(pack.mappings[3].source_channel),
-                    destination_channel=Channel(pack.mappings[3].destination_channel),
+                    enabled=packer.mappings[3].enabled,
+                    source_map_uuid=packer.mappings[3].source_map_uuid,
+                    source_map_name=alpha_baker.baker if alpha_baker else "NONE",
+                    source_channel=Channel(packer.mappings[3].source_channel),
+                    destination_channel=Channel(packer.mappings[3].destination_channel),
                 )
 
                 pack_settings = PackSettingsResolver.resolve(
                     project.settings_bake,
-                    pack.settings if pack.override_settings else None,
+                    packer.settings if packer.override_settings else None,
+                )
+
+                output_settings = OutputSettingsResolver.resolve(
+                    project.settings_bake,
+                    packer.settings if packer.override_settings else None,
+                )
+                output_context = OutputContext(
+                    directory_template=packer.settings.output_settings.output_path,
+                    filename_template=packer.settings.output_settings.filename_template,
+                    extension=output_settings.image.file_format,
+                    variables=get_variables(
+                        obj=obj.target,
+                        baker=None,
+                        packer=packer,
+                        image_name=packer.image_name,
+                        scene=bpy.context.scene,
+                        extension=output_settings.image.file_format,
+                    ),
+                    output_settings=output_settings,
                 )
 
                 task = PackingTask(
-                    id=pack.name,
+                    id=packer.name,
                     uuid=str(uuid4()),
                     enabled=True,
+                    output_context=output_context,
                     packer=PackerInternal(),
-                    image_name=pack.image_name,
+                    image_name=packer.image_name,
                     settings=pack_settings,
                     red=red,
                     green=green,

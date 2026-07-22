@@ -3,7 +3,7 @@ from __future__ import annotations
 import bpy
 
 from bpy.types import PropertyGroup
-from bpy.props import EnumProperty, StringProperty, IntProperty
+from bpy.props import EnumProperty, StringProperty, IntProperty, BoolProperty
 from ..services.internal_data import InternalDataService
 
 from .settings_base import get_colorspace_items
@@ -41,12 +41,23 @@ class UBK_Output(PropertyGroup):
     # Path
     # -------------------------------------------------------------------------
 
+    export_file: BoolProperty(name="Export File", default=True)
     output_path: StringProperty(name="Output Path", default="//", subtype="FILE_PATH")
+    filename_template: StringProperty(name="Filename", default="{object}_{image_name}")
 
-    @property
-    def file_format_settings(self):
-        node = InternalDataService.get_output_node(self.internal_name)
-        if node is None:
-            return
 
-        return node.format
+classes = (UBK_Output,)
+
+
+def register():
+    from bpy.utils import register_class
+
+    for cls in classes:
+        register_class(cls)
+
+
+def unregister():
+    from bpy.utils import unregister_class
+
+    for cls in reversed(classes):
+        unregister_class(cls)

@@ -5,11 +5,12 @@ from universal_baker.properties.settings_base import UBK_Settings
 from .settings_output import UBK_Output
 
 
-class UBK_PackSettings(UBK_Settings, UBK_Output):
+class UBK_PackerSettings(UBK_Settings):
     internal_name: bpy.props.StringProperty(default="Default")
+    output_settings: bpy.props.PointerProperty(type=UBK_Output)
 
 
-classes = (UBK_PackSettings,)
+classes = (UBK_PackerSettings,)
 
 
 def register():

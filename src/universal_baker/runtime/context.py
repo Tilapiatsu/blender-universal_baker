@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from .task_pack import PackingTask
     from .image_buffer import ImageBuffer
     from ..resources.pack import PackResource
+    from .settings_output import OutputSettings
 
 from ..resources.image import ImageResource
 from ..resources.material import MaterialResource
@@ -75,6 +76,10 @@ class BakeContext(ExecutionContext):
     def settings(self) -> BakeSettings:
         return self.task.settings
 
+    @property
+    def output_settings(self) -> OutputSettings:
+        return self.task.output_context.output_settings
+
     def succeed(self, message: str = "") -> None:
         self.finished = True
         self.success = True
@@ -98,6 +103,11 @@ class PackContext(ExecutionContext):
     green_resource: ImageResource | None = None
     blue_resource: ImageResource | None = None
     alpha_resource: ImageResource | None = None
+
+    pack_red: bool = False
+    pack_green: bool = False
+    pack_blue: bool = False
+    pack_alpha: bool = False
 
     output_buffer: ImageBuffer | None = None
     pack_resource: PackResource | None = None

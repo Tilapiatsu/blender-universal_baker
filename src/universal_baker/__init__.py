@@ -14,6 +14,7 @@ bl_info = {
 from . import (
     preferences,
     properties,
+    output,
     ui,
     operators,
     bakers,
@@ -23,6 +24,7 @@ from . import (
 modules = (
     preferences,
     properties,
+    output,
     ui,
     operators,
     bakers,

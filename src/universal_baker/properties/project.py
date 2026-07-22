@@ -5,7 +5,7 @@ from bpy.props import CollectionProperty, PointerProperty
 from .object import UBK_Object
 from .settings_bake import UBK_BakeSettings
 from .settings_cage import UBK_CageSettings
-from .settings_pack import UBK_PackSettings
+from .settings_pack import UBK_PackerSettings
 
 
 class UBK_Project(PropertyGroup):

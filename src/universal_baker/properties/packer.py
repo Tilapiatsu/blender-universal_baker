@@ -8,7 +8,7 @@ from bpy.types import PropertyGroup
 from bpy.props import EnumProperty, PointerProperty, BoolProperty, StringProperty
 from ..core import registry_baker
 from .baker import UBK_Baker
-from .settings_pack import UBK_PackSettings
+from .settings_pack import UBK_PackerSettings
 from ..packers.channels import CHANNEL_ITEMS
 
 
@@ -49,7 +49,7 @@ class UBK_ChannelMapping(PropertyGroup):
     )
 
 
-class UBK_Pack(PropertyGroup):
+class UBK_Packer(PropertyGroup):
     """Packing settings from output maps"""
 
     # packer_type: EnumProperty(name="Packing Type", items=packer_types)
@@ -60,12 +60,12 @@ class UBK_Pack(PropertyGroup):
     image_name: StringProperty(name="Name", default="Channel Packing")
     active_packer_index: bpy.props.IntProperty(default=0)
     mappings: bpy.props.CollectionProperty(type=UBK_ChannelMapping)
-    settings: bpy.props.PointerProperty(type=UBK_PackSettings)
+    settings: bpy.props.PointerProperty(type=UBK_PackerSettings)
 
 
 classes = (
     UBK_ChannelMapping,
-    UBK_Pack,
+    UBK_Packer,
 )
 
 

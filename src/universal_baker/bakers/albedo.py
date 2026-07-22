@@ -14,3 +14,6 @@ class Baker(BakerBase):
 
     def update_baker(self, ctx: BakeContext) -> None:
         return super().update_baker(ctx)
+
+    def export_file(self, ctx: BakeContext):
+        return super().export_file(ctx)

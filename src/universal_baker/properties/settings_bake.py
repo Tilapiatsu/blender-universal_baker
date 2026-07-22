@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import bpy
-from ..services.internal_data import InternalDataService
 from .settings_output import UBK_Output
 from .settings_base import UBK_Settings
 
 
-class UBK_BakeSettings(UBK_Settings, UBK_Output):
+class UBK_BakeSettings(UBK_Settings):
+    output_settings: bpy.props.PointerProperty(type=UBK_Output)
+
     # -------------------------------------------------------------------------
     # Bake
     # -------------------------------------------------------------------------
@@ -82,14 +83,6 @@ class UBK_BakeSettings(UBK_Settings, UBK_Output):
         name="Denoise",
         default=False,
     )
-
-    @property
-    def file_format_settings(self):
-        node = InternalDataService.get_output_node(self.internal_name)
-        if node is None:
-            return
-
-        return node.format
 
 
 classes = (UBK_BakeSettings,)

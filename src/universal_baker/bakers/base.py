@@ -47,6 +47,7 @@ class BakerBase(ABC):
         self.bake(ctx)
         self.cleanup(ctx)
         self.update_baker(ctx)
+        self.export_file(ctx)
 
     @abstractmethod
     def prepare(self, ctx: BakeContext) -> None:
@@ -71,3 +72,7 @@ class BakerBase(ABC):
             return
 
         baker.image = ctx.image
+
+    @abstractmethod
+    def export_file(self, ctx: BakeContext):
+        """Save Pack to disk."""

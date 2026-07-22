@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .settings_output import OutputSettings
-
 
 @dataclass(slots=True)
 class BakeRenderSettings:
@@ -27,6 +25,6 @@ class SamplingSettings:
 
 
 @dataclass(slots=True)
-class BakeSettings(OutputSettings):
+class BakeSettings:
     bake: BakeRenderSettings
     sampling: SamplingSettings
