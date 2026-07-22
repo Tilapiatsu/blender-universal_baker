@@ -10,6 +10,7 @@ if TYPE_CHECKING:
     from ..runtime.task import Task
 
 from ..services.renderer import RendererService
+from ..services.image_bake import ImageServiceBake
 
 
 class BakerColorType(Enum):
@@ -75,4 +76,6 @@ class BakerBase(ABC):
 
     @abstractmethod
     def export_file(self, ctx: BakeContext):
-        """Save Pack to disk."""
+        """Save Bake to disk."""
+        if ctx.task.output_context.output_settings.path.export_file:
+            ImageServiceBake.save(ctx.image)

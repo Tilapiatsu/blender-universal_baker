@@ -33,7 +33,7 @@ class PackerInternal(PackerBase):
 
     def export_file(self, ctx: PackContext):
         """Save Pack to disk."""
-        ImageServicePack.save(ctx.image)
+        return super().export_file(ctx)
 
     def prepare(self, ctx: PackContext) -> None:
         """Prepare Blender before packing."""

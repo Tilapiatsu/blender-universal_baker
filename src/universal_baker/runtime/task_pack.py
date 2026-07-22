@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
-from ..packers.packer_base import PackerBase
+if TYPE_CHECKING:
+    from ..packers.packer_base import PackerBase
 
 from .task import Task
 from .settings_pack import PackSettings

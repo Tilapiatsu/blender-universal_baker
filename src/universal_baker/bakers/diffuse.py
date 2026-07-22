@@ -28,6 +28,7 @@ class DiffuseBaker(BakerBase):
         MaterialService.prepare_target(ctx)
 
     def bake(self, ctx: BakeContext) -> None:
+        """Execute the bake."""
         return super().bake(ctx)
 
     def cleanup(self, ctx: BakeContext):
@@ -42,7 +43,7 @@ class DiffuseBaker(BakerBase):
 
     def export_file(self, ctx: BakeContext):
         """Save Bake to disk."""
-        ImageServiceBake.save(ctx.image)
+        super().export_file(ctx)
 
 
 classes = (DiffuseBaker,)

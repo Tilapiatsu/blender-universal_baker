@@ -5,8 +5,13 @@ from pathlib import Path
 
 import bpy
 
+from typing import TYPE_CHECKING
+
 from .task import Task
-from ..bakers.base import BakerBase
+
+if TYPE_CHECKING:
+    from ..bakers.base import BakerBase
+
 from ..runtime.settings_bake import BakeSettings
 
 

@@ -9,6 +9,8 @@ if TYPE_CHECKING:
     from ..runtime.context import PackContext
     from ..runtime.task import Task
 
+from ..services.image_pack import ImageServicePack
+
 
 class PackerBase(ABC):
     """Abstract baker interface.
@@ -49,3 +51,5 @@ class PackerBase(ABC):
     @abstractmethod
     def export_file(self, ctx: PackContext):
         """Save Pack to disk."""
+        if ctx.task.output_context.output_settings.path.export_file:
+            ImageServicePack.save(ctx.image)
