@@ -41,7 +41,7 @@ class DiffuseBaker(BakerBase):
         return super().update_baker(ctx)
 
     def export_file(self, ctx: BakeContext):
-        """Save Pack to disk."""
+        """Save Bake to disk."""
         ImageServiceBake.save(ctx.image)
 
 
