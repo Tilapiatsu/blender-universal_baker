@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import bpy
+
 import re
 
 from pathlib import Path
@@ -25,19 +27,23 @@ class OutputResolver:
     # -------------------------------------------------------------------------
 
     @classmethod
-    def resolve(cls, context: OutputContext) -> OutputFile:
+    def resolve(cls, ctx: OutputContext) -> OutputFile:
+        relative = ""
+        if ctx.directory_template.startswith(r"//"):
+            ctx.directory_template = ctx.directory_template[2:]
+            relative = r"//"
 
-        directory = cls.resolve_directory(context.directory_template, context)
-        filename = cls.resolve_filename(context.filename_template, context)
+        directory = cls.resolve_directory(ctx.directory_template, ctx)
+        filename = cls.resolve_filename(ctx.filename_template, ctx)
 
-        path = directory / f"{filename}.{context.extension.lower()}"
+        path = Path.as_posix(relative / directory / f"{filename}.{ctx.extension.lower()}")
 
         return OutputFile(
             directory=directory,
             filename=filename,
-            extension=context.extension,
-            absolute_path=path,
-            settings=context.output_settings,
+            extension=ctx.extension,
+            absolute_path=Path(bpy.path.abspath(str(path))),
+            settings=ctx.output_settings,
         )
 
     # -------------------------------------------------------------------------
@@ -45,27 +51,27 @@ class OutputResolver:
     # -------------------------------------------------------------------------
 
     @classmethod
-    def resolve_directory(cls, template: str, context: OutputContext) -> Path:
-        return Path(cls.expand(template, context))
+    def resolve_directory(cls, template: str, ctx: OutputContext) -> Path:
+        return Path(cls.expand(template, ctx))
 
     # -------------------------------------------------------------------------
     # Filename
     # -------------------------------------------------------------------------
 
     @classmethod
-    def resolve_filename(cls, template: str, context: OutputContext) -> str:
-        return cls.expand(template, context)
+    def resolve_filename(cls, template: str, ctx: OutputContext) -> str:
+        return cls.expand(template, ctx)
 
     # -------------------------------------------------------------------------
     # Template expansion
     # -------------------------------------------------------------------------
 
     @classmethod
-    def expand(cls, template: str, context: OutputContext) -> str:
+    def expand(cls, template: str, ctx: OutputContext) -> str:
         return _TOKEN_PATTERN.sub(
             lambda match: cls._resolve_token(
                 match.group(1),
-                context,
+                ctx,
             ),
             template,
         )
@@ -75,14 +81,14 @@ class OutputResolver:
     # -------------------------------------------------------------------------
 
     @classmethod
-    def _resolve_token(cls, token: str, context: OutputContext) -> str:
+    def _resolve_token(cls, token: str, ctx: OutputContext) -> str:
         parts = token.split(".")
 
         name = parts[0]
 
         transforms = parts[1:]
 
-        value = registry_token.resolve(name, context)
+        value = registry_token.resolve(name, ctx)
 
         for transform in transforms:
             value = registry_transform.apply(value, transform)

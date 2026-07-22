@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from ..runtime.settings_output import OutputSettings
+from ..runtime.settings_output import OutputSettings, PathSettings
 
 from ..runtime.settings_image import (
     ImageSettings,
@@ -20,8 +20,6 @@ class OutputSettingsResolver:
 
         return OutputSettings(
             image=ImageSettings(
-                width=settings.output_settings.resolution_x,
-                height=settings.output_settings.resolution_y,
                 cineon_black=settings.file_format_settings.cineon_black,
                 cineon_gamma=settings.file_format_settings.cineon_gamma,
                 cineon_white=settings.file_format_settings.cineon_white,
@@ -46,5 +44,13 @@ class OutputSettingsResolver:
             ),
             color=ColorManagementSettings(
                 colorspace=settings.output_settings.colorspace,
+            ),
+            path=PathSettings(
+                resolution_x=settings.output_settings.resolution_x,
+                resolution_y=settings.output_settings.resolution_y,
+                colorspace=settings.output_settings.colorspace,
+                export_file=settings.output_settings.export_file,
+                output_path=settings.output_settings.output_path,
+                filename_template=settings.output_settings.filename_template,
             ),
         )

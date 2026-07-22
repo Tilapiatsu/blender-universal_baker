@@ -6,8 +6,6 @@ from typing import Literal
 
 @dataclass(slots=True)
 class ImageSettings:
-    width: int = 2048
-    height: int = 2048
     cineon_black: int = 0
     cineon_gamma: float = 0.0
     cineon_white: int = 0

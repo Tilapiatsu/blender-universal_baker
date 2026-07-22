@@ -11,13 +11,14 @@ class ImageServiceBase:
     """Manage destination images."""
 
     @classmethod
-    def acquire(cls, resource: ImageResource, task: Task) -> bpy.types.Image:
+    def acquire(cls, resource: ImageResource, task: Task) -> ImageResource:
         """
         Acquire the destination image for this bake.
         """
 
         if resource.image is not None:
-            return resource.image
+            cls.configure(resource, task)
+            return resource
 
         cls.configure(resource, task)
 
@@ -35,7 +36,7 @@ class ImageServiceBase:
 
         cls.apply_settings(resource)
 
-        return image
+        return resource
 
     @classmethod
     def save(cls, resource: ImageResource) -> None:
@@ -49,6 +50,7 @@ class ImageServiceBase:
         image.filepath_raw = str(resource.filepath)
         image.file_format = resource.image_format_settings.file_format
         image.save()
+        image.pack()
 
         resource.mark_saved()
 
@@ -81,10 +83,11 @@ class ImageServiceBase:
 
         image_settings = task.output_context.output_settings.image
         color_settings = task.output_context.output_settings.color
+        path_settings = task.output_context.output_settings.path
 
         resource.name = task.output_name
-        resource.width = image_settings.width
-        resource.height = image_settings.height
+        resource.width = path_settings.resolution_x
+        resource.height = path_settings.resolution_y
         resource.colorspace = color_settings.colorspace
         resource.image_format_settings = image_settings
 
@@ -108,6 +111,7 @@ class ImageServiceBase:
             image = cls.find(resource.name)
             assert image is not None
             image.scale(resource.width, resource.height)
+            image.filepath_raw = str(resource.filepath)
             # image.update()
             image.pack()
 
@@ -133,15 +137,13 @@ class ImageServiceBase:
 
     @classmethod
     def is_image_settings_changed(cls, image: bpy.types.Image, resource: ImageResource) -> bool:
-        if (
+        return (
             image.size[0] != resource.width
             or image.size[1] != resource.height
             or ((image.channels == 4) != resource.image_format_settings.alpha)
+            or image.filepath_raw != str(resource.filepath)
             # or image.colorspace_settings.name != resources.image_format_settings.colorspace
-        ):
-            return True
-
-        return False
+        )
 
     @classmethod
     def apply_settings(cls, resource: ImageResource) -> None:

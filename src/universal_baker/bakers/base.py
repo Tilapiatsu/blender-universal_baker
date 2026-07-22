@@ -71,7 +71,7 @@ class BakerBase(ABC):
         if baker is None:
             return
 
-        baker.image = ctx.image
+        baker.image = ctx.image.image
 
     @abstractmethod
     def export_file(self, ctx: BakeContext):

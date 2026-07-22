@@ -24,7 +24,7 @@ class DiffuseBaker(BakerBase):
         """
         Prepare everything required before Blender's bake.
         """
-        ImageServiceBake.acquire(ctx.image, ctx.task)
+        ctx.image = ImageServiceBake.acquire(ctx.image, ctx.task)
         MaterialService.prepare_target(ctx)
 
     def bake(self, ctx: BakeContext) -> None:

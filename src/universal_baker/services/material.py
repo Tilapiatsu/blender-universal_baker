@@ -113,7 +113,7 @@ class MaterialService:
         if resource.image_node is None:
             return
 
-        resource.image_node.image = ctx.image
+        resource.image_node.image = ctx.image.image
 
     @classmethod
     def activate_image_node(cls, resource: MaterialResource) -> None:

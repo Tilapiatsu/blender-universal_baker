@@ -109,7 +109,7 @@ class PackerInternal(PackerBase):
                 image_buffer = ImageIOService.read(ctx.alpha_resource)
                 self.copy_channel(ctx.output_buffer, ctx.pack_resource.alpha_channel_mapping, image_buffer, Channel.A)
 
-            ImageIOService.acquire(ctx.image, ctx.task)
+            ctx.image = ImageIOService.acquire(ctx.image, ctx.task)
             ImageIOService.write(ctx.image, ctx.output_buffer)
 
         else:

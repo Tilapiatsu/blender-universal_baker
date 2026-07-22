@@ -50,9 +50,10 @@ class ExecutionPlanner:
                         project.settings_bake,
                         baker.settings if baker.override_settings else None,
                     )
+
                     output_context = OutputContext(
-                        directory_template=baker.settings.output_settings.output_path,
-                        filename_template=baker.settings.output_settings.filename_template,
+                        directory_template=output_settings.path.output_path,
+                        filename_template=output_settings.path.filename_template,
                         extension=output_settings.image.file_format,
                         variables=get_variables(
                             obj=obj.target,
@@ -132,8 +133,8 @@ class ExecutionPlanner:
                     packer.settings if packer.override_settings else None,
                 )
                 output_context = OutputContext(
-                    directory_template=packer.settings.output_settings.output_path,
-                    filename_template=packer.settings.output_settings.filename_template,
+                    directory_template=output_settings.path.output_path,
+                    filename_template=output_settings.path.filename_template,
                     extension=output_settings.image.file_format,
                     variables=get_variables(
                         obj=obj.target,
