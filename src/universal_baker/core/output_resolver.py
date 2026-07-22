@@ -30,7 +30,7 @@ class OutputResolver:
         directory = cls.resolve_directory(context.directory_template, context)
         filename = cls.resolve_filename(context.filename_template, context)
 
-        path = directory / f"{filename}.{context.extension}"
+        path = directory / f"{filename}.{context.extension.lower()}"
 
         return OutputFile(
             directory=directory,
