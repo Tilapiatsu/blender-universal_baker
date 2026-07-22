@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import bpy
 
+from .bake_group import BakeGroupService
+
 
 class ProjectService:
     @staticmethod
@@ -9,16 +11,46 @@ class ProjectService:
         return context.scene.ubk_project
 
     @staticmethod
+    def add_bake_group(context: bpy.types.context):
+        project = ProjectService.get(context)
+
+        item = project.bake_groups.add()
+
+        return item
+
+    @staticmethod
+    def remove_bake_group(context: bpy.types.Context, index: int):
+        project = ProjectService.get(context)
+
+        if not project.bake_groups:
+            return
+
+        project.bake_groups.remove(index)
+
+        project.active_bake_group_index = min(
+            project.active_bake_group_index,
+            len(project.bake_groups) - 1,
+        )
+
+    @staticmethod
     def add_target_object(context, obj: bpy.types.Object):
         project = ProjectService.get(context)
 
-        for item in project.objects:
+        if not project.bake_groups:
+            return
+
+        bake_group = BakeGroupService.active(project)
+
+        if not bake_group:
+            return
+
+        for item in bake_group.target_objects:
             if item.target == obj:
                 return item
 
-        item = project.objects.add()
+        item = bake_group.target_objects.add()
         item.target = obj
-        project.active_object_index = len(project.objects) - 1
+        project.active_object_index = len(bake_group.target_objects) - 1
         return item
 
     @staticmethod

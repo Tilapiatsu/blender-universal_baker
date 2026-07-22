@@ -1,18 +1,18 @@
 from __future__ import annotations
 
-from ..properties.object import UBK_Object
+from ..properties.object import UBK_TargetObject
 from .collection import PropertyCollectionService
 
 
-class ObjectService(PropertyCollectionService[UBK_Object]):
+class TargetObjectService(PropertyCollectionService[UBK_TargetObject]):
     @classmethod
     def collection(cls, owner):
-        return owner.objects
+        return owner.target_objects
 
     @classmethod
     def get_active_index(cls, owner):
-        return owner.active_object_index
+        return owner.active_target_object_index
 
     @classmethod
     def set_active_index(cls, owner, index):
-        owner.active_object_index = index
+        owner.active_target_object_index = index

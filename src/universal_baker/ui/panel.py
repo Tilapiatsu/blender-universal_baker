@@ -4,15 +4,45 @@ import bpy
 
 from ..core.controller import BakeController
 
+
 # -------------------------------------------------------------------------
 # Decorators
 # -------------------------------------------------------------------------
+#
+def bake_group_needed(func):
+    def wrapper(self, context):
+        project = BakeController.project(context)
+        if project is None:
+            return
+
+        active_bake_group = BakeController.active_bake_group(context)
+
+        if active_bake_group is None:
+            layout = self.layout
+            box = layout.box()
+            header = box.row()
+            header.label(text="Add a Bake Group.", icon="INFO")
+            return
+
+        func(self, context)
+
+    return wrapper
 
 
 def object_needed(func):
     def wrapper(self, context):
         project = BakeController.project(context)
         if project is None:
+            return
+
+        active_bake_group = BakeController.active_bake_group(context)
+
+        if active_bake_group is None:
+            layout = self.layout
+            box = layout.box()
+            header = box.row()
+            header.label(text="Add a Bake Group.", icon="INFO")
+
             return
 
         active_object = BakeController.active_object(context)
@@ -35,13 +65,14 @@ def baker_needed(func):
         if project is None:
             return
 
-        active_object = BakeController.active_object(context)
+        active_bake_group = BakeController.active_bake_group(context)
 
-        if active_object is None:
+        if active_bake_group is None:
             layout = self.layout
             box = layout.box()
             header = box.row()
-            header.label(text="Add a Target Object.", icon="INFO")
+            header.label(text="Add a Bake Group.", icon="INFO")
+
             return
 
         active_baker = BakeController.active_baker(context)
@@ -64,13 +95,14 @@ def packer_needed(func):
         if project is None:
             return
 
-        active_object = BakeController.active_object(context)
+        active_bake_group = BakeController.active_bake_group(context)
 
-        if active_object is None:
+        if active_bake_group is None:
             layout = self.layout
             box = layout.box()
             header = box.row()
-            header.label(text="Add a Target Object.", icon="INFO")
+            header.label(text="Add a Bake Group.", icon="INFO")
+
             return
 
         active_packer = BakeController.active_packer(context)
@@ -171,6 +203,31 @@ class UBK_PT_UniversalBakerPanel(UBK_PT_MainPanel, bpy.types.Panel):
         pass
 
 
+class UBK_PT_BakeGroupPanel(UBK_PT_MainPanel, bpy.types.Panel):
+    bl_idname = "UBK_PT_BakeGroupPanel"
+    bl_label = ""
+    bl_parent_id = "UBK_PT_UniversalBakerPanel"
+
+    def draw(self, context):
+        layout = self.layout
+        project = BakeController.project(context)
+
+        self.draw_bake_groups(context, project)
+
+    def draw_header(self, context):
+        layout = self.layout
+        layout.label(text="Bake Groups", icon="OUTLINER")
+
+    def draw_bake_groups(self, context, project):
+        box = self.layout.box()
+        box.template_list(
+            "UBK_UL_BakeGroupList", "", project, "bake_groups", project, "active_bake_group_index", rows=5
+        )
+        row = box.row(align=True)
+        row.operator("ubk.add_bake_group", text="Add group", icon="ADD")
+        row.operator("ubk.remove_bake_group", text="", icon="REMOVE")
+
+
 class UBK_PT_ObjectPanel(UBK_PT_MainPanel, bpy.types.Panel):
     bl_idname = "UBK_PT_ObjectPanel"
     bl_label = ""
@@ -180,15 +237,26 @@ class UBK_PT_ObjectPanel(UBK_PT_MainPanel, bpy.types.Panel):
         layout = self.layout
         project = BakeController.project(context)
 
-        self.draw_objects(context, project)
+        self.draw_objects(context)
 
     def draw_header(self, context):
         layout = self.layout
         layout.label(text="Target Objects", icon="OUTLINER_OB_MESH")
 
-    def draw_objects(self, context, project):
+    @bake_group_needed
+    def draw_objects(self, context):
         box = self.layout.box()
-        box.template_list("UBK_UL_ObjectList", "", project, "objects", project, "active_object_index", rows=5)
+        active_bake_group = BakeController.active_bake_group(context)
+
+        box.template_list(
+            "UBK_UL_ObjectList",
+            "",
+            active_bake_group,
+            "target_objects",
+            active_bake_group,
+            "active_target_object_index",
+            rows=5,
+        )
         row = box.row(align=True)
         row.operator("ubk.add_object", text="Add Selected", icon="ADD")
         row.operator("ubk.remove_object", text="", icon="REMOVE")
@@ -206,16 +274,17 @@ class UBK_PT_BakerPanel(UBK_PT_MainPanel, bpy.types.Panel):
     def draw(self, context):
         self.draw_bakers(context)
 
-    @object_needed
+    @bake_group_needed
     def draw_bakers(self, context):
         box = self.layout.box()
-        active_object = BakeController.active_object(context)
+        active_bake_group = BakeController.active_bake_group(context)
 
-        box.template_list("UBK_UL_BakerList", "", active_object, "bakers", active_object, "active_baker_index", rows=5)
+        box.template_list(
+            "UBK_UL_BakerList", "", active_bake_group, "bakers", active_bake_group, "active_baker_index", rows=5
+        )
 
         row = box.row(align=True)
         row.menu("UBK_MT_BakerAddMenu", icon="ADD")
-        # row.operator("ubk.add_baker", icon="ADD")
         row.operator("ubk.remove_baker", text="", icon="REMOVE")
 
 
@@ -230,6 +299,7 @@ class UBK_PT_ProcessPanel(UBK_PT_MainPanel, bpy.types.Panel):
         layout = self.layout
         layout.label(text="Process", icon="SETTINGS")
 
+    @bake_group_needed
     def draw(self, context):
         layout = self.layout
         col = layout.column()
@@ -241,6 +311,7 @@ class UBK_PT_ProcessPanel(UBK_PT_MainPanel, bpy.types.Panel):
 
 classes = (
     UBK_PT_UniversalBakerPanel,
+    UBK_PT_BakeGroupPanel,
     UBK_PT_ObjectPanel,
     UBK_PT_BakerPanel,
     UBK_PT_ProcessPanel,

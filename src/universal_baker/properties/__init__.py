@@ -6,6 +6,7 @@ from . import (
     baker,
     packer,
     object,
+    bake_group,
     project,
 )
 
@@ -17,6 +18,7 @@ modules = (
     baker,
     packer,
     object,
+    bake_group,
     project,
 )
 

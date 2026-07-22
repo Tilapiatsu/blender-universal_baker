@@ -1,4 +1,5 @@
 from . import (
+    bake_group_list,
     baker_list,
     object_list,
     packer_list,
@@ -11,6 +12,7 @@ from . import (
 
 
 modules = (
+    bake_group_list,
     baker_list,
     object_list,
     packer_list,

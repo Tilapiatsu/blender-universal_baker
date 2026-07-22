@@ -7,7 +7,7 @@ from ..core.controller import BakeController
 from .panel_settings_output import (
     draw_output_settings,
 )
-from .panel import object_needed, packer_needed, UBK_PT_MainPanel
+from .panel import bake_group_needed, packer_needed, UBK_PT_MainPanel
 
 
 def grid_layout(layout, alignment, size):
@@ -55,14 +55,16 @@ class UBK_UL_PackerPanel(UBK_PT_MainPanel, bpy.types.Panel):
         layout = self.layout
         layout.label(text="Packers", icon="NODE_COMPOSITING")
 
-    @object_needed
+    @bake_group_needed
     def draw(self, context):
         layout = self.layout
         box = layout.box()
 
-        active_object = BakeController.active_object(context)
+        active_bake_group = BakeController.active_bake_group(context)
 
-        box.template_list("UBK_UL_PackList", "", active_object, "packers", active_object, "active_packer_index", rows=5)
+        box.template_list(
+            "UBK_UL_PackList", "", active_bake_group, "packers", active_bake_group, "active_packer_index", rows=5
+        )
 
         row = box.row(align=True)
         row.operator("ubk.add_packer", text="Add Packer", icon="ADD")

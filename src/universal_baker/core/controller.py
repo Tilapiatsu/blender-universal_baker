@@ -11,9 +11,10 @@ from .planner import ExecutionPlanner
 from ..runtime.job import Job
 
 from ..services.project import ProjectService
-from ..services.object import ObjectService
+from ..services.target_object import TargetObjectService
 from ..services.packer import PackService
-from ..services.map import BakerService
+from ..services.baker import BakerService
+from ..services.bake_group import BakeGroupService
 from ..services.internal_data import InternalDataService
 from ..constant import get_prefs
 from ..core.registry_executor import registry_executor
@@ -38,27 +39,55 @@ class BakeController:
         return ProjectService.get(context)
 
     @classmethod
-    def active_object(cls, context):
-        return ObjectService.active(cls.project(context))
+    def active_bake_group(cls, context: bpy.types.Context):
+        return BakeGroupService.active(cls.project(context))
 
     @classmethod
-    def active_baker(cls, context):
-        return BakerService.active(cls.project(context))
+    def active_object(cls, context: bpy.types.Context):
+        bake_group = cls.active_bake_group(context)
+        if bake_group is None:
+            return
+
+        return TargetObjectService.active(bake_group)
 
     @classmethod
-    def active_packer(cls, context):
-        return PackService.active(cls.active_object(context))
+    def active_baker(cls, context: bpy.types.Context):
+        bake_group = cls.active_bake_group(context)
+        if bake_group is None:
+            return
+
+        return BakerService.active(bake_group)
+
+    @classmethod
+    def active_packer(cls, context: bpy.types.Context):
+        bake_group = cls.active_bake_group(context)
+        if bake_group is None:
+            return
+
+        return PackService.active(bake_group)
+
+    # ---------------------------------------------------------
+    # Bake Group Operations
+    # ---------------------------------------------------------
+
+    @classmethod
+    def add_bake_group(cls, context: bpy.types.Context):
+        return ProjectService.add_bake_group(context)
+
+    @classmethod
+    def remove_bake_group(cls, context: bpy.types.Context, index: int):
+        return ProjectService.remove_bake_group(context, index)
 
     # ---------------------------------------------------------
     # Object Operations
     # ---------------------------------------------------------
 
     @classmethod
-    def add_selected_objects(cls, context):
+    def add_selected_objects(cls, context: bpy.types.Context):
         return ProjectService.add_selected_objects(context)
 
     @classmethod
-    def remove_object(cls, context, index: int):
+    def remove_object(cls, context: bpy.types.Context, index: int):
         ProjectService.remove_object(context, index)
 
     # ---------------------------------------------------------
@@ -66,7 +95,7 @@ class BakeController:
     # ---------------------------------------------------------
 
     @classmethod
-    def add_map(cls, context, baker_id: str = "DIFFUSE"):
+    def add_map(cls, context: bpy.types.Context, baker_id: str = "DIFFUSE"):
         project = cls.project(context)
 
         if not project.objects:
@@ -82,13 +111,13 @@ class BakeController:
         return baker
 
     @classmethod
-    def remove_map(cls, context):
+    def remove_map(cls, context: bpy.types.Context):
         project = cls.project(context)
 
         if not project.objects:
             return
 
-        obj = ObjectService.active(project)
+        obj = TargetObjectService.active(project)
 
         if obj is None:
             return
@@ -99,7 +128,7 @@ class BakeController:
         BakerService.remove(project, obj.active_baker_index)
 
     @staticmethod
-    def resolve_map_uuid(project, uuid):
+    def resolve_map_uuid(project, uuid: str):
         for obj in project.objects:
             for map in obj.bakers:
                 if map.uuid == uuid:
@@ -150,13 +179,13 @@ class BakeController:
     # ---------------------------------------------------------
 
     @classmethod
-    def add_packer(cls, context, packer_id: str = "INTERNAL"):
+    def add_packer(cls, context: bpy.types.Context, packer_id: str = "INTERNAL"):
         project = cls.project(context)
 
         if not project.objects:
             return
 
-        obj = ObjectService.active(project)
+        obj = TargetObjectService.active(project)
 
         if obj is None:
             return
@@ -183,13 +212,13 @@ class BakeController:
         return packer
 
     @classmethod
-    def remove_packer(cls, context, index: int = 0):
+    def remove_packer(cls, context: bpy.types.Context, index: int = 0):
         project = cls.project(context)
 
         if not project.objects:
             return
 
-        obj = ObjectService.active(project)
+        obj = TargetObjectService.active(project)
 
         if obj is None:
             return
@@ -213,7 +242,7 @@ class BakeController:
     # ---------------------------------------------------------
 
     @classmethod
-    def validate(cls, context) -> List[str]:
+    def validate(cls, context: bpy.types.Context) -> List[str]:
         errors = []
 
         project = cls.project(context)
@@ -246,7 +275,9 @@ class BakeController:
     # ---------------------------------------------------------
 
     @classmethod
-    def create_job(cls, context, register_bakers: bool = False, register_packers: bool = False) -> Job:
+    def create_job(
+        cls, context: bpy.types.Context, register_bakers: bool = False, register_packers: bool = False
+    ) -> Job:
         planner = ExecutionPlanner()
 
         return planner.build_job(cls.project(context), register_bakers, register_packers)
@@ -256,7 +287,7 @@ class BakeController:
     # ---------------------------------------------------------
 
     @classmethod
-    def bake_all(cls, context) -> tuple[bool, Job | list[str]]:
+    def bake_all(cls, context: bpy.types.Context) -> tuple[bool, Job | list[str]]:
         errors = cls.validate(context)
 
         if errors:
@@ -288,7 +319,7 @@ class BakeController:
         )
 
     @classmethod
-    def bake_object(cls, context, object_index: int):
+    def bake_group(cls, context: bpy.types.Context, object_index: int):
 
         #
         # TODO
@@ -296,7 +327,7 @@ class BakeController:
         raise NotImplementedError()
 
     @classmethod
-    def bake_map(cls, context, object_index: int, map_index: int):
+    def bake_baker(cls, context: bpy.types.Context, object_index: int, map_index: int):
 
         #
         # TODO
@@ -308,7 +339,7 @@ class BakeController:
     # ---------------------------------------------------------
 
     @classmethod
-    def pack_all(cls, context) -> tuple[bool, Job | list[str]]:
+    def pack_all(cls, context: bpy.types.Context) -> tuple[bool, Job | list[str]]:
         errors = cls.validate(context)
 
         if errors:
@@ -340,7 +371,7 @@ class BakeController:
         )
 
     @classmethod
-    def bake_and_pack_all(cls, context) -> tuple[bool, Job | list[str]]:
+    def bake_and_pack_all(cls, context: bpy.types.Context) -> tuple[bool, Job | list[str]]:
         success_bake, job_bake = cls.bake_all(context)
         if not success_bake:
             return success_bake, job_bake
@@ -352,7 +383,7 @@ class BakeController:
         return success_pack, job_pack
 
     @classmethod
-    def pack_selected(cls, context, object_index: int):
+    def pack_selected(cls, context: bpy.types.Context, object_index: int):
 
         #
         # TODO

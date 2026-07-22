@@ -15,13 +15,17 @@ class UBK_OT_ObjectRemove(UBK_OT_Base):
     @classmethod
     def poll(cls, context):
         """Only enable the button when an object exists."""
-        project = BakeController.project(context)
-        return bool(project.objects)
+        bake_group = BakeController.active_bake_group(context)
+        if bake_group is None:
+            return False
+        return bool(bake_group.target_objects)
 
     def execute(self, context):
-        project = BakeController.project(context)
+        bake_group = BakeController.active_bake_group(context)
+        if bake_group is None:
+            return
 
-        active_index = project.active_object_index
+        active_index = bake_group.active_target_object_index
 
         if active_index < 0:
             self.warning("No bake object selected.")

@@ -7,12 +7,12 @@ from ..runtime.job import Job
 from .base import UBK_OT_Base
 
 
-class UBK_OT_BakeObject(UBK_OT_Base):
+class UBK_OT_BakeGroup(UBK_OT_Base):
     """Bake every enabled map of selecvted target object."""
 
-    bl_idname = "ubk.bake_object"
-    bl_label = "Bake Object"
-    bl_description = "Bake every enabled map of current target object"
+    bl_idname = "ubk.bake_group"
+    bl_label = "Bake Group"
+    bl_description = "Bake every enabled map of current Bake Group"
     bl_options = {"REGISTER"}
 
     index: bpy.props.IntProperty(name="Index", default=0)
@@ -26,7 +26,7 @@ class UBK_OT_BakeObject(UBK_OT_Base):
         return True
 
     def execute(self, context):
-        success, result = BakeController.bake_object(context, self.index)
+        success, result = BakeController.bake_group(context, self.index)
 
         if not success:
             for error in result:
@@ -49,7 +49,7 @@ class UBK_OT_BakeObject(UBK_OT_Base):
         return {"FINISHED"}
 
 
-classes = (UBK_OT_BakeObject,)
+classes = (UBK_OT_BakeGroup,)
 
 
 def register():

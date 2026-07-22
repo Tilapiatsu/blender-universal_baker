@@ -2,7 +2,6 @@ from __future__ import annotations
 import bpy
 from bpy.types import PropertyGroup
 from bpy.props import BoolProperty, EnumProperty, StringProperty, PointerProperty
-from .settings_cage import UBK_CageSettings
 from .settings_bake import UBK_BakeSettings
 
 
@@ -48,10 +47,6 @@ class UBK_Baker(PropertyGroup):
     override_settings_cage: BoolProperty(
         name="Override Cage",
         default=False,
-    )
-
-    settings_cage: PointerProperty(
-        type=UBK_CageSettings,
     )
 
 

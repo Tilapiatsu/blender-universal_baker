@@ -2,17 +2,19 @@ from __future__ import annotations
 import bpy
 from bpy.types import PropertyGroup
 from bpy.props import BoolProperty, PointerProperty, CollectionProperty, IntProperty
-from .baker import UBK_Baker
-from .packer import UBK_Packer
 
 
 class UBK_SourceObject(PropertyGroup):
     """Source object property"""
 
+    enabled: BoolProperty(
+        default=True,
+    )
+
     source: PointerProperty(name="Source Object", type=bpy.types.Object)
 
 
-class UBK_Object(PropertyGroup):
+class UBK_TargetObject(PropertyGroup):
     """Bake settings for one target object."""
 
     enabled: BoolProperty(
@@ -25,24 +27,18 @@ class UBK_Object(PropertyGroup):
     )
 
     sources: CollectionProperty(type=UBK_SourceObject)
+    active_source_index: IntProperty(default=0)
 
-    bakers: CollectionProperty(
-        type=UBK_Baker,
+    use_cage: BoolProperty(
+        name="Use Cage",
+        default=False,
     )
-
-    active_baker_index: IntProperty(
-        default=0,
-    )
-
-    packers: CollectionProperty(type=UBK_Packer)
-    active_packer_index: bpy.props.IntProperty(
-        default=0,
-    )
+    cache_object: PointerProperty(name="Cage Object", type=bpy.types.Object)
 
 
 classes = (
     UBK_SourceObject,
-    UBK_Object,
+    UBK_TargetObject,
 )
 
 

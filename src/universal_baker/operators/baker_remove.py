@@ -17,6 +17,10 @@ class UBK_OT_BakerRemove(UBK_OT_Base):
     @classmethod
     def poll(cls, context):
         """Only available when the active bake object contains maps."""
+        bake_group = BakeController.active_bake_group(context)
+
+        if bake_group is None:
+            return False
 
         obj = BakeController.active_object(context)
 
