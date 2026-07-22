@@ -42,7 +42,7 @@ class UBK_Output(PropertyGroup):
     # -------------------------------------------------------------------------
 
     export_file: BoolProperty(name="Export File", default=True)
-    output_path: StringProperty(name="Output Path", default="//", subtype="FILE_PATH")
+    output_path: StringProperty(name="Output Path", default="//baking", subtype="FILE_PATH")
     filename_template: StringProperty(name="Filename", default="{object}_{image_name}")
 
 

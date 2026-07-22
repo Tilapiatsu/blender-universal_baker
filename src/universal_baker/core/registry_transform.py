@@ -11,7 +11,7 @@ class TransformRegistry:
         cls._transforms[name] = callback
 
     @classmethod
-    def apply(cls, transform: str, value: str):
+    def apply(cls, value: str, transform: str):
         callback = cls._transforms.get(transform)
 
         if callback is None:

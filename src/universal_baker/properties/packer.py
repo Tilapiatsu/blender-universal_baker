@@ -52,12 +52,11 @@ class UBK_ChannelMapping(PropertyGroup):
 class UBK_Packer(PropertyGroup):
     """Packing settings from output maps"""
 
-    # packer_type: EnumProperty(name="Packing Type", items=packer_types)
     uuid: bpy.props.StringProperty()
     packer: bpy.props.StringProperty(name="Packer")
     enabled: BoolProperty(name="Enabled", default=True)
     override_settings: BoolProperty(name="Override Settings", default=False)
-    image_name: StringProperty(name="Name", default="Channel Packing")
+    image_name: StringProperty(name="Image Name", default="Channel Packing")
     active_packer_index: bpy.props.IntProperty(default=0)
     mappings: bpy.props.CollectionProperty(type=UBK_ChannelMapping)
     settings: bpy.props.PointerProperty(type=UBK_PackerSettings)
