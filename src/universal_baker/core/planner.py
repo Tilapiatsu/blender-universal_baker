@@ -3,7 +3,6 @@ from __future__ import annotations
 import bpy
 
 from uuid import uuid4
-
 from ..runtime.job import Job
 from ..runtime.task_bake import BakeTask
 from ..runtime.task_pack import PackingTask, PackingChannel
@@ -21,7 +20,7 @@ from ..runtime.output_context import OutputContext
 class ExecutionPlanner:
     """Converts the project into executable bake tasks."""
 
-    def build_job(self, project, regiter_bakers: bool = False, regiter_packers: bool = False) -> Job:
+    def build_job(self, project, register_bakers: bool = False, register_packers: bool = False) -> Job:
         from .controller import BakeController
 
         job = Job()
@@ -34,7 +33,7 @@ class ExecutionPlanner:
                     continue
 
                 for baker in group.bakers:
-                    if regiter_bakers:
+                    if register_bakers:
                         if not baker.enabled:
                             continue
 
@@ -83,7 +82,7 @@ class ExecutionPlanner:
 
                         job.add_task(task)
 
-                if not regiter_packers:
+                if not register_packers:
                     continue
 
                 for packer in group.packers:
