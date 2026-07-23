@@ -31,11 +31,11 @@ class OutputRepository:
     def add(self, output: BakeOutput):
         self._outputs[output.id] = output
 
-        target_key = (output.target_name, output.baker_id)
+        target_key = (output.bake_group_name, output.baker_id)
 
         self._target_baker_index[target_key].append(output)
 
-        object_key = (output.target_name, output.baker_id, output.object_name)
+        object_key = (output.bake_group_name, output.baker_id, output.target_object_name)
 
         self._object_index[object_key] = output
 
@@ -43,7 +43,7 @@ class OutputRepository:
         self._outputs.pop(output.id, None)
 
         target_key = (
-            output.target_name,
+            output.bake_group_name,
             output.baker_id,
         )
 
@@ -56,7 +56,7 @@ class OutputRepository:
                 del self._target_baker_index[target_key]
 
         self._object_index.pop(
-            (output.target_name, output.baker_id, output.object_name),
+            (output.bake_group_name, output.baker_id, output.target_object_name),
             None,
         )
 
@@ -85,7 +85,7 @@ class OutputRepository:
         return len(self._outputs)
 
     def clear_target(self, target):
-        ids = [output.id for output in self.iter_outputs() if output.target == target]
+        ids = [output.id for output in self.iter_outputs() if output.bake_group == target]
 
         for output_id in ids:
             self.remove(self._outputs[output_id])

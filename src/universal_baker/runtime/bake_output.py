@@ -55,9 +55,9 @@ class BakeOutput:
         return self.baker.name
 
     @property
-    def target_name(self) -> str:
+    def bake_group_name(self) -> str:
         return self.bake_group.name
 
     @property
-    def object_name(self) -> str:
-        return self.object.name
+    def target_object_name(self) -> str:
+        return self.target_object.name
