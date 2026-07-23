@@ -23,9 +23,9 @@ class UBK_OT_BakerAdd(UBK_OT_Base):
         return bool(bake_group)
 
     def execute(self, context):
-        bake_map = BakeController.add_baker(context, baker_id=self.baker_id)
+        baker = BakeController.add_baker(context, baker_id=self.baker_id)
 
-        if bake_map is None:
+        if baker is None:
             self.warning("Unable to add bake map. Select a target object first.")
 
             return {"CANCELLED"}
@@ -33,8 +33,8 @@ class UBK_OT_BakerAdd(UBK_OT_Base):
         project = BakeController.project(context)
         BakeController.ensure_output_node(project.settings_bake.internal_name)
 
-        bake_map.settings.internal_name = f"{self.baker_id}"
-        BakeController.ensure_output_node(bake_map.settings.internal_name)
+        baker.settings.internal_name = f"{self.baker_id}"
+        BakeController.ensure_output_node(baker.settings.internal_name)
 
         self.info(f"Added bake map '{self.baker_id}'.")
 

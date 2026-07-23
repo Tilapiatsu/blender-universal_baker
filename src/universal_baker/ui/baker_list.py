@@ -28,27 +28,27 @@ class UBK_UL_BakerList(bpy.types.UIList):
             layout.alignment = "CENTER"
             layout.label(icon="TEXTURE")
 
-    def draw_default(self, layout, bake_map, index: int):
+    def draw_default(self, layout, item, index: int):
         row = layout.row(align=True)
 
-        row.prop(bake_map, "enabled", text="")
+        row.prop(item, "enabled", text="")
         baker = None
 
-        if registry_baker.exists(bake_map.baker):
-            baker = registry_baker[bake_map.baker]
+        if registry_baker.exists(item.baker):
+            baker = registry_baker[item.baker]
 
         if baker:
             row.label(text=baker.name, icon=baker.icon)
 
         else:
-            row.label(text=bake_map.baker, icon="QUESTION")
+            row.label(text=item.baker, icon="QUESTION")
 
         info = row.row()
         info.alignment = "RIGHT"
         info.enabled = False
 
-        if bake_map.override_settings:
-            resolution = f"{bake_map.settings.resolution_x}×{bake_map.settings.resolution_y}"
+        if item.override_settings:
+            resolution = f"{item.settings.output_settings.width}×{item.settings.output_settings.height}"
 
             info.label(text=resolution, icon="IMAGE_DATA")
 

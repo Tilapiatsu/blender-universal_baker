@@ -46,8 +46,8 @@ class OutputSettingsResolver:
                 colorspace=settings.output_settings.colorspace,
             ),
             path=PathSettings(
-                resolution_x=settings.output_settings.resolution_x,
-                resolution_y=settings.output_settings.resolution_y,
+                width=settings.output_settings.width,
+                height=settings.output_settings.height,
                 colorspace=settings.output_settings.colorspace,
                 export_file=settings.output_settings.export_file,
                 output_path=settings.output_settings.output_path,

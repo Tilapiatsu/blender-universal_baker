@@ -8,8 +8,8 @@ from .settings_image import ImageSettings, ColorManagementSettings
 
 @dataclass(slots=True)
 class PathSettings:
-    resolution_x: int
-    resolution_y: int
+    width: int
+    height: int
     colorspace: str
     export_file: bool
     output_path: str

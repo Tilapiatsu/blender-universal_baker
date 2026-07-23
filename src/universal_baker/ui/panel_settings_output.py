@@ -38,8 +38,8 @@ def draw_output_settings(layout, settings):
     if internal_data is None:
         layout.label(text="Add a Target object and a Map first.", icon="INFO")
     else:
-        layout.prop(settings.output_settings, "resolution_x")
-        layout.prop(settings.output_settings, "resolution_y")
+        layout.prop(settings.output_settings, "width")
+        layout.prop(settings.output_settings, "height")
         layout.template_image_settings(internal_data.format, color_management=False)
         layout.prop(settings.output_settings, "colorspace")
         layout.separator()

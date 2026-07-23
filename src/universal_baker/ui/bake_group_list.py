@@ -38,7 +38,7 @@ class UBK_UL_BakeGroupList(bpy.types.UIList):
         enabled_targets = sum(target_object.enabled for target_object in active_bake_group.target_objects)
         total_targets = len(active_bake_group.target_objects)
 
-        enabled_bakers = sum(bake_map.enabled for bake_map in active_bake_group.bakers)
+        enabled_bakers = sum(baker.enabled for baker in active_bake_group.bakers)
         total_bakers = len(active_bake_group.bakers)
 
         stats = row.row()

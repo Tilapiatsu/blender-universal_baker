@@ -25,9 +25,9 @@ class UBK_OT_BakerRemove(UBK_OT_Base):
         return bool(bake_group.bakers)
 
     def execute(self, context):
-        bake_map = BakeController.active_baker(context)
+        baker = BakeController.active_baker(context)
 
-        if bake_map is None:
+        if baker is None:
             self.warning("No bake map selected.")
 
             return {"CANCELLED"}

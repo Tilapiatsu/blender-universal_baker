@@ -5,7 +5,7 @@ from bpy.props import BoolProperty, EnumProperty, StringProperty, PointerPropert
 from .settings_bake import UBK_BakeSettings
 
 
-def bake_map_items(self, context):
+def baker_items(self, context):
     from ..core.registry_baker import registry_baker
 
     return registry_baker.enum_items()
@@ -23,7 +23,7 @@ class UBK_Baker(PropertyGroup):
 
     baker: EnumProperty(
         name="Bake Type",
-        items=bake_map_items,
+        items=baker_items,
     )
 
     image_name: StringProperty(

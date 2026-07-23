@@ -86,8 +86,8 @@ class ImageServiceBase:
         path_settings = task.output_context.output_settings.path
 
         resource.name = task.output_name
-        resource.width = path_settings.resolution_x
-        resource.height = path_settings.resolution_y
+        resource.width = path_settings.width
+        resource.height = path_settings.height
         resource.colorspace = color_settings.colorspace
         resource.image_format_settings = image_settings
 

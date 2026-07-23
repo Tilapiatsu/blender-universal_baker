@@ -13,14 +13,14 @@ class UBK_Output(PropertyGroup):
     # Image
     # -------------------------------------------------------------------------
 
-    resolution_x: IntProperty(
+    width: IntProperty(
         name="Width",
         default=2048,
         min=1,
         subtype="PIXEL",
     )
 
-    resolution_y: IntProperty(
+    height: IntProperty(
         name="Height",
         default=2048,
         min=1,

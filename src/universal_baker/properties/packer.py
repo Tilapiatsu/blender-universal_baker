@@ -16,12 +16,12 @@ def get_source_bakers_items(self, context):
 
     from ..core.controller import BakeController
 
-    active_object = BakeController.active_object(context)
+    active_bake_group = BakeController.active_bake_group(context)
 
-    if active_object is None:
+    if active_bake_group is None:
         return items
 
-    for b in active_object.bakers:
+    for b in active_bake_group.bakers:
         items.append((b.uuid, f"{b.baker}_{b.image_name}", ""))
 
     return items

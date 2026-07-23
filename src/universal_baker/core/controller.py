@@ -136,11 +136,11 @@ class BakeController:
         if project is None:
             return None
 
-        for o in project.objects:
-            if not len(o.bakers):
+        for g in project.bake_groups:
+            if not len(g.bakers):
                 continue
 
-            for b in o.bakers:
+            for b in g.bakers:
                 if b.uuid == uuid:
                     resource = ImageResource(
                         image=b.image,
@@ -160,11 +160,11 @@ class BakeController:
         if project is None:
             return None
 
-        for o in project.objects:
-            if not len(o.bakers):
+        for g in project.bake_groups:
+            if not len(g.bakers):
                 continue
 
-            for b in o.bakers:
+            for b in g.bakers:
                 if b.uuid == uuid:
                     return b
 
@@ -234,23 +234,24 @@ class BakeController:
 
         project = cls.project(context)
 
-        if not project.objects:
-            errors.append("No target objects have been added.")
+        if not project.bake_groups:
+            errors.append("No bake groups have been added.")
 
             return errors
 
-        enabled_objects = [obj for obj in project.objects if obj.enabled]
+        enabled_bake_groups = [g for g in project.bake_groups if g.enabled]
 
-        if not enabled_objects:
-            errors.append("Every target object is disabled.")
+        if not enabled_bake_groups:
+            errors.append("Every Bake Groups is disabled.")
 
-        for obj in enabled_objects:
-            if obj.target is None:
-                errors.append("A target object is missing.")
+        for b in enabled_bake_groups:
+            for o in b.target_objects:
+                if o.target is None:
+                    errors.append("A target object is missing.")
 
-                continue
+                    continue
 
-            # enabled_maps = [bake_map for bake_map in obj.maps if bake_map.enabled]
+            # enabled_maps = [baker for baker in obj.maps if baker.enabled]
             #
             # if not enabled_maps:
             #     errors.append(f"{obj.target.name} has no enabled bake maps.")

@@ -80,7 +80,6 @@ class UBK_UL_PackerSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
     bl_idname = "UBK_PT_settings_packer_panel"
     bl_label = "Packing"
     bl_parent_id = "UBK_PT_packer_panel"
-    bl_options = {"DEFAULT_CLOSED"}
 
     @classmethod
     def poll(cls, context):
