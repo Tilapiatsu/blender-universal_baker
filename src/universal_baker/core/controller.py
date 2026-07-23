@@ -12,7 +12,7 @@ from ..runtime.job import Job
 
 from ..services.project import ProjectService
 from ..services.target_object import TargetObjectService
-from ..services.packer import PackService
+from ..services.packer import PackerService
 from ..services.baker import BakerService
 from ..services.bake_group import BakeGroupService
 from ..services.internal_data import InternalDataService
@@ -64,7 +64,7 @@ class BakeController:
         if bake_group is None:
             return
 
-        return PackService.active(bake_group)
+        return PackerService.active(bake_group)
 
     # ---------------------------------------------------------
     # Bake Group Operations
@@ -111,21 +111,21 @@ class BakeController:
         return baker
 
     @classmethod
-    def remove_map(cls, context: bpy.types.Context):
+    def remove_baker(cls, context: bpy.types.Context):
         project = cls.project(context)
 
         if not project.objects:
             return
 
-        obj = TargetObjectService.active(project)
+        bake_group = BakeGroupService.active(project)
 
-        if obj is None:
+        if bake_group is None:
             return
 
-        if not obj.bakers:
+        if not bake_group.bakers:
             return
 
-        BakerService.remove(project, obj.active_baker_index)
+        BakerService.remove(project, bake_group.active_baker_index)
 
     @staticmethod
     def resolve_map_uuid(project, uuid: str):
@@ -212,18 +212,21 @@ class BakeController:
         return packer
 
     @classmethod
-    def remove_packer(cls, context: bpy.types.Context, index: int = 0):
+    def remove_packer(cls, context: bpy.types.Context):
         project = cls.project(context)
 
         if not project.objects:
             return
 
-        obj = TargetObjectService.active(project)
+        bake_group = BakeGroupService.active(project)
 
-        if obj is None:
+        if bake_group is None:
             return
 
-        PackService.remove(obj, index)
+        if not bake_group.packers:
+            return
+
+        PackerService.remove(project, bake_group.active_packer_index)
 
     # ---------------------------------------------------------
     # Internal Data

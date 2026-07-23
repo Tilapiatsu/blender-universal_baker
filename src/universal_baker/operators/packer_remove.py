@@ -17,28 +17,20 @@ class UBK_OT_PackerRemove(UBK_OT_Base):
     @classmethod
     def poll(cls, context):
         """Only enable the button when packer exists."""
+        bake_group = BakeController.active_bake_group(context)
 
-        obj = BakeController.active_object(context)
-
-        if obj is None:
+        if bake_group is None:
             return False
 
-        return bool(obj.packers)
+        return bool(bake_group.packers)
 
     def execute(self, context):
-        obj = BakeController.active_object(context)
-        if obj is None:
-            self.error("No Target Objects found.")
+        packer = BakeController.active_packer(context)
+        if packer is None:
+            self.error("No Packer found.")
             return {"CANCELLED"}
 
-        active_index = obj.active_packer_index
-
-        if active_index < 0:
-            self.warning("No packer item selected.")
-
-            return {"CANCELLED"}
-
-        BakeController.remove_packer(context, active_index)
+        BakeController.remove_packer(context)
 
         self.info("Packer item removed.")
 

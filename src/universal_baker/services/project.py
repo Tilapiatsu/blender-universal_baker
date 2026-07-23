@@ -16,6 +16,8 @@ class ProjectService:
 
         item = project.bake_groups.add()
 
+        project.active_bake_group_index = len(project.bake_groups) - 1
+
         return item
 
     @staticmethod
@@ -50,7 +52,8 @@ class ProjectService:
 
         item = bake_group.target_objects.add()
         item.target = obj
-        project.active_object_index = len(bake_group.target_objects) - 1
+
+        bake_group.active_target_object_index = len(bake_group.target_objects) - 1
         return item
 
     @staticmethod

@@ -27,18 +27,19 @@ class UBK_UL_BakeGroupList(bpy.types.UIList):
 
             layout.label(text="", icon="MESH_CUBE")
 
-    def draw_default(self, layout, obj_settings, index: int):
+    def draw_default(self, layout, active_bake_group, index: int):
         """Draw one object row."""
 
         row = layout.row(align=True)
 
-        row.prop(obj_settings, "enabled", text="")
+        row.prop(active_bake_group, "enabled", text="")
+        row.prop(active_bake_group.name)
 
-        enabled_targets = sum(target_object.enabled for target_object in obj_settings.target_objects)
-        total_targets = len(obj_settings.target_objects)
+        enabled_targets = sum(target_object.enabled for target_object in active_bake_group.target_objects)
+        total_targets = len(active_bake_group.target_objects)
 
-        enabled_bakers = sum(bake_map.enabled for bake_map in obj_settings.bakers)
-        total_bakers = len(obj_settings.bakers)
+        enabled_bakers = sum(bake_map.enabled for bake_map in active_bake_group.bakers)
+        total_bakers = len(active_bake_group.bakers)
 
         stats = row.row()
         stats.alignment = "RIGHT"

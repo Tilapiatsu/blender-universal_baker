@@ -248,6 +248,9 @@ class UBK_PT_ObjectPanel(UBK_PT_MainPanel, bpy.types.Panel):
         box = self.layout.box()
         active_bake_group = BakeController.active_bake_group(context)
 
+        if active_bake_group is None:
+            return
+
         box.template_list(
             "UBK_UL_ObjectList",
             "",

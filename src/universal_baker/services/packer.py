@@ -4,7 +4,7 @@ from ..properties.packer import UBK_Packer
 from .collection import PropertyCollectionService
 
 
-class PackService(PropertyCollectionService[UBK_Packer]):
+class PackerService(PropertyCollectionService[UBK_Packer]):
     @classmethod
     def collection(cls, owner):
         return owner.packers

@@ -42,16 +42,17 @@ class UBK_UL_ObjectList(bpy.types.UIList):
         else:
             row.label(text="<Missing Object>", icon="ERROR")
 
-        enabled_bakers = sum(bake_map.enabled for bake_map in obj_settings.bakers)
-
-        total_bakers = len(obj_settings.bakers)
+        source_objects = len(obj_settings.sources)
 
         stats = row.row()
         stats.alignment = "RIGHT"
 
         stats.enabled = False
 
-        stats.label(text=f"{enabled_bakers}/{total_bakers}", icon="RENDERLAYERS")
+        if source_objects:
+            stats.label(text=f"{source_objects}", icon="SPHERE")
+        else:
+            stats.label(text="no source")
 
         op = row.operator(
             "ubk.bake_object",
