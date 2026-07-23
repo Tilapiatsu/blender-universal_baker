@@ -41,6 +41,9 @@ class AmbientOcclusionBaker(BakerBase):
     def update_baker(self, ctx: BakeContext) -> None:
         return super().update_baker(ctx)
 
+    def create_output(self, ctx: BakeContext):
+        return super().create_output(ctx)
+
     def export_file(self, ctx: BakeContext):
         """Save Pack to disk."""
         super().export_file(ctx)
