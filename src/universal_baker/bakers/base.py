@@ -5,12 +5,17 @@ from abc import ABC
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 
+from universal_baker.core.controller import BakeController
+from universal_baker.properties import bake_group
+from universal_baker.services.image_io import ImageIOService
+
 if TYPE_CHECKING:
     from ..runtime.context import BakeContext
     from ..runtime.task import Task
 
 from ..services.renderer import RendererService
 from ..services.image_bake import ImageServiceBake
+from ..runtime.bake_output import BakeOutput
 
 
 class BakerColorType(Enum):
@@ -47,6 +52,7 @@ class BakerBase(ABC):
         self.prepare(ctx)
         self.bake(ctx)
         self.update_baker(ctx)
+        self.create_output(ctx)
         self.export_file(ctx)
         self.cleanup(ctx)
 
@@ -73,6 +79,19 @@ class BakerBase(ABC):
             return
 
         baker.image = ctx.image.image
+
+    @abstractmethod
+    def create_output(self, ctx: BakeContext):
+        buffer = ImageIOService.read(ctx.image)
+
+        output = BakeOutput.create(
+            bake_group=ctx.task.target,
+            target_object=ctx.task.target,
+            baker=ctx.task.baker,
+            image=buffer,
+        )
+
+        ctx.session.outputs.add(output)
 
     @abstractmethod
     def export_file(self, ctx: BakeContext):

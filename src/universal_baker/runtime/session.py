@@ -7,6 +7,8 @@ import bpy
 
 from typing import TYPE_CHECKING
 
+from .output_repository import OutputRepository
+
 
 if TYPE_CHECKING:
     from .job import Job
@@ -34,6 +36,7 @@ class ExecutionSession:
 
     job: Job
     context: bpy.types.Context
+    outputs: OutputRepository = OutputRepository()
     current_task: Task | None = None
     current_context: ExecutionContext | None = None
     cancelled: bool = False
