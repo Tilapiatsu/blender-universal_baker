@@ -95,37 +95,31 @@ class BakeController:
     # ---------------------------------------------------------
 
     @classmethod
-    def add_map(cls, context: bpy.types.Context, baker_id: str = "DIFFUSE"):
-        project = cls.project(context)
+    def add_baker(cls, context: bpy.types.Context, baker_id: str = "DIFFUSE"):
+        bake_group = cls.active_bake_group(context)
 
-        if not project.objects:
+        if not bake_group:
             return None
 
-        object_settings = project.objects[project.active_object_index]
-        baker = object_settings.bakers.add()
+        baker = bake_group.bakers.add()
         baker.baker = baker_id
         baker.image_name = baker_id.title()
         baker.uuid = str(uuid4())
-        object_settings.active_baker_index = len(object_settings.bakers) - 1
+        bake_group.active_baker_index = len(bake_group.bakers) - 1
 
         return baker
 
     @classmethod
     def remove_baker(cls, context: bpy.types.Context):
-        project = cls.project(context)
+        bake_group = cls.active_bake_group(context)
 
-        if not project.objects:
-            return
-
-        bake_group = BakeGroupService.active(project)
-
-        if bake_group is None:
-            return
+        if not bake_group:
+            return None
 
         if not bake_group.bakers:
             return
 
-        BakerService.remove(project, bake_group.active_baker_index)
+        BakerService.remove(bake_group, bake_group.active_baker_index)
 
     @staticmethod
     def resolve_map_uuid(project, uuid: str):
@@ -180,17 +174,12 @@ class BakeController:
 
     @classmethod
     def add_packer(cls, context: bpy.types.Context, packer_id: str = "INTERNAL"):
-        project = cls.project(context)
+        bake_group = cls.active_bake_group(context)
 
-        if not project.objects:
-            return
+        if not bake_group:
+            return None
 
-        obj = TargetObjectService.active(project)
-
-        if obj is None:
-            return
-
-        packer = obj.packers.add()
+        packer = bake_group.packers.add()
         packer.packer = packer_id
         red = packer.mappings.add()
         green = packer.mappings.add()
@@ -207,18 +196,13 @@ class BakeController:
         blue.destination_channel = "B"
         alpha.destination_channel = "A"
 
-        obj.active_packer_index = len(obj.packers) - 1
+        bake_group.active_packer_index = len(bake_group.packers) - 1
 
         return packer
 
     @classmethod
     def remove_packer(cls, context: bpy.types.Context):
-        project = cls.project(context)
-
-        if not project.objects:
-            return
-
-        bake_group = BakeGroupService.active(project)
+        bake_group = cls.active_bake_group(context)
 
         if bake_group is None:
             return
@@ -226,7 +210,7 @@ class BakeController:
         if not bake_group.packers:
             return
 
-        PackerService.remove(project, bake_group.active_packer_index)
+        PackerService.remove(bake_group, bake_group.active_packer_index)
 
     # ---------------------------------------------------------
     # Internal Data

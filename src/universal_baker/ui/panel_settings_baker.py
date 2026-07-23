@@ -65,16 +65,18 @@ class UBK_PT_BakerSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
         box.use_property_split = True
         box.use_property_decorate = False
 
-        active_object = BakeController.active_object(context)
-        assert active_object is not None
+        active_bake_group = BakeController.active_bake_group(context)
+        if active_bake_group is None:
+            return
 
         active_baker = BakeController.active_baker(context)
-        assert active_baker is not None
+        if active_baker is None:
+            return
 
         box.prop(active_baker, "image_name")
         layout.prop(active_baker, "override_settings", toggle=1)
         if active_baker.override_settings:
-            box.label(text=f"{active_object.target.name}_{active_baker.image_name} settings")
+            box.label(text=f"{active_baker.image_name} settings")
         else:
             box.label(text="Inherited from Global Settings")
 

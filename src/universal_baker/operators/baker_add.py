@@ -19,12 +19,11 @@ class UBK_OT_BakerAdd(UBK_OT_Base):
     @classmethod
     def poll(cls, context):
         """Only available when a bake object exists."""
-
-        project = BakeController.project(context)
-        return bool(project.objects)
+        bake_group = BakeController.active_bake_group(context)
+        return bool(bake_group)
 
     def execute(self, context):
-        bake_map = BakeController.add_map(context, baker_id=self.baker_id)
+        bake_map = BakeController.add_baker(context, baker_id=self.baker_id)
 
         if bake_map is None:
             self.warning("Unable to add bake map. Select a target object first.")
@@ -34,9 +33,7 @@ class UBK_OT_BakerAdd(UBK_OT_Base):
         project = BakeController.project(context)
         BakeController.ensure_output_node(project.settings_bake.internal_name)
 
-        obj = BakeController.active_object(context)
-        assert obj is not None
-        bake_map.settings.internal_name = f"{obj.target.name}_{self.baker_id}"
+        bake_map.settings.internal_name = f"{self.baker_id}"
         BakeController.ensure_output_node(bake_map.settings.internal_name)
 
         self.info(f"Added bake map '{self.baker_id}'.")

@@ -77,14 +77,19 @@ class ProjectService:
     def remove_object(context, index: int):
         project = ProjectService.get(context)
 
-        if not project.objects:
+        if not project.bake_groups:
             return
 
-        project.objects.remove(index)
+        bake_group = BakeGroupService.active(project)
 
-        project.active_object_index = min(
-            project.active_object_index,
-            len(project.objects) - 1,
+        if not bake_group:
+            return
+
+        bake_group.target_objects.remove(index)
+
+        bake_group.active_target_object_index = min(
+            bake_group.active_target_object_index,
+            len(bake_group.target_objects) - 1,
         )
 
     @staticmethod

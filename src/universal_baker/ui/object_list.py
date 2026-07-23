@@ -54,14 +54,6 @@ class UBK_UL_ObjectList(bpy.types.UIList):
         else:
             stats.label(text="no source")
 
-        op = row.operator(
-            "ubk.bake_object",
-            text="",
-            icon="RENDER_STILL",
-        )
-
-        op.index = index
-
     def draw_filter(self, context, layout):
         """Reserved for future filtering options."""
         pass
