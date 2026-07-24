@@ -12,7 +12,7 @@ from ..core.registry_token import registry_token
 
 
 def get_variables(
-    obj: bpy.types.Object,
+    bake_group_name: str,
     baker: UBK_Baker | None,
     packer: UBK_Packer | None,
     image_name: str,
@@ -20,7 +20,7 @@ def get_variables(
     extension: str,
 ):
     return {
-        "object": obj,
+        "bake_group": bake_group_name,
         "baker": baker,
         "packer": packer,
         "image_name": image_name,
@@ -31,8 +31,8 @@ def get_variables(
 
 def register():
     registry_token.register(
-        "object",
-        lambda ctx: ctx.variables["object"].name,
+        "bake_group",
+        lambda ctx: ctx.variables["bake_group"],
     )
     registry_token.register(
         "baker",

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from ..runtime.image_buffer import ImageBuffer
-from ..compositor.compositor import Compositor
+from ..compositors.compositor import Compositor
 
 
 class ImageAccumulator:

@@ -7,6 +7,11 @@ from ..runtime.image_buffer import ImageBuffer
 
 
 class Compositor(ABC):
+    id: str
+    name: str
+    description: str
+    icon: str
+
     @abstractmethod
     def composite(self, buffer: ImageBuffer, image: ImageBuffer) -> None:
         """Composite Image to buffer"""

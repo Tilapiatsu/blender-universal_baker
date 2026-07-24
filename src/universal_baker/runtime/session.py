@@ -44,7 +44,6 @@ class ExecutionSession:
     original_mode: str = "OBJECT"
     original_active_object: bpy.types.Object | None = None
     original_selected_objects: list[bpy.types.Object] = field(default_factory=list)
-    image_cache: dict[str, ImageBuffer] = field(default_factory=dict)
 
     original_engine: str = ""
     original_samples: int = 0

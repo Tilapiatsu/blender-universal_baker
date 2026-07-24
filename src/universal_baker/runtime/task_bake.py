@@ -7,16 +7,19 @@ import bpy
 
 from typing import TYPE_CHECKING
 
+
 from .task import Task
 
 if TYPE_CHECKING:
     from ..bakers.base import BakerBase
+    from ..properties.bake_group import UBK_BakeGroup
 
 from ..runtime.settings_bake import BakeSettings
 
 
 @dataclass(slots=True, frozen=True)
 class BakeTask(Task):
+    bake_group: UBK_BakeGroup
     target: bpy.types.Object
     sources: tuple[bpy.types.Object]
     baker: BakerBase

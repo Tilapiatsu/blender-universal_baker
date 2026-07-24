@@ -83,7 +83,7 @@ class BakerBase(ABC):
         buffer = ImageIOService.read(ctx.image)
 
         output = BakeOutput.create(
-            bake_group=ctx.task.target,
+            bake_group=ctx.task.bake_group,
             target_object=ctx.task.target,
             baker=ctx.task.baker,
             image=buffer,
