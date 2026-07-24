@@ -5,9 +5,7 @@ from abc import ABC
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 
-from universal_baker.core.controller import BakeController
-from universal_baker.properties import bake_group
-from universal_baker.services.image_io import ImageIOService
+from ..services.image_io import ImageIOService
 
 if TYPE_CHECKING:
     from ..runtime.context import BakeContext
