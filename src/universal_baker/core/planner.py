@@ -153,6 +153,7 @@ class ExecutionPlanner:
                 task = PackingTask(
                     id=packer.name,
                     uuid=str(uuid4()),
+                    bake_group_uuid=group.uuid,
                     enabled=True,
                     output_context=output_context,
                     packer=PackerInternal(),

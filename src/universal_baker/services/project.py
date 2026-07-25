@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import bpy
 
+from uuid import uuid4
+
 from .bake_group import BakeGroupService
 
 
@@ -15,6 +17,7 @@ class ProjectService:
         project = ProjectService.get(context)
 
         item = project.bake_groups.add()
+        item.uuid = str(uuid4())
 
         project.active_bake_group_index = len(project.bake_groups) - 1
 

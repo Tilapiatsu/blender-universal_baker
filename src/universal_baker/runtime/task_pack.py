@@ -25,6 +25,7 @@ class PackingTask(Task):
     packer: PackerBase
     settings: PackSettings
     image_name: str
+    bake_group_uuid: str
 
     red: PackingChannel | None
     green: PackingChannel | None

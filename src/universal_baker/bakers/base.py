@@ -76,13 +76,16 @@ class BakerBase(ABC):
         if baker is None:
             return
 
-        baker.image = ctx.image.image
+        image = baker.images.add()
+        image.object_name = ctx.target.name
+        image.image = ctx.image.image
 
     @abstractmethod
     def create_output(self, ctx: BakeContext):
         buffer = ImageIOService.read(ctx.image)
 
         output = BakeOutput.create(
+            uuid=ctx.task.uuid,
             bake_group=ctx.task.bake_group,
             target_object=ctx.task.target,
             baker=ctx.task.baker,
@@ -90,6 +93,9 @@ class BakerBase(ABC):
         )
 
         ctx.session.outputs.add(output)
+        ctx.session.provider.invalidate(ctx.task.bake_group.uuid, ctx.task.uuid)
+        print(ctx.session.outputs)
+        # print(ctx.session.provider.get_image(ctx.task.bake_group.uuid, ctx.task.baker.id))
 
     @abstractmethod
     def export_file(self, ctx: BakeContext):

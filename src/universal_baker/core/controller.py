@@ -5,10 +5,12 @@ from typing import List
 import bpy
 from uuid import uuid4
 
+
 from ..resources.image import ImageResource
 
 from .planner import ExecutionPlanner
 from ..runtime.job import Job
+from ..runtime.bake_group import BakeGroup
 
 from ..services.project import ProjectService
 from ..services.target_object import TargetObjectService
@@ -16,12 +18,16 @@ from ..services.packer import PackerService
 from ..services.baker import BakerService
 from ..services.bake_group import BakeGroupService
 from ..services.internal_data import InternalDataService
+from ..services.output_provider import OutputProvider
+from ..services.image_io import ImageIOService
 from ..constant import get_prefs
 from ..core.registry_executor import registry_executor
+from ..runtime.session import ExecutionSession
 
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from ..properties.bake_group import UBK_BakeGroup
     from ..properties.baker import UBK_Baker
 
 
@@ -91,7 +97,7 @@ class BakeController:
         ProjectService.remove_object(context, index)
 
     # ---------------------------------------------------------
-    # Map Operations
+    # Baker Operations
     # ---------------------------------------------------------
 
     @classmethod
@@ -131,7 +137,7 @@ class BakeController:
         return None
 
     @classmethod
-    def get_resource_from_uuid(cls, uuid: str) -> ImageResource | None:
+    def get_resource_from_uuid(cls, baker_uuid: str, provider: OutputProvider) -> ImageResource | None:
         project = cls.project(bpy.context)
         if project is None:
             return None
@@ -141,12 +147,17 @@ class BakeController:
                 continue
 
             for b in g.bakers:
-                if b.uuid == uuid:
-                    resource = ImageResource(
-                        image=b.image,
-                        name=b.image_name,
-                    )
-                    if b.image is not None:
+                if b.uuid == baker_uuid:
+                    image_buffer = provider.get_image(g.uuid, b.uuid)
+                    if image_buffer is None:
+                        print("image_buffer is empty")
+                        return None
+                    if b.images[0] is not None:
+                        resource = ImageResource(
+                            image=b.images[0],
+                            name=b.image_name,
+                        )
+                        ImageIOService.write(resource, image_buffer)
                         resource.width = b.image.size[0]
                         resource.height = b.image.size[1]
                     else:
@@ -167,6 +178,18 @@ class BakeController:
             for b in g.bakers:
                 if b.uuid == uuid:
                     return b
+
+    @classmethod
+    def get_bake_group_from_uuid(cls, uuid: str) -> UBK_BakeGroup | None:
+        project = cls.project(bpy.context)
+        if project is None:
+            return None
+
+        for g in project.bake_groups:
+            if g.uuid != uuid:
+                continue
+
+            return g
 
     # ---------------------------------------------------------
     # Pack Operations
@@ -295,12 +318,6 @@ class BakeController:
 
         executor.execute(context, job)
 
-        #
-        # MVP
-        #
-        # Executor will be added later.
-        #
-
         return (
             True,
             job,
@@ -346,12 +363,6 @@ class BakeController:
             executor = registry_executor["PackInternal"]
 
         executor.execute(context, job)
-
-        #
-        # MVP
-        #
-        # Executor will be added later.
-        #
 
         return (
             True,

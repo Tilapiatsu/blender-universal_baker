@@ -4,10 +4,15 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 import bpy
+from ..services.output_provider import OutputProvider
 from ..runtime.task_pack import PackingTask
 
 from .image import ImageResource
 from ..packers.channels import Channel
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..runtime.context import PackContext
 
 
 @dataclass(slots=True)
@@ -17,8 +22,11 @@ class PackResource:
     required by the packing pipeline.
     """
 
+    provider: OutputProvider
+
     output_image: ImageResource | None = None
 
+    bake_group_uuid: str | None = None
     red_uuid: str | None = None
     green_uuid: str | None = None
     blue_uuid: str | None = None
@@ -29,7 +37,9 @@ class PackResource:
     blue_channel_mapping: Channel = Channel.B
     alpha_channel_mapping: Channel = Channel.A
 
-    def __init__(self, task: PackingTask) -> None:
+    def __init__(self, task: PackingTask, ctx: PackContext) -> None:
+        self.bake_group_uuid = task.bake_group_uuid
+        self.provider = ctx.session.provider
         if task.red:
             self.red_uuid = task.red.source_map_uuid
             self.red_channel_mapping = task.red.source_channel
@@ -74,4 +84,4 @@ class PackResource:
     def get_resource_from_uuid(self, uuid: str) -> ImageResource | None:
         from ..core.controller import BakeController
 
-        return BakeController.get_resource_from_uuid(uuid)
+        return BakeController.get_resource_from_uuid(uuid, self.provider)

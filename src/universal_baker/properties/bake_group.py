@@ -20,6 +20,7 @@ from .settings_bake import UBK_BakeSettings
 class UBK_BakeGroup(PropertyGroup):
     """Bake target contains all properties for one group of target objects."""
 
+    uuid: StringProperty(name="uuid", default="")
     enabled: BoolProperty(
         name="Enabled",
         default=True,
@@ -27,7 +28,7 @@ class UBK_BakeGroup(PropertyGroup):
 
     name: StringProperty(
         name="Target",
-        default="Target",
+        default="Group",
     )
 
     expanded: BoolProperty(default=True)

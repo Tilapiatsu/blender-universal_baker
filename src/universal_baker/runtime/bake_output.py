@@ -30,16 +30,23 @@ class BakeOutput:
     They can later be accumulated into one image.
     """
 
-    id: str
+    uuid: str
     bake_group: UBK_BakeGroup
     target_object: Object
     baker: BaseBaker
     image: ImageBuffer
 
     @classmethod
-    def create(cls, *, bake_group, target_object, baker, image) -> "BakeOutput":
+    def create(
+        cls,
+        uuid: str,
+        bake_group: UBK_BakeGroup,
+        target_object: Object,
+        baker: BaseBaker,
+        image: ImageBuffer,
+    ) -> "BakeOutput":
         return cls(
-            id=str(uuid4()),
+            uuid=uuid,
             bake_group=bake_group,
             target_object=target_object,
             baker=baker,
@@ -49,6 +56,10 @@ class BakeOutput:
     @property
     def baker_id(self) -> str:
         return self.baker.id
+
+    @property
+    def baker_uuid(self) -> str:
+        return self.baker.uuid
 
     @property
     def baker_name(self) -> str:

@@ -92,7 +92,6 @@ class BakeExecutorInternal(TaskExecutor):
         """
         Hook called after the last task.
         """
-        pass
 
     def before_task(self, ctx: ExecutionContext) -> None:
         """

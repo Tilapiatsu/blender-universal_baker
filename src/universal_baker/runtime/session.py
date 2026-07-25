@@ -5,16 +5,16 @@ from time import perf_counter
 
 import bpy
 
-from typing import TYPE_CHECKING
 
 from .output_repository import OutputRepository
+from ..services.output_provider import OutputProvider
 
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .job import Job
     from .task import Task
     from .context import ExecutionContext
-    from .image_buffer import ImageBuffer
 
 
 class SessionContext:
@@ -36,7 +36,10 @@ class ExecutionSession:
 
     job: Job
     context: bpy.types.Context
-    outputs: OutputRepository = OutputRepository()
+    # TODO: The session shouldn't own OutputRepository, because it will loos all its content when reinitialize at the
+    # creation of an executor
+    outputs: OutputRepository
+    provider: OutputProvider
     current_task: Task | None = None
     current_context: ExecutionContext | None = None
     cancelled: bool = False
@@ -53,6 +56,15 @@ class ExecutionSession:
     temporary_images: list[bpy.types.Image] = field(default_factory=list)
     temporary_materials: list[bpy.types.Material] = field(default_factory=list)
     temporary_node_groups: list[bpy.types.NodeTree] = field(default_factory=list)
+
+    def __init__(self, job: Job, context: bpy.types.Context) -> None:
+        self.job = job
+        self.context = context
+        self.outputs = OutputRepository()
+        self.provider = OutputProvider(self.outputs)
+        self.temporary_images = []
+        self.temporary_materials = []
+        self.temporary_node_groups = []
 
     def initialize(self, context: bpy.types.Context) -> None:
         """Capture the current Blender state."""

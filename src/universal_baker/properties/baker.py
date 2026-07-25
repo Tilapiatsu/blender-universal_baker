@@ -1,7 +1,7 @@
 from __future__ import annotations
 import bpy
 from bpy.types import PropertyGroup
-from bpy.props import BoolProperty, EnumProperty, StringProperty, PointerProperty
+from bpy.props import BoolProperty, EnumProperty, StringProperty, PointerProperty, CollectionProperty
 from .settings_bake import UBK_BakeSettings
 
 
@@ -9,6 +9,13 @@ def baker_items(self, context):
     from ..core.registry_baker import registry_baker
 
     return registry_baker.enum_items()
+
+
+class UBK_BakerOutput(PropertyGroup):
+    object_name: StringProperty("Object Name", default="")
+    image: PointerProperty(
+        type=bpy.types.Image,
+    )
 
 
 class UBK_Baker(PropertyGroup):
@@ -31,8 +38,8 @@ class UBK_Baker(PropertyGroup):
         default="Bake",
     )
 
-    image: PointerProperty(
-        type=bpy.types.Image,
+    images: CollectionProperty(
+        type=UBK_BakerOutput,
     )
 
     override_settings: BoolProperty(
@@ -50,7 +57,10 @@ class UBK_Baker(PropertyGroup):
     )
 
 
-classes = (UBK_Baker,)
+classes = (
+    UBK_BakerOutput,
+    UBK_Baker,
+)
 
 
 def register():

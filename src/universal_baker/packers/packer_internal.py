@@ -38,7 +38,7 @@ class PackerInternal(PackerBase):
     def prepare(self, ctx: PackContext) -> None:
         """Prepare Blender before packing."""
         task = ctx.task
-        ctx.pack_resource = ImageServicePack.create_pack_resource(task)
+        ctx.pack_resource = ImageServicePack.create_pack_resource(task, ctx)
 
         ctx.red_resource = ctx.pack_resource.red_resource
         ctx.green_resource = ctx.pack_resource.green_resource

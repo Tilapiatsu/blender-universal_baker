@@ -43,7 +43,7 @@ class UBK_Output(PropertyGroup):
     export_file: BoolProperty(name="Export File", default=True)
     # TODO : add dynamic description to get and explain the registered tokens and transforms
     output_path: StringProperty(name="Output Path", default="//baking", subtype="FILE_PATH")
-    filename_template: StringProperty(name="Filename", default="{object}_{image_name}")
+    filename_template: StringProperty(name="Filename", default="{bake_group}_{image_name}")
 
 
 classes = (UBK_Output,)
