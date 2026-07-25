@@ -8,6 +8,7 @@ import bpy
 
 from .output_repository import OutputRepository
 from ..services.output_provider import OutputProvider
+from .runtime_manager import RuntimeManager
 
 from typing import TYPE_CHECKING
 
@@ -36,10 +37,7 @@ class ExecutionSession:
 
     job: Job
     context: bpy.types.Context
-    # TODO: The session shouldn't own OutputRepository, because it will loos all its content when reinitialize at the
-    # creation of an executor
-    outputs: OutputRepository
-    provider: OutputProvider
+    runtime: RuntimeManager
     current_task: Task | None = None
     current_context: ExecutionContext | None = None
     cancelled: bool = False
@@ -60,8 +58,8 @@ class ExecutionSession:
     def __init__(self, job: Job, context: bpy.types.Context) -> None:
         self.job = job
         self.context = context
-        self.outputs = OutputRepository()
-        self.provider = OutputProvider(self.outputs)
+        self.runtime = RuntimeManager.current(context)
+        self.runtime.register_session(self)
         self.temporary_images = []
         self.temporary_materials = []
         self.temporary_node_groups = []
@@ -71,6 +69,9 @@ class ExecutionSession:
 
         self.capture_scene(context)
         self.capture_render_settings(context)
+
+    def dispose(self):
+        self.runtime.unregister_session(self)
 
     def capture_scene(self, context: bpy.types.Context) -> None:
         self.original_mode = context.mode

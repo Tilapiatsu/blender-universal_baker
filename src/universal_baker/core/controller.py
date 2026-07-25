@@ -152,14 +152,14 @@ class BakeController:
                     if image_buffer is None:
                         print("image_buffer is empty")
                         return None
-                    if b.images[0] is not None:
+                    if b.images[0].image is not None:
                         resource = ImageResource(
-                            image=b.images[0],
+                            image=b.images[0].image,
                             name=b.image_name,
                         )
                         ImageIOService.write(resource, image_buffer)
-                        resource.width = b.image.size[0]
-                        resource.height = b.image.size[1]
+                        resource.width = b.images[0].image.size[0]
+                        resource.height = b.images[0].image.size[1]
                     else:
                         return None
 

@@ -7,6 +7,7 @@ from . import (
     packer,
     object,
     bake_group,
+    artifact,
     project,
 )
 
@@ -19,6 +20,7 @@ modules = (
     packer,
     object,
     bake_group,
+    artifact,
     project,
 )
 

@@ -19,6 +19,7 @@ from . import (
     operators,
     bakers,
     executors,
+    compositors,
 )
 
 modules = (
@@ -29,6 +30,7 @@ modules = (
     operators,
     bakers,
     executors,
+    compositors,
 )
 
 

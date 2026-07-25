@@ -39,7 +39,7 @@ class PackResource:
 
     def __init__(self, task: PackingTask, ctx: PackContext) -> None:
         self.bake_group_uuid = task.bake_group_uuid
-        self.provider = ctx.session.provider
+        self.provider = ctx.session.runtime.provider
         if task.red:
             self.red_uuid = task.red.source_map_uuid
             self.red_channel_mapping = task.red.source_channel

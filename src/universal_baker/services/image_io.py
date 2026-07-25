@@ -1,4 +1,5 @@
 from __future__ import annotations
+from pathlib import Path
 
 import bpy
 
@@ -39,3 +40,7 @@ class ImageIOService(ImageServiceBase):
 
     @staticmethod
     def validate_channels(): ...
+
+    @staticmethod
+    def load(path: Path):
+        bpy.data.images.load(path)

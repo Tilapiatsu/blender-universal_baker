@@ -92,9 +92,11 @@ class BakerBase(ABC):
             image=buffer,
         )
 
-        ctx.session.outputs.add(output)
-        ctx.session.provider.invalidate(ctx.task.bake_group.uuid, ctx.task.uuid)
-        print(ctx.session.outputs)
+        ctx.session.runtime.outputs.add(output)
+        ctx.session.runtime.provider.invalidate(ctx.task.bake_group.uuid, ctx.task.uuid)
+
+        print(ctx.session.runtime.outputs)
+
         # print(ctx.session.provider.get_image(ctx.task.bake_group.uuid, ctx.task.baker.id))
 
     @abstractmethod

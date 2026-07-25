@@ -94,7 +94,7 @@ class OutputProvider:
         #
         # Order is important.
         #
-        outputs.sort(key=lambda o: o.bake_group)
+        # outputs.sort(key=lambda o: o.bake_group)
 
         for output in outputs:
             accumulator.accumulate(output.image, registry_compositor["ALPHA_OVER"])

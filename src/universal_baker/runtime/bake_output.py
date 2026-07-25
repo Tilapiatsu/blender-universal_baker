@@ -31,6 +31,7 @@ class BakeOutput:
     """
 
     uuid: str
+    # index: int
     bake_group: UBK_BakeGroup
     target_object: Object
     baker: BaseBaker
@@ -40,6 +41,7 @@ class BakeOutput:
     def create(
         cls,
         uuid: str,
+        # index: int,
         bake_group: UBK_BakeGroup,
         target_object: Object,
         baker: BaseBaker,
@@ -47,6 +49,7 @@ class BakeOutput:
     ) -> "BakeOutput":
         return cls(
             uuid=uuid,
+            # index=index,
             bake_group=bake_group,
             target_object=target_object,
             baker=baker,
