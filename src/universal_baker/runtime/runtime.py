@@ -26,10 +26,15 @@ class BakeRuntime:
 
         self._scene = scene
 
+        self.artifacts = ArtifactRepository(
+            scene,
+            project=scene.ubk_project,
+        )
+
         #
         # Runtime repositories
         #
-        self.outputs = OutputRepository()
+        self.outputs = OutputRepository(self.artifacts)
 
         #
         # High level services
@@ -38,10 +43,6 @@ class BakeRuntime:
             repository=self.outputs,
         )
 
-        self.artifacts = ArtifactRepository(
-            scene,
-            project=scene.ubk_project,
-        )
         #
         # Future runtime objects
         #

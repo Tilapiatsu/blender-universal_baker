@@ -99,6 +99,15 @@ class ImageResource:
         if self.height <= 0:
             raise ValueError("Image height must be greater than zero.")
 
+    def init_from_image(self) -> None:
+        if self.image is None:
+            return
+
+        self._width = self.image.size[0]
+        self._height = self.image.size[1]
+        self.name = self.image.name
+        self.filepath = self.image.filepath_raw
+
     def __repr__(self) -> str:
         result = ""
         result += f"{self.name} : {self.filepath}\nwidth = {self.width}\nheight = {self.height}"

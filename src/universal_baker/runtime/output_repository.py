@@ -1,88 +1,86 @@
 from __future__ import annotations
 
-import bpy
 from collections import defaultdict
 from typing import Iterable
 from typing import TYPE_CHECKING
 
+from .output_artifact import OutputArtifact
+
+from .artifact_repository import ArtifactRepository
+
 if TYPE_CHECKING:
     from ..runtime.bake_group import BakeGroup
-    from .bake_output import BakeOutput
+    from .output_base import OutputBase
 
 
 class OutputRepository:
     """
-    Runtime repository storing every BakeOutput produced
+    Runtime repository storing every Output produced
     during the execution of a BakeSession.
+    Producers refers to Bakers, Packers or accumulated sources.
     """
 
-    def __init__(self):
+    def __init__(self, artifact_repository: ArtifactRepository):
+        self._artifacts = artifact_repository
+        self._outputs = {}
+        self._index = defaultdict(list)
+        self._materialized = {}
         self.clear()
 
     def clear(self):
-        self._outputs: dict[str, BakeOutput] = {}
+        self._outputs: dict[str, OutputBase] = {}
+        self._index = defaultdict(list)
 
-        #
-        # (bake_group_uuid, baker_uuid)
-        #
-        self._target_baker_index = defaultdict(list)
-
-        #
-        # (bake_group_uuid, baker_uuid, object_name)
-        #
-        self._object_index = {}
-
-    def add(self, output: BakeOutput):
+    def add(self, output: OutputBase):
         self._outputs[output.uuid] = output
 
         target_key = (output.bake_group.uuid, output.uuid)
 
-        self._target_baker_index[target_key].append(output)
+        self._index[target_key].append(output)
 
-        object_key = (output.bake_group.uuid, output.uuid, output.target_object_name)
-
-        self._object_index[object_key] = output
-
-    def remove(self, output: BakeOutput):
+    def remove(self, output: OutputBase):
         self._outputs.pop(output.uuid, None)
 
         target_key = (
-            output.bake_group_name,
+            output.bake_group.name,
             output.uuid,
         )
 
-        outputs = self._target_baker_index.get(target_key)
+        outputs = self._index.get(target_key)
 
         if outputs:
             outputs.remove(output)
 
             if not outputs:
-                del self._target_baker_index[target_key]
+                del self._index[target_key]
 
-        self._object_index.pop(
-            (output.bake_group_name, output.uuid, output.target_object_name),
-            None,
-        )
+    def resolve_outputs(self, bake_group_uuid: str, producer_uuid: str):
+        key = (bake_group_uuid, producer_uuid)
 
-    def get_outputs(self, bake_group_uuid: str, baker_uuid: str) -> list[BakeOutput]:
-        """
-        Returns every output belonging to a bake target
-        for one baker.
-        """
-        return list(
-            self._target_baker_index.get(
-                (bake_group_uuid, baker_uuid),
-                [],
-            )
-        )
+        # First try RAM
+        outputs = self._lookup(key)
 
-    def get_output(self, bake_group: BakeGroup, baker_uuid: str, object: bpy.types.Object) -> BakeOutput | None:
-        return self._object_index.get((bake_group.uuid, baker_uuid, object.name))
+        if outputs:
+            return outputs
 
-    def has_output(self, bake_group: BakeGroup, baker_uuid: str, object: bpy.types.Object) -> bool:
-        return self.get_output(bake_group, baker_uuid, object) is not None
+        # Otherwise ask persistent artifacts.
 
-    def iter_outputs(self) -> Iterable[BakeOutput]:
+        artifacts = self._artifacts.resolve(bake_group_uuid, producer_uuid)
+
+        if not artifacts:
+            return []
+
+        outputs = []
+
+        for artifact in artifacts:
+            outputs.append(self._materialize(artifact))
+
+        return outputs
+
+    def _lookup(self, key: tuple[str, str]) -> list[OutputBase]:
+        return self._index[key]
+
+    def iter_outputs(self) -> Iterable[OutputBase]:
         return self._outputs.values()
 
     @property
@@ -100,18 +98,32 @@ class OutputRepository:
             if output.bake_group == bake_group:
                 yield output
 
-    def _max_chr(self) -> dict[str, int]:
-        max_chr = {"target_name": 0, "bake_id": 0, "uuid": 0}
-        for id, output in self._outputs.items():
-            max_chr["target_name"] = max(len(output.target_object_name), max_chr["target_name"])
-            max_chr["baker_id"] = max(len(output.baker.id), max_chr["bake_id"])
-            max_chr["uuid"] = max(len(id), max_chr["uuid"])
+    def _materialize(self, artifact: OutputArtifact):
+        """Get output from memory if exists or create a new one if not."""
+        if artifact.uuid in self._materialized:
+            uuid = self._materialized[artifact.uuid]
 
-        return max_chr
+            return self._outputs[uuid]
 
+        output = artifact.create_output()
+        self.add(output)
+        self._materialized[artifact.uuid] = output.uuid
+
+        return output
+
+    # def _max_chr(self) -> dict[str, int]:
+    #     max_chr = {"target_name": 0, "bake_id": 0, "uuid": 0}
+    #     for id, output in self._outputs.items():
+    #         max_chr["target_name"] = max(len(output.target_object_name), max_chr["target_name"])
+    #         max_chr["baker_id"] = max(len(output.baker.id), max_chr["bake_id"])
+    #         max_chr["uuid"] = max(len(id), max_chr["uuid"])
+    #
+    #     return max_chr
+    #
     def __repr__(self) -> str:
         result = f"Repository contains {self.count} output(s)\n"
         for id, output in self._outputs.items():
-            result += f"{output.target_object_name:20} | {output.baker.id:20} | {id}\n"
+            # TODO: add __repr__ method to all OutputBase children to make this look nice
+            result += f"{output:20} | {id}\n"
 
         return result

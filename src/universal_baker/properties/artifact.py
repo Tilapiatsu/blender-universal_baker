@@ -9,6 +9,7 @@ from bpy.props import (
     IntProperty,
     CollectionProperty,
 )
+from .properties.object import UBK_TargetObject
 
 
 ARTIFACT_TYPES = [
@@ -23,7 +24,7 @@ class UBK_ArtifactDependency(PropertyGroup):
     Stores a dependency to another artifact.
     """
 
-    artifact_uid: StringProperty()
+    artifact_uuid: StringProperty()
 
 
 class UBK_Artifact(PropertyGroup):
@@ -41,8 +42,9 @@ class UBK_Artifact(PropertyGroup):
         default="BAKE",
     )
 
-    target_uid: StringProperty()
-    producer_id: StringProperty()
+    bake_group_uuid: StringProperty()
+    producer_uuid: StringProperty(description="Baker or Packer uuid: Where the data comes from ? Who had produced it ")
+    target_objects: CollectionProperty(type=UBK_TargetObject)
     relative_path: StringProperty()
     filename: StringProperty()
     extension: StringProperty()

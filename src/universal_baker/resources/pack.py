@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from pathlib import Path
+from dataclasses import dataclass
 
-import bpy
 from ..services.output_provider import OutputProvider
 from ..runtime.task_pack import PackingTask
 

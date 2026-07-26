@@ -12,7 +12,14 @@ if TYPE_CHECKING:
 @dataclass(slots=True)
 class BakeGroup:
     uuid: str
-    name: str
+
+    @property
+    def name(self):
+        group = self.get()
+        if group is None:
+            return "NOT FOUND"
+
+        return group.name
 
     def get(self) -> UBK_BakeGroup | None:
         return BakeController.get_bake_group_from_uuid(self.uuid)

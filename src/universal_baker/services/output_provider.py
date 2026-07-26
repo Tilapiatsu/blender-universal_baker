@@ -16,7 +16,7 @@ class OutputProvider:
     High-level access to runtime bake results.
 
     Responsible for:
-        - retrieving BakeOutputs
+        - retrieving OutputBakes
         - accumulating grouped targets
         - caching accumulated images
     """

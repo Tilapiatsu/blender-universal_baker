@@ -42,5 +42,5 @@ class ImageIOService(ImageServiceBase):
     def validate_channels(): ...
 
     @staticmethod
-    def load(path: Path):
+    def load(path: Path) -> bpy.types.Image:
         bpy.data.images.load(path)

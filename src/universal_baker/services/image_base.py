@@ -11,6 +11,12 @@ class ImageServiceBase:
     """Manage destination images."""
 
     @classmethod
+    def init_resource(cls, image: bpy.types.Image) -> ImageResource:
+        resource = ImageResource(image)
+        resource.init_from_image()
+        return resource
+
+    @classmethod
     def acquire(cls, resource: ImageResource, task: Task) -> ImageResource:
         """
         Acquire the destination image for this bake.

@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 from ..services.renderer import RendererService
 from ..services.image_bake import ImageServiceBake
-from ..runtime.bake_output import BakeOutput
+from ..runtime.output_bake import OutputBake
 
 
 class BakerColorType(Enum):
@@ -84,7 +84,7 @@ class BakerBase(ABC):
     def create_output(self, ctx: BakeContext):
         buffer = ImageIOService.read(ctx.image)
 
-        output = BakeOutput.create(
+        output = OutputBake.create(
             uuid=ctx.task.uuid,
             bake_group=ctx.task.bake_group,
             target_object=ctx.task.target,

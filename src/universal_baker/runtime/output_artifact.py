@@ -4,66 +4,90 @@ import bpy
 
 from pathlib import Path
 from typing import TYPE_CHECKING
-from datetime import datetime
 
+from ..core.controller import BakeController
+
+from .bake_group import BakeGroup
+
+from ..resources.image import ImageResource
+
+from .output_base import OutputBase
+from .output_bake import OutputBake
+from .output_accumulated import OutputAccumulated
+from .output_pack import OutputPack
 from ..services.image_io import ImageIOService
 
 if TYPE_CHECKING:
     from bpy.types import Scene
-    from ..runtime.image_buffer import ImageBuffer
     from ..properties.artifact import UBK_Artifact
 
 
 class OutputArtifact:
-    """
-    Runtime wrapper around a persistent UBK_PG_Artifact.
-    """
+    uuid: str
+    bake_group_uuid: str
+    producer_uuid: str
 
-    def __init__(self, scene: Scene, artifact: UBK_Artifact):
+    def __init__(self, scene: Scene, property_group: UBK_Artifact):
         self.scene = scene
-        self.data = artifact
-
-    @property
-    def uuid(self):
-        return self.data.uuid
-
-    @property
-    def producer_id(self):
-        return self.data.producer_id
-
-    @property
-    def target_uid(self):
-        return self.data.target_uid
+        self.data = property_group
+        self.bake_group_uuid = property_group.bake_group_uuid
+        self.producer_uuid = property_group.producer_uuid
 
     @property
     def path(self) -> Path:
         return Path(bpy.path.abspath(self.data.relative_path))
 
-    @property
     def exists(self) -> bool:
         return self.path.exists()
 
-    def load(self) -> ImageBuffer:
+    def load_image(self) -> ImageResource:
         """
-        Loads the artifact from disk.
+        Returns an ImageBuffer.
+        """
+        image = ImageIOService.load(self.path)
+
+        return ImageIOService.init_resource(image)
+
+    def create_output(self) -> OutputBase:
+        """
+        Materializes this artifact into
+        a runtime OutputBase.
         """
 
-        return ImageIOService.load(self.path)
+        image = self.load_image()
+        image_buffer = ImageIOService.read(image)
+        # TODO: Implement Output for all archetype types
+        match self.data.type:
+            case "BAKE":
+                output = OutputBake(
+                    uuid=self.data.uuid,
+                    bake_group=self.data.bake_group_uuid,
+                    target_object=self.data.target_object[0],
+                    baker=self.data.producer_uuid,
+                    image=image_buffer,
+                )
+            case "ACCUMULATED":
+                output_bakes = []
+                for b in self.data.dependencies:
+                    baker = BakeController.get_baker_from_uuid(b.artifact_uuid)
+                    if baker is None:
+                        continue
 
-    def delete(self):
+                    output_bakes.append(baker)
 
-        if self.exists:
-            self.path.unlink()
+                output = OutputAccumulated(
+                    uuid=self.data.uuid,
+                    image=image_buffer,
+                    baker=self.data.baker_uuid,
+                    bake_group=BakeGroup(self.data.bake_group_uuid),
+                    target_objects=self.data.target_objects,
+                    output_bakes=output_bakes,
+                )
+            case "PACK":
+                pass
+            case _:
+                pass
 
-    @property
-    def dependencies(self):
+        output.uuid = self.uuid
 
-        return [dep.artifact_uid for dep in self.data.dependencies]
-
-    @property
-    def timestamp(self):
-
-        if not self.data.created:
-            return None
-
-        return datetime.fromisoformat(self.data.created)
+        return output
