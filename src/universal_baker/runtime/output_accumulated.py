@@ -9,7 +9,6 @@ from .output_bake import OutputBake
 from .bake_group import BakeGroup
 from .output_artifact import OutputArtifact
 from ..services.image_io import ImageIOService
-from ..core.controller import BakeController
 
 if TYPE_CHECKING:
     from .image_buffer import ImageBuffer
@@ -41,13 +40,14 @@ class OutputAccumulated(OutputBase):
     @classmethod
     def create(
         cls,
+        uuid: str,
         bake_group: BakeGroup,
         output_bakes: list[OutputBake],
         baker: BakerBase,
         image: ImageBuffer,
     ) -> OutputAccumulated:
         return cls(
-            uuid=str(uuid4()),
+            uuid=uuid,
             image=image,
             bake_group=bake_group,
             output_bakes=output_bakes,
@@ -68,6 +68,8 @@ class OutputAccumulated(OutputBase):
 
     @classmethod
     def from_artifact(cls, artifact: OutputArtifact) -> OutputAccumulated:
+        from ..core.controller import BakeController
+
         image = artifact.load_image()
         image_buffer = ImageIOService.read(image)
 
@@ -90,3 +92,6 @@ class OutputAccumulated(OutputBase):
         )
 
         return output
+
+    def __repr__(self) -> str:
+        return f"Accumulated Output : {self.bake_group.name} | {self.baker.id}"

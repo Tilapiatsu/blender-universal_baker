@@ -86,18 +86,15 @@ class BakerBase(ABC):
 
         output = OutputBake.create(
             uuid=ctx.task.uuid,
-            bake_group=ctx.task.bake_group,
-            target_object=ctx.task.target,
-            baker=ctx.task.baker,
             image=buffer,
+            bake_group=ctx.task.bake_group,
+            baker=ctx.task.baker,
         )
 
         ctx.session.runtime.outputs.add(output)
         ctx.session.runtime.provider.invalidate(ctx.task.bake_group.uuid, ctx.task.uuid)
 
         print(ctx.session.runtime.outputs)
-
-        # print(ctx.session.provider.get_image(ctx.task.bake_group.uuid, ctx.task.baker.id))
 
     @abstractmethod
     def export_file(self, ctx: BakeContext):

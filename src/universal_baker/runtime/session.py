@@ -5,10 +5,8 @@ from time import perf_counter
 
 import bpy
 
-
-from .output_repository import OutputRepository
-from ..services.output_provider import OutputProvider
 from .runtime_manager import RuntimeManager
+from .runtime import BakeRuntime
 
 from typing import TYPE_CHECKING
 
@@ -37,7 +35,7 @@ class ExecutionSession:
 
     job: Job
     context: bpy.types.Context
-    runtime: RuntimeManager
+    runtime: BakeRuntime
     current_task: Task | None = None
     current_context: ExecutionContext | None = None
     cancelled: bool = False

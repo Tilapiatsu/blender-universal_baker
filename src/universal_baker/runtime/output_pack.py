@@ -1,19 +1,19 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
 from uuid import uuid4
 
-from ..packers.packer_base import PackerBase
 from .image_buffer import ImageBuffer
 
 from .output_base import OutputBase
 from .bake_group import BakeGroup
 from .output_artifact import OutputArtifact
 from ..services.image_io import ImageIOService
-from ..core.controller import BakeController
+
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from ..packers.packer_base import PackerBase
     from ..packers.channels import Channel
     from ..bakers.base import BakerBase
 
@@ -51,6 +51,7 @@ class OutputPack(OutputBase):
     @classmethod
     def create(
         cls,
+        uuid: str,
         image: ImageBuffer,
         bake_group: BakeGroup,
         packer: PackerBase,
@@ -64,7 +65,7 @@ class OutputPack(OutputBase):
         alpha_channel_mapping: Channel,
     ) -> OutputPack:
         return cls(
-            uuid=str(uuid4()),
+            uuid=uuid,
             image=image,
             bake_group=bake_group,
             packer=packer,
@@ -79,7 +80,9 @@ class OutputPack(OutputBase):
         )
 
     @classmethod
-    def from_artifact(cls, artifact: OutputArtifact) -> OutputBake:
+    def from_artifact(cls, artifact: OutputArtifact) -> OutputPack:
+        from ..core.controller import BakeController
+
         image = artifact.load_image()
         image_buffer = ImageIOService.read(image)
 
@@ -105,3 +108,6 @@ class OutputPack(OutputBase):
         )
 
         return output
+
+    def __repr__(self) -> str:
+        return f"Pack Output : {self.bake_group.name} | R: {self.red_baker.id if self.red_baker else 'NONE'} | G: {self.green_baker.id if self.green_baker else 'NONE'} | B: {self.blue_baker.id if self.blue_baker else 'NONE'} | A: {self.alpha_baker.id if self.alpha_baker else 'NONE'}"

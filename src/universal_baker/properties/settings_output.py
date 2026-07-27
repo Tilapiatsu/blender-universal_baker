@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import bpy
-
 from bpy.types import PropertyGroup
 from bpy.props import EnumProperty, StringProperty, IntProperty, BoolProperty
 
@@ -15,14 +13,14 @@ class UBK_Output(PropertyGroup):
 
     width: IntProperty(
         name="Width",
-        default=2048,
+        default=256,
         min=1,
         subtype="PIXEL",
     )
 
     height: IntProperty(
         name="Height",
-        default=2048,
+        default=256,
         min=1,
         subtype="PIXEL",
     )

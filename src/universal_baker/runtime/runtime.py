@@ -22,6 +22,9 @@ class BakeRuntime:
     Nothing stored here is serialized inside the .blend file.
     """
 
+    outputs: OutputRepository
+    provider: OutputProvider
+
     def __init__(self, scene: Scene):
 
         self._scene = scene
@@ -47,11 +50,8 @@ class BakeRuntime:
         # Future runtime objects
         #
         self.preview_cache = {}
-
         self.image_cache = {}
-
         self.statistics = {}
-
         self.active_sessions = []
 
     # ---------------------------------------------------------
@@ -77,33 +77,24 @@ class BakeRuntime:
         """
 
         self.outputs.clear()
-
         self.provider.clear()
-
         self.preview_cache.clear()
-
         self.image_cache.clear()
-
         self.statistics.clear()
-
         self.active_sessions.clear()
 
     def register_session(self, session):
-
         if session not in self.active_sessions:
             self.active_sessions.append(session)
 
     def unregister_session(self, session):
-
         if session in self.active_sessions:
             self.active_sessions.remove(session)
 
     def has_active_sessions(self) -> bool:
-
         return bool(self.active_sessions)
 
     def __repr__(self):
-
         return (
             f"<BakeRuntime scene='{self.scene.name}' outputs={self.outputs.count} sessions={len(self.active_sessions)}>"
         )

@@ -75,7 +75,6 @@ class RuntimeManager:
         """
         Removes every runtime.
         """
-
         for runtime in cls._runtimes.values():
             runtime.clear()
 

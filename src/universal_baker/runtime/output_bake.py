@@ -8,11 +8,8 @@ from .output_base import OutputBase
 from .bake_group import BakeGroup
 from .output_artifact import OutputArtifact
 from ..services.image_io import ImageIOService
-from ..core.controller import BakeController
 
 if TYPE_CHECKING:
-    from bpy.types import Object
-
     from .image_buffer import ImageBuffer
     from ..bakers.base import BakerBase
 
@@ -40,12 +37,13 @@ class OutputBake(OutputBase):
     @classmethod
     def create(
         cls,
+        uuid: str,
         bake_group: BakeGroup,
         baker: BakerBase,
         image: ImageBuffer,
     ) -> OutputBake:
         return cls(
-            uuid=str(uuid4()),
+            uuid=uuid,
             image=image,
             bake_group=bake_group,
             baker=baker,
@@ -65,6 +63,8 @@ class OutputBake(OutputBase):
 
     @classmethod
     def from_artifact(cls, artifact: OutputArtifact) -> OutputBake:
+        from ..core.controller import BakeController
+
         image = artifact.load_image()
         image_buffer = ImageIOService.read(image)
 
@@ -78,3 +78,6 @@ class OutputBake(OutputBase):
         )
 
         return output
+
+    def __repr__(self) -> str:
+        return f"Bake Output : {self.bake_group.name} | {self.baker.name}"

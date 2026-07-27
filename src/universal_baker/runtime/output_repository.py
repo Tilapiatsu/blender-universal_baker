@@ -4,6 +4,10 @@ from collections import defaultdict
 from typing import Iterable, Generator
 from typing import TYPE_CHECKING
 
+from .output_accumulated import OutputAccumulated
+from .output_bake import OutputBake
+from .output_pack import OutputPack
+
 from .output_artifact import OutputArtifact
 
 from .artifact_repository import ArtifactRepository
@@ -95,21 +99,64 @@ class OutputRepository:
         for output_id in ids:
             self.remove(self._outputs[output_id])
 
-    def iter_target_outputs(self, bake_group: BakeGroup) -> Generator[OutputBase]:
+    def iter_bake_group_outputs(self, bake_group: BakeGroup) -> Generator[OutputBase]:
         for output in self.iter_outputs():
             if output.bake_group == bake_group:
                 yield output
 
-    def _materialize(self, artifact: OutputArtifact) -> OutputBase:
+    def _materialize(self, artifact: OutputArtifact) -> OutputBase | None:
         """Get output from memory if exists or create a new one if not."""
         if artifact.uuid in self._materialized:
             uuid = self._materialized[artifact.uuid]
 
             return self._outputs[uuid]
 
-        output = artifact.create_output()
+        output = self._create_output(artifact)
+        if output is None:
+            return None
+
         self.add(output)
         self._materialized[artifact.uuid] = output.uuid
+
+        return output
+
+    def get_outputs(self, bake_group_uuid: str, producer_uuid: str) -> list[OutputBase]:
+        outputs = self._lookup((bake_group_uuid, producer_uuid))
+
+        if outputs:
+            return outputs
+
+        outputs = self._load_from_artifacts(bake_group_uuid, producer_uuid)
+
+        return outputs
+
+    def _load_from_artifacts(self, bake_group_uuid: str, producer_uuid: str) -> list[OutputBase]:
+
+        artifacts = self._artifacts.find_outputs(bake_group_uuid, producer_uuid)
+
+        outputs = []
+
+        for artifact in artifacts:
+            output = self._create_output(artifact)
+            if output is None:
+                continue
+
+            self.add(output)
+            outputs.append(output)
+
+        return outputs
+
+    def _create_output(self, artifact: OutputArtifact) -> OutputBase | None:
+        match artifact.type:
+            case "BAKE":
+                output = OutputBake.from_artifact(artifact)
+            case "ACCUMULATED":
+                output = OutputAccumulated.from_artifact(artifact)
+            case "PACK":
+                output = OutputPack.from_artifact(artifact)
+            case _:
+                print("Invalid Artifact")
+                output = None
 
         return output
 
@@ -128,7 +175,7 @@ class OutputRepository:
         for output in outputs:
             self.remove(output)
 
-    def clear_materialized(self, artifact_uuid):
+    def clear_materialized(self, artifact_uuid: str):
         output_uuid = self._materialized.pop(artifact_uuid, None)
 
         if output_uuid is None:
@@ -148,7 +195,6 @@ class OutputRepository:
     def __repr__(self) -> str:
         result = f"Repository contains {self.count} output(s)\n"
         for id, output in self._outputs.items():
-            # TODO: add __repr__ method to all OutputBase children to make this look nice
-            result += f"{output:20} | {id}\n"
+            result += f"{str(output):20} | {id}\n"
 
         return result

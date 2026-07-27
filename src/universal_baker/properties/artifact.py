@@ -80,6 +80,7 @@ class UBK_Artifact(PropertyGroup):
 
 
 classes = (
+    UBK_ChannelMapping,
     UBK_ArtifactDependency,
     UBK_ProducerUUID,
     UBK_Artifact,

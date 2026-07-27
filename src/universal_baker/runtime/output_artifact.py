@@ -7,16 +7,8 @@ from typing import TYPE_CHECKING
 
 from ..packers.channels import Channel
 
-from ..core.controller import BakeController
-
-from .bake_group import BakeGroup
-
 from ..resources.image import ImageResource
 
-from .output_base import OutputBase
-from .output_bake import OutputBake
-from .output_accumulated import OutputAccumulated
-from .output_pack import OutputPack
 from ..services.image_io import ImageIOService
 
 if TYPE_CHECKING:
@@ -27,6 +19,7 @@ if TYPE_CHECKING:
 class OutputArtifact:
     uuid: str
     bake_group_uuid: str
+    type: str
     producer_uuid: str
     dependencies: list[str]
     dependency_mapping: list[Channel]
@@ -34,6 +27,7 @@ class OutputArtifact:
     def __init__(self, scene: Scene, property_group: UBK_Artifact):
         self.scene = scene
         self.data = property_group
+        self.type = property_group.type
         self.bake_group_uuid = property_group.bake_group_uuid
         self.producer_uuid = property_group.producer_uuid
         self.dependencies = []
