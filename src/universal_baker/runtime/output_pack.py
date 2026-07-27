@@ -9,6 +9,9 @@ from .image_buffer import ImageBuffer
 
 from .output_base import OutputBase
 from .bake_group import BakeGroup
+from .output_artifact import OutputArtifact
+from ..services.image_io import ImageIOService
+from ..core.controller import BakeController
 
 if TYPE_CHECKING:
     from ..packers.channels import Channel
@@ -74,3 +77,31 @@ class OutputPack(OutputBase):
             blue_channel_mapping=blue_channel_mapping,
             alpha_channel_mapping=alpha_channel_mapping,
         )
+
+    @classmethod
+    def from_artifact(cls, artifact: OutputArtifact) -> OutputBake:
+        image = artifact.load_image()
+        image_buffer = ImageIOService.read(image)
+
+        packer = BakeController.get_paker_from_uuid(artifact.producer_uuid)
+        red_baker = BakeController.get_baker_from_uuid(artifact.dependencies[0])
+        green_baker = BakeController.get_baker_from_uuid(artifact.dependencies[1])
+        blue_baker = BakeController.get_baker_from_uuid(artifact.dependencies[2])
+        alpha_baker = BakeController.get_baker_from_uuid(artifact.dependencies[3])
+
+        output = OutputPack(
+            uuid=artifact.uuid,
+            image=image_buffer,
+            bake_group=BakeGroup(artifact.bake_group_uuid),
+            packer=packer,
+            red_baker=red_baker,
+            green_baker=green_baker,
+            blue_baker=blue_baker,
+            alpha_baker=alpha_baker,
+            red_channel_mapping=artifact.dependency_mapping[0],
+            green_channel_mapping=artifact.dependency_mapping[1],
+            blue_channel_mapping=artifact.dependency_mapping[2],
+            alpha_channel_mapping=artifact.dependency_mapping[3],
+        )
+
+        return output

@@ -6,6 +6,9 @@ from uuid import uuid4
 
 from .output_base import OutputBase
 from .bake_group import BakeGroup
+from .output_artifact import OutputArtifact
+from ..services.image_io import ImageIOService
+from ..core.controller import BakeController
 
 if TYPE_CHECKING:
     from bpy.types import Object
@@ -32,14 +35,12 @@ class OutputBake(OutputBase):
     They can later be accumulated into one image.
     """
 
-    target_object: Object
     baker: BakerBase
 
     @classmethod
     def create(
         cls,
         bake_group: BakeGroup,
-        target_object: Object,
         baker: BakerBase,
         image: ImageBuffer,
     ) -> OutputBake:
@@ -47,7 +48,6 @@ class OutputBake(OutputBase):
             uuid=str(uuid4()),
             image=image,
             bake_group=bake_group,
-            target_object=target_object,
             baker=baker,
         )
 
@@ -63,6 +63,18 @@ class OutputBake(OutputBase):
     def bake_group_name(self) -> str:
         return self.bake_group.name
 
-    @property
-    def target_object_name(self) -> str:
-        return self.target_object.name
+    @classmethod
+    def from_artifact(cls, artifact: OutputArtifact) -> OutputBake:
+        image = artifact.load_image()
+        image_buffer = ImageIOService.read(image)
+
+        baker = BakeController.get_baker_from_uuid(artifact.producer_uuid)
+
+        output = OutputBake(
+            uuid=artifact.uuid,
+            bake_group=BakeGroup(artifact.bake_group_uuid),
+            baker=baker,
+            image=image_buffer,
+        )
+
+        return output

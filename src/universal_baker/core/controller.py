@@ -5,6 +5,8 @@ from typing import List
 import bpy
 from uuid import uuid4
 
+from universal_baker.properties.packer import UBK_Packer
+
 
 from ..resources.image import ImageResource
 
@@ -187,6 +189,18 @@ class BakeController:
 
         for g in project.bake_groups:
             if g.uuid != uuid:
+                continue
+
+            return g
+
+    @classmethod
+    def get_paker_from_uuid(cls, uuid: str) -> UBK_Packer | None:
+        project = cls.project(bpy.context)
+        if project is None:
+            return None
+
+        for p in project.packers:
+            if p.uuid != uuid:
                 continue
 
             return g

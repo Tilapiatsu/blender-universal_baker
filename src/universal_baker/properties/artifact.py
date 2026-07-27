@@ -8,8 +8,9 @@ from bpy.props import (
     EnumProperty,
     IntProperty,
     CollectionProperty,
+    PointerProperty,
 )
-from .properties.object import UBK_TargetObject
+from ..packers.channels import CHANNEL_ITEMS
 
 
 ARTIFACT_TYPES = [
@@ -24,7 +25,19 @@ class UBK_ArtifactDependency(PropertyGroup):
     Stores a dependency to another artifact.
     """
 
-    artifact_uuid: StringProperty()
+    uuid: StringProperty()
+
+
+class UBK_ProducerUUID(PropertyGroup):
+    uuid: StringProperty()
+
+
+class UBK_ChannelMapping(PropertyGroup):
+    channel: EnumProperty(
+        name="SRC",
+        items=CHANNEL_ITEMS,
+        default="R",
+    )
 
 
 class UBK_Artifact(PropertyGroup):
@@ -43,8 +56,11 @@ class UBK_Artifact(PropertyGroup):
     )
 
     bake_group_uuid: StringProperty()
-    producer_uuid: StringProperty(description="Baker or Packer uuid: Where the data comes from ? Who had produced it ")
-    target_objects: CollectionProperty(type=UBK_TargetObject)
+    producer_uuid: StringProperty()
+    # producer_uuid: CollectionProperty(
+    #     type=UBK_ProducerUUID, description="Baker or Packer uuid: Where the data comes from ? Who had produced it "
+    # )
+    # target_object: PointerProperty(type=bpy.types.Object)
     relative_path: StringProperty()
     filename: StringProperty()
     extension: StringProperty()
@@ -60,10 +76,12 @@ class UBK_Artifact(PropertyGroup):
     dependencies: CollectionProperty(
         type=UBK_ArtifactDependency,
     )
+    dependencies_mapping: CollectionProperty(type=UBK_ChannelMapping)
 
 
 classes = (
     UBK_ArtifactDependency,
+    UBK_ProducerUUID,
     UBK_Artifact,
 )
 

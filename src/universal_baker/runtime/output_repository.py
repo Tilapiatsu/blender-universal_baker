@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Iterable
+from typing import Iterable, Generator
 from typing import TYPE_CHECKING
 
 from .output_artifact import OutputArtifact
@@ -27,18 +27,18 @@ class OutputRepository:
         self._materialized = {}
         self.clear()
 
-    def clear(self):
+    def clear(self) -> None:
         self._outputs: dict[str, OutputBase] = {}
         self._index = defaultdict(list)
 
-    def add(self, output: OutputBase):
+    def add(self, output: OutputBase) -> None:
         self._outputs[output.uuid] = output
 
         target_key = (output.bake_group.uuid, output.uuid)
 
         self._index[target_key].append(output)
 
-    def remove(self, output: OutputBase):
+    def remove(self, output: OutputBase) -> None:
         self._outputs.pop(output.uuid, None)
 
         target_key = (
@@ -54,7 +54,7 @@ class OutputRepository:
             if not outputs:
                 del self._index[target_key]
 
-    def resolve_outputs(self, bake_group_uuid: str, producer_uuid: str):
+    def resolve_outputs(self, bake_group_uuid: str, producer_uuid: str, materialize: bool = True) -> list[OutputBase]:
         key = (bake_group_uuid, producer_uuid)
 
         # First try RAM
@@ -64,7 +64,6 @@ class OutputRepository:
             return outputs
 
         # Otherwise ask persistent artifacts.
-
         artifacts = self._artifacts.resolve(bake_group_uuid, producer_uuid)
 
         if not artifacts:
@@ -73,7 +72,10 @@ class OutputRepository:
         outputs = []
 
         for artifact in artifacts:
-            outputs.append(self._materialize(artifact))
+            if materialize:
+                outputs.append(self._materialize(artifact))
+            else:
+                outputs.append(artifact)
 
         return outputs
 
@@ -87,18 +89,18 @@ class OutputRepository:
     def count(self) -> int:
         return len(self._outputs)
 
-    def clear_target(self, bake_group: BakeGroup):
+    def clear_target(self, bake_group: BakeGroup) -> None:
         ids = [output.uuid for output in self.iter_outputs() if output.bake_group == bake_group]
 
         for output_id in ids:
             self.remove(self._outputs[output_id])
 
-    def iter_target_outputs(self, bake_group: BakeGroup):
+    def iter_target_outputs(self, bake_group: BakeGroup) -> Generator[OutputBase]:
         for output in self.iter_outputs():
             if output.bake_group == bake_group:
                 yield output
 
-    def _materialize(self, artifact: OutputArtifact):
+    def _materialize(self, artifact: OutputArtifact) -> OutputBase:
         """Get output from memory if exists or create a new one if not."""
         if artifact.uuid in self._materialized:
             uuid = self._materialized[artifact.uuid]
@@ -111,6 +113,29 @@ class OutputRepository:
 
         return output
 
+    def invalidate(self, bake_group_uuid: str, producer_uuid: str) -> None:
+        """
+        Removes all runtime BakeOutputs associated
+        with one target/producer pair.
+        """
+
+        outputs = self.resolve_outputs(
+            bake_group_uuid,
+            producer_uuid,
+            materialize=False,
+        )
+
+        for output in outputs:
+            self.remove(output)
+
+    def clear_materialized(self, artifact_uuid):
+        output_uuid = self._materialized.pop(artifact_uuid, None)
+
+        if output_uuid is None:
+            return
+
+        self.remove(self._outputs[output_uuid])
+
     # def _max_chr(self) -> dict[str, int]:
     #     max_chr = {"target_name": 0, "bake_id": 0, "uuid": 0}
     #     for id, output in self._outputs.items():
@@ -119,7 +144,7 @@ class OutputRepository:
     #         max_chr["uuid"] = max(len(id), max_chr["uuid"])
     #
     #     return max_chr
-    #
+
     def __repr__(self) -> str:
         result = f"Repository contains {self.count} output(s)\n"
         for id, output in self._outputs.items():

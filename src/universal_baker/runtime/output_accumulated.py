@@ -6,12 +6,13 @@ from uuid import uuid4
 
 from .output_base import OutputBase
 from .output_bake import OutputBake
+from .bake_group import BakeGroup
+from .output_artifact import OutputArtifact
+from ..services.image_io import ImageIOService
+from ..core.controller import BakeController
 
 if TYPE_CHECKING:
-    from bpy.types import Object
-
     from .image_buffer import ImageBuffer
-    from ..properties.bake_group import UBK_BakeGroup
     from ..bakers.base import BakerBase
 
 
@@ -34,16 +35,13 @@ class OutputAccumulated(OutputBase):
 
     """
 
-    bake_group: UBK_BakeGroup
-    target_objects: list[Object]
     output_bakes: list[OutputBake]
     baker: BakerBase
 
     @classmethod
     def create(
         cls,
-        bake_group: UBK_BakeGroup,
-        target_objects: list[Object],
+        bake_group: BakeGroup,
         output_bakes: list[OutputBake],
         baker: BakerBase,
         image: ImageBuffer,
@@ -52,7 +50,6 @@ class OutputAccumulated(OutputBase):
             uuid=str(uuid4()),
             image=image,
             bake_group=bake_group,
-            target_objects=target_objects,
             output_bakes=output_bakes,
             baker=baker,
         )
@@ -68,3 +65,28 @@ class OutputAccumulated(OutputBase):
     @property
     def bake_group_name(self) -> str:
         return self.bake_group.name
+
+    @classmethod
+    def from_artifact(cls, artifact: OutputArtifact) -> OutputAccumulated:
+        image = artifact.load_image()
+        image_buffer = ImageIOService.read(image)
+
+        output_bakes = []
+        for d in artifact.dependencies:
+            baker = BakeController.get_baker_from_uuid(d)
+            if baker is None:
+                continue
+
+            output_bakes.append(baker)
+
+        baker = BakeController.get_baker_from_uuid(artifact.producer_uuid)
+
+        output = OutputAccumulated(
+            uuid=artifact.uuid,
+            image=image_buffer,
+            baker=baker,
+            bake_group=BakeGroup(artifact.bake_group_uuid),
+            output_bakes=output_bakes,
+        )
+
+        return output

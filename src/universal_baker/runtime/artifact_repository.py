@@ -13,14 +13,14 @@ class ArtifactRepository:
     Runtime view over the persistent artifact database.
     """
 
-    def __init__(self, scene: bpy.types.Scene, project: UBK_Project):
+    def __init__(self, scene: bpy.types.Scene, project: UBK_Project) -> None:
         self.scene = scene
         self.project = project
 
         self.rebuild()
 
-    def rebuild(self):
-        self._artifacts = {}
+    def rebuild(self) -> None:
+        self._artifacts: dict[str, OutputArtifact] = {}
         self._baker_group_index = defaultdict(list)
         self._producer_index = defaultdict(list)
 
@@ -31,27 +31,29 @@ class ArtifactRepository:
             self._baker_group_index[artifact.bake_group_uuid].append(artifact)
             self._producer_index[artifact.producer_uuid].append(artifact)
 
-    def all(self):
-        return self._artifacts.values()
+    def all(self) -> list[OutputArtifact]:
+        return list(self._artifacts.values())
 
-    def get(self, uuid):
+    def get(self, uuid) -> OutputArtifact | None:
         return self._artifacts.get(uuid)
 
-    def by_bake_group(self, bake_group_uuid):
+    def by_bake_group(self, bake_group_uuid) -> list[OutputArtifact]:
         return list(self._baker_group_index.get(bake_group_uuid, []))
 
-    def by_producer(self, producer_id):
-        return list(self._producer_index.get(producer_id, []))
+    def by_producer(self, producer_uuid) -> list[OutputArtifact]:
+        return list(self._producer_index.get(producer_uuid, []))
 
-    def resolve(self, bake_group_uuid: str, producer_id: str):
-        return [artifact for artifact in self.by_bake_group(bake_group_uuid) if artifact.producer_id == producer_id]
+    def resolve(self, bake_group_uuid: str, producer_uuid: str) -> list[OutputArtifact]:
+        return [artifact for artifact in self.by_bake_group(bake_group_uuid) if artifact.producer_uuid == producer_uuid]
 
-    def exists(self, target_uid, producer_id):
+    def exists(self, bake_group_uuid, producer_uuid) -> bool:
         return any(
-            artifact.exists for artifact in self.by_bake_group(target_uid) if artifact.producer_id == producer_id
+            artifact.exists
+            for artifact in self.by_bake_group(bake_group_uuid)
+            if artifact.producer_uuid == producer_uuid
         )
 
-    def remove(self, uuid):
+    def remove(self, uuid) -> None:
         artifact = self._artifacts.get(uuid)
 
         if artifact is None:
@@ -67,6 +69,6 @@ class ArtifactRepository:
 
         self.rebuild()
 
-    def clear(self):
+    def clear(self) -> None:
         self.project.artifacts.clear()
         self.rebuild()
