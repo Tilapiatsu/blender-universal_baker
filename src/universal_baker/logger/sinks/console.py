@@ -8,4 +8,9 @@ class ConsoleSink(BaseSink):
     def write(self, event: LogEvent):
         timestamp = datetime.fromtimestamp(event.timestamp).strftime("%H:%M:%S")
 
-        print(f"[{timestamp}] [{event.severity.name}] {event.message}")
+        scope = ""
+
+        if event.scope:
+            scope = "[" + " > ".join(event.scope) + "] "
+
+        print(f"[{timestamp}] [{event.severity.name}] {scope}{event.message}")

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from typing import Any
 import time
@@ -14,3 +16,4 @@ class LogEvent:
     category: str | None = None
     exception: Exception | None = None
     data: dict[str, Any] = field(default_factory=dict)
+    scope: tuple[str, ...] = field(default_factory=tuple)

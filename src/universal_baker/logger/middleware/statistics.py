@@ -1,5 +1,6 @@
-from .base import BaseMiddleware
+from __future__ import annotations
 
+from .base import BaseMiddleware
 from ..severity import Severity
 
 

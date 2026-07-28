@@ -4,6 +4,8 @@ from ..event import LogEvent
 
 
 class BaseMiddleware(ABC):
+    priority: int = 100
+
     @abstractmethod
     def process(self, event: LogEvent) -> LogEvent | None:
         """

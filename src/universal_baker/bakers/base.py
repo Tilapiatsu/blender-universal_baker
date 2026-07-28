@@ -15,6 +15,8 @@ if TYPE_CHECKING:
     from ..runtime.context import BakeContext
     from ..runtime.task import Task
 
+LOG_SCOPE = "Bake"
+
 
 class BakerColorType(Enum):
     COLOR = auto()
@@ -47,14 +49,15 @@ class BakerBase(ABC):
     @abstractmethod
     def execute(self, ctx: BakeContext) -> None:
         """Prepare, bake and cleanup all at once."""
-        LOG.info(f"Execute Task : {str(ctx.task)}")
+        with LOG.scope(LOG_SCOPE):
+            LOG.info(f"Execute Task : {str(ctx.task)}")
 
-        self.prepare(ctx)
-        self.bake(ctx)
-        self.update_baker(ctx)
-        self.create_output(ctx)
-        self.export_file(ctx)
-        self.cleanup(ctx)
+            self.prepare(ctx)
+            self.bake(ctx)
+            self.update_baker(ctx)
+            self.create_output(ctx)
+            self.export_file(ctx)
+            self.cleanup(ctx)
 
     @abstractmethod
     def prepare(self, ctx: BakeContext) -> None:

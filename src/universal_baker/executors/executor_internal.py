@@ -15,6 +15,8 @@ from ..core.registry_baker import registry_baker
 from ..core.registry_executor import registry_executor
 from .executor_base import TaskExecutor
 
+LOG_SCOPE = "ProcessInternal"
+
 
 class BakeExecutorInternal(TaskExecutor):
     """
@@ -59,29 +61,31 @@ class BakeExecutorInternal(TaskExecutor):
         return session
 
     def execute_task(self, session: ExecutionSession, task: BakeTask) -> None:
-        session.current_context = BakeContext(
-            session=session,
-            task=task,
-            baker=registry_baker[task.baker_id],
-        )
-        ctx = session.current_context
-        session.current_task = task
-        session.job.notify_task_started(task)
-        start = perf_counter()
+        with LOG.scope(LOG_SCOPE):
+            LOG.info("Init Task")
+            session.current_context = BakeContext(
+                session=session,
+                task=task,
+                baker=registry_baker[task.baker_id],
+            )
+            ctx = session.current_context
+            session.current_task = task
+            session.job.notify_task_started(task)
+            start = perf_counter()
 
-        try:
-            self.before_task(ctx)
-            task.baker.execute(ctx)
-            ctx.succeed()
-            session.job.notify_task_finished(task, True, perf_counter() - start)
+            try:
+                self.before_task(ctx)
+                task.baker.execute(ctx)
+                ctx.succeed()
+                session.job.notify_task_finished(task, True, perf_counter() - start)
 
-        except Exception as exc:
-            traceback.print_exc()
-            ctx.fail(str(exc))
-            session.job.notify_task_failed(task, str(exc))
+            except Exception as exc:
+                traceback.print_exc()
+                ctx.fail(str(exc))
+                session.job.notify_task_failed(task, str(exc))
 
-        finally:
-            self.after_task(ctx)
+            finally:
+                self.after_task(ctx)
 
     def before_job(self, session: ExecutionSession) -> None:
         """
