@@ -9,7 +9,6 @@ class ConsoleSink(BaseSink):
         timestamp = datetime.fromtimestamp(event.timestamp).strftime("%H:%M:%S")
 
         scope = ""
-
         if event.scope:
             scope = "[" + " > ".join(event.scope) + "] "
 

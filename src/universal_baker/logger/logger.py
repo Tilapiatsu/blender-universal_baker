@@ -6,7 +6,7 @@ from .dispatcher import Dispatcher
 from .event import LogEvent
 from .severity import Severity
 from .middleware.dispatcher import MiddlewareDispatcher
-from .middleware.scope import ScopeManager
+from .middleware.scope_manager import ScopeManager
 
 
 class Logger:
@@ -21,7 +21,7 @@ class Logger:
             severity=severity,
             message=message,
             addon=self.addon,
-            scope=self.scope_manager.current,
+            scope=self.scope_manager.current_path,
             **kwargs,
         )
 
