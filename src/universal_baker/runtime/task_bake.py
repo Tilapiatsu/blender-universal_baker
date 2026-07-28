@@ -49,5 +49,5 @@ class BakeTask(Task):
         return len(self.sources) > 0
 
     def __repr__(self) -> str:
-        result = f"{self.object_name:100} | BAKER_{self.baker_id}"
+        result = f"BAKER_{self.baker_id} | {self.object_name:100} "
         return result

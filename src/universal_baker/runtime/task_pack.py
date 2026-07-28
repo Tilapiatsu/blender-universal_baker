@@ -67,4 +67,4 @@ class PackingTask(Task):
                 self.alpha.source_map_name + "_" + self.alpha.source_channel + " -> " + self.alpha.destination_channel
             )
 
-        return f"{result:100} | PACKER_{self.packer.id}"
+        return f"PACKER_{self.packer.id} | {result:100}"

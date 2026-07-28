@@ -5,15 +5,15 @@ from abc import ABC
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 
+from ..constant import LOG
 from ..services.image_io import ImageIOService
+from ..services.renderer import RendererService
+from ..services.image_bake import ImageServiceBake
+from ..runtime.output_bake import OutputBake
 
 if TYPE_CHECKING:
     from ..runtime.context import BakeContext
     from ..runtime.task import Task
-
-from ..services.renderer import RendererService
-from ..services.image_bake import ImageServiceBake
-from ..runtime.output_bake import OutputBake
 
 
 class BakerColorType(Enum):
@@ -47,6 +47,8 @@ class BakerBase(ABC):
     @abstractmethod
     def execute(self, ctx: BakeContext) -> None:
         """Prepare, bake and cleanup all at once."""
+        LOG.info(f"Execute Task : {str(ctx.task)}")
+
         self.prepare(ctx)
         self.bake(ctx)
         self.update_baker(ctx)

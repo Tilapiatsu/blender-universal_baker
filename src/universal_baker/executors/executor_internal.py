@@ -5,6 +5,7 @@ import traceback
 
 import bpy
 
+from ..constant import LOG
 from ..runtime.context import BakeContext, ExecutionContext, PackContext
 from ..runtime.job import Job
 from ..runtime.session import ExecutionSession
