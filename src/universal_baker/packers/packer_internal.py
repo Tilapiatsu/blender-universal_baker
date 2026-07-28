@@ -1,8 +1,8 @@
 from __future__ import annotations
-from abc import abstractmethod
 
 from universal_baker.resources.pack import ImageResource
 
+from ..constant import LOG
 from ..runtime.context import PackContext
 from .packer_base import PackerBase
 
@@ -24,7 +24,7 @@ class PackerInternal(PackerBase):
     Operates exclusively on ImageBuffer instances.
     """
 
-    id: str = "INTERNAL"
+    id: str = "PACK_INTERNAL"
     label: str = "Pack Internal"
     description: str = "Pack rendered bake using blender"
 
@@ -61,7 +61,8 @@ class PackerInternal(PackerBase):
             resources += (ctx.alpha_resource,)
 
         if not len(resources):
-            print("No Image Resource Found")
+            with LOG.scope(self.id.capitalize()):
+                LOG.warning("No Image Resource Found")
             return
 
         ImageIOService.ensure_image_sizes(*resources)
@@ -113,7 +114,8 @@ class PackerInternal(PackerBase):
             ImageIOService.write(ctx.image, ctx.output_buffer)
 
         else:
-            print("Missing output buffer")
+            with LOG.scope(self.id.capitalize()):
+                LOG.error("Missing output buffer")
 
     def cleanup(self, ctx: PackContext) -> None:
         """Restore Blender."""

@@ -11,7 +11,7 @@ class BakeSummaryMiddleware(BaseMiddleware):
 
     def process(self, event) -> LogEvent:
 
-        if event.category != "BAKE":
+        if event.category not in ["BAKE", "PACK"]:
             return event
 
         status = event.data.get("status")

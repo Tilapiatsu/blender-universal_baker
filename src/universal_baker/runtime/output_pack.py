@@ -3,8 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from uuid import uuid4
 
+from ..constant import LOG
 from .image_buffer import ImageBuffer
-
 from .output_base import OutputBase
 from .bake_group import BakeGroup
 from .output_artifact import OutputArtifact
@@ -16,6 +16,9 @@ if TYPE_CHECKING:
     from ..packers.packer_base import PackerBase
     from ..packers.channels import Channel
     from ..bakers.base import BakerBase
+
+
+LOG_SCOPE: str = "Output Pack"
 
 
 @dataclass(slots=True)
@@ -81,33 +84,35 @@ class OutputPack(OutputBase):
 
     @classmethod
     def from_artifact(cls, artifact: OutputArtifact) -> OutputPack:
-        from ..core.controller import BakeController
+        with LOG.scope(LOG_SCOPE):
+            LOG.debug(f"Creating Output : {artifact.data.filename}")
+            from ..core.controller import BakeController
 
-        image = artifact.load_image()
-        image_buffer = ImageIOService.read(image)
+            image = artifact.load_image()
+            image_buffer = ImageIOService.read(image)
 
-        packer = BakeController.get_paker_from_uuid(artifact.producer_uuid)
-        red_baker = BakeController.get_baker_from_uuid(artifact.dependencies[0])
-        green_baker = BakeController.get_baker_from_uuid(artifact.dependencies[1])
-        blue_baker = BakeController.get_baker_from_uuid(artifact.dependencies[2])
-        alpha_baker = BakeController.get_baker_from_uuid(artifact.dependencies[3])
+            packer = BakeController.get_paker_from_uuid(artifact.producer_uuid)
+            red_baker = BakeController.get_baker_from_uuid(artifact.dependencies[0])
+            green_baker = BakeController.get_baker_from_uuid(artifact.dependencies[1])
+            blue_baker = BakeController.get_baker_from_uuid(artifact.dependencies[2])
+            alpha_baker = BakeController.get_baker_from_uuid(artifact.dependencies[3])
 
-        output = OutputPack(
-            uuid=artifact.uuid,
-            image=image_buffer,
-            bake_group=BakeGroup(artifact.bake_group_uuid),
-            packer=packer,
-            red_baker=red_baker,
-            green_baker=green_baker,
-            blue_baker=blue_baker,
-            alpha_baker=alpha_baker,
-            red_channel_mapping=artifact.dependency_mapping[0],
-            green_channel_mapping=artifact.dependency_mapping[1],
-            blue_channel_mapping=artifact.dependency_mapping[2],
-            alpha_channel_mapping=artifact.dependency_mapping[3],
-        )
+            output = OutputPack(
+                uuid=artifact.uuid,
+                image=image_buffer,
+                bake_group=BakeGroup(artifact.bake_group_uuid),
+                packer=packer,
+                red_baker=red_baker,
+                green_baker=green_baker,
+                blue_baker=blue_baker,
+                alpha_baker=alpha_baker,
+                red_channel_mapping=artifact.dependency_mapping[0],
+                green_channel_mapping=artifact.dependency_mapping[1],
+                blue_channel_mapping=artifact.dependency_mapping[2],
+                alpha_channel_mapping=artifact.dependency_mapping[3],
+            )
 
-        return output
+            return output
 
     def __repr__(self) -> str:
         return f"Pack Output : {self.bake_group.name} | R: {self.red_baker.id if self.red_baker else 'NONE'} | G: {self.green_baker.id if self.green_baker else 'NONE'} | B: {self.blue_baker.id if self.blue_baker else 'NONE'} | A: {self.alpha_baker.id if self.alpha_baker else 'NONE'}"

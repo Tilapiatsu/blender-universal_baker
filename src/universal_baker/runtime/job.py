@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from uuid import uuid4
 
+from ..constant import LOG
 from .task import Task
 from .task_bake import BakeTask
 from .task_pack import PackingTask
@@ -44,7 +45,14 @@ class Job:
         pass
 
     def notify_finished(self) -> None:
-        pass
+        stats = LOG.middleware.get("StatisticsMiddleware")
+        if stats is None:
+            return
+
+        message = "Job ended with :\n"
+        message += f"{stats.warning} warning(s)\n"
+        message += f"{stats.error} error(s)\n"
+        LOG.info(message)
 
     def notify_task_started(self, task: Task) -> None:
         pass

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import bpy
 
+from ..constant import LOG
 from ..core.controller import BakeController
 from ..runtime.job import Job
 from .base import UBK_OT_Base
@@ -26,7 +27,7 @@ class UBK_OT_BakeMap(UBK_OT_Base):
         return True
 
     def execute(self, context):
-        success, result = BakeController.bake_object(context, self.index)
+        success, result = BakeController.bake_baker(context, self.index)
 
         if not success:
             for error in result:
@@ -38,13 +39,8 @@ class UBK_OT_BakeMap(UBK_OT_Base):
 
         self.info(f"Created bake job with {job.total_tasks} task(s).")
 
-        print(job)
-
-        #
-        # MVP
-        #
-        # Executor will be added later.
-        #
+        with LOG.scope(self.LOG_SCOPE):
+            LOG.info(str(job))
 
         return {"FINISHED"}
 

@@ -15,8 +15,6 @@ from ..core.registry_baker import registry_baker
 from ..core.registry_executor import registry_executor
 from .executor_base import TaskExecutor
 
-LOG_SCOPE = "ProcessInternal"
-
 
 class BakeExecutorInternal(TaskExecutor):
     """
@@ -61,7 +59,7 @@ class BakeExecutorInternal(TaskExecutor):
         return session
 
     def execute_task(self, session: ExecutionSession, task: BakeTask) -> None:
-        with LOG.scope(LOG_SCOPE):
+        with LOG.scope(self.id):
             LOG.info("Init Task")
             session.current_context = BakeContext(
                 session=session,
@@ -76,12 +74,12 @@ class BakeExecutorInternal(TaskExecutor):
             try:
                 self.before_task(ctx)
                 task.baker.execute(ctx)
-                ctx.succeed()
+                ctx.succeed(f"{task.baker_id.capitalize()} succeeded")
                 session.job.notify_task_finished(task, True, perf_counter() - start)
 
             except Exception as exc:
                 traceback.print_exc()
-                ctx.fail(str(exc))
+                ctx.fail(f"{task.baker_id.capitalize()} failed\n" + str(exc))
                 session.job.notify_task_failed(task, str(exc))
 
             finally:
@@ -161,28 +159,30 @@ class PackExecutorInternal(TaskExecutor):
         return session
 
     def execute_task(self, session: ExecutionSession, task: PackingTask) -> None:
-        session.current_context = PackContext(
-            session=session,
-            task=task,
-        )
-        ctx = session.current_context
-        session.current_task = task
-        session.job.notify_task_started(task)
-        start = perf_counter()
+        with LOG.scope(self.id):
+            LOG.info("Init Task")
+            session.current_context = PackContext(
+                session=session,
+                task=task,
+            )
+            ctx = session.current_context
+            session.current_task = task
+            session.job.notify_task_started(task)
+            start = perf_counter()
 
-        try:
-            self.before_task(ctx)
-            task.packer.execute(ctx)
-            ctx.succeed()
-            session.job.notify_task_finished(task, True, perf_counter() - start)
+            try:
+                self.before_task(ctx)
+                task.packer.execute(ctx)
+                ctx.succeed(f"{task.packer.label.capitalize()} succeeded")
+                session.job.notify_task_finished(task, True, perf_counter() - start)
 
-        except Exception as exc:
-            traceback.print_exc()
-            ctx.fail(str(exc))
-            session.job.notify_task_failed(task, str(exc))
+            except Exception as exc:
+                traceback.print_exc()
+                ctx.fail(f"{task.packer.label.capitalize()} failed\n" + str(exc))
+                session.job.notify_task_failed(task, str(exc))
 
-        finally:
-            self.after_task(ctx)
+            finally:
+                self.after_task(ctx)
 
     def before_job(self, session: ExecutionSession) -> None:
         """

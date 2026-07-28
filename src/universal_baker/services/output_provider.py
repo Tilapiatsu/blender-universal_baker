@@ -3,12 +3,15 @@ from __future__ import annotations
 
 from ..core.accumulator import ImageAccumulator
 from ..core.registry_compositor import registry_compositor
+from ..constant import LOG
 
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..runtime.image_buffer import ImageBuffer
     from ..runtime.output_repository import OutputRepository
+
+LOG_SCOPE = "Output Provider"
 
 
 class OutputProvider:
@@ -73,7 +76,8 @@ class OutputProvider:
         outputs = self._repository.get_outputs(bake_group_uuid, baker_uuid)
 
         if not outputs:
-            print("output not found")
+            with LOG.scope(LOG_SCOPE):
+                LOG.error("output not found")
             return None
 
         #
@@ -123,8 +127,8 @@ class OutputProvider:
         """
 
         bakers = {
-            output.baker for output in self._repository.iter_outputs() if output.bake_group.uuid == bake_group_uuid
+            output.uuid for output in self._repository.iter_outputs() if output.bake_group.uuid == bake_group_uuid
         }
 
         for baker in bakers:
-            self.get_image(bake_group_uuid, baker.id)
+            self.get_image(bake_group_uuid, baker)

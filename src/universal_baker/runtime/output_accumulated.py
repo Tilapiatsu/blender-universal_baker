@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 from uuid import uuid4
 
+from ..constant import LOG
 from .output_base import OutputBase
 from .output_bake import OutputBake
 from .bake_group import BakeGroup
@@ -13,6 +14,8 @@ from ..services.image_io import ImageIOService
 if TYPE_CHECKING:
     from .image_buffer import ImageBuffer
     from ..bakers.base import BakerBase
+
+LOG_SCOPE: str = "Output Accumulated"
 
 
 @dataclass(slots=True)
@@ -68,30 +71,32 @@ class OutputAccumulated(OutputBase):
 
     @classmethod
     def from_artifact(cls, artifact: OutputArtifact) -> OutputAccumulated:
-        from ..core.controller import BakeController
+        with LOG.scope(LOG_SCOPE):
+            LOG.debug(f"Creating Output : {artifact.data.filename}")
+            from ..core.controller import BakeController
 
-        image = artifact.load_image()
-        image_buffer = ImageIOService.read(image)
+            image = artifact.load_image()
+            image_buffer = ImageIOService.read(image)
 
-        output_bakes = []
-        for d in artifact.dependencies:
-            baker = BakeController.get_baker_from_uuid(d)
-            if baker is None:
-                continue
+            output_bakes = []
+            for d in artifact.dependencies:
+                baker = BakeController.get_baker_from_uuid(d)
+                if baker is None:
+                    continue
 
-            output_bakes.append(baker)
+                output_bakes.append(baker)
 
-        baker = BakeController.get_baker_from_uuid(artifact.producer_uuid)
+            baker = BakeController.get_baker_from_uuid(artifact.producer_uuid)
 
-        output = OutputAccumulated(
-            uuid=artifact.uuid,
-            image=image_buffer,
-            baker=baker,
-            bake_group=BakeGroup(artifact.bake_group_uuid),
-            output_bakes=output_bakes,
-        )
+            output = OutputAccumulated(
+                uuid=artifact.uuid,
+                image=image_buffer,
+                baker=baker,
+                bake_group=BakeGroup(artifact.bake_group_uuid),
+                output_bakes=output_bakes,
+            )
 
-        return output
+            return output
 
     def __repr__(self) -> str:
         return f"Accumulated Output : {self.bake_group.name} | {self.baker.id}"

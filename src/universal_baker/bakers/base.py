@@ -99,8 +99,6 @@ class BakerBase(ABC):
         ctx.session.runtime.outputs.add(output)
         ctx.session.runtime.provider.invalidate(ctx.task.bake_group.uuid, ctx.task.uuid)
 
-        print(ctx.session.runtime.outputs)
-
     @abstractmethod
     def export_file(self, ctx: BakeContext):
         """Save Bake to disk."""

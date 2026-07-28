@@ -2,11 +2,13 @@ import bpy
 from .logger import Logger
 
 from .logger.sinks.console import ConsoleSink
+from .logger.middleware.statistics import StatisticsMiddleware
 from .logger_bake_middleware.bake_summary import BakeSummaryMiddleware
 
 LOG = Logger("Universal Baker")
 LOG.dispatcher.add_sink(ConsoleSink())
 LOG.middleware.add(BakeSummaryMiddleware())
+LOG.middleware.add(StatisticsMiddleware())
 
 BAKE_IMAGE_NODE_NAME = "UBK_BakeImage"
 BAKE_IMAGE_NODE_LABEL = "Universal Baker"

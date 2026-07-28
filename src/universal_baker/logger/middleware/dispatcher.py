@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from ..event import LogEvent
 from collections import OrderedDict
+from ..event import LogEvent
+from .base import BaseMiddleware
 
 
 class MiddlewareDispatcher:
@@ -23,6 +24,9 @@ class MiddlewareDispatcher:
             self._middleware.pop(name)
         except KeyError:
             print(f"Middleware {name} not found")
+
+    def get(self, name: str) -> BaseMiddleware | None:
+        return self._middleware[name]
 
     def process(self, event: LogEvent) -> LogEvent | None:
         for middleware in self.ordered_middleware:

@@ -5,15 +5,13 @@ from typing import List
 import bpy
 from uuid import uuid4
 
-from universal_baker.properties.packer import UBK_Packer
+from ..properties.packer import UBK_Packer
 
-
+from ..constant import LOG
 from ..resources.image import ImageResource
-
 from .planner import ExecutionPlanner
 from ..runtime.job import Job
 from ..runtime.bake_group import BakeGroup
-
 from ..services.project import ProjectService
 from ..services.target_object import TargetObjectService
 from ..services.packer import PackerService
@@ -152,7 +150,7 @@ class BakeController:
                 if b.uuid == baker_uuid:
                     image_buffer = provider.get_image(g.uuid, b.uuid)
                     if image_buffer is None:
-                        print("image_buffer is empty")
+                        LOG.warning("Image_buffer is empty")
                         return None
                     if b.images[0].image is not None:
                         resource = ImageResource(
@@ -346,7 +344,7 @@ class BakeController:
         raise NotImplementedError()
 
     @classmethod
-    def bake_baker(cls, context: bpy.types.Context, object_index: int, map_index: int):
+    def bake_baker(cls, context: bpy.types.Context, baker_index: int):
 
         #
         # TODO

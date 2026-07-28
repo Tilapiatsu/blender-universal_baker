@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import bpy
 
+from ..constant import LOG
 from ..core.controller import BakeController
 from ..runtime.job import Job
 from .base import UBK_OT_Base
@@ -38,7 +39,8 @@ class UBK_OT_BakeMap(UBK_OT_Base):
 
         self.info(f"Created Pack job with {job.total_tasks} task(s).")
 
-        print(job)
+        with LOG.scope(self.LOG_SCOPE):
+            LOG.info(str(job))
 
         #
         # MVP

@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 from uuid import uuid4
 
+from ..constant import LOG
 from .output_base import OutputBase
 from .bake_group import BakeGroup
 from .output_artifact import OutputArtifact
@@ -12,6 +13,8 @@ from ..services.image_io import ImageIOService
 if TYPE_CHECKING:
     from .image_buffer import ImageBuffer
     from ..bakers.base import BakerBase
+
+LOG_SCOPE: str = "Output Bake"
 
 
 @dataclass(slots=True)
@@ -63,21 +66,24 @@ class OutputBake(OutputBase):
 
     @classmethod
     def from_artifact(cls, artifact: OutputArtifact) -> OutputBake:
-        from ..core.controller import BakeController
+        with LOG.scope(LOG_SCOPE):
+            LOG.debug(f"Creating Output : {artifact.data.filename}")
 
-        image = artifact.load_image()
-        image_buffer = ImageIOService.read(image)
+            from ..core.controller import BakeController
 
-        baker = BakeController.get_baker_from_uuid(artifact.producer_uuid)
+            image = artifact.load_image()
+            image_buffer = ImageIOService.read(image)
 
-        output = OutputBake(
-            uuid=artifact.uuid,
-            bake_group=BakeGroup(artifact.bake_group_uuid),
-            baker=baker,
-            image=image_buffer,
-        )
+            baker = BakeController.get_baker_from_uuid(artifact.producer_uuid)
 
-        return output
+            output = OutputBake(
+                uuid=artifact.uuid,
+                bake_group=BakeGroup(artifact.bake_group_uuid),
+                baker=baker,
+                image=image_buffer,
+            )
+
+            return output
 
     def __repr__(self) -> str:
         return f"Bake Output : {self.bake_group.name} | {self.baker.name}"

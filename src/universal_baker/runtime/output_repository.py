@@ -4,17 +4,18 @@ from collections import defaultdict
 from typing import Iterable, Generator
 from typing import TYPE_CHECKING
 
+from ..constant import LOG
 from .output_accumulated import OutputAccumulated
 from .output_bake import OutputBake
 from .output_pack import OutputPack
-
 from .output_artifact import OutputArtifact
-
 from .artifact_repository import ArtifactRepository
 
 if TYPE_CHECKING:
     from ..runtime.bake_group import BakeGroup
     from .output_base import OutputBase
+
+LOG_SCOPE = "Output Repository"
 
 
 class OutputRepository:
@@ -155,7 +156,8 @@ class OutputRepository:
             case "PACK":
                 output = OutputPack.from_artifact(artifact)
             case _:
-                print("Invalid Artifact")
+                with LOG.scope(LOG_SCOPE):
+                    LOG.debug("Invalid Artifact")
                 output = None
 
         return output

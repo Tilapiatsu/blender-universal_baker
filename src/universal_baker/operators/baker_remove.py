@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import bpy
 
+from ..constant import LOG
 from ..core.controller import BakeController
 from .base import UBK_OT_Base
 

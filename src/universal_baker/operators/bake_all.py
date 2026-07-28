@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import bpy
+from ..constant import LOG
 
 from ..core.controller import BakeController
 from ..runtime.job import Job
@@ -38,7 +38,8 @@ class UBK_OT_BakeAll(UBK_OT_Base):
 
         self.info(f"Created bake job with {job.total_tasks} task(s).")
 
-        print(job)
+        with LOG.scope(self.LOG_SCOPE):
+            LOG.info(str(job))
 
         #
         # MVP

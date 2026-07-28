@@ -21,8 +21,8 @@ from ..resources.material import MaterialResource
 from .settings_bake import BakeSettings
 from .settings_cage import CageSettings
 from .settings_pack import PackSettings
-
 from .session import ExecutionSession
+from ..constant import LOG
 
 
 @dataclass(slots=True)
@@ -84,11 +84,27 @@ class BakeContext(ExecutionContext):
         self.finished = True
         self.success = True
         self.message = message
+        LOG.info(
+            message=message,
+            category="BAKE",
+            data={
+                "status": "SUCCESS",
+                "object": self.target.name,
+            },
+        )
 
     def fail(self, message: str) -> None:
         self.finished = True
         self.success = False
         self.message = message
+        LOG.info(
+            message=message,
+            category="BAKE",
+            data={
+                "status": "FAILD",
+                "object": self.target.name,
+            },
+        )
 
 
 @dataclass(slots=True)
@@ -124,8 +140,24 @@ class PackContext(ExecutionContext):
         self.finished = True
         self.success = True
         self.message = message
+        LOG.info(
+            message=message,
+            category="PACK",
+            data={
+                "status": "SUCCESS",
+                "image": self.task.image_name,
+            },
+        )
 
     def fail(self, message: str) -> None:
         self.finished = True
         self.success = False
         self.message = message
+        LOG.info(
+            message=message,
+            category="PACK",
+            data={
+                "status": "SUCCESS",
+                "image": self.task.image_name,
+            },
+        )
