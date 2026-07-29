@@ -33,8 +33,8 @@ class Logger:
         self.dispatcher.dispatch(event)
 
     @contextmanager
-    def scope(self, name):
-        with self.scope_manager.scope(name):
+    def scope(self, name: str, **metadata):
+        with self.scope_manager.scope(name, **metadata):
             yield
 
     def debug(self, message: str, **kwargs) -> None:

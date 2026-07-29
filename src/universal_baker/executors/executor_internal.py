@@ -59,8 +59,14 @@ class BakeExecutorInternal(TaskExecutor):
         return session
 
     def execute_task(self, session: ExecutionSession, task: BakeTask) -> None:
-        with LOG.scope(self.id):
-            LOG.info("Init Task")
+        with LOG.scope(
+            self.id,
+            object=task.object_name,
+            baker=task.baker.name,
+            width=task.output_context.output_settings.path.width,
+            height=task.output_context.output_settings.path.height,
+        ) as bake_scope:
+            print(bake_scope)
             session.current_context = BakeContext(
                 session=session,
                 task=task,
@@ -70,16 +76,17 @@ class BakeExecutorInternal(TaskExecutor):
             session.current_task = task
             session.job.notify_task_started(task)
             start = perf_counter()
+            LOG.info(f"Init Task {session.job.current_task} / {session.job.total_tasks}")
 
             try:
                 self.before_task(ctx)
                 task.baker.execute(ctx)
-                ctx.succeed(f"{task.baker_id.capitalize()} succeeded")
+                ctx.succeed(f"{task.baker_id.capitalize()} succeeded", bake_scope)
                 session.job.notify_task_finished(task, True, perf_counter() - start)
 
             except Exception as exc:
                 traceback.print_exc()
-                ctx.fail(f"{task.baker_id.capitalize()} failed\n" + str(exc))
+                ctx.fail(f"{task.baker_id.capitalize()} failed", str(exc), bake_scope)
                 session.job.notify_task_failed(task, str(exc))
 
             finally:

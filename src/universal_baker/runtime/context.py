@@ -23,6 +23,7 @@ from .settings_cage import CageSettings
 from .settings_pack import PackSettings
 from .session import ExecutionSession
 from ..constant import LOG
+from ..logger.middleware.task_scope import TaskScope
 
 
 @dataclass(slots=True)
@@ -80,10 +81,12 @@ class BakeContext(ExecutionContext):
     def output_settings(self) -> OutputSettings:
         return self.task.output_context.output_settings
 
-    def succeed(self, message: str = "") -> None:
+    def succeed(self, message: str = "", log_scope: TaskScope | None = None) -> None:
         self.finished = True
         self.success = True
         self.message = message
+        if log_scope:
+            self.message = f"{self.message} {log_scope.duration}s"
         LOG.info(
             message=message,
             category="BAKE",
@@ -93,16 +96,19 @@ class BakeContext(ExecutionContext):
             },
         )
 
-    def fail(self, message: str) -> None:
+    def fail(self, message: str, errors: str, log_scope: TaskScope | None = None) -> None:
         self.finished = True
         self.success = False
         self.message = message
+        if log_scope:
+            self.message = f"{self.message} {log_scope.duration}s"
         LOG.info(
             message=message,
             category="BAKE",
             data={
-                "status": "FAILD",
+                "status": "FAILED",
                 "object": self.target.name,
+                "errors": errors,
             },
         )
 

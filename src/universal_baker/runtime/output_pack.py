@@ -23,7 +23,7 @@ LOG_SCOPE: str = "Output Pack"
 
 @dataclass(slots=True)
 class OutputPack(OutputBase):
-    """
+    r"""
     Runtime representation of a Pack image.
 
     A Pack Image can be composed from multiple bakers and 
@@ -32,10 +32,10 @@ class OutputPack(OutputBase):
     -------
     BakeTarget : Character
 
-        R: AO  ------------\
-        G: METALIC  --------\ ______ 1 Pack Image
-        B: ROUGHNESS -------/
-        A: OPACITY  -------/
+        R: AO  ------------ \
+        G: METALIC  -------- \ ______ 1 Pack Image
+        B: ROUGHNESS ------- /
+        A: OPACITY  ------- /
 
     """
 

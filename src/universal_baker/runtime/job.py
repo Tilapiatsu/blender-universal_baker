@@ -8,6 +8,7 @@ from ..constant import LOG
 from .task import Task
 from .task_bake import BakeTask
 from .task_pack import PackingTask
+from ..logger.middleware.statistics import StatisticsMiddleware
 
 
 class JobStatus(Enum):
@@ -55,7 +56,7 @@ class Job:
         LOG.info(message)
 
     def notify_task_started(self, task: Task) -> None:
-        pass
+        self.current_task += 1
 
     def notify_task_finished(self, task: Task, log: bool, time_elapsed: float) -> None:
         pass
