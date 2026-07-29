@@ -11,13 +11,12 @@ from ..services.image_io import ImageIOService
 from ..services.renderer import RendererService
 from ..services.image_bake import ImageServiceBake
 from ..runtime.output_bake import OutputBake
-from ..logger.event import ScopeState
 
 if TYPE_CHECKING:
     from ..runtime.context import BakeContext
     from ..runtime.task import Task
 
-LOG_SCOPE = "Bake"
+LOG_SCOPE = "Baking"
 
 
 class BakerColorType(Enum):
@@ -52,7 +51,7 @@ class BakerBase(ABC):
     def execute(self, ctx: BakeContext) -> None:
         """Prepare, bake and cleanup all at once."""
         with LOG.scope(LOG_SCOPE):
-            LOG.info(f"Execute Task : {str(ctx.task)}")
+            LOG.info(f"{str(ctx.task)}")
 
             self.prepare(ctx)
             self.bake(ctx)
@@ -64,18 +63,22 @@ class BakerBase(ABC):
     @abstractmethod
     def prepare(self, ctx: BakeContext) -> None:
         """Prepare Blender before baking."""
+        LOG.debug("Preparing Scene ...")
 
     @abstractmethod
     def bake(self, ctx: BakeContext) -> None:
         """Execute the bake."""
+        LOG.debug("Baking ...")
         RendererService.execute(ctx)
 
     @abstractmethod
     def cleanup(self, ctx: BakeContext) -> None:
+        LOG.debug("Restoring ...")
         """Restore Blender."""
 
     @abstractmethod
     def update_baker(self, ctx: BakeContext) -> None:
+        LOG.debug("Upate Baker ...")
         from ..core.controller import BakeController
 
         baker = BakeController.get_baker_from_uuid(ctx.task.uuid)
@@ -89,6 +92,7 @@ class BakerBase(ABC):
 
     @abstractmethod
     def create_output(self, ctx: BakeContext):
+        LOG.debug("Creating Output ...")
         buffer = ImageIOService.read(ctx.image)
 
         output = OutputBake.create(
@@ -104,5 +108,6 @@ class BakerBase(ABC):
     @abstractmethod
     def export_file(self, ctx: BakeContext):
         """Save Bake to disk."""
+        LOG.debug("Creating File ...")
         if ctx.task.output_context.output_settings.path.export_file:
             ImageServiceBake.save(ctx.image)

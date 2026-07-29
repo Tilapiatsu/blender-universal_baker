@@ -38,15 +38,6 @@ class UBK_OT_BakeAndPackAll(UBK_OT_Base):
 
         self.info(f"Created bake job with {job.total_tasks} task(s).")
 
-        with LOG.scope(self.LOG_SCOPE):
-            LOG.info(str(job))
-
-        #
-        # MVP
-        #
-        # Executor will be added later.
-        #
-
         return {"FINISHED"}
 
 

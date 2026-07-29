@@ -15,6 +15,7 @@ from ..core.registry_baker import registry_baker
 from ..core.registry_executor import registry_executor
 from .executor_base import TaskExecutor
 from ..logger.event import ScopeState
+from ..logger_bake_middleware.bake_summary import EventCategory
 
 
 class BakeExecutorInternal(TaskExecutor):
@@ -33,35 +34,36 @@ class BakeExecutorInternal(TaskExecutor):
 
         Returns the ExecutionSession containing execution statistics.
         """
-        session = ExecutionSession(context=context, job=job)
-        session.initialize(context)
-        job.notify_started()
+        with LOG.scope(self.id):
+            session = ExecutionSession(context=context, job=job)
+            session.initialize(context)
+            job.notify_started()
 
-        try:
-            self.before_job(session)
+            try:
+                self.before_job(session)
 
-            for task in job.tasks:
-                if not isinstance(task, BakeTask):
-                    continue
-                if self._cancel_requested:
-                    session.cancel()
+                for task in job.tasks:
+                    if not isinstance(task, BakeTask):
+                        continue
+                    if self._cancel_requested:
+                        session.cancel()
 
-                    break
+                        break
 
-                self.execute_task(session, task)
+                    self.execute_task(session, task)
 
-            self.after_job(session)
+                self.after_job(session)
 
-        finally:
-            session.cleanup()
-            session.restore(context)
-            job.notify_finished()
+            finally:
+                session.cleanup()
+                session.restore(context)
+                job.notify_finished()
 
-        return session
+            return session
 
     def execute_task(self, session: ExecutionSession, task: BakeTask) -> None:
         with LOG.scope(
-            self.id,
+            task.baker_name,
             object=task.object_name,
             baker=task.baker.name,
             width=task.output_context.output_settings.path.width,
@@ -79,6 +81,7 @@ class BakeExecutorInternal(TaskExecutor):
             LOG.info(
                 f"Init Task {session.job.current_task} / {session.job.total_tasks}",
                 scope_state=ScopeState.ENTER,
+                category=EventCategory.BAKE,
             )
 
             try:
@@ -142,34 +145,35 @@ class PackExecutorInternal(TaskExecutor):
 
         Returns the ExecutionSession containing execution statistics.
         """
-        session = ExecutionSession(context=context, job=job)
-        session.initialize(context)
-        job.notify_started()
+        with LOG.scope(self.id):
+            session = ExecutionSession(context=context, job=job)
+            session.initialize(context)
+            job.notify_started()
 
-        try:
-            self.before_job(session)
+            try:
+                self.before_job(session)
 
-            for task in job.tasks:
-                if not isinstance(task, PackingTask):
-                    continue
-                if self._cancel_requested:
-                    session.cancel()
+                for task in job.tasks:
+                    if not isinstance(task, PackingTask):
+                        continue
+                    if self._cancel_requested:
+                        session.cancel()
 
-                    break
+                        break
 
-                self.execute_task(session, task)
+                    self.execute_task(session, task)
 
-            self.after_job(session)
+                self.after_job(session)
 
-        finally:
-            session.cleanup()
-            session.restore(context)
-            job.notify_finished()
+            finally:
+                session.cleanup()
+                session.restore(context)
+                job.notify_finished()
 
-        return session
+            return session
 
     def execute_task(self, session: ExecutionSession, task: PackingTask) -> None:
-        with LOG.scope(self.id):
+        with LOG.scope(task.packer.name):
             session.current_context = PackContext(
                 session=session,
                 task=task,
@@ -181,17 +185,18 @@ class PackExecutorInternal(TaskExecutor):
             LOG.info(
                 f"Init Task {session.job.current_task} / {session.job.total_tasks}",
                 scope_state=ScopeState.ENTER,
+                category=EventCategory.BAKE,
             )
 
             try:
                 self.before_task(ctx)
                 task.packer.execute(ctx)
-                ctx.succeed(f"{task.packer.label.capitalize()} succeeded")
+                ctx.succeed(f"{task.packer.name} succeeded")
                 session.job.notify_task_finished(task, True, perf_counter() - start)
 
             except Exception as exc:
                 traceback.print_exc()
-                ctx.fail(f"{task.packer.label.capitalize()} failed\n" + str(exc))
+                ctx.fail(f"{task.packer.name} failed\n" + str(exc))
                 session.job.notify_task_failed(task, perf_counter() - start, tuple(str(exc)))
 
             finally:

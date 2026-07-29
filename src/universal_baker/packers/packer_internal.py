@@ -24,8 +24,8 @@ class PackerInternal(PackerBase):
     Operates exclusively on ImageBuffer instances.
     """
 
-    id: str = "PACK_INTERNAL"
-    label: str = "Pack Internal"
+    id: str = "INTERNAL"
+    name: str = "Internal"
     description: str = "Pack rendered bake using blender"
 
     def execute(self, ctx: PackContext) -> None:

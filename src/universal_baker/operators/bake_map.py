@@ -39,11 +39,6 @@ class UBK_OT_BakeMap(UBK_OT_Base):
 
         self.info(f"Created bake job with {job.total_tasks} task(s).")
 
-        with LOG.scope(self.LOG_SCOPE):
-            LOG.info(str(job))
-
-        return {"FINISHED"}
-
 
 classes = (UBK_OT_BakeMap,)
 

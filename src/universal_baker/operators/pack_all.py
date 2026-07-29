@@ -39,15 +39,6 @@ class UBK_OT_PackAll(UBK_OT_Base):
 
         self.info(f"Created Pack job with {job.total_tasks} task(s).")
 
-        with LOG.scope(self.LOG_SCOPE):
-            LOG.info(str(job))
-
-        #
-        # MVP
-        #
-        # Executor will be added later.
-        #
-
         return {"FINISHED"}
 
 

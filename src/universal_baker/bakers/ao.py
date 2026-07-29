@@ -24,6 +24,7 @@ class AmbientOcclusionBaker(BakerBase):
         """
         Prepare everything required before Blender's bake.
         """
+        super().prepare(ctx)
         ctx.image = ImageServiceBake.acquire(ctx.image, ctx.task)
         MaterialService.prepare_target(ctx)
 
@@ -35,6 +36,7 @@ class AmbientOcclusionBaker(BakerBase):
         """
         Cleanup after baking.
         """
+        super().cleanup(ctx)
         MaterialService.restore_target(ctx)
         ImageServiceBake.cleanup(ctx.image)
 

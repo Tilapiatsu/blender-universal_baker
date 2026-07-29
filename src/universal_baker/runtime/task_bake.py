@@ -15,6 +15,7 @@ from ..constant import LOG
 from .task import Task
 from ..runtime.settings_bake import BakeSettings
 from ..logger.event import ScopeState
+from ..logger_bake_middleware.bake_summary import BakeStatus, EventCategory
 
 
 @dataclass(slots=True, frozen=True)
@@ -53,28 +54,28 @@ class BakeTask(Task):
         return result
 
     def notify_finished(self, time_elapsed: float) -> None:
-        with LOG.scope("Bake"):
+        with LOG.scope("Baking"):
             LOG.info(
                 message=f"{self.baker_id.capitalize()} succeeded",
-                category="BAKE",
+                category=EventCategory.BAKE,
                 scope_state=ScopeState.EXIT,
                 scope_duration=time_elapsed,
                 data={
-                    "status": "SUCCESS",
+                    "status": BakeStatus.SUCCESS,
                     "object": self.target.name,
                     "image": self.image_name,
                 },
             )
 
     def notify_failed(self, time_elapsed: float, errors: tuple[str, ...]) -> None:
-        with LOG.scope("Bake"):
+        with LOG.scope("Baking"):
             LOG.error(
                 message=f"{self.baker_id.capitalize()} failed",
-                category="BAKE",
+                category=EventCategory.BAKE,
                 scope_state=ScopeState.EXIT,
                 scope_duration=time_elapsed,
                 data={
-                    "status": "FAILED",
+                    "status": BakeStatus.FAIL,
                     "object": self.target.name,
                     "image": self.image_name,
                 },

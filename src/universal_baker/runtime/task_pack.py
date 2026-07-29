@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+
 if TYPE_CHECKING:
     from ..packers.packer_base import PackerBase
 
@@ -11,6 +12,7 @@ from .task import Task
 from .settings_pack import PackSettings
 from ..packers.channels import Channel
 from ..logger.event import ScopeState
+from ..logger_bake_middleware.bake_summary import BakeStatus, EventCategory
 
 
 @dataclass(slots=True)
@@ -37,6 +39,10 @@ class PackingTask(Task):
     @property
     def output_name(self) -> str:
         return self.image_name
+
+    @property
+    def packer_name(self) -> str:
+        return self.packer.name
 
     def __repr__(self) -> str:
         result = ""
@@ -69,30 +75,30 @@ class PackingTask(Task):
                 self.alpha.source_map_name + "_" + self.alpha.source_channel + " -> " + self.alpha.destination_channel
             )
 
-        return f"PACKER_{self.packer.id} | {result:100}"
+        return f"PACKER_{self.packer.id} | {result:50}"
 
     def notify_finished(self, time_elapsed: float) -> None:
-        with LOG.scope("Pack"):
+        with LOG.scope("Packing"):
             LOG.info(
-                message=f"{self.packer.id.capitalize()} succeeded",
-                category="PACK",
+                message=f"{self.__repr__()} succeeded",
+                category=EventCategory.PACK,
                 scope_state=ScopeState.EXIT,
                 scope_duration=time_elapsed,
                 data={
-                    "status": "SUCCESS",
+                    "status": BakeStatus.SUCCESS,
                     "image": self.image_name,
                 },
             )
 
     def notify_failed(self, time_elapsed: float, errors: tuple[str, ...]) -> None:
-        with LOG.scope("Pack"):
+        with LOG.scope("Packing"):
             LOG.error(
-                message=f"{self.packer.id.capitalize()} failed",
-                category="PACK",
+                message=f"{self.packer.name} failed",
+                category=EventCategory.PACK,
                 scope_state=ScopeState.EXIT,
                 scope_duration=time_elapsed,
                 data={
-                    "status": "FAILED",
+                    "status": BakeStatus.FAIL,
                     "image": self.image_name,
                 },
             )
