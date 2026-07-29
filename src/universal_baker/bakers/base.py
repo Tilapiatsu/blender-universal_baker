@@ -5,11 +5,13 @@ from abc import ABC
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 
+
 from ..constant import LOG
 from ..services.image_io import ImageIOService
 from ..services.renderer import RendererService
 from ..services.image_bake import ImageServiceBake
 from ..runtime.output_bake import OutputBake
+from ..logger.event import ScopeState
 
 if TYPE_CHECKING:
     from ..runtime.context import BakeContext

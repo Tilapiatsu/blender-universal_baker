@@ -7,14 +7,14 @@ import bpy
 
 from typing import TYPE_CHECKING
 
-
-from .task import Task
-
 if TYPE_CHECKING:
     from ..bakers.base import BakerBase
     from ..properties.bake_group import UBK_BakeGroup
 
+from ..constant import LOG
+from .task import Task
 from ..runtime.settings_bake import BakeSettings
+from ..logger.event import ScopeState
 
 
 @dataclass(slots=True, frozen=True)
@@ -51,3 +51,33 @@ class BakeTask(Task):
     def __repr__(self) -> str:
         result = f"BAKER_{self.baker_id} | {self.object_name:100} "
         return result
+
+    def notify_finished(self, time_elapsed: float) -> None:
+        with LOG.scope("Bake"):
+            LOG.info(
+                message=f"{self.baker_id.capitalize()} succeeded",
+                category="BAKE",
+                scope_state=ScopeState.EXIT,
+                scope_duration=time_elapsed,
+                data={
+                    "status": "SUCCESS",
+                    "object": self.target.name,
+                    "image": self.image_name,
+                },
+            )
+
+    def notify_failed(self, time_elapsed: float, errors: tuple[str, ...]) -> None:
+        with LOG.scope("Bake"):
+            LOG.error(
+                message=f"{self.baker_id.capitalize()} failed",
+                category="BAKE",
+                scope_state=ScopeState.EXIT,
+                scope_duration=time_elapsed,
+                data={
+                    "status": "FAILED",
+                    "object": self.target.name,
+                    "image": self.image_name,
+                },
+            )
+            for e in errors:
+                LOG.error(message=e, category="BAKE")

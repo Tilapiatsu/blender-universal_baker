@@ -6,9 +6,11 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from ..packers.packer_base import PackerBase
 
+from ..constant import LOG
 from .task import Task
 from .settings_pack import PackSettings
 from ..packers.channels import Channel
+from ..logger.event import ScopeState
 
 
 @dataclass(slots=True)
@@ -68,3 +70,31 @@ class PackingTask(Task):
             )
 
         return f"PACKER_{self.packer.id} | {result:100}"
+
+    def notify_finished(self, time_elapsed: float) -> None:
+        with LOG.scope("Pack"):
+            LOG.info(
+                message=f"{self.packer.id.capitalize()} succeeded",
+                category="PACK",
+                scope_state=ScopeState.EXIT,
+                scope_duration=time_elapsed,
+                data={
+                    "status": "SUCCESS",
+                    "image": self.image_name,
+                },
+            )
+
+    def notify_failed(self, time_elapsed: float, errors: tuple[str, ...]) -> None:
+        with LOG.scope("Pack"):
+            LOG.error(
+                message=f"{self.packer.id.capitalize()} failed",
+                category="PACK",
+                scope_state=ScopeState.EXIT,
+                scope_duration=time_elapsed,
+                data={
+                    "status": "FAILED",
+                    "image": self.image_name,
+                },
+            )
+            for e in errors:
+                LOG.error(message=e, category="BAKE")

@@ -9,6 +9,7 @@ from .task import Task
 from .task_bake import BakeTask
 from .task_pack import PackingTask
 from ..logger.middleware.statistics import StatisticsMiddleware
+from ..logger.event import ScopeState
 
 
 class JobStatus(Enum):
@@ -50,19 +51,19 @@ class Job:
         if stats is None:
             return
 
-        message = "Job ended with :\n"
-        message += f"{stats.warning} warning(s)\n"
-        message += f"{stats.error} error(s)\n"
-        LOG.info(message)
+        LOG.info("Job ended with :")
+        LOG.info(f"{stats.warning} warning(s)")
+        LOG.info(f"{stats.error} error(s)")
 
     def notify_task_started(self, task: Task) -> None:
         self.current_task += 1
 
     def notify_task_finished(self, task: Task, log: bool, time_elapsed: float) -> None:
-        pass
+        if log:
+            task.notify_finished(time_elapsed)
 
-    def notify_task_failed(self, task: Task, msg: str) -> None:
-        pass
+    def notify_task_failed(self, task: Task, time_elapsed: float, errors: tuple[str, ...]) -> None:
+        task.notify_failed(time_elapsed, errors)
 
     def __repr__(self) -> str:
         result = f"""

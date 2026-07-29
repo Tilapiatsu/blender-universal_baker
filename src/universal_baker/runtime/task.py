@@ -20,6 +20,10 @@ class Task:
 
     def __repr__(self) -> str: ...
 
+    def notify_finished(self, time_elapsed: float) -> None: ...
+
+    def notify_failed(self, time_elapsed: float, errors: tuple[str, ...]) -> None: ...
+
 
 @dataclass(slots=True)
 class TaskResult:

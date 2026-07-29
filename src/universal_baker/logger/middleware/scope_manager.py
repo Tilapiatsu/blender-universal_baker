@@ -9,18 +9,18 @@ class ScopeManager:
         self._roots: list[TaskScope] = []
 
     @property
-    def current(self):
+    def current(self) -> TaskScope | None:
         if not self._stack:
             return None
 
         return self._stack[-1]
 
     @property
-    def current_path(self):
+    def current_path(self) -> tuple[str, ...]:
         return tuple(scope.name for scope in self._stack)
 
     @property
-    def roots(self):
+    def roots(self) -> list[TaskScope]:
         return self._roots
 
     @contextmanager

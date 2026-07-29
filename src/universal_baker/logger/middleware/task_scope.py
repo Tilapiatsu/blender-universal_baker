@@ -34,6 +34,6 @@ class TaskScope:
     def set_progress(self, value: float):
         self.progress = max(0.0, min(1.0, value))
 
-    def add_child(self, child: "TaskScope"):
+    def add_child(self, child: TaskScope):
         child.parent = self
         self.children.append(child)

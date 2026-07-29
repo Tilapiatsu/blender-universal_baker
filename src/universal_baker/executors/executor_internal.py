@@ -14,6 +14,7 @@ from ..runtime.task_pack import PackingTask
 from ..core.registry_baker import registry_baker
 from ..core.registry_executor import registry_executor
 from .executor_base import TaskExecutor
+from ..logger.event import ScopeState
 
 
 class BakeExecutorInternal(TaskExecutor):
@@ -65,8 +66,7 @@ class BakeExecutorInternal(TaskExecutor):
             baker=task.baker.name,
             width=task.output_context.output_settings.path.width,
             height=task.output_context.output_settings.path.height,
-        ) as bake_scope:
-            print(bake_scope)
+        ):
             session.current_context = BakeContext(
                 session=session,
                 task=task,
@@ -76,18 +76,21 @@ class BakeExecutorInternal(TaskExecutor):
             session.current_task = task
             session.job.notify_task_started(task)
             start = perf_counter()
-            LOG.info(f"Init Task {session.job.current_task} / {session.job.total_tasks}")
+            LOG.info(
+                f"Init Task {session.job.current_task} / {session.job.total_tasks}",
+                scope_state=ScopeState.ENTER,
+            )
 
             try:
                 self.before_task(ctx)
                 task.baker.execute(ctx)
-                ctx.succeed(f"{task.baker_id.capitalize()} succeeded", bake_scope)
+                ctx.succeed(f"{task.baker_id.capitalize()} succeeded")
                 session.job.notify_task_finished(task, True, perf_counter() - start)
 
             except Exception as exc:
                 traceback.print_exc()
-                ctx.fail(f"{task.baker_id.capitalize()} failed", str(exc), bake_scope)
-                session.job.notify_task_failed(task, str(exc))
+                ctx.fail(f"{task.baker_id.capitalize()} failed", str(exc))
+                session.job.notify_task_failed(task, perf_counter() - start, tuple(str(exc)))
 
             finally:
                 self.after_task(ctx)
@@ -167,7 +170,6 @@ class PackExecutorInternal(TaskExecutor):
 
     def execute_task(self, session: ExecutionSession, task: PackingTask) -> None:
         with LOG.scope(self.id):
-            LOG.info("Init Task")
             session.current_context = PackContext(
                 session=session,
                 task=task,
@@ -176,6 +178,10 @@ class PackExecutorInternal(TaskExecutor):
             session.current_task = task
             session.job.notify_task_started(task)
             start = perf_counter()
+            LOG.info(
+                f"Init Task {session.job.current_task} / {session.job.total_tasks}",
+                scope_state=ScopeState.ENTER,
+            )
 
             try:
                 self.before_task(ctx)
@@ -186,7 +192,7 @@ class PackExecutorInternal(TaskExecutor):
             except Exception as exc:
                 traceback.print_exc()
                 ctx.fail(f"{task.packer.label.capitalize()} failed\n" + str(exc))
-                session.job.notify_task_failed(task, str(exc))
+                session.job.notify_task_failed(task, perf_counter() - start, tuple(str(exc)))
 
             finally:
                 self.after_task(ctx)

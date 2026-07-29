@@ -5,12 +5,15 @@ from abc import abstractmethod
 
 from ..constant import LOG
 from ..services.image_pack import ImageServicePack
+from ..logger.event import ScopeState
 
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..runtime.context import PackContext
     from ..runtime.task import Task
+
+LOG_SCOPE = "Pack"
 
 
 class PackerBase(ABC):
@@ -32,12 +35,13 @@ class PackerBase(ABC):
     @abstractmethod
     def execute(self, ctx: PackContext) -> None:
         """Prepare, bake and cleanup all at once."""
-        LOG.info(f"Execute Task : {str(ctx.task)}")
+        with LOG.scope(LOG_SCOPE):
+            LOG.info(f"Execute Task : {str(ctx.task)}")
 
-        self.prepare(ctx)
-        self.pack(ctx)
-        self.cleanup(ctx)
-        self.export_file(ctx)
+            self.prepare(ctx)
+            self.pack(ctx)
+            self.cleanup(ctx)
+            self.export_file(ctx)
 
     @abstractmethod
     def prepare(self, ctx: PackContext) -> None:
