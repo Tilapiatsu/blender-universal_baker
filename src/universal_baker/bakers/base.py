@@ -97,6 +97,7 @@ class BakerBase(ABC):
 
         output = OutputBake.create(
             uuid=ctx.task.uuid,
+            name=ctx.image.name,
             image=buffer,
             bake_group=ctx.task.bake_group,
             baker=ctx.task.baker,

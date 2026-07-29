@@ -49,7 +49,7 @@ class UBK_Artifact(PropertyGroup):
     """
 
     uuid: StringProperty()
-
+    name: StringProperty()
     type: EnumProperty(
         items=ARTIFACT_TYPES,
         default="BAKE",

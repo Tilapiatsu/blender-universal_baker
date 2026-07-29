@@ -74,7 +74,7 @@ class ArtifactService:
         artifact_pg.file_format = file_format
         artifact_pg.checksum = checksum
         artifact_pg.created = datetime.now().isoformat()
-
+        artifact_pg.name = f"{artifact_type}_{file_path.name}"
         #
         # Dependencies
         #

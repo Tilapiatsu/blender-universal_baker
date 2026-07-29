@@ -18,18 +18,12 @@ if TYPE_CHECKING:
 
 class OutputArtifact:
     uuid: str
-    bake_group_uuid: str
-    type: str
-    producer_uuid: str
     dependencies: list[str]
     dependency_mapping: list[Channel]
 
     def __init__(self, scene: Scene, property_group: UBK_Artifact):
         self.scene = scene
         self.data = property_group
-        self.type = property_group.type
-        self.bake_group_uuid = property_group.bake_group_uuid
-        self.producer_uuid = property_group.producer_uuid
         self.dependencies = []
         self.dependency_mapping = []
 
@@ -38,6 +32,22 @@ class OutputArtifact:
 
         for m in property_group.dependency_mapping:
             self.dependency_mapping.append(m)
+
+    @property
+    def name(self):
+        return self.data.name
+
+    @property
+    def type(self):
+        return self.data.type
+
+    @property
+    def bake_group_uuid(self):
+        return self.data.bake_group_uuid
+
+    @property
+    def producer_uuid(self):
+        return self.data.producer_uuid
 
     @property
     def path(self) -> Path:

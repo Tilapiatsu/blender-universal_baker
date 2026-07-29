@@ -63,51 +63,53 @@ class OutputProvider:
             self._cache.pop(key, None)
 
     def get_image(self, bake_group_uuid: str, baker_uuid: str) -> ImageBuffer | None:
-        key = (bake_group_uuid, baker_uuid)
+        with LOG.scope(LOG_SCOPE):
+            LOG.info("Request Image from repository")
+            key = (bake_group_uuid, baker_uuid)
 
-        #
-        # Cached ?
-        #
-        cached = self._cache.get(key)
+            #
+            # Cached ?
+            #
+            cached = self._cache.get(key)
 
-        if cached is not None:
-            return cached
+            if cached is not None:
+                LOG.debug("Reuse cached image")
+                return cached
 
-        outputs = self._repository.get_outputs(bake_group_uuid, baker_uuid)
+            outputs = self._repository.get_outputs(bake_group_uuid, baker_uuid)
 
-        if not outputs:
-            with LOG.scope(LOG_SCOPE):
+            if not outputs:
                 LOG.error("output not found")
-            return None
+                return None
 
-        #
-        # Single object target
-        #
-        if len(outputs) == 1:
-            image = outputs[0].image
+            #
+            # Single object target
+            #
+            if len(outputs) == 1:
+                image = outputs[0].image
+
+                self._cache[key] = image
+
+                return image
+
+            #
+            # Multi object target
+            #
+            accumulator = ImageAccumulator(width=outputs[0].image.width, height=outputs[0].image.height)
+
+            #
+            # Order is important.
+            #
+            # outputs.sort(key=lambda o: o.bake_group)
+
+            for output in outputs:
+                accumulator.accumulate(output.image, registry_compositor["ALPHA_OVER"])
+
+            image = accumulator.result()
 
             self._cache[key] = image
 
             return image
-
-        #
-        # Multi object target
-        #
-        accumulator = ImageAccumulator(width=outputs[0].image.width, height=outputs[0].image.height)
-
-        #
-        # Order is important.
-        #
-        # outputs.sort(key=lambda o: o.bake_group)
-
-        for output in outputs:
-            accumulator.accumulate(output.image, registry_compositor["ALPHA_OVER"])
-
-        image = accumulator.result()
-
-        self._cache[key] = image
-
-        return image
 
     def has_image(self, bake_group_uuid: str, baker_uuid: str) -> bool:
 

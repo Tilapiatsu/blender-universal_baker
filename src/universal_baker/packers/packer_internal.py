@@ -153,9 +153,9 @@ class PackerInternal(PackerBase):
     # -------------------------------------------------------------------------
 
     @staticmethod
-    def create_buffer(width: int, height: int) -> ImageBuffer:
+    def create_buffer(width: int, height: int, name: str = "Image") -> ImageBuffer:
         """Create an Image Buffer with the given width and height"""
-        return ImageBuffer.empty(width, height)
+        return ImageBuffer.empty(width, height, name)
 
     # -------------------------------------------------------------------------
     # Public API

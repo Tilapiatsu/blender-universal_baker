@@ -12,5 +12,6 @@ if TYPE_CHECKING:
 @dataclass(slots=True)
 class OutputBase:
     uuid: str
+    name: str
     image: ImageBuffer
     bake_group: BakeGroup

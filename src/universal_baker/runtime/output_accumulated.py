@@ -44,6 +44,7 @@ class OutputAccumulated(OutputBase):
     def create(
         cls,
         uuid: str,
+        name: str,
         bake_group: BakeGroup,
         output_bakes: list[OutputBake],
         baker: BakerBase,
@@ -51,6 +52,7 @@ class OutputAccumulated(OutputBase):
     ) -> OutputAccumulated:
         return cls(
             uuid=uuid,
+            name=name,
             image=image,
             bake_group=bake_group,
             output_bakes=output_bakes,
@@ -90,6 +92,7 @@ class OutputAccumulated(OutputBase):
 
             output = OutputAccumulated(
                 uuid=artifact.uuid,
+                name=artifact.name,
                 image=image_buffer,
                 baker=baker,
                 bake_group=BakeGroup(artifact.bake_group_uuid),

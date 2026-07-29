@@ -19,6 +19,7 @@ class ImageBuffer:
     pixels: np.array
 
     channels: int = 4
+    name: str | None = None
 
     @property
     def size(self):
@@ -26,7 +27,7 @@ class ImageBuffer:
         return self.width * self.height
 
     @classmethod
-    def empty(cls, width: int, height: int):
+    def empty(cls, width: int, height: int, name: str = "Image"):
         """Create an Empty Buffer"""
         length = width * height * 4
 
@@ -36,7 +37,7 @@ class ImageBuffer:
         else:
             pixels = array.array("f", [0.0] * length)
 
-        return cls(width, height, pixels)
+        return cls(width, height, pixels, name=name)
 
     @classmethod
     def copy(cls): ...

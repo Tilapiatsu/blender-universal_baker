@@ -41,12 +41,14 @@ class OutputBake(OutputBase):
     def create(
         cls,
         uuid: str,
+        name: str,
         bake_group: BakeGroup,
         baker: BakerBase,
         image: ImageBuffer,
     ) -> OutputBake:
         return cls(
             uuid=uuid,
+            name=name,
             image=image,
             bake_group=bake_group,
             baker=baker,
@@ -78,6 +80,7 @@ class OutputBake(OutputBase):
 
             output = OutputBake(
                 uuid=artifact.uuid,
+                name=artifact.name,
                 bake_group=BakeGroup(artifact.bake_group_uuid),
                 baker=baker,
                 image=image_buffer,
@@ -86,4 +89,4 @@ class OutputBake(OutputBase):
             return output
 
     def __repr__(self) -> str:
-        return f"Bake Output : {self.bake_group.name} | {self.baker.name}"
+        return f"Bake Output : {self.name} | {self.bake_group.name} | {self.baker.name}"
