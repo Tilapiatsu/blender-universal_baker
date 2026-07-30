@@ -25,28 +25,30 @@ class ImageServiceBase:
         """
         Acquire the destination image for this bake.
         """
+        with LOG.scope(LOG_SCOPE):
+            LOG.info(f"Acquire image : {resource.name}")
 
-        if resource.image is not None:
+            if resource.image is not None:
+                cls.configure(resource, task)
+                return resource
+
             cls.configure(resource, task)
+
+            image = bpy.data.images.get(resource.name)
+
+            if image is None:
+                image = cls.create(resource)
+                resource.created = True
+
+            elif cls.is_image_settings_changed(image, resource):
+                image = cls.create(resource)
+                resource.created = True
+
+            resource.image = image
+
+            cls.apply_settings(resource)
+
             return resource
-
-        cls.configure(resource, task)
-
-        image = bpy.data.images.get(resource.name)
-
-        if image is None:
-            image = cls.create(resource)
-            resource.created = True
-
-        elif cls.is_image_settings_changed(image, resource):
-            image = cls.create(resource)
-            resource.created = True
-
-        resource.image = image
-
-        cls.apply_settings(resource)
-
-        return resource
 
     @classmethod
     def save(cls, resource: ImageResource) -> None:

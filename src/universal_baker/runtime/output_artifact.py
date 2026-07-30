@@ -34,19 +34,23 @@ class OutputArtifact:
             self.dependency_mapping.append(m)
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self.data.name
 
     @property
-    def type(self):
+    def type(self) -> str:
         return self.data.type
 
     @property
-    def bake_group_uuid(self):
+    def bake_group_uuid(self) -> str:
         return self.data.bake_group_uuid
 
     @property
-    def producer_uuid(self):
+    def producer_uuid(self) -> str:
+        return self.data.producer_uuid
+
+    @property
+    def target_object(self) -> bpy.types.Object:
         return self.data.producer_uuid
 
     @property

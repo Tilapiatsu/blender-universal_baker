@@ -78,7 +78,7 @@ class BakerBase(ABC):
 
     @abstractmethod
     def update_baker(self, ctx: BakeContext) -> None:
-        LOG.debug("Upate Baker ...")
+        LOG.debug("Update Baker ...")
         from ..core.controller import BakeController
 
         baker = BakeController.get_baker_from_uuid(ctx.task.uuid)

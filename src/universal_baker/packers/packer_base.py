@@ -39,6 +39,7 @@ class PackerBase(ABC):
 
             self.prepare(ctx)
             self.pack(ctx)
+            self.update_pack(ctx)
             self.cleanup(ctx)
             self.export_file(ctx)
 
@@ -49,6 +50,17 @@ class PackerBase(ABC):
     @abstractmethod
     def pack(self, ctx: PackContext) -> None:
         """Execute the Packing."""
+
+    @abstractmethod
+    def update_pack(self, ctx: PackContext) -> None:
+        from ..core.controller import BakeController
+
+        packer = BakeController.get_paker_from_uuid(ctx.task.uuid)
+
+        if packer is None:
+            return
+
+        packer.image = ctx.image.image
 
     @abstractmethod
     def cleanup(self, ctx: PackContext) -> None:

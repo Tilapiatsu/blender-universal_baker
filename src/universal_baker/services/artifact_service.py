@@ -4,6 +4,8 @@ from pathlib import Path
 from datetime import datetime
 from typing import Iterable
 
+from universal_baker.services import target_object
+
 from ..runtime.output_artifact import OutputArtifact
 
 
@@ -65,6 +67,7 @@ class ArtifactService:
         artifact_pg.bake_group_uuid = bake_group.uuid
         artifact_pg.producer_uuid = producer.uuid
         artifact_pg.relative_path = str(file_path)
+        artifact_pg.target_object = target_object
         artifact_pg.filename = file_path.name
         artifact_pg.extension = file_path.suffix.lower()
         artifact_pg.width = width

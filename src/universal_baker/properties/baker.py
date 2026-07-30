@@ -13,7 +13,8 @@ def baker_items(self, context):
 
 class UBK_BakerOutput(PropertyGroup):
     object_name: StringProperty("Object Name", default="")
-    taregt_object_uuid: StringProperty()
+    target_object_uuid: StringProperty()
+    baker_uuid: StringProperty()
     image: PointerProperty(
         type=bpy.types.Image,
     )

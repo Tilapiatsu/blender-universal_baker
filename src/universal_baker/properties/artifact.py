@@ -57,10 +57,7 @@ class UBK_Artifact(PropertyGroup):
 
     bake_group_uuid: StringProperty()
     producer_uuid: StringProperty()
-    # producer_uuid: CollectionProperty(
-    #     type=UBK_ProducerUUID, description="Baker or Packer uuid: Where the data comes from ? Who had produced it "
-    # )
-    # target_object: PointerProperty(type=bpy.types.Object)
+    target_object: PointerProperty(type=bpy.types.Object)
     relative_path: StringProperty()
     filename: StringProperty()
     extension: StringProperty()

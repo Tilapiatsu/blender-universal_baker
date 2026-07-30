@@ -117,6 +117,9 @@ class PackerInternal(PackerBase):
             with LOG.scope(self.id.capitalize()):
                 LOG.error("Missing output buffer")
 
+    def update_pack(self, ctx: PackContext) -> None:
+        return super().update_pack(ctx)
+
     def cleanup(self, ctx: PackContext) -> None:
         """Restore Blender."""
         if ctx.red_resource and ctx.red_resource.exists and ctx.red_resource.is_copy:

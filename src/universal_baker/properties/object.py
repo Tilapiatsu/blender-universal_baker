@@ -17,7 +17,7 @@ class UBK_SourceObject(PropertyGroup):
 class UBK_TargetObject(PropertyGroup):
     """Bake settings for one target object."""
 
-    uuid = StringProperty()
+    uuid: StringProperty()
 
     enabled: BoolProperty(
         default=True,

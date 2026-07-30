@@ -59,6 +59,7 @@ class UBK_Packer(PropertyGroup):
     active_packer_index: bpy.props.IntProperty(default=0)
     mappings: bpy.props.CollectionProperty(type=UBK_ChannelMapping)
     settings: bpy.props.PointerProperty(type=UBK_PackerSettings)
+    image: PointerProperty(type=bpy.types.Image)
 
 
 classes = (

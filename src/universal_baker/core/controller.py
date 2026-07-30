@@ -158,14 +158,16 @@ class BakeController:
                     if b.images[0].image is None:
                         return None
 
+                    # TODO : Need to properly get the resource from uuid, not a copy of the existing image in the baker
+                    # property
                     resource = ImageResource(
                         image=b.images[0].image,
                         name=b.image_name,
                     )
-                    ImageIOService.write(resource, image_buffer)
                     resource.width = b.images[0].image.size[0]
                     resource.height = b.images[0].image.size[1]
 
+                    ImageIOService.write(resource, image_buffer)
                     ImageIOService.save(resource)
                     return resource
 
@@ -221,11 +223,15 @@ class BakeController:
         if project is None:
             return None
 
-        for p in project.packers:
-            if p.uuid != uuid:
+        for g in project.bake_groups:
+            if not len(g.packers):
                 continue
 
-            return p
+            for p in g.packers:
+                if p.uuid != uuid:
+                    continue
+
+                return p
 
     # ---------------------------------------------------------
     # Pack Operations
