@@ -286,7 +286,7 @@ class BakeController:
 
         for b in enabled_bake_groups:
             for o in b.target_objects:
-                if o.target is None:
+                if o.object is None:
                     errors.append("A target object is missing.")
 
                     continue

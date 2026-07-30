@@ -22,9 +22,7 @@ from ..logger_bake_middleware.bake_summary import BakeStatus, EventCategory
 @dataclass(slots=True, frozen=True)
 class BakeTask(Task):
     bake_group: UBK_BakeGroup
-    # TODO : target need to be a UBK_TargetObject for Bakers to access its uuid, to be able to retrieve the proper baked
-    # map to accumulate them properly
-    target: bpy.types.Object
+    target: UBK_TargetObject
     sources: tuple[bpy.types.Object]
     baker: BakerBase
     settings: BakeSettings
@@ -34,7 +32,7 @@ class BakeTask(Task):
 
     @property
     def object_name(self) -> str:
-        return self.target.name
+        return self.target.object.name
 
     @property
     def baker_id(self) -> str:
@@ -65,7 +63,7 @@ class BakeTask(Task):
                 scope_duration=time_elapsed,
                 data={
                     "status": BakeStatus.SUCCESS,
-                    "object": self.target.name,
+                    "object": self.object_name,
                     "image": self.image_name,
                 },
             )
@@ -79,7 +77,7 @@ class BakeTask(Task):
                 scope_duration=time_elapsed,
                 data={
                     "status": BakeStatus.FAIL,
-                    "object": self.target.name,
+                    "object": self.object_name,
                     "image": self.image_name,
                 },
             )

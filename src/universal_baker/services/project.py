@@ -50,11 +50,11 @@ class ProjectService:
             return
 
         for item in bake_group.target_objects:
-            if item.target == obj:
+            if item.object == obj:
                 return item
 
         item = bake_group.target_objects.add()
-        item.target = obj
+        item.object = obj
 
         bake_group.active_target_object_index = len(bake_group.target_objects) - 1
         return item

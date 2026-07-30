@@ -34,7 +34,7 @@ class UBK_UL_ObjectList(bpy.types.UIList):
 
         row.prop(obj_settings, "enabled", text="")
 
-        obj = obj_settings.target
+        obj = obj_settings.object
 
         if obj:
             row.prop(obj, "name", text="", emboss=False, icon="MESH_DATA")

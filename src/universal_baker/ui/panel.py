@@ -133,7 +133,7 @@ def draw_baker_settings(self, layout, context):
     box.prop(active_baker, "image_name")
     layout.prop(active_baker, "override_settings", toggle=1)
     if active_baker.override_settings:
-        box.label(text=f"{active_object.target.name}_{active_baker.image_name} settings")
+        box.label(text=f"{active_object.target.object.name}_{active_baker.image_name} settings")
     else:
         box.label(text="Inherited from Global Settings")
 

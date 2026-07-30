@@ -59,11 +59,11 @@ class BakeContext(ExecutionContext):
 
     @property
     def target(self) -> bpy.types.Object:
-        return self.task.target
+        return self.task.target.object
 
     @property
     def sources(self) -> tuple[bpy.types.Object]:
-        return self.task.sources
+        return [o.object for o in self.task.sources]
 
     # @property
     # def output_path(self):

@@ -53,9 +53,9 @@ class RendererService:
         for obj in ctx.task.sources:
             obj.select_set(True)
 
-        ctx.task.target.select_set(True)
+        ctx.task.target.object.select_set(True)
 
-        ctx.session.context.view_layer.objects.active = ctx.task.target
+        ctx.session.context.view_layer.objects.active = ctx.task.target.object
 
         if ctx.session.context.mode != "OBJECT":
             bpy.ops.object.mode_set(mode="OBJECT")

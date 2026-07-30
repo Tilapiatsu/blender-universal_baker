@@ -36,7 +36,7 @@ class ExecutionPlanner:
                     continue
 
                 for obj in group.target_objects:
-                    if obj.target is None:
+                    if obj.object is None:
                         continue
 
                     settings = BakeSettingsResolver.resolve(
@@ -74,7 +74,7 @@ class ExecutionPlanner:
                         uuid=baker.uuid,
                         enabled=True,
                         output_context=output_context,
-                        target=obj.target,
+                        target=obj,
                         sources=obj.sources,
                         baker=registry_baker[baker.baker],
                         settings=settings,

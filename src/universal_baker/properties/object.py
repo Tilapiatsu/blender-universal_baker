@@ -21,7 +21,7 @@ class UBK_TargetObject(PropertyGroup):
         default=True,
     )
 
-    target: PointerProperty(
+    object: PointerProperty(
         name="Target",
         type=bpy.types.Object,
     )
