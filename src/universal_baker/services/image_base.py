@@ -3,8 +3,12 @@ from __future__ import annotations
 from pathlib import Path
 
 import bpy
+
+from ..constant import LOG
 from ..resources.image import ImageResource
 from ..runtime.task import Task
+
+LOG_SCOPE = "Image Service"
 
 
 class ImageServiceBase:
@@ -46,19 +50,22 @@ class ImageServiceBase:
 
     @classmethod
     def save(cls, resource: ImageResource) -> None:
-        if resource.image is None:
-            return
+        with LOG.scope(LOG_SCOPE):
+            LOG.info(f'Save Image Resource "{resource.name}" : {resource.filepath}')
 
-        if resource.filepath is None:
-            return
+            if resource.image is None:
+                return
 
-        image = resource.image
-        image.filepath_raw = str(resource.filepath)
-        image.file_format = resource.image_format_settings.file_format
-        image.save()
-        image.pack()
+            if resource.filepath is None:
+                return
 
-        resource.mark_saved()
+            image = resource.image
+            image.filepath_raw = str(resource.filepath)
+            image.file_format = resource.image_format_settings.file_format
+            image.save()
+            image.pack()
+
+            resource.mark_saved()
 
     @classmethod
     def remove(cls, image: bpy.types.Image) -> None:

@@ -12,7 +12,7 @@ class ImageAccumulator:
 
     def accumulate(self, image: ImageBuffer, compositor: Compositor) -> None:
         """Accumulate Image to buffer"""
-        LOG.info(f"Accumulate image {image.name}")
+        LOG.info(f"Accumulate image : {image.name}")
         compositor.composite(self._buffer, image)
 
     def result(self) -> ImageBuffer:

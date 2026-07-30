@@ -163,6 +163,7 @@ class BakeController:
                     else:
                         return None
 
+                    ImageIOService.save(resource)
                     return resource
 
     @classmethod

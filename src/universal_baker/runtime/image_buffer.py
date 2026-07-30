@@ -55,5 +55,14 @@ class ImageBuffer:
 
         return np.reshape(self.pixels, (self.height, self.width, 4))
 
+    def is_empty(self) -> bool:
+        if np is not None:
+            result = np.greater(self.pixels, 0)
+            for r in result:
+                if r:
+                    return False
+            return True
+        return True
+
     @classmethod
     def clone(cls): ...

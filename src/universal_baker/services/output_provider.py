@@ -82,6 +82,7 @@ class OutputProvider:
                 LOG.error("output not found")
                 return None
 
+            LOG.info(f"{len(outputs)} image(s) found :")
             #
             # Single object target
             #
@@ -95,7 +96,11 @@ class OutputProvider:
             #
             # Multi object target
             #
-            accumulator = ImageAccumulator(width=outputs[0].image.width, height=outputs[0].image.height)
+            accumulator = ImageAccumulator(
+                width=outputs[0].image.width,
+                height=outputs[0].image.height,
+                name=f"Accumulated_{outputs[0].image.name}",
+            )
 
             #
             # Order is important.

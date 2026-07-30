@@ -60,29 +60,32 @@ class OutputRepository:
                 del self._index[target_key]
 
     def resolve_outputs(self, bake_group_uuid: str, producer_uuid: str, materialize: bool = True) -> list[OutputBase]:
-        key = (bake_group_uuid, producer_uuid)
+        with LOG.scope(LOG_SCOPE):
+            key = (bake_group_uuid, producer_uuid)
 
-        # First try RAM
-        outputs = self._lookup(key)
+            # First try RAM
+            outputs = self._lookup(key)
 
-        if outputs:
+            if outputs:
+                LOG.info(f"{len(outputs)} found")
+                return outputs
+
+            # Otherwise ask persistent artifacts.
+            artifacts = self._artifacts.resolve(bake_group_uuid, producer_uuid)
+
+            if not artifacts:
+                LOG.error("Artifacts not found")
+                return []
+
+            outputs = []
+
+            for artifact in artifacts:
+                if materialize:
+                    outputs.append(self._materialize(artifact))
+                else:
+                    outputs.append(artifact)
+
             return outputs
-
-        # Otherwise ask persistent artifacts.
-        artifacts = self._artifacts.resolve(bake_group_uuid, producer_uuid)
-
-        if not artifacts:
-            return []
-
-        outputs = []
-
-        for artifact in artifacts:
-            if materialize:
-                outputs.append(self._materialize(artifact))
-            else:
-                outputs.append(artifact)
-
-        return outputs
 
     def _lookup(self, key: tuple[str, str]) -> list[OutputBase]:
         return self._index[key]
@@ -107,19 +110,21 @@ class OutputRepository:
 
     def _materialize(self, artifact: OutputArtifact) -> OutputBase | None:
         """Get output from memory if exists or create a new one if not."""
-        if artifact.uuid in self._materialized:
-            uuid = self._materialized[artifact.uuid]
+        with LOG.scope(LOG_SCOPE):
+            if artifact.uuid in self._materialized:
+                LOG.info("Retreive from Memory")
+                uuid = self._materialized[artifact.uuid]
 
-            return self._outputs[uuid]
+                return self._outputs[uuid]
 
-        output = self._create_output(artifact)
-        if output is None:
-            return None
+            output = self._create_output(artifact)
+            if output is None:
+                return None
 
-        self.add(output)
-        self._materialized[artifact.uuid] = output.uuid
+            self.add(output)
+            self._materialized[artifact.uuid] = output.uuid
 
-        return output
+            return output
 
     def get_outputs(self, bake_group_uuid: str, producer_uuid: str) -> list[OutputBase]:
         outputs = self._lookup((bake_group_uuid, producer_uuid))
@@ -148,19 +153,21 @@ class OutputRepository:
         return outputs
 
     def _create_output(self, artifact: OutputArtifact) -> OutputBase | None:
-        match artifact.type:
-            case "BAKE":
-                output = OutputBake.from_artifact(artifact)
-            case "ACCUMULATED":
-                output = OutputAccumulated.from_artifact(artifact)
-            case "PACK":
-                output = OutputPack.from_artifact(artifact)
-            case _:
-                with LOG.scope(LOG_SCOPE):
-                    LOG.debug("Invalid Artifact")
-                output = None
+        with LOG.scope(LOG_SCOPE):
+            LOG.info("Create Output from Artifact")
+            match artifact.type:
+                case "BAKE":
+                    output = OutputBake.from_artifact(artifact)
+                case "ACCUMULATED":
+                    output = OutputAccumulated.from_artifact(artifact)
+                case "PACK":
+                    output = OutputPack.from_artifact(artifact)
+                case _:
+                    with LOG.scope(LOG_SCOPE):
+                        LOG.debug("Invalid Artifact")
+                    output = None
 
-        return output
+            return output
 
     def invalidate(self, bake_group_uuid: str, producer_uuid: str) -> None:
         """
