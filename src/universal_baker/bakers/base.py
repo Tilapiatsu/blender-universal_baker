@@ -89,6 +89,13 @@ class BakerBase(ABC):
         image = baker.images.add()
         image.object_name = ctx.target.name
         image.image = ctx.image.image
+        image.target_object_uuid = ctx.task.target.uuid
+
+        target = BakeController.get_target_object_from_uuid(ctx.task.target.uuid)
+        if target is None:
+            return
+
+        target.image = ctx.image.image
 
     @abstractmethod
     def create_output(self, ctx: BakeContext):

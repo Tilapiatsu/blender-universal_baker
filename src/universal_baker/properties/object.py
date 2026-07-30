@@ -1,7 +1,7 @@
 from __future__ import annotations
 import bpy
 from bpy.types import PropertyGroup
-from bpy.props import BoolProperty, PointerProperty, CollectionProperty, IntProperty
+from bpy.props import BoolProperty, PointerProperty, CollectionProperty, IntProperty, StringProperty
 
 
 class UBK_SourceObject(PropertyGroup):
@@ -16,6 +16,8 @@ class UBK_SourceObject(PropertyGroup):
 
 class UBK_TargetObject(PropertyGroup):
     """Bake settings for one target object."""
+
+    uuid = StringProperty()
 
     enabled: BoolProperty(
         default=True,

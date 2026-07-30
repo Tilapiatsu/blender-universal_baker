@@ -5,6 +5,7 @@ from typing import List
 import bpy
 from uuid import uuid4
 
+
 from ..properties.packer import UBK_Packer
 
 from ..constant import LOG
@@ -29,6 +30,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from ..properties.bake_group import UBK_BakeGroup
     from ..properties.baker import UBK_Baker
+    from ..properties.object import UBK_TargetObject
 
 
 class BakeController:
@@ -136,9 +138,6 @@ class BakeController:
 
         return None
 
-    # TODO : Need to write get_target_object_from_uuid method
-    # TODO:: Need to write get_source_object_from_uuid method
-
     @classmethod
     def get_resource_from_uuid(cls, baker_uuid: str, provider: OutputProvider) -> ImageResource | None:
         project = cls.project(bpy.context)
@@ -170,6 +169,24 @@ class BakeController:
                     ImageIOService.save(resource)
                     return resource
 
+    # TODO:: Need to write get_source_object_from_uuid method
+
+    @classmethod
+    def get_target_object_from_uuid(cls, uuid: str) -> UBK_TargetObject | None:
+        project = cls.project(bpy.context)
+        if project is None:
+            return None
+
+        for g in project.bake_groups:
+            if not len(g.target_objects):
+                continue
+
+            for t in g.target_objects:
+                if t.uuid != uuid:
+                    continue
+
+                return t
+
     @classmethod
     def get_baker_from_uuid(cls, uuid: str) -> UBK_Baker | None:
         project = cls.project(bpy.context)
@@ -181,8 +198,10 @@ class BakeController:
                 continue
 
             for b in g.bakers:
-                if b.uuid == uuid:
-                    return b
+                if b.uuid != uuid:
+                    continue
+
+                return b
 
     @classmethod
     def get_bake_group_from_uuid(cls, uuid: str) -> UBK_BakeGroup | None:
@@ -206,7 +225,7 @@ class BakeController:
             if p.uuid != uuid:
                 continue
 
-            return g
+            return p
 
     # ---------------------------------------------------------
     # Pack Operations

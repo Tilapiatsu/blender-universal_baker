@@ -63,6 +63,7 @@ class BakeContext(ExecutionContext):
 
     @property
     def sources(self) -> tuple[bpy.types.Object]:
+        # TODO : Need to fix
         return [o.object for o in self.task.sources]
 
     # @property

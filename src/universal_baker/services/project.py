@@ -55,6 +55,7 @@ class ProjectService:
 
         item = bake_group.target_objects.add()
         item.object = obj
+        item.uuid = str(uuid4())
 
         bake_group.active_target_object_index = len(bake_group.target_objects) - 1
         return item
