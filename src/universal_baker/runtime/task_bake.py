@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from ..bakers.base import BakerBase
     from ..properties.bake_group import UBK_BakeGroup
+    from ..properties.object import UBK_TargetObject
 
 from ..constant import LOG
 from .task import Task
@@ -21,6 +22,8 @@ from ..logger_bake_middleware.bake_summary import BakeStatus, EventCategory
 @dataclass(slots=True, frozen=True)
 class BakeTask(Task):
     bake_group: UBK_BakeGroup
+    # TODO : target need to be a UBK_TargetObject for Bakers to access its uuid, to be able to retrieve the proper baked
+    # map to accumulate them properly
     target: bpy.types.Object
     sources: tuple[bpy.types.Object]
     baker: BakerBase

@@ -136,6 +136,9 @@ class BakeController:
 
         return None
 
+    # TODO : Need to write get_target_object_from_uuid method
+    # TODO:: Need to write get_source_object_from_uuid method
+
     @classmethod
     def get_resource_from_uuid(cls, baker_uuid: str, provider: OutputProvider) -> ImageResource | None:
         project = cls.project(bpy.context)
@@ -152,16 +155,17 @@ class BakeController:
                     if image_buffer is None:
                         LOG.warning("Image_buffer is empty")
                         return None
-                    if b.images[0].image is not None:
-                        resource = ImageResource(
-                            image=b.images[0].image,
-                            name=b.image_name,
-                        )
-                        ImageIOService.write(resource, image_buffer)
-                        resource.width = b.images[0].image.size[0]
-                        resource.height = b.images[0].image.size[1]
-                    else:
+
+                    if b.images[0].image is None:
                         return None
+
+                    resource = ImageResource(
+                        image=b.images[0].image,
+                        name=b.image_name,
+                    )
+                    ImageIOService.write(resource, image_buffer)
+                    resource.width = b.images[0].image.size[0]
+                    resource.height = b.images[0].image.size[1]
 
                     ImageIOService.save(resource)
                     return resource

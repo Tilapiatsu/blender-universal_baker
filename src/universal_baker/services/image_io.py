@@ -35,7 +35,7 @@ class ImageIOService(ImageServiceBase):
     def write(resource: ImageResource, buffer: ImageBuffer) -> None:
         """Save buffer to Image"""
         with LOG.scope(LOG_SCOPE):
-            LOG.info(f'Write Buffer "{buffer.name}" to Image Resource "{resource.name}"')
+            LOG.info(f'Write Buffer "{buffer.name}" to Image "{resource.name}"')
 
             image = resource.image
             assert image is not None

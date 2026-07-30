@@ -26,6 +26,8 @@ class UBK_TargetObject(PropertyGroup):
         type=bpy.types.Object,
     )
 
+    image: PointerProperty(type=bpy.types.Image)
+
     sources: CollectionProperty(type=UBK_SourceObject)
     active_source_index: IntProperty(default=0)
 

@@ -90,6 +90,10 @@ class BakerBase(ABC):
         image.object_name = ctx.target.name
         image.image = ctx.image.image
 
+        # TODO: Need to store target_object_uuid in UBK_BakerOutput in order to store and recover the images baked from
+        # each objects, and properly replace them and prevent to replace the wrong one durring accumulation
+        # image.target_object_uuid =
+
     @abstractmethod
     def create_output(self, ctx: BakeContext):
         LOG.debug("Creating Output ...")
