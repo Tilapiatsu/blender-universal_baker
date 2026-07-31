@@ -1,15 +1,15 @@
 from __future__ import annotations
 
-from universal_baker.resources.pack import ImageResource
 
 from ..constant import LOG
-from ..runtime.context import PackContext
-from .packer_base import PackerBase
+from ..runtime.context_pack import PackContext
+from .base import PackerBase
 
+from ..core.registry_packer import registry_packer
 from ..runtime.image_buffer import ImageBuffer
 from ..services.image_pack import ImageServicePack
 from ..services.image_io import ImageIOService
-from .channels import Channel
+from ..enum.channels import Channel
 
 try:
     import numpy as np
@@ -40,75 +40,49 @@ class PackerInternal(PackerBase):
         task = ctx.task
         ctx.pack_resource = ImageServicePack.create_pack_resource(task, ctx)
 
-        ctx.red_resource = ctx.pack_resource.red_resource
-        ctx.green_resource = ctx.pack_resource.green_resource
-        ctx.blue_resource = ctx.pack_resource.blue_resource
-        ctx.alpha_resource = ctx.pack_resource.alpha_resource
+        ctx.red_buffer = ctx.pack_resource.red_buffer
+        ctx.green_buffer = ctx.pack_resource.green_buffer
+        ctx.blue_buffer = ctx.pack_resource.blue_buffer
+        ctx.alpha_buffer = ctx.pack_resource.alpha_buffer
 
-        resources: tuple[ImageResource, ...] = tuple([])
+        buffers: tuple[ImageBuffer, ...] = tuple([])
 
-        if ctx.red_resource is not None and task.red and task.red.enabled:
+        if ctx.red_buffer is not None and task.red and task.red.enabled:
             ctx.pack_red = True
-            resources += (ctx.red_resource,)
-        if ctx.green_resource is not None and task.green and task.green.enabled:
+            buffers += (ctx.red_buffer,)
+        if ctx.green_buffer is not None and task.green and task.green.enabled:
             ctx.pack_green = True
-            resources += (ctx.green_resource,)
-        if ctx.blue_resource is not None and task.blue and task.blue.enabled:
+            buffers += (ctx.green_buffer,)
+        if ctx.blue_buffer is not None and task.blue and task.blue.enabled:
             ctx.pack_blue = True
-            resources += (ctx.blue_resource,)
-        if ctx.alpha_resource is not None and task.alpha and task.alpha.enabled:
+            buffers += (ctx.blue_buffer,)
+        if ctx.alpha_buffer is not None and task.alpha and task.alpha.enabled:
             ctx.pack_alpha = True
-            resources += (ctx.alpha_resource,)
+            buffers += (ctx.alpha_buffer,)
 
-        if not len(resources):
+        if not len(buffers):
             with LOG.scope(self.id.capitalize()):
                 LOG.warning("No Image Resource Found")
             return
 
-        ImageIOService.ensure_image_sizes(*resources)
-
-        ctx.output_buffer = self.create_buffer(resources[0].width, resources[0].height)
+        ctx.output_buffer = self.create_buffer(buffers[0].width, buffers[0].height, ctx.task.image_name)
 
     def pack(self, ctx: PackContext) -> None:
         """Execute the packing."""
 
         if ctx.output_buffer:
-            if (
-                ctx.pack_red
-                and ctx.red_resource
-                and ctx.pack_resource
-                and ctx.pack_resource.red_channel_mapping
-                and ctx.red_resource.exists
-            ):
-                image_buffer = ImageIOService.read(ctx.red_resource)
-                self.copy_channel(ctx.output_buffer, ctx.pack_resource.red_channel_mapping, image_buffer, Channel.R)
-            if (
-                ctx.pack_green
-                and ctx.green_resource
-                and ctx.pack_resource
-                and ctx.pack_resource.green_channel_mapping
-                and ctx.green_resource.exists
-            ):
-                image_buffer = ImageIOService.read(ctx.green_resource)
-                self.copy_channel(ctx.output_buffer, ctx.pack_resource.green_channel_mapping, image_buffer, Channel.G)
-            if (
-                ctx.pack_blue
-                and ctx.blue_resource
-                and ctx.pack_resource
-                and ctx.pack_resource.blue_channel_mapping
-                and ctx.blue_resource.exists
-            ):
-                image_buffer = ImageIOService.read(ctx.blue_resource)
-                self.copy_channel(ctx.output_buffer, ctx.pack_resource.blue_channel_mapping, image_buffer, Channel.B)
-            if (
-                ctx.pack_alpha
-                and ctx.alpha_resource
-                and ctx.pack_resource
-                and ctx.pack_resource.alpha_channel_mapping
-                and ctx.alpha_resource.exists
-            ):
-                image_buffer = ImageIOService.read(ctx.alpha_resource)
-                self.copy_channel(ctx.output_buffer, ctx.pack_resource.alpha_channel_mapping, image_buffer, Channel.A)
+            if ctx.pack_red and ctx.red_buffer and ctx.pack_resource and ctx.pack_resource.red_channel_mapping:
+                self.copy_channel(ctx.output_buffer, ctx.pack_resource.red_channel_mapping, ctx.red_buffer, Channel.R)
+            if ctx.pack_green and ctx.green_buffer and ctx.pack_resource and ctx.pack_resource.green_channel_mapping:
+                self.copy_channel(
+                    ctx.output_buffer, ctx.pack_resource.green_channel_mapping, ctx.green_buffer, Channel.G
+                )
+            if ctx.pack_blue and ctx.blue_buffer and ctx.pack_resource and ctx.pack_resource.blue_channel_mapping:
+                self.copy_channel(ctx.output_buffer, ctx.pack_resource.blue_channel_mapping, ctx.blue_buffer, Channel.B)
+            if ctx.pack_alpha and ctx.alpha_buffer and ctx.pack_resource and ctx.pack_resource.alpha_channel_mapping:
+                self.copy_channel(
+                    ctx.output_buffer, ctx.pack_resource.alpha_channel_mapping, ctx.alpha_buffer, Channel.A
+                )
 
             ctx.image = ImageIOService.acquire(ctx.image, ctx.task)
             ImageIOService.write(ctx.image, ctx.output_buffer)
@@ -120,19 +94,23 @@ class PackerInternal(PackerBase):
     def update_pack(self, ctx: PackContext) -> None:
         return super().update_pack(ctx)
 
+    def create_artifact(self, ctx: PackContext) -> None:
+        return super().create_artifact(ctx)
+
     def cleanup(self, ctx: PackContext) -> None:
         """Restore Blender."""
-        if ctx.red_resource and ctx.red_resource.exists and ctx.red_resource.is_copy:
-            ImageServicePack.remove(ctx.red_resource.image)
-
-        if ctx.green_resource and ctx.green_resource.exists and ctx.green_resource.is_copy:
-            ImageServicePack.remove(ctx.green_resource.image)
-
-        if ctx.blue_resource and ctx.blue_resource.exists and ctx.blue_resource.is_copy:
-            ImageServicePack.remove(ctx.blue_resource.image)
-
-        if ctx.alpha_resource and ctx.alpha_resource.exists and ctx.alpha_resource.is_copy:
-            ImageServicePack.remove(ctx.alpha_resource.image)
+        # if ctx.red_resource and ctx.red_resource.exists and ctx.red_resource.is_copy:
+        #     ImageServicePack.remove(ctx.red_resource.image)
+        #
+        # if ctx.green_resource and ctx.green_resource.exists and ctx.green_resource.is_copy:
+        #     ImageServicePack.remove(ctx.green_resource.image)
+        #
+        # if ctx.blue_resource and ctx.blue_resource.exists and ctx.blue_resource.is_copy:
+        #     ImageServicePack.remove(ctx.blue_resource.image)
+        #
+        # if ctx.alpha_resource and ctx.alpha_resource.exists and ctx.alpha_resource.is_copy:
+        #     ImageServicePack.remove(ctx.alpha_resource.image)
+        #
 
     # -------------------------------------------------------------------------
     # Validation
@@ -259,3 +237,15 @@ class PackerInternal(PackerBase):
             return 3
 
         raise ValueError(f"{channel} is not a single channel.")
+
+
+classes = (PackerInternal,)
+
+
+def register():
+    for c in classes:
+        registry_packer.register(c())
+
+
+def unregister():
+    pass

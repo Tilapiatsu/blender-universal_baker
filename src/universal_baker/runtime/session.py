@@ -36,10 +36,10 @@ class ExecutionSession:
     job: Job
     context: bpy.types.Context
     runtime: BakeRuntime
-    current_task: Task | None = None
     current_context: ExecutionContext | None = None
     cancelled: bool = False
     start_time: float = field(default_factory=perf_counter)
+    current_task: Task | None = None
     original_mode: str = "OBJECT"
     original_active_object: bpy.types.Object | None = None
     original_selected_objects: list[bpy.types.Object] = field(default_factory=list)

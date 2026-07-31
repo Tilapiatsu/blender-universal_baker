@@ -1,14 +1,17 @@
 from __future__ import annotations
 
 import bpy
+from uuid import uuid4
 
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from ..packers.channels import Channel
+from universal_baker.runtime.bake_group import BakeGroup
+
 
 from ..resources.image import ImageResource
-
+from ..enum.channels import Channel
+from ..runtime.output_base import OutputBase
 from ..services.image_io import ImageIOService
 
 if TYPE_CHECKING:
@@ -16,7 +19,7 @@ if TYPE_CHECKING:
     from ..properties.artifact import UBK_Artifact
 
 
-class OutputArtifact:
+class OutputArtifact(OutputBase):
     uuid: str
     dependencies: list[str]
     dependency_mapping: list[Channel]
@@ -24,18 +27,17 @@ class OutputArtifact:
     def __init__(self, scene: Scene, property_group: UBK_Artifact):
         self.scene = scene
         self.data = property_group
+        self.name = self.data.name
+        self.bake_group = BakeGroup(self.data.bake_group_uuid)
+        self.uuid = str(uuid4())
         self.dependencies = []
         self.dependency_mapping = []
 
         for d in property_group.dependencies:
             self.dependencies.append(d.uuid)
 
-        for m in property_group.dependency_mapping:
+        for m in property_group.dependencies_mapping:
             self.dependency_mapping.append(m)
-
-    @property
-    def name(self) -> str:
-        return self.data.name
 
     @property
     def type(self) -> str:
@@ -48,6 +50,10 @@ class OutputArtifact:
     @property
     def producer_uuid(self) -> str:
         return self.data.producer_uuid
+
+    @property
+    def target_object_uuid(self) -> str:
+        return self.data.target_object_uuid
 
     @property
     def target_object(self) -> bpy.types.Object:
@@ -64,8 +70,7 @@ class OutputArtifact:
 
     def load_image(self) -> ImageResource:
         """
-        Returns an ImageBuffer.
+        Returns an ImageResource.
         """
         image = ImageIOService.load(self.path)
-
         return ImageIOService.init_resource(image)

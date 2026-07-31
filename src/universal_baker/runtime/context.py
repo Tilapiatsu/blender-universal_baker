@@ -1,133 +1,13 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
-import bpy
-
-
-from typing import TYPE_CHECKING
-
-
-if TYPE_CHECKING:
-    from ..bakers.base import BakerBase
-    from .task_bake import BakeTask
-    from .task_pack import PackingTask
-    from .image_buffer import ImageBuffer
-    from ..resources.pack import PackResource
-    from .settings_output import OutputSettings
-
-from ..resources.image import ImageResource
-from ..resources.material import MaterialResource
-from .settings_bake import BakeSettings
-from .settings_cage import CageSettings
-from .settings_pack import PackSettings
 from .session import ExecutionSession
-from ..constant import LOG
-from ..logger.event import ScopeState
 
 
 @dataclass(slots=True)
 class ExecutionContext:
-    def __init__(self, session) -> None:
+    session: ExecutionSession
+
+    def __init__(self, session: ExecutionSession) -> None:
         self.session = session
-
-
-@dataclass(slots=True)
-class BakeContext(ExecutionContext):
-    """Runtime context used while executing a single BakeTask."""
-
-    session: ExecutionSession
-    task: BakeTask
-    baker: BakerBase
-    image: ImageResource = field(default_factory=ImageResource)
-
-    material: MaterialResource = field(default_factory=MaterialResource)
-    node_tree: bpy.types.NodeTree | None = None
-    image_node: bpy.types.ShaderNodeTexImage | None = None
-
-    finished: bool = False
-    success: bool = False
-    message: str = ""
-
-    @property
-    def blender_context(self) -> bpy.types.Context:
-        return self.session.context
-
-    @property
-    def scene(self) -> bpy.types.Scene:
-        return self.session.context.scene
-
-    @property
-    def target(self) -> bpy.types.Object:
-        return self.task.target.object
-
-    @property
-    def sources(self) -> tuple[bpy.types.Object]:
-        # TODO : Need to fix
-        return [o.object for o in self.task.sources]
-
-    # @property
-    # def output_path(self):
-    #     return self.task.output_path
-
-    @property
-    def selected_to_active(self) -> bool:
-        return self.task.selected_to_active
-
-    @property
-    def settings(self) -> BakeSettings:
-        return self.task.settings
-
-    @property
-    def output_settings(self) -> OutputSettings:
-        return self.task.output_context.output_settings
-
-    def succeed(self, message: str = "") -> None:
-        self.finished = True
-        self.success = True
-        self.message = message
-
-    def fail(self, message: str, errors: str) -> None:
-        self.finished = True
-        self.success = False
-        self.message = message
-
-
-@dataclass(slots=True)
-class PackContext(ExecutionContext):
-    session: ExecutionSession
-    task: PackingTask
-    node_tree: bpy.types.NodeTree | None = None
-    image_node: bpy.types.ShaderNodeTexImage | None = None
-    image: ImageResource = field(default_factory=ImageResource)
-
-    red_resource: ImageResource | None = None
-    green_resource: ImageResource | None = None
-    blue_resource: ImageResource | None = None
-    alpha_resource: ImageResource | None = None
-
-    pack_red: bool = False
-    pack_green: bool = False
-    pack_blue: bool = False
-    pack_alpha: bool = False
-
-    output_buffer: ImageBuffer | None = None
-    pack_resource: PackResource | None = None
-
-    finished: bool = False
-    success: bool = False
-    message: str = ""
-
-    @property
-    def settings(self) -> PackSettings:
-        return self.task.settings
-
-    def succeed(self, message: str = "") -> None:
-        self.finished = True
-        self.success = True
-        self.message = message
-
-    def fail(self, message: str) -> None:
-        self.finished = True
-        self.success = False
-        self.message = message

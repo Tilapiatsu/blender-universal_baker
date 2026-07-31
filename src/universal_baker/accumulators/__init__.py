@@ -1,8 +1,8 @@
 from . import (
-    packer_internal,
+    alpha_over,
 )
 
-modules = (packer_internal,)
+modules = (alpha_over,)
 
 
 def register():

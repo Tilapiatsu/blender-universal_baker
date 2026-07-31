@@ -3,12 +3,17 @@ from __future__ import annotations
 import bpy
 
 from uuid import uuid4
+
+from ..constant import LOG
+from ..runtime.settings_accumulate import AccumulateSettings
 from ..runtime.job import Job
 from ..runtime.task_bake import BakeTask
 from ..runtime.task_pack import PackingTask, PackingChannel
-from ..packers.channels import Channel
-from ..packers.packer_internal import PackerInternal
+from ..runtime.task_accumulate import AccumulateTask
+from ..enum.channels import Channel
 from ..core.registry_baker import registry_baker
+from ..core.registry_packer import registry_packer
+from ..core.registry_accumulator import registry_accumulator
 from ..factories.settings_bake import BakeSettingsResolver
 from ..factories.settings_cage import CageSettingsResolver
 from ..factories.settings_pack import PackSettingsResolver
@@ -35,46 +40,46 @@ class ExecutionPlanner:
                 if not baker.enabled:
                     continue
 
+                settings = BakeSettingsResolver.resolve(
+                    project.settings_bake,
+                    baker.settings if baker.override_settings else None,
+                )
+                # settings_cage = CageSettingsResolver.resolve(
+                #     project.settings_cage,
+                #     baker.settings_cage if baker.override_settings_cage else None,
+                # )
+
+                output_settings = OutputSettingsResolver.resolve(
+                    project.settings_bake,
+                    baker.settings if baker.override_settings else None,
+                )
+
+                output_context = OutputContext(
+                    directory_template=output_settings.path.output_path,
+                    filename_template=output_settings.path.filename_template,
+                    extension=output_settings.image.file_format,
+                    variables=get_variables(
+                        bake_group_name=group.name,
+                        baker=baker,
+                        packer=None,
+                        image_name=baker.image_name,
+                        scene=bpy.context.scene,
+                        extension=output_settings.image.file_format,
+                    ),
+                    output_settings=output_settings,
+                )
+
                 for obj in group.target_objects:
                     if obj.object is None:
                         continue
 
-                    settings = BakeSettingsResolver.resolve(
-                        project.settings_bake,
-                        baker.settings if baker.override_settings else None,
-                    )
-                    # settings_cage = CageSettingsResolver.resolve(
-                    #     project.settings_cage,
-                    #     baker.settings_cage if baker.override_settings_cage else None,
-                    # )
-
-                    output_settings = OutputSettingsResolver.resolve(
-                        project.settings_bake,
-                        baker.settings if baker.override_settings else None,
-                    )
-
-                    output_context = OutputContext(
-                        directory_template=output_settings.path.output_path,
-                        filename_template=output_settings.path.filename_template,
-                        extension=output_settings.image.file_format,
-                        variables=get_variables(
-                            bake_group_name=group.name,
-                            baker=baker,
-                            packer=None,
-                            image_name=baker.image_name,
-                            scene=bpy.context.scene,
-                            extension=output_settings.image.file_format,
-                        ),
-                        output_settings=output_settings,
-                    )
-
                     task = BakeTask(
-                        bake_group=group,
+                        bake_group_uuid=group.uuid,
                         id=baker.name,
                         uuid=baker.uuid,
                         enabled=True,
                         output_context=output_context,
-                        target=obj,
+                        target_object_uuid=obj.uuid,
                         sources=obj.sources,
                         baker=registry_baker[baker.baker],
                         settings=settings,
@@ -84,6 +89,23 @@ class ExecutionPlanner:
                     )
 
                     job.add_task(task)
+
+                if len(group.target_objects) <= 1:
+                    continue
+
+                settings_accumulator = AccumulateSettings(baker_uuid=baker.uuid)
+                task = AccumulateTask(
+                    uuid=str(uuid4()),
+                    enabled=True,
+                    output_context=output_context,
+                    bake_group_uuid=group.uuid,
+                    baker_name=baker.baker,
+                    baker_uuid=baker.uuid,
+                    accumulator=registry_accumulator[registry_baker[baker.baker].accumulator_id],
+                    image_name=baker.image_name,
+                    settings=settings_accumulator,
+                )
+                job.add_task(task)
 
             if not register_packers:
                 continue
@@ -156,7 +178,7 @@ class ExecutionPlanner:
                     bake_group_uuid=group.uuid,
                     enabled=True,
                     output_context=output_context,
-                    packer=PackerInternal(),
+                    packer=registry_packer[packer.packer],
                     image_name=packer.image_name,
                     settings=pack_settings,
                     red=red,
@@ -166,4 +188,6 @@ class ExecutionPlanner:
                 )
                 job.add_task(task)
 
+        with LOG.scope("Planner"):
+            LOG.info(str(job))
         return job

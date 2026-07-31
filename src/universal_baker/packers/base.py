@@ -4,12 +4,14 @@ from abc import ABC
 from abc import abstractmethod
 
 from ..constant import LOG
+from ..enum.output_stage import OutputStage
 from ..services.image_pack import ImageServicePack
+from ..services.artifact_service import ArtifactService
 
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..runtime.context import PackContext
+    from ..runtime.context_pack import PackContext
     from ..runtime.task import Task
 
 LOG_SCOPE = "Packing"
@@ -40,6 +42,7 @@ class PackerBase(ABC):
             self.prepare(ctx)
             self.pack(ctx)
             self.update_pack(ctx)
+            self.create_artifact(ctx)
             self.cleanup(ctx)
             self.export_file(ctx)
 
@@ -65,6 +68,31 @@ class PackerBase(ABC):
     @abstractmethod
     def cleanup(self, ctx: PackContext) -> None:
         """Restore Blender."""
+        ImageServicePack.cleanup(ctx.image)
+
+    @abstractmethod
+    def create_artifact(self, ctx: PackContext) -> None:
+        LOG.debug("Creating Artifact ...")
+        dependencies = []
+
+        if ctx.pack_resource is not None:
+            dependencies = ctx.pack_resource.uuids
+
+        ArtifactService.register(
+            runtime=ctx.session.runtime,
+            project=ctx.project,
+            artifact_type=OutputStage.PACK,
+            bake_group_uuid=ctx.task.bake_group_uuid,
+            target_object_uuid="",
+            producer_uuid=ctx.task.uuid,
+            filepath=ctx.image.filepath,
+            width=ctx.image.width,
+            height=ctx.image.height,
+            channels=ctx.image.channels,
+            color_space=ctx.image.colorspace,
+            file_format=ctx.output_settings.image.file_format,
+            dependencies=dependencies,
+        )
 
     @abstractmethod
     def export_file(self, ctx: PackContext):

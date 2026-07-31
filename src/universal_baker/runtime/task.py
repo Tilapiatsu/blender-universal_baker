@@ -10,10 +10,10 @@ from .output_context import OutputContext
 class Task:
     """Base Task Class. This is the base class that each executor uses."""
 
-    id: str
     uuid: str
     enabled: bool
     output_context: OutputContext
+    bake_group_uuid: str
 
     @property
     def output_name(self) -> str: ...
@@ -22,7 +22,7 @@ class Task:
 
     def notify_finished(self, time_elapsed: float) -> None: ...
 
-    def notify_failed(self, time_elapsed: float, errors: tuple[str, ...]) -> None: ...
+    def notify_failed(self, time_elapsed: float, error: str) -> None: ...
 
 
 @dataclass(slots=True)

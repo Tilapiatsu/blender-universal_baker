@@ -15,13 +15,10 @@ class ImageIOService(ImageServiceBase):
     """Service to convert Images to ImageBuffers and vice versa"""
 
     @staticmethod
-    def read(resource: ImageResource) -> ImageBuffer:
-        """Convert Image to ImageBuffer for manipulation"""
+    def read_image(image: bpy.types.Image) -> ImageBuffer:
+        """Convert ImageResource to ImageBuffer for manipulation"""
         with LOG.scope(LOG_SCOPE):
-            LOG.info(f'Create Buffer from Image Resource "{resource.name}"')
-            image = resource.image
-            assert image is not None
-
+            LOG.info(f'Create Buffer from Image "{image.name}"')
             width = image.size[0]
             height = image.size[1]
 
@@ -30,6 +27,18 @@ class ImageIOService(ImageServiceBase):
             image.pixels.foreach_get(buffer.pixels)
 
             return buffer
+
+    @classmethod
+    def read(cls, resource: ImageResource) -> ImageBuffer:
+        """Convert ImageResource to ImageBuffer for manipulation"""
+        with LOG.scope(LOG_SCOPE):
+            LOG.info(f'Create Buffer from Image Resource "{resource.name}"')
+            image = resource.image
+
+            if image is None:
+                image = cls.create(resource)
+
+            return cls.read_image(image)
 
     @staticmethod
     def write(resource: ImageResource, buffer: ImageBuffer) -> None:
@@ -51,4 +60,4 @@ class ImageIOService(ImageServiceBase):
 
     @staticmethod
     def load(path: Path) -> bpy.types.Image:
-        bpy.data.images.load(path)
+        return bpy.data.images.load(str(path))

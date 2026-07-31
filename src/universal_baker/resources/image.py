@@ -20,14 +20,15 @@ class ImageResource:
     _width: int = 2048
     _height: int = 2048
 
+    filepath: Path = field(default_factory=Path)
     name: str = ""
-    filepath: Path | None = None
 
     generated_type: str = "BLANK"
 
     object_name: str = ""
     map_name: str = ""
 
+    channels: int = 4
     colorspace: str = "sRGB"
     is_data: bool = False
 
@@ -40,6 +41,37 @@ class ImageResource:
     temporary: bool = False
     packed: bool = False
     is_copy: bool = False
+
+    @classmethod
+    def create(
+        cls,
+        width: int,
+        height: int,
+        name: str,
+        filepath: Path,
+        colorspace: str,
+        alpha: bool = False,
+        float_buffer: bool = False,
+        tiled: bool = False,
+    ) -> ImageResource:
+        image = bpy.data.new(
+            name,
+            width,
+            height,
+            alpha,
+            float_buffer,
+            stereo3d=False,
+            is_data=True if colorspace == "Non-Color" else False,
+            tiled=tiled,
+        )
+        return cls(
+            image=image,
+            _width=width,
+            _height=height,
+            name=name,
+            filepath=filepath,
+            channels=4 if alpha else 3,
+        )
 
     @property
     def width(self) -> int:
@@ -67,8 +99,6 @@ class ImageResource:
 
     @property
     def filename(self) -> str:
-        if self.filepath is None:
-            return ""
         return self.filepath.name
 
     @property

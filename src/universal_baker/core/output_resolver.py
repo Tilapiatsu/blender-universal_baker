@@ -27,14 +27,18 @@ class OutputResolver:
     # -------------------------------------------------------------------------
 
     @classmethod
-    def resolve(cls, ctx: OutputContext) -> OutputFile:
+    def resolve(cls, ctx: OutputContext, suffix: str | None = None) -> OutputFile:
         relative = ""
-        if ctx.directory_template.startswith(r"//"):
-            ctx.directory_template = ctx.directory_template[2:]
+        dir = ctx.directory_template
+        if dir.startswith(r"//"):
+            dir = dir[2:]
             relative = r"//"
 
-        directory = cls.resolve_directory(ctx.directory_template, ctx)
+        directory = cls.resolve_directory(dir, ctx)
         filename = cls.resolve_filename(ctx.filename_template, ctx)
+
+        if suffix is not None:
+            filename += f"_{suffix}"
 
         path = Path.as_posix(relative / directory / f"{filename}.{ctx.extension.lower()}")
 
@@ -85,9 +89,7 @@ class OutputResolver:
         parts = token.split(".")
 
         name = parts[0]
-
         transforms = parts[1:]
-
         value = registry_token.resolve(name, ctx)
 
         for transform in transforms:

@@ -47,7 +47,7 @@ class OutputRepository:
         self._outputs.pop(output.uuid, None)
 
         target_key = (
-            output.bake_group.name,
+            output.bake_group.uuid,
             output.uuid,
         )
 
@@ -137,7 +137,6 @@ class OutputRepository:
         return outputs
 
     def _load_from_artifacts(self, bake_group_uuid: str, producer_uuid: str) -> list[OutputBase]:
-
         artifacts = self._artifacts.find_outputs(bake_group_uuid, producer_uuid)
 
         outputs = []

@@ -13,6 +13,7 @@ class BakeStatus(Enum):
 class EventCategory(Enum):
     BAKE = auto()
     PACK = auto()
+    ACCUMULATE = auto()
 
 
 class BakeSummaryMiddleware(BaseMiddleware):

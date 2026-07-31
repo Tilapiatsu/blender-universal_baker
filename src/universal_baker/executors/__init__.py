@@ -1,6 +1,16 @@
-from . import executor_internal, executor_external
+from . import (
+    executor_internal_bake,
+    executor_internal_pack,
+    executor_internal_accumulate,
+    executor_external,
+)
 
-modules = (executor_internal, executor_external)
+modules = (
+    executor_internal_bake,
+    executor_internal_pack,
+    executor_internal_accumulate,
+    executor_external,
+)
 
 
 def register():

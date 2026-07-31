@@ -20,6 +20,8 @@ from . import (
     bakers,
     executors,
     compositors,
+    packers,
+    accumulators,
 )
 
 modules = (
@@ -31,6 +33,8 @@ modules = (
     bakers,
     executors,
     compositors,
+    packers,
+    accumulators,
 )
 
 

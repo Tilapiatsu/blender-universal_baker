@@ -12,7 +12,7 @@ def baker_items(self, context):
 
 
 class UBK_BakerOutput(PropertyGroup):
-    object_name: StringProperty("Object Name", default="")
+    name: StringProperty("Object Name", default="")
     target_object_uuid: StringProperty()
     baker_uuid: StringProperty()
     image: PointerProperty(
@@ -40,9 +40,9 @@ class UBK_Baker(PropertyGroup):
         default="Bake",
     )
 
-    images: CollectionProperty(
-        type=UBK_BakerOutput,
-    )
+    images: CollectionProperty(type=UBK_BakerOutput)
+
+    accumulated_image: PointerProperty(type=bpy.types.Image)
 
     override_settings: BoolProperty(
         name="Override Settings",
@@ -57,6 +57,10 @@ class UBK_Baker(PropertyGroup):
         name="Override Cage",
         default=False,
     )
+
+    # @property
+    # def accumulated_image(self) -> bpy.types.Image:
+    #     pass
 
 
 classes = (

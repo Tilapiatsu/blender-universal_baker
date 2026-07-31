@@ -5,6 +5,8 @@ from typing import List
 import bpy
 from uuid import uuid4
 
+from universal_baker.runtime.task import Task
+
 
 from ..properties.packer import UBK_Packer
 
@@ -139,7 +141,7 @@ class BakeController:
         return None
 
     @classmethod
-    def get_resource_from_uuid(cls, baker_uuid: str, provider: OutputProvider) -> ImageResource | None:
+    def get_resource_from_uuids(cls, baker_uuid: str, provider: OutputProvider) -> ImageResource | None:
         project = cls.project(bpy.context)
         if project is None:
             return None
@@ -236,7 +238,7 @@ class BakeController:
     # ---------------------------------------------------------
     # Pack Operations
     # ---------------------------------------------------------
-
+    # TODO: every "adder" should check for name collision and and prevent is by adding a suffix like "_001"
     @classmethod
     def add_packer(cls, context: bpy.types.Context, packer_id: str = "INTERNAL"):
         bake_group = cls.active_bake_group(context)
@@ -354,11 +356,14 @@ class BakeController:
         preferences = get_prefs()
 
         if preferences.use_background_blender:
-            executor = registry_executor["BakeExternal"]
+            bake_executor = registry_executor["BakeExternal"]
+            accumulate_executor = registry_executor["AccumulateExternal"]
         else:
-            executor = registry_executor["BakeInternal"]
+            bake_executor = registry_executor["BakeInternal"]
+            accumulate_executor = registry_executor["AccumulateInternal"]
 
-        executor.execute(context, job)
+        bake_executor.execute(context, job)
+        accumulate_executor.execute(context, job)
 
         return (
             True,
@@ -413,15 +418,35 @@ class BakeController:
 
     @classmethod
     def bake_and_pack_all(cls, context: bpy.types.Context) -> tuple[bool, Job | list[str]]:
-        success_bake, job_bake = cls.bake_all(context)
-        if not success_bake:
-            return success_bake, job_bake
+        errors = cls.validate(context)
 
-        success_pack, job_pack = cls.pack_all(context)
-        if not success_pack:
-            return success_pack, job_pack
+        if errors:
+            return (
+                False,
+                errors,
+            )
 
-        return success_pack, job_pack
+        job = cls.create_job(context, register_bakers=True, register_packers=True)
+
+        preferences = get_prefs()
+
+        if preferences.use_background_blender:
+            bake_executor = registry_executor["BakeExternal"]
+            accumulate_executor = registry_executor["AccumulateExternal"]
+            pack_executor = registry_executor["PackExternal"]
+        else:
+            bake_executor = registry_executor["BakeInternal"]
+            accumulate_executor = registry_executor["AccumulateInternal"]
+            pack_executor = registry_executor["PackInternal"]
+
+        bake_executor.execute(context, job)
+        accumulate_executor.execute(context, job)
+        pack_executor.execute(context, job)
+
+        return (
+            True,
+            job,
+        )
 
     @classmethod
     def pack_selected(cls, context: bpy.types.Context, object_index: int):

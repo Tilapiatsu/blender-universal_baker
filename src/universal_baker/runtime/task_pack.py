@@ -5,12 +5,13 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from ..packers.packer_base import PackerBase
+    from ..packers.base import PackerBase
+    from ..properties.bake_group import UBK_BakeGroup
 
 from ..constant import LOG
 from .task import Task
 from .settings_pack import PackSettings
-from ..packers.channels import Channel
+from ..enum.channels import Channel
 from ..logger.event import ScopeState
 from ..logger_bake_middleware.bake_summary import BakeStatus, EventCategory
 
@@ -26,15 +27,21 @@ class PackingChannel:
 
 @dataclass(slots=True, frozen=True)
 class PackingTask(Task):
+    id: str
     packer: PackerBase
     settings: PackSettings
     image_name: str
-    bake_group_uuid: str
 
     red: PackingChannel | None
     green: PackingChannel | None
     blue: PackingChannel | None
     alpha: PackingChannel | None
+
+    @property
+    def bake_group(self) -> UBK_BakeGroup | None:
+        from ..core.controller import BakeController
+
+        return BakeController.get_bake_group_from_uuid(self.bake_group_uuid)
 
     @property
     def output_name(self) -> str:
@@ -90,7 +97,7 @@ class PackingTask(Task):
                 },
             )
 
-    def notify_failed(self, time_elapsed: float, errors: tuple[str, ...]) -> None:
+    def notify_failed(self, time_elapsed: float, error: str) -> None:
         with LOG.scope("Packing"):
             LOG.error(
                 message=f"{self.packer.name} failed",
@@ -102,5 +109,4 @@ class PackingTask(Task):
                     "image": self.image_name,
                 },
             )
-            for e in errors:
-                LOG.error(message=e, category="BAKE")
+            LOG.error(message=error, category="BAKE")

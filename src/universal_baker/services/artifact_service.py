@@ -1,12 +1,19 @@
 from __future__ import annotations
 
+import bpy
+
 from pathlib import Path
 from datetime import datetime
 from typing import Iterable
 
-from universal_baker.services import target_object
-
+from ..enum.output_stage import OutputStage
 from ..runtime.output_artifact import OutputArtifact
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..properties.project import UBK_Project
+    from ..runtime.runtime import BakeRuntime
 
 
 class ArtifactService:
@@ -24,31 +31,30 @@ class ArtifactService:
     @classmethod
     def register(
         cls,
-        runtime,
-        project,
+        runtime: BakeRuntime,
+        project: UBK_Project,
         *,
-        artifact_type,
-        bake_group,
-        producer,
-        file_path,
-        width,
-        height,
-        channels,
-        color_space,
-        file_format,
+        artifact_type: OutputStage,
+        bake_group_uuid: str,
+        target_object_uuid: str,
+        producer_uuid: str,
+        filepath: Path,
+        width: int,
+        height: int,
+        channels: int,
+        color_space: str,
+        file_format: str,
         checksum="",
         dependencies: Iterable[str] = (),
-    ) -> OutputArtifact:
+    ) -> OutputArtifact | None:
         """
         Creates or updates an artifact.
         """
 
-        file_path = Path(file_path)
-
         artifact_pg = cls._find_property_group(
             project,
-            bake_group.uuid,
-            producer.uuid,
+            bake_group_uuid,
+            producer_uuid,
         )
 
         #
@@ -56,20 +62,19 @@ class ArtifactService:
         #
         if artifact_pg is None:
             artifact_pg = project.artifacts.add()
-
             artifact_pg.uid = cls._generate_uuid()
 
         #
         # Fill metadata
         #
 
-        artifact_pg.type = artifact_type
-        artifact_pg.bake_group_uuid = bake_group.uuid
-        artifact_pg.producer_uuid = producer.uuid
-        artifact_pg.relative_path = str(file_path)
-        artifact_pg.target_object = target_object
-        artifact_pg.filename = file_path.name
-        artifact_pg.extension = file_path.suffix.lower()
+        artifact_pg.type = artifact_type.value
+        artifact_pg.bake_group_uuid = bake_group_uuid
+        artifact_pg.producer_uuid = producer_uuid
+        artifact_pg.target_object_uuid = target_object_uuid
+        artifact_pg.relative_path = str(filepath)
+        artifact_pg.filename = filepath.name
+        artifact_pg.extension = filepath.suffix.lower()
         artifact_pg.width = width
         artifact_pg.height = height
         artifact_pg.channels = channels
@@ -77,7 +82,7 @@ class ArtifactService:
         artifact_pg.file_format = file_format
         artifact_pg.checksum = checksum
         artifact_pg.created = datetime.now().isoformat()
-        artifact_pg.name = f"{artifact_type}_{file_path.name}"
+        artifact_pg.name = f"{artifact_type.value}_{filepath.name}"
         #
         # Dependencies
         #
@@ -96,8 +101,8 @@ class ArtifactService:
         runtime.artifacts.rebuild()
 
         runtime.outputs.invalidate(
-            bake_group.uuid,
-            producer.uuid,
+            bake_group_uuid,
+            producer_uuid,
         )
 
         return runtime.artifacts.get(artifact_pg.uuid)
@@ -136,9 +141,9 @@ class ArtifactService:
     @classmethod
     def remove_target(
         cls,
-        runtime,
-        project,
-        bake_group_uuid,
+        runtime: BakeRuntime,
+        project: UBK_Project,
+        bake_group_uuid: str,
         delete_files=False,
     ):
 
@@ -150,10 +155,10 @@ class ArtifactService:
     @classmethod
     def remove_producer(
         cls,
-        runtime,
-        project,
-        producer_uuid,
-        delete_files=False,
+        runtime: BakeRuntime,
+        project: UBK_Project,
+        producer_uuid: str,
+        delete_files: bool = False,
     ):
 
         artifacts = list(runtime.artifacts.by_producer(producer_uuid))
@@ -164,8 +169,8 @@ class ArtifactService:
     @classmethod
     def validate(
         cls,
-        runtime,
-        project,
+        runtime: BakeRuntime,
+        project: UBK_Project,
     ):
         """
         Removes artifacts whose files no longer exist.
@@ -183,9 +188,9 @@ class ArtifactService:
 
     @staticmethod
     def _find_property_group(
-        project,
-        bake_group_uuid,
-        producer_uuid,
+        project: UBK_Project,
+        bake_group_uuid: str,
+        producer_uuid: str,
     ):
 
         for artifact in project.artifacts:

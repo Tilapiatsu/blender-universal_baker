@@ -1,16 +1,17 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from ..services.output_provider import OutputProvider
 from ..runtime.task_pack import PackingTask
+from ..runtime.image_buffer import ImageBuffer
 
 from .image import ImageResource
-from ..packers.channels import Channel
+from ..enum.channels import Channel
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..runtime.context import PackContext
+    from ..runtime.context_pack import PackContext
 
 
 @dataclass(slots=True)
@@ -20,11 +21,12 @@ class PackResource:
     required by the packing pipeline.
     """
 
+    ctx: PackContext
     provider: OutputProvider
 
     output_image: ImageResource | None = None
 
-    bake_group_uuid: str | None = None
+    bake_group_uuid: str = field(default_factory=str)
     red_uuid: str | None = None
     green_uuid: str | None = None
     blue_uuid: str | None = None
@@ -36,6 +38,7 @@ class PackResource:
     alpha_channel_mapping: Channel = Channel.A
 
     def __init__(self, task: PackingTask, ctx: PackContext) -> None:
+        self.ctx = ctx
         self.bake_group_uuid = task.bake_group_uuid
         self.provider = ctx.session.runtime.provider
         if task.red:
@@ -52,34 +55,47 @@ class PackResource:
             self.alpha_channel_mapping = task.alpha.source_channel
 
     @property
-    def red_resource(self) -> ImageResource | None:
+    def red_buffer(self) -> ImageBuffer | None:
         if self.red_uuid is None:
             return None
 
-        return self.get_resource_from_uuid(self.red_uuid)
+        return self.get_buffer_from_baker_uuid(self.red_uuid)
 
     @property
-    def green_resource(self) -> ImageResource | None:
+    def green_buffer(self) -> ImageBuffer | None:
         if self.green_uuid is None:
             return None
 
-        return self.get_resource_from_uuid(self.green_uuid)
+        return self.get_buffer_from_baker_uuid(self.green_uuid)
 
     @property
-    def blue_resource(self) -> ImageResource | None:
+    def blue_buffer(self) -> ImageBuffer | None:
         if self.blue_uuid is None:
             return None
 
-        return self.get_resource_from_uuid(self.blue_uuid)
+        return self.get_buffer_from_baker_uuid(self.blue_uuid)
 
     @property
-    def alpha_resource(self) -> ImageResource | None:
+    def alpha_buffer(self) -> ImageBuffer | None:
         if self.alpha_uuid is None:
             return None
 
-        return self.get_resource_from_uuid(self.alpha_uuid)
+        return self.get_buffer_from_baker_uuid(self.alpha_uuid)
 
-    def get_resource_from_uuid(self, uuid: str) -> ImageResource | None:
-        from ..core.controller import BakeController
+    @property
+    def uuids(self) -> list[str]:
+        uuids = []
 
-        return BakeController.get_resource_from_uuid(uuid, self.provider)
+        if self.red_uuid is not None:
+            uuids.append(self.red_uuid)
+        if self.green_uuid is not None:
+            uuids.append(self.green_uuid)
+        if self.blue_uuid is not None:
+            uuids.append(self.blue_uuid)
+        if self.alpha_uuid is not None:
+            uuids.append(self.alpha_uuid)
+
+        return uuids
+
+    def get_buffer_from_baker_uuid(self, uuid: str) -> ImageBuffer | None:
+        return self.provider.get_image(self.bake_group_uuid, uuid)

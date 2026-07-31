@@ -3,7 +3,7 @@ from __future__ import annotations
 import bpy
 
 from ..runtime.session import ExecutionSession
-from ..runtime.context import BakeContext
+from ..runtime.context_bake import BakeContext
 from ..runtime.job import Job
 from ..core.registry_baker import registry_baker
 from ..core.registry_executor import registry_executor

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import bpy
-from ..runtime.context import BakeContext
+from ..runtime.context_bake import BakeContext
 
 
 class RendererService:

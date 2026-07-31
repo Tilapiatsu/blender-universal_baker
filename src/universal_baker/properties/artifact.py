@@ -10,7 +10,7 @@ from bpy.props import (
     CollectionProperty,
     PointerProperty,
 )
-from ..packers.channels import CHANNEL_ITEMS
+from ..enum.channels import CHANNEL_ITEMS
 
 
 ARTIFACT_TYPES = [
@@ -57,7 +57,7 @@ class UBK_Artifact(PropertyGroup):
 
     bake_group_uuid: StringProperty()
     producer_uuid: StringProperty()
-    target_object: PointerProperty(type=bpy.types.Object)
+    target_object_uuid: StringProperty()
     relative_path: StringProperty()
     filename: StringProperty()
     extension: StringProperty()

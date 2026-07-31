@@ -8,7 +8,7 @@ from bpy.types import PropertyGroup
 from bpy.props import EnumProperty, PointerProperty, BoolProperty, StringProperty
 from .baker import UBK_Baker
 from .settings_pack import UBK_PackerSettings
-from ..packers.channels import CHANNEL_ITEMS
+from ..enum.channels import CHANNEL_ITEMS
 
 
 def get_source_bakers_items(self, context):

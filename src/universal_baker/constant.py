@@ -1,4 +1,5 @@
 import bpy
+
 from .logger import Logger
 
 from .logger.sinks.console import ConsoleSink

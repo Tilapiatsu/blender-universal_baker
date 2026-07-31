@@ -46,7 +46,7 @@ class Job:
 
     def notify_finished(self) -> None:
         stats = LOG.middleware.get("StatisticsMiddleware")
-        if stats is None:
+        if stats is not None:
             if stats.warning > 0 or stats.error > 0:
                 LOG.info("Job ended with :")
             else:
@@ -87,8 +87,8 @@ class Job:
         if log:
             task.notify_finished(time_elapsed)
 
-    def notify_task_failed(self, task: Task, time_elapsed: float, errors: tuple[str, ...]) -> None:
-        task.notify_failed(time_elapsed, errors)
+    def notify_task_failed(self, task: Task, time_elapsed: float, error: str) -> None:
+        task.notify_failed(time_elapsed, error)
 
     def __repr__(self) -> str:
         return self.job_summary()
@@ -104,10 +104,10 @@ Bake Job
         for index, task in enumerate(self.tasks):
             result += f"{index + 1:03d} | {str(task)}\n"
 
-        result += "-" * 60 + "\n"
+        result += "-" * 100 + "\n"
 
         result += f"Total Tasks : {self.total_tasks}\n"
 
-        result += "=" * 60 + "\n"
+        result += "=" * 100 + "\n"
 
         return result

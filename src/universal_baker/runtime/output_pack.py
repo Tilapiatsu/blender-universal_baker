@@ -13,8 +13,8 @@ from ..services.image_io import ImageIOService
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..packers.packer_base import PackerBase
-    from ..packers.channels import Channel
+    from ..packers.base import PackerBase
+    from ..enum.channels import Channel
     from ..bakers.base import BakerBase
 
 

@@ -23,6 +23,7 @@ class ArtifactRepository:
         self._artifacts: dict[str, OutputArtifact] = {}
         self._bake_group_index = defaultdict(list)
         self._producer_index = defaultdict(list)
+        self._target_object_index = defaultdict(list)
 
         for pg in self.project.artifacts:
             artifact = OutputArtifact(self.scene, pg)
@@ -30,6 +31,7 @@ class ArtifactRepository:
             self._artifacts[artifact.uuid] = artifact
             self._bake_group_index[artifact.bake_group_uuid].append(artifact)
             self._producer_index[artifact.producer_uuid].append(artifact)
+            self._target_object_index[artifact.target_object_uuid].append(artifact)
 
     def all(self) -> list[OutputArtifact]:
         return list(self._artifacts.values())
@@ -42,6 +44,9 @@ class ArtifactRepository:
 
     def by_producer(self, producer_uuid) -> list[OutputArtifact]:
         return list(self._producer_index.get(producer_uuid, []))
+
+    def by_target(self, target_object_uuid) -> list[OutputArtifact]:
+        return list(self._target_object_index.get(target_object_uuid, []))
 
     def resolve(self, bake_group_uuid: str, producer_uuid: str) -> list[OutputArtifact]:
         return [artifact for artifact in self.by_bake_group(bake_group_uuid) if artifact.producer_uuid == producer_uuid]

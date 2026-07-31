@@ -3,6 +3,7 @@ from __future__ import annotations
 import bpy
 
 from abc import ABC, abstractmethod
+from ..constant import LOG
 from ..runtime.session import ExecutionSession
 from ..runtime.context import ExecutionContext
 from ..runtime.job import Job
@@ -12,6 +13,12 @@ class TaskExecutor(ABC):
     id: str
 
     def execute(self, context: bpy.types.Context, job: Job) -> ExecutionSession: ...
+
+    def finish(self, session: ExecutionSession, context: bpy.types.Context, job: Job):
+        session.cleanup()
+        session.restore(context)
+        session.dispose()
+        job.notify_finished()
 
     def before_job(self, session: ExecutionSession) -> None:
         """

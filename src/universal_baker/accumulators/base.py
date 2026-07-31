@@ -1,34 +1,27 @@
 from __future__ import annotations
 
-from enum import Enum, auto
 from abc import ABC
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 
+
 from ..constant import LOG
 from ..enum.output_stage import OutputStage
-from ..services.image_io import ImageIOService
-from ..services.renderer import RendererService
 from ..services.image_bake import ImageServiceBake
-from ..runtime.output_bake import OutputBake
 from ..services.artifact_service import ArtifactService
-from ..services.material import MaterialService
+from ..core.accumulator import ImageAccumulator
+from ..core.registry_compositor import registry_compositor
+from ..logger_bake_middleware.bake_summary import EventCategory
+from ..services.image_io import ImageIOService
 
 if TYPE_CHECKING:
-    from ..runtime.context_bake import BakeContext
+    from ..runtime.context_accumulate import AccumulateContext
     from ..runtime.task import Task
 
-LOG_SCOPE = "Baking"
+LOG_SCOPE = "Accumulating"
 
 
-class BakerColorType(Enum):
-    COLOR = auto()
-    DATA = auto()
-    MASK = auto()
-    VECTOR = auto()
-
-
-class BakerBase(ABC):
+class AccumulatorBase(ABC):
     """Abstract baker interface.
 
     Every baker is responsible for preparing Blender,
@@ -42,22 +35,19 @@ class BakerBase(ABC):
     name: str = ""
     description: str = ""
     icon: str = "RENDER_STILL"
-    color_type: BakerColorType = BakerColorType.COLOR
-    blender_bake_type = "DIFFUSE"
-    accumulator_id = "ALPHA_OVER"
 
     def poll(self, task: Task) -> bool:
         """Whether this baker can execute this task."""
         return True
 
     @abstractmethod
-    def execute(self, ctx: BakeContext) -> None:
+    def execute(self, ctx: AccumulateContext) -> None:
         """Prepare, bake and cleanup all at once."""
         with LOG.scope(LOG_SCOPE):
             LOG.info(f"{str(ctx.task)}")
 
             self.prepare(ctx)
-            self.bake(ctx)
+            self.accumulate(ctx)
             self.update_baker(ctx)
             # self.create_output(ctx)
             self.create_artifact(ctx)
@@ -65,26 +55,42 @@ class BakerBase(ABC):
             self.cleanup(ctx)
 
     @abstractmethod
-    def prepare(self, ctx: BakeContext) -> None:
+    def prepare(self, ctx: AccumulateContext) -> None:
         """Prepare Blender before baking."""
         LOG.debug("Preparing Scene ...")
-        ctx.image = ImageServiceBake.acquire(ctx.image, ctx.task, ctx.task.object_name)
-        MaterialService.prepare_target(ctx)
 
     @abstractmethod
-    def bake(self, ctx: BakeContext) -> None:
+    def accumulate(self, ctx: AccumulateContext) -> None:
         """Execute the bake."""
-        LOG.debug("Baking ...")
-        RendererService.execute(ctx)
+        LOG.debug("Accumulating ...")
+        images = ctx.get_input_images()
+        if not len(images):
+            LOG.error(
+                "No Image found",
+                category=EventCategory.ACCUMULATE,
+            )
+
+        accumulator = ImageAccumulator(
+            width=images[0].size[0],
+            height=images[0].size[1],
+            name=f"Accumulated_{ctx.image.name}",
+        )
+
+        for image in images:
+            LOG.info(f"Accumulating {image.name}")
+            buffer = ImageIOService.read_image(image)
+            accumulator.accumulate(buffer, registry_compositor[self.id])
+
+        ctx.output_buffer = accumulator.result()
 
     @abstractmethod
-    def cleanup(self, ctx: BakeContext) -> None:
-        LOG.debug("Restoring ...")
+    def cleanup(self, ctx: AccumulateContext) -> None:
         """Restore Blender."""
-        ImageServiceBake.cleanup(ctx.image)
+        LOG.debug("Restoring ...")
+        ImageIOService.cleanup(ctx.image)
 
     @abstractmethod
-    def update_baker(self, ctx: BakeContext) -> None:
+    def update_baker(self, ctx: AccumulateContext) -> None:
         LOG.debug("Update Baker ...")
         from ..core.controller import BakeController
 
@@ -93,45 +99,17 @@ class BakerBase(ABC):
         if baker is None:
             return
 
-        if ctx.target.name not in baker.images:
-            image = baker.images.add()
-        else:
-            image = baker.images[ctx.target.name]
-
-        image.name = ctx.target.name
-        image.image = ctx.image.image
-        image.target_object_uuid = ctx.task.target.uuid
-
-        target = BakeController.get_target_object_from_uuid(ctx.task.target.uuid)
-        if target is None:
-            return
-
-        target.image = ctx.image.image
+        baker.accumulated_image = ctx.image.image
 
     @abstractmethod
-    def create_output(self, ctx: BakeContext) -> None:
-        LOG.debug("Creating Output ...")
-        buffer = ImageIOService.read(ctx.image)
-
-        output = OutputBake.create(
-            uuid=ctx.task.uuid,
-            name=ctx.image.name,
-            image=buffer,
-            bake_group=ctx.task.bake_group,
-            baker=ctx.task.baker,
-        )
-
-        ctx.session.runtime.outputs.add(output)
-        ctx.session.runtime.provider.invalidate(ctx.task.bake_group_uuid, ctx.task.uuid)
-
-    @abstractmethod
-    def create_artifact(self, ctx: BakeContext) -> None:
+    def create_artifact(self, ctx: AccumulateContext) -> None:
+        LOG.debug("Creating Artifact ...")
         ArtifactService.register(
             runtime=ctx.session.runtime,
             project=ctx.project,
-            artifact_type=OutputStage.BAKE,
+            artifact_type=OutputStage.ACCUMULATED,
             bake_group_uuid=ctx.task.bake_group_uuid,
-            target_object_uuid=ctx.task.target_object_uuid,
+            target_object_uuid="",
             producer_uuid=ctx.task.uuid,
             filepath=ctx.image.filepath,
             width=ctx.image.width,
@@ -142,7 +120,7 @@ class BakerBase(ABC):
         )
 
     @abstractmethod
-    def export_file(self, ctx: BakeContext) -> None:
+    def export_file(self, ctx: AccumulateContext) -> None:
         """Save Bake to disk."""
         LOG.debug("Creating File ...")
         if ctx.task.output_context.output_settings.path.export_file:

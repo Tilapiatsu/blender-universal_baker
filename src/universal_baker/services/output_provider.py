@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-
 from ..core.accumulator import ImageAccumulator
 from ..core.registry_compositor import registry_compositor
 from ..constant import LOG
@@ -76,7 +75,7 @@ class OutputProvider:
                 LOG.debug("Reuse cached image")
                 return cached
 
-            outputs = self._repository.get_outputs(bake_group_uuid, baker_uuid)
+            outputs = self._repository.resolve_outputs(bake_group_uuid, baker_uuid)
 
             if not outputs:
                 LOG.error("output not found")
