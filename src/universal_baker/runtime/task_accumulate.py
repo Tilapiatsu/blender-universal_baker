@@ -43,13 +43,13 @@ class AccumulateTask(Task):
         return self.accumulator.name
 
     def __repr__(self) -> str:
-        result = f"ACCUMULATOR_{self.accumulator_id} | {self.output_name:100} "
+        result = f"ACCUMULATOR_{self.accumulator_id} | {self.output_name} "
         return result
 
     def notify_finished(self, time_elapsed: float) -> None:
-        with LOG.scope("Baking"):
+        with LOG.scope("Accumulating"):
             LOG.info(
-                message=f"{self.accumulator.name.capitalize()} succeeded",
+                message=f"{self.__repr__()} succeeded",
                 category=EventCategory.ACCUMULATE,
                 scope_state=ScopeState.EXIT,
                 scope_duration=time_elapsed,
@@ -60,7 +60,7 @@ class AccumulateTask(Task):
             )
 
     def notify_failed(self, time_elapsed: float, error: str) -> None:
-        with LOG.scope("Baking"):
+        with LOG.scope("Accumulating"):
             LOG.error(
                 message=f"{self.accumulator.name.capitalize()} failed",
                 category=EventCategory.ACCUMULATE,

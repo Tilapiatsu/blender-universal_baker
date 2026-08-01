@@ -70,7 +70,7 @@ class PackExecutorInternal(TaskExecutor):
             LOG.info(
                 f"Init Task {session.job.current_task} / {session.job.total_tasks}",
                 scope_state=ScopeState.ENTER,
-                category=EventCategory.BAKE,
+                category=EventCategory.PACK,
             )
 
             try:

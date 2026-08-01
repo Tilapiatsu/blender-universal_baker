@@ -50,7 +50,7 @@ class Job:
             if stats.warning > 0 or stats.error > 0:
                 LOG.info("Job ended with :")
             else:
-                LOG.info("Job finished successfully.")
+                LOG.info("Job finished successfully!")
             if stats.warning > 0:
                 LOG.warning(f"{stats.warning} warning(s)")
             if stats.error > 0:

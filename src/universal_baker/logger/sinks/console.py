@@ -12,7 +12,13 @@ class ConsoleSink(BaseSink):
         if event.scope:
             scope = "[" + " > ".join(event.scope) + "] "
 
-        message = f"[{timestamp}] [{event.severity.name}] {scope}{event.message}"
+        severity = event.severity.name
+        if len(severity) == 4:
+            severity = f" {severity}  "
+        elif len(severity) == 5:
+            severity = f" {severity} "
+
+        message = f"[{timestamp}] [{severity}] {scope}{event.message}"
         match event.scope_state:
             case ScopeState.ENTER:
                 pass
