@@ -30,7 +30,7 @@ class MaterialService:
         """
         Restore the material to its original state.
         """
-
+        # TODO : It doesn't work if no material is present initially
         resource = ctx.material
 
         if not resource.prepared:

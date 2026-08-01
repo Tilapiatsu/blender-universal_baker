@@ -86,6 +86,7 @@ class BakerBase(ABC):
         LOG.debug("Restoring ...")
         """Restore Blender."""
         ctx.image.reset()
+        # TODO : Need Further cleanup : Image data keep on adding inside blender file
 
     @abstractmethod
     def update_baker(self, ctx: BakeContext) -> None:

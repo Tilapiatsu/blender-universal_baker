@@ -98,7 +98,7 @@ class ExecutionPlanner:
 
                 settings_accumulator = AccumulateSettings(baker_uuid=baker.uuid)
                 task = AccumulateTask(
-                    uuid=str(uuid4()),
+                    uuid=baker.uuid,
                     enabled=True,
                     output_context=output_context,
                     bake_group_uuid=group.uuid,

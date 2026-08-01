@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 import bpy
+from ..constant import LOG
 
 from dataclasses import dataclass
 
@@ -57,7 +58,7 @@ class ImageBuffer:
         image.pixels.foreach_set(self.flat_pixels)
 
     def reshape(self) -> np.ndarray:
-        return np.reshape(self.pixels, (self.height, self.width, 4))
+        return np.reshape(self.pixels, (self.height, self.width, self.channels))
 
     def is_empty(self) -> bool:
         if np is not None:

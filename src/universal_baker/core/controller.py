@@ -140,39 +140,6 @@ class BakeController:
 
         return None
 
-    @classmethod
-    def get_resource_from_uuids(cls, baker_uuid: str, provider: OutputProvider) -> ImageResource | None:
-        project = cls.project(bpy.context)
-        if project is None:
-            return None
-
-        for g in project.bake_groups:
-            if not len(g.bakers):
-                continue
-
-            for b in g.bakers:
-                if b.uuid == baker_uuid:
-                    image_buffer = provider.get_image(g.uuid, b.uuid)
-                    if image_buffer is None:
-                        LOG.warning("Image_buffer is empty")
-                        return None
-
-                    if b.images[0].image is None:
-                        return None
-
-                    # TODO : Need to properly get the resource from uuid, not a copy of the existing image in the baker
-                    # property
-                    resource = ImageResource(
-                        image=b.images[0].image,
-                        name=b.image_name,
-                    )
-                    resource.width = b.images[0].image.size[0]
-                    resource.height = b.images[0].image.size[1]
-
-                    ImageIOService.write(resource, image_buffer)
-                    ImageIOService.save(resource)
-                    return resource
-
     # TODO:: Need to write get_source_object_from_uuid method
 
     @classmethod

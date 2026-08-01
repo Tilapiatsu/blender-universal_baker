@@ -74,7 +74,7 @@ class OutputAccumulated(OutputBase):
     @classmethod
     def from_artifact(cls, artifact: OutputArtifact) -> OutputAccumulated:
         with LOG.scope(LOG_SCOPE):
-            LOG.debug(f"Creating Output : {artifact.data.filename}")
+            LOG.debug(f"Creating Accumulated Output : {artifact.data.filename}")
             from ..core.controller import BakeController
 
             image = artifact.load_image()

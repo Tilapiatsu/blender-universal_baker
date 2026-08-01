@@ -68,14 +68,18 @@ class OutputProvider:
             LOG.debug("Request Image from repository")
             key = (bake_group_uuid, baker_uuid)
 
+            # ISSUE : Cached image is a bit too dumb right now. If the user change the resolution for exemple, the
+            # cached version can be with the wrong size.
+            # TODO : Need to store othere metadata like resolution with cached buffer in order to invalidate the cached
+            # if the metadata differed from the requested image
             #
             # Cached ?
             #
-            cached = self._cache.get(key)
-
-            if cached is not None:
-                LOG.debug("Reuse cached image")
-                return cached
+            # cached = self._cache.get(key)
+            #
+            # if cached is not None:
+            #     LOG.debug("Reuse cached image")
+            #     return cached
 
             outputs = self._repository.resolve_outputs(bake_group_uuid, baker_uuid)
 

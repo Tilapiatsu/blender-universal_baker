@@ -87,7 +87,7 @@ class OutputPack(OutputBase):
     @classmethod
     def from_artifact(cls, artifact: OutputArtifact) -> OutputPack:
         with LOG.scope(LOG_SCOPE):
-            LOG.debug(f"Creating Output : {artifact.data.filename}")
+            LOG.debug(f"Creating Pack Output : {artifact.data.filename}")
             from ..core.controller import BakeController
 
             image = artifact.load_image()
