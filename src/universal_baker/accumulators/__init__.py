@@ -1,8 +1,12 @@
 from . import (
     alpha_over,
+    max,
 )
 
-modules = (alpha_over,)
+modules = (
+    alpha_over,
+    max,
+)
 
 
 def register():

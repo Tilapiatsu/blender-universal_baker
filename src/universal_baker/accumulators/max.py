@@ -7,12 +7,12 @@ from ..services.image_bake import ImageServiceBake
 from ..core.registry_accumulator import registry_accumulator
 
 
-class AlphaOverAccumulator(AccumulatorBase):
-    """Accumulate images using their alpha channel."""
+class MaxAccumulator(AccumulatorBase):
+    """Accumulate image keeping the brightest pixel."""
 
-    id = "ALPHA_OVER"
-    name = "Alpha Over"
-    description = "Accumulate image using their alpha channel"
+    id = "MAX"
+    name = "Maximum"
+    description = "Accumulate image keeping the brightest pixel"
     icon = "NODE_COMPOSITING"
 
     def execute(self, ctx: AccumulateContext) -> None:
@@ -26,12 +26,12 @@ class AlphaOverAccumulator(AccumulatorBase):
         ctx.image = ImageServiceBake.acquire(ctx.image, ctx.task)
 
     def accumulate(self, ctx: AccumulateContext) -> None:
-        """Execute the Accumulator."""
+        """Execute the Accumulation."""
         return super().accumulate(ctx)
 
     def cleanup(self, ctx: AccumulateContext):
         """
-        Cleanup after Accumulator.
+        Cleanup after accumulation.
         """
         super().cleanup(ctx)
 
@@ -46,7 +46,7 @@ class AlphaOverAccumulator(AccumulatorBase):
         super().export_file(ctx)
 
 
-classes = (AlphaOverAccumulator,)
+classes = (MaxAccumulator,)
 
 
 def register():

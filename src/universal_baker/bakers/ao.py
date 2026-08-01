@@ -16,6 +16,7 @@ class AmbientOcclusionBaker(BakerBase):
     description = "Bake Ambient Occlusion"
     icon = "TEXTURE"
     blender_bake_type = "AO"
+    accumulator_id = "MAX"
 
     def execute(self, ctx: BakeContext) -> None:
         return super().execute(ctx)

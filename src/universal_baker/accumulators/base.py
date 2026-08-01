@@ -97,9 +97,10 @@ class AccumulatorBase(ABC):
         LOG.debug("Update Baker ...")
         from ..core.controller import BakeController
 
-        baker = BakeController.get_baker_from_uuid(ctx.task.uuid)
+        baker = BakeController.get_baker_from_uuid(ctx.task.baker_uuid)
 
         if baker is None:
+            LOG.warning("Baker not found")
             return
 
         baker.accumulated_image = ctx.image.image

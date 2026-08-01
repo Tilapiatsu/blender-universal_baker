@@ -19,12 +19,7 @@ class ImageIOService(ImageServiceBase):
         """Convert ImageResource to ImageBuffer for manipulation"""
         with LOG.scope(LOG_SCOPE):
             LOG.info(f'Create Buffer from Image "{image.name}"')
-            width = image.size[0]
-            height = image.size[1]
-
-            buffer = ImageBuffer.empty(width, height, image.name)
-
-            image.pixels.foreach_get(buffer.pixels)
+            buffer = ImageBuffer.from_blender_image(image)
 
             return buffer
 
@@ -52,7 +47,7 @@ class ImageIOService(ImageServiceBase):
             if image.size[0] != resource.width or image.size[1] != resource.height:
                 image.scale(buffer.width, buffer.height)
 
-            image.pixels.foreach_set(buffer.pixels)
+            buffer.write_to_blender_image(image)
             image.update()
 
     @staticmethod

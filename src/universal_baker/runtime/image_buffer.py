@@ -1,12 +1,9 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-import array
+import numpy as np
+import bpy
 
-try:
-    import numpy as np
-except ImportError:
-    np = None
+from dataclasses import dataclass
 
 
 @dataclass(slots=True)
@@ -16,28 +13,36 @@ class ImageBuffer:
     width: int
     height: int
 
-    pixels: np.array
+    pixels: np.ndarray
 
     channels: int = 4
     name: str | None = None
 
     @property
-    def size(self):
+    def size(self) -> int:
         """Returns the number of pixels in an buffer"""
         return self.width * self.height
 
+    @property
+    def flat_pixels(self) -> np.ndarray:
+        return self.pixels.reshape(-1)
+
     @classmethod
-    def empty(cls, width: int, height: int, name: str = "Image"):
+    def empty(cls, width: int, height: int, channels: int = 4, name: str = "Image") -> ImageBuffer:
         """Create an Empty Buffer"""
-        length = width * height * 4
 
-        if np is not None:
-            pixels = np.zeros(length, dtype=np.float32)
+        pixels = np.zeros((width, height, channels), dtype=np.float32)
 
-        else:
-            pixels = array.array("f", [0.0] * length)
+        return cls(width, height, pixels, channels=channels, name=name)
 
-        return cls(width, height, pixels, name=name)
+    @classmethod
+    def from_blender_image(cls, image: bpy.types.Image) -> ImageBuffer:
+        """Create an Empty Buffer"""
+
+        buffer = cls.empty(image.size[0], image.size[1], channels=image.channels, name=image.name)
+        image.pixels.foreach_get(buffer.flat_pixels)
+
+        return buffer
 
     @classmethod
     def copy(cls): ...
@@ -48,11 +53,10 @@ class ImageBuffer:
     @classmethod
     def clear(cls): ...
 
-    def reshape(self):
+    def write_to_blender_image(self, image: bpy.types.Image) -> None:
+        image.pixels.foreach_set(self.flat_pixels)
 
-        if np is None:
-            raise RuntimeError("NumPy unavailable.")
-
+    def reshape(self) -> np.ndarray:
         return np.reshape(self.pixels, (self.height, self.width, 4))
 
     def is_empty(self) -> bool:

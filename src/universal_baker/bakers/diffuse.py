@@ -16,6 +16,7 @@ class DiffuseBaker(BakerBase):
     description = "Bake diffuse color"
     icon = "TEXTURE"
     blender_bake_type = "DIFFUSE"
+    accumulator_id = "ALPHA_OVER"
 
     def execute(self, ctx: BakeContext) -> None:
         return super().execute(ctx)

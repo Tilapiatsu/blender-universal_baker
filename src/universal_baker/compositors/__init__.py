@@ -1,8 +1,12 @@
 from . import (
-    compositor_alpha_over,
+    alpha_over,
+    max,
 )
 
-modules = (compositor_alpha_over,)
+modules = (
+    alpha_over,
+    max,
+)
 
 
 def register():

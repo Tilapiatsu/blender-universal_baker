@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import numpy as np
 
 from ..constant import LOG
 from ..logger_bake_middleware.bake_summary import BakeStatus
@@ -11,11 +12,6 @@ from ..runtime.image_buffer import ImageBuffer
 from ..services.image_pack import ImageServicePack
 from ..services.image_io import ImageIOService
 from ..enum.channels import Channel
-
-try:
-    import numpy as np
-except ImportError:
-    np = None
 
 
 class PackerInternal(PackerBase):
@@ -142,7 +138,7 @@ class PackerInternal(PackerBase):
     @staticmethod
     def create_buffer(width: int, height: int, name: str = "Image") -> ImageBuffer:
         """Create an Image Buffer with the given width and height"""
-        return ImageBuffer.empty(width, height, name)
+        return ImageBuffer.empty(width, height, name=name)
 
     # -------------------------------------------------------------------------
     # Public API
