@@ -2,6 +2,7 @@ from __future__ import annotations
 
 
 from ..constant import LOG
+from ..logger_bake_middleware.bake_summary import BakeStatus
 from ..runtime.context_pack import PackContext
 from .base import PackerBase
 
@@ -89,7 +90,12 @@ class PackerInternal(PackerBase):
 
         else:
             with LOG.scope(self.id.capitalize()):
-                LOG.error("Missing output buffer")
+                LOG.error(
+                    "Missing output buffer",
+                    data={
+                        "status": BakeStatus.FAIL,
+                    },
+                )
 
     def update_pack(self, ctx: PackContext) -> None:
         return super().update_pack(ctx)

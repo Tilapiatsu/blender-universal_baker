@@ -129,6 +129,18 @@ class ImageResource:
         if self.height <= 0:
             raise ValueError("Image height must be greater than zero.")
 
+    def reset(self):
+        self.filepath = Path("")
+        self.image = None
+        self.created = False
+        self.created = False
+        self.loaded = False
+        self.saved = False
+        self.dirty = False
+        self.temporary = False
+        self.packed = False
+        self.is_copy = False
+
     def init_from_image(self) -> None:
         if self.image is None:
             return

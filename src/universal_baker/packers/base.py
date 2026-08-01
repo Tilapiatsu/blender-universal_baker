@@ -68,7 +68,7 @@ class PackerBase(ABC):
     @abstractmethod
     def cleanup(self, ctx: PackContext) -> None:
         """Restore Blender."""
-        ImageServicePack.cleanup(ctx.image)
+        ctx.image.reset()
 
     @abstractmethod
     def create_artifact(self, ctx: PackContext) -> None:

@@ -69,6 +69,8 @@ class ExecutionPlanner:
                     output_settings=output_settings,
                 )
 
+                has_multiple_targets = len([o for o in group.target_objects if o.enabled]) > 1
+
                 for obj in group.target_objects:
                     if obj.object is None:
                         continue
@@ -84,13 +86,14 @@ class ExecutionPlanner:
                         baker=registry_baker[baker.baker],
                         settings=settings,
                         image_name=baker.image_name,
+                        has_multiple_targets=has_multiple_targets,
                         # cage_object=None,
                         # settings_cage=settings_cage,
                     )
 
                     job.add_task(task)
 
-                if len(group.target_objects) <= 1:
+                if not has_multiple_targets:
                     continue
 
                 settings_accumulator = AccumulateSettings(baker_uuid=baker.uuid)

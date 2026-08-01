@@ -2,12 +2,13 @@ import bpy
 
 from .logger import Logger
 
+from .logger.severity import Severity
 from .logger.sinks.console import ConsoleSink
 from .logger.middleware.statistics import StatisticsMiddleware
 from .logger_bake_middleware.bake_summary import BakeSummaryMiddleware
 
 LOG = Logger("Universal Baker")
-LOG.dispatcher.add_sink(ConsoleSink())
+LOG.dispatcher.add_sink(ConsoleSink(level=Severity.INFO))
 LOG.middleware.add(BakeSummaryMiddleware())
 LOG.middleware.add(StatisticsMiddleware())
 

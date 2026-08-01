@@ -34,7 +34,6 @@ class AlphaOverAccumulator(AccumulatorBase):
         Cleanup after baking.
         """
         super().cleanup(ctx)
-        ImageServiceBake.cleanup(ctx.image)
 
     def update_baker(self, ctx: AccumulateContext) -> None:
         return super().update_baker(ctx)

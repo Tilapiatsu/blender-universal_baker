@@ -17,7 +17,7 @@ from ..properties.project import UBK_Project
 from ..resources.image import ImageResource
 from ..runtime.settings_accumulate import AccumulateSettings
 from ..runtime.task_accumulate import AccumulateTask
-from ..logger_bake_middleware.bake_summary import EventCategory
+from ..logger_bake_middleware.bake_summary import BakeStatus, EventCategory
 
 
 @dataclass(slots=True)
@@ -58,6 +58,9 @@ class AccumulateContext(ExecutionContext):
             LOG.error(
                 "Baker not found",
                 category=EventCategory.ACCUMULATE,
+                data={
+                    "status": BakeStatus.FAIL,
+                },
             )
             return []
 

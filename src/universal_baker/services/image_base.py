@@ -21,19 +21,21 @@ class ImageServiceBase:
         return resource
 
     @classmethod
-    def acquire(cls, resource: ImageResource, task: Task, suffix: str | None = None) -> ImageResource:
+    def acquire(
+        cls, resource: ImageResource, task: Task, suffix: str | None = None, sub_folder: str | None = None
+    ) -> ImageResource:
         """
         Acquire the destination image for this bake.
         """
         with LOG.scope(LOG_SCOPE):
-            LOG.info(f"Acquire image : {resource.name}")
+            LOG.info("Acquire image ...")
 
             if resource.image is not None:
-                LOG.info("Image is already setup")
-                cls.configure(resource, task, suffix)
+                LOG.info("Update existing Image")
+                cls.configure(resource, task, suffix, sub_folder)
                 return resource
 
-            cls.configure(resource, task, suffix)
+            cls.configure(resource, task, suffix, sub_folder)
 
             image = bpy.data.images.get(resource.name)
 
@@ -89,12 +91,18 @@ class ImageServiceBase:
         resource.image = None
 
     @classmethod
-    def configure(cls, resource: ImageResource, task: Task, suffix: str | None = None) -> None:
+    def configure(
+        cls,
+        resource: ImageResource,
+        task: Task,
+        suffix: str | None = None,
+        sub_folder: str | None = None,
+    ) -> None:
         """
         Populate the resource from the Task.
         """
         with LOG.scope("Configure"):
-            LOG.info("Setting up ressource from Task")
+            LOG.info(f"Setting up ressource from task {task.output_name}")
 
             image_settings = task.output_context.output_settings.image
             color_settings = task.output_context.output_settings.color
@@ -106,13 +114,13 @@ class ImageServiceBase:
             resource.colorspace = color_settings.colorspace
             resource.image_format_settings = image_settings
 
-            resource.filepath = cls.resolve_filepath(task, suffix)
+            resource.filepath = cls.resolve_filepath(task, suffix, sub_folder)
 
     @classmethod
-    def resolve_filepath(cls, task: Task, suffix: str | None = None) -> Path:
+    def resolve_filepath(cls, task: Task, suffix: str | None = None, sub_folder: str | None = None) -> Path:
         from ..core.output_resolver import OutputResolver
 
-        file_output = OutputResolver.resolve(task.output_context, suffix)
+        file_output = OutputResolver.resolve(task.output_context, suffix, sub_folder)
         return file_output.absolute_path
 
     @classmethod
@@ -199,8 +207,7 @@ class ImageServiceBase:
 
     @classmethod
     def cleanup(cls, resource: ImageResource) -> None:
-        resource.filepath = Path("")
-        resource.image = None
+        resource.reset()
 
     @classmethod
     def ensure_image_sizes(cls, *resources: ImageResource) -> None:

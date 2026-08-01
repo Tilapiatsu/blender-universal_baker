@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from universal_baker.logger_bake_middleware.bake_summary import BakeStatus
+
 from ..core.accumulator import ImageAccumulator
 from ..core.registry_compositor import registry_compositor
 from ..constant import LOG
@@ -78,7 +80,12 @@ class OutputProvider:
             outputs = self._repository.resolve_outputs(bake_group_uuid, baker_uuid)
 
             if not outputs:
-                LOG.error("output not found")
+                LOG.error(
+                    "output not found",
+                    data={
+                        "status": BakeStatus.FAIL,
+                    },
+                )
                 return None
 
             LOG.info(f"{len(outputs)} image(s) found :")

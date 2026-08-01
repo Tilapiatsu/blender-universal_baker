@@ -4,7 +4,9 @@ from collections import defaultdict
 from typing import Iterable, Generator
 from typing import TYPE_CHECKING
 
+
 from ..constant import LOG
+from ..logger_bake_middleware.bake_summary import BakeStatus
 from .output_accumulated import OutputAccumulated
 from .output_bake import OutputBake
 from .output_pack import OutputPack
@@ -74,7 +76,12 @@ class OutputRepository:
             artifacts = self._artifacts.resolve(bake_group_uuid, producer_uuid)
 
             if not artifacts:
-                LOG.error("Artifacts not found")
+                LOG.error(
+                    "Artifacts not found",
+                    data={
+                        "status": BakeStatus.FAIL,
+                    },
+                )
                 return []
 
             outputs = []

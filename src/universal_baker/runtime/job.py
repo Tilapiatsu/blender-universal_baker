@@ -56,6 +56,8 @@ class Job:
             if stats.error > 0:
                 LOG.error(f"{stats.error} error(s)")
 
+            stats.reset()
+
         summary = LOG.middleware.get("BakeSummaryMiddleware")
         if summary is not None:
             LOG.separator(Severity.INFO)

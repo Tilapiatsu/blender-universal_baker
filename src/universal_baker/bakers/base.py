@@ -68,7 +68,11 @@ class BakerBase(ABC):
     def prepare(self, ctx: BakeContext) -> None:
         """Prepare Blender before baking."""
         LOG.debug("Preparing Scene ...")
-        ctx.image = ImageServiceBake.acquire(ctx.image, ctx.task, ctx.task.object_name)
+        if ctx.task.has_multiple_targets:
+            ctx.image = ImageServiceBake.acquire(ctx.image, ctx.task, ctx.task.object_name, "object_buffers")
+        else:
+            ctx.image = ImageServiceBake.acquire(ctx.image, ctx.task)
+
         MaterialService.prepare_target(ctx)
 
     @abstractmethod
@@ -81,7 +85,7 @@ class BakerBase(ABC):
     def cleanup(self, ctx: BakeContext) -> None:
         LOG.debug("Restoring ...")
         """Restore Blender."""
-        ImageServiceBake.cleanup(ctx.image)
+        ctx.image.reset()
 
     @abstractmethod
     def update_baker(self, ctx: BakeContext) -> None:

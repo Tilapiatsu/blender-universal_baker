@@ -109,4 +109,10 @@ class PackingTask(Task):
                     "image": self.image_name,
                 },
             )
-            LOG.error(message=error, category="BAKE")
+            LOG.error(
+                message=error,
+                category=EventCategory.BAKE,
+                data={
+                    "status": BakeStatus.FAIL,
+                },
+            )

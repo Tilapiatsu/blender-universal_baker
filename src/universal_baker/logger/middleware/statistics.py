@@ -6,6 +6,9 @@ from ..severity import Severity
 
 class StatisticsMiddleware(BaseMiddleware):
     def __init__(self):
+        self.reset()
+
+    def reset(self):
         self.total = 0
         self.info = 0
         self.warning = 0

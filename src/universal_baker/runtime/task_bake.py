@@ -27,6 +27,8 @@ class BakeTask(Task):
     baker: BakerBase
     settings: BakeSettings
     image_name: str
+
+    has_multiple_targets: bool = False
     # output_path: Path
     # cage_object: bpy.types.Object | None
 
@@ -93,4 +95,10 @@ class BakeTask(Task):
                     "image": self.image_name,
                 },
             )
-            LOG.error(message=error, category="BAKE")
+            LOG.error(
+                message=error,
+                category=EventCategory.BAKE,
+                data={
+                    "status": BakeStatus.FAIL,
+                },
+            )

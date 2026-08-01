@@ -11,7 +11,7 @@ from ..services.image_bake import ImageServiceBake
 from ..services.artifact_service import ArtifactService
 from ..core.accumulator import ImageAccumulator
 from ..core.registry_compositor import registry_compositor
-from ..logger_bake_middleware.bake_summary import EventCategory
+from ..logger_bake_middleware.bake_summary import BakeStatus, EventCategory
 from ..services.image_io import ImageIOService
 
 if TYPE_CHECKING:
@@ -68,6 +68,9 @@ class AccumulatorBase(ABC):
             LOG.error(
                 "No Image found",
                 category=EventCategory.ACCUMULATE,
+                data={
+                    "status": BakeStatus.FAIL,
+                },
             )
 
         accumulator = ImageAccumulator(
@@ -77,17 +80,17 @@ class AccumulatorBase(ABC):
         )
 
         for image in images:
-            LOG.info(f"Accumulating {image.name}")
             buffer = ImageIOService.read_image(image)
             accumulator.accumulate(buffer, registry_compositor[self.id])
 
         ctx.output_buffer = accumulator.result()
+        ImageIOService.write(ctx.image, ctx.output_buffer)
 
     @abstractmethod
     def cleanup(self, ctx: AccumulateContext) -> None:
         """Restore Blender."""
         LOG.debug("Restoring ...")
-        ImageIOService.cleanup(ctx.image)
+        ctx.image.reset()
 
     @abstractmethod
     def update_baker(self, ctx: AccumulateContext) -> None:

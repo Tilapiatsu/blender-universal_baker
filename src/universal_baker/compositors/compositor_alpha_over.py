@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from ..constant import LOG
 from .compositor import Compositor
 from ..runtime.image_buffer import ImageBuffer
 from ..core.registry_compositor import registry_compositor

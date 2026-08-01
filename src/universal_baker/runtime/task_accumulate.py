@@ -43,7 +43,7 @@ class AccumulateTask(Task):
         return self.accumulator.name
 
     def __repr__(self) -> str:
-        result = f"ACCUMULATOR_{self.accumulator_id} | {self.output_name} "
+        result = f"ACCUMULATOR_{self.accumulator_id:30} | {self.output_name:30} "
         return result
 
     def notify_finished(self, time_elapsed: float) -> None:
@@ -71,4 +71,10 @@ class AccumulateTask(Task):
                     "image": self.image_name,
                 },
             )
-            LOG.error(message=error, category="BAKE")
+            LOG.error(
+                message=error,
+                category=EventCategory.BAKE,
+                data={
+                    "status": BakeStatus.FAIL,
+                },
+            )

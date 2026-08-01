@@ -27,7 +27,7 @@ class OutputResolver:
     # -------------------------------------------------------------------------
 
     @classmethod
-    def resolve(cls, ctx: OutputContext, suffix: str | None = None) -> OutputFile:
+    def resolve(cls, ctx: OutputContext, suffix: str | None = None, sub_folder: str | None = None) -> OutputFile:
         relative = ""
         dir = ctx.directory_template
         if dir.startswith(r"//"):
@@ -39,6 +39,9 @@ class OutputResolver:
 
         if suffix is not None:
             filename += f"_{suffix}"
+
+        if sub_folder is not None:
+            directory = directory / sub_folder
 
         path = Path.as_posix(relative / directory / f"{filename}.{ctx.extension.lower()}")
 

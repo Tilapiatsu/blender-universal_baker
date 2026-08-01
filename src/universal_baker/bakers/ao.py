@@ -36,7 +36,6 @@ class AmbientOcclusionBaker(BakerBase):
         """
         super().cleanup(ctx)
         MaterialService.restore_target(ctx)
-        ImageServiceBake.cleanup(ctx.image)
 
     def update_baker(self, ctx: BakeContext) -> None:
         return super().update_baker(ctx)

@@ -8,7 +8,7 @@ from ..resources.image import ImageResource
 from ..runtime.image_buffer import ImageBuffer
 from .image_base import ImageServiceBase
 
-LOG_SCOPE = "Image IO Service"
+LOG_SCOPE = "Image IO"
 
 
 class ImageIOService(ImageServiceBase):
@@ -42,7 +42,7 @@ class ImageIOService(ImageServiceBase):
 
     @staticmethod
     def write(resource: ImageResource, buffer: ImageBuffer) -> None:
-        """Save buffer to Image"""
+        """Write buffer to Image"""
         with LOG.scope(LOG_SCOPE):
             LOG.info(f'Write Buffer "{buffer.name}" to Image "{resource.name}"')
 
