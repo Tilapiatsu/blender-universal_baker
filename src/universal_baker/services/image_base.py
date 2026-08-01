@@ -28,10 +28,10 @@ class ImageServiceBase:
         Acquire the destination image for this bake.
         """
         with LOG.scope(LOG_SCOPE):
-            LOG.info("Acquire image ...")
+            LOG.debug("Acquire image ...")
 
             if resource.image is not None:
-                LOG.info("Update existing Image")
+                LOG.debug("Update existing Image")
                 cls.configure(resource, task, suffix, sub_folder)
                 return resource
 
@@ -56,7 +56,7 @@ class ImageServiceBase:
     @classmethod
     def save(cls, resource: ImageResource) -> None:
         with LOG.scope("Save"):
-            LOG.info(f'Save Image Resource "{resource.name}" : {resource.filepath}')
+            LOG.debug(f'Save Image Resource "{resource.name}" : {resource.filepath}')
 
             if resource.image is None:
                 return
@@ -102,7 +102,7 @@ class ImageServiceBase:
         Populate the resource from the Task.
         """
         with LOG.scope("Configure"):
-            LOG.info(f"Setting up ressource from task {task.output_name}")
+            LOG.debug(f"Setting up ressource from task {task.output_name}")
 
             image_settings = task.output_context.output_settings.image
             color_settings = task.output_context.output_settings.color
@@ -127,7 +127,7 @@ class ImageServiceBase:
     def create(cls, resource: ImageResource) -> bpy.types.Image:
         with LOG.scope("Create"):
             if resource.name not in bpy.data.images:
-                LOG.info(f"Create Image : {resource.name}")
+                LOG.debug(f"Create Image : {resource.name}")
                 image = bpy.data.images.new(
                     name=resource.name,
                     width=resource.width,
@@ -136,7 +136,7 @@ class ImageServiceBase:
                     float_buffer=resource.image_format_settings.float_buffer,
                 )
             else:
-                LOG.info(f"Image found : {resource.name}")
+                LOG.debug(f"Image found : {resource.name}")
                 image = cls.find(resource.name)
                 assert image is not None
                 image.scale(resource.width, resource.height)

@@ -18,7 +18,7 @@ class ImageIOService(ImageServiceBase):
     def read_image(image: bpy.types.Image) -> ImageBuffer:
         """Convert ImageResource to ImageBuffer for manipulation"""
         with LOG.scope(LOG_SCOPE):
-            LOG.info(f'Create Buffer from Image "{image.name}"')
+            LOG.debug(f'Create Buffer from Image "{image.name}"')
             buffer = ImageBuffer.from_blender_image(image)
 
             return buffer
@@ -27,7 +27,7 @@ class ImageIOService(ImageServiceBase):
     def read(cls, resource: ImageResource) -> ImageBuffer:
         """Convert ImageResource to ImageBuffer for manipulation"""
         with LOG.scope(LOG_SCOPE):
-            LOG.info(f'Create Buffer from Image Resource "{resource.name}"')
+            LOG.debug(f'Create Buffer from Image Resource "{resource.name}"')
             image = resource.image
 
             if image is None:
@@ -39,7 +39,7 @@ class ImageIOService(ImageServiceBase):
     def write(resource: ImageResource, buffer: ImageBuffer) -> None:
         """Write buffer to Image"""
         with LOG.scope(LOG_SCOPE):
-            LOG.info(f'Write Buffer "{buffer.name}" to Image "{resource.name}"')
+            LOG.debug(f'Write Buffer "{buffer.name}" to Image "{resource.name}"')
 
             image = resource.image
             assert image is not None

@@ -63,13 +63,14 @@ class OutputRepository:
 
     def resolve_outputs(self, bake_group_uuid: str, producer_uuid: str, materialize: bool = True) -> list[OutputBase]:
         with LOG.scope(LOG_SCOPE):
+            LOG.debug("Resolving Output")
             key = (bake_group_uuid, producer_uuid)
 
             # First try RAM
             outputs = self._lookup(key)
 
             if outputs:
-                LOG.info(f"{len(outputs)} found")
+                LOG.debug(f"{len(outputs)} found from memory")
                 return outputs
 
             # Otherwise ask persistent artifacts.
@@ -117,21 +118,20 @@ class OutputRepository:
 
     def _materialize(self, artifact: OutputArtifact) -> OutputBase | None:
         """Get output from memory if exists or create a new one if not."""
-        with LOG.scope(LOG_SCOPE):
-            if artifact.uuid in self._materialized:
-                LOG.info("Retreive from Memory")
-                uuid = self._materialized[artifact.uuid]
+        if artifact.uuid in self._materialized:
+            LOG.debug("Retreive from Memory")
+            uuid = self._materialized[artifact.uuid]
 
-                return self._outputs[uuid]
+            return self._outputs[uuid]
 
-            output = self._create_output(artifact)
-            if output is None:
-                return None
+        output = self._create_output(artifact)
+        if output is None:
+            return None
 
-            self.add(output)
-            self._materialized[artifact.uuid] = output.uuid
+        self.add(output)
+        self._materialized[artifact.uuid] = output.uuid
 
-            return output
+        return output
 
     def get_outputs(self, bake_group_uuid: str, producer_uuid: str) -> list[OutputBase]:
         outputs = self._lookup((bake_group_uuid, producer_uuid))
@@ -159,21 +159,20 @@ class OutputRepository:
         return outputs
 
     def _create_output(self, artifact: OutputArtifact) -> OutputBase | None:
-        with LOG.scope(LOG_SCOPE):
-            LOG.info("Create Output from Artifact")
-            match artifact.type:
-                case "BAKE":
-                    output = OutputBake.from_artifact(artifact)
-                case "ACCUMULATED":
-                    output = OutputAccumulated.from_artifact(artifact)
-                case "PACK":
-                    output = OutputPack.from_artifact(artifact)
-                case _:
-                    with LOG.scope(LOG_SCOPE):
-                        LOG.debug("Invalid Artifact")
-                    output = None
+        LOG.debug("Create Output from Artifact")
+        match artifact.type:
+            case "BAKE":
+                output = OutputBake.from_artifact(artifact)
+            case "ACCUMULATED":
+                output = OutputAccumulated.from_artifact(artifact)
+            case "PACK":
+                output = OutputPack.from_artifact(artifact)
+            case _:
+                with LOG.scope(LOG_SCOPE):
+                    LOG.debug("Invalid Artifact")
+                output = None
 
-            return output
+        return output
 
     def invalidate(self, bake_group_uuid: str, producer_uuid: str) -> None:
         """

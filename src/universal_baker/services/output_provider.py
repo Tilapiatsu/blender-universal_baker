@@ -65,7 +65,7 @@ class OutputProvider:
 
     def get_image(self, bake_group_uuid: str, baker_uuid: str) -> ImageBuffer | None:
         with LOG.scope(LOG_SCOPE):
-            LOG.info("Request Image from repository")
+            LOG.debug("Request Image from repository")
             key = (bake_group_uuid, baker_uuid)
 
             #
@@ -81,14 +81,14 @@ class OutputProvider:
 
             if not outputs:
                 LOG.error(
-                    "output not found",
+                    "Output not found",
                     data={
                         "status": BakeStatus.FAIL,
                     },
                 )
                 return None
 
-            LOG.info(f"{len(outputs)} image(s) found :")
+            LOG.debug(f"{len(outputs)} image(s) found :")
             #
             # Single object target
             #
@@ -98,29 +98,6 @@ class OutputProvider:
                 self._cache[key] = image
 
                 return image
-
-            #
-            # Multi object target
-            #
-            accumulator = ImageAccumulator(
-                width=outputs[0].image.width,
-                height=outputs[0].image.height,
-                name=f"Accumulated_{outputs[0].image.name}",
-            )
-
-            #
-            # Order is important.
-            #
-            # outputs.sort(key=lambda o: o.bake_group)
-
-            for output in outputs:
-                accumulator.accumulate(output.image, registry_compositor["ALPHA_OVER"])
-
-            image = accumulator.result()
-
-            self._cache[key] = image
-
-            return image
 
     def has_image(self, bake_group_uuid: str, baker_uuid: str) -> bool:
 

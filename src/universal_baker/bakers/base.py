@@ -112,6 +112,9 @@ class BakerBase(ABC):
 
         target.image = ctx.image.image
 
+        if not ctx.task.has_multiple_targets:
+            baker.accumulated_image = ctx.image.image
+
     @abstractmethod
     def create_output(self, ctx: BakeContext) -> None:
         LOG.debug("Creating Output ...")
