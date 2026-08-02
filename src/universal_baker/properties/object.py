@@ -4,6 +4,10 @@ from bpy.types import PropertyGroup
 from bpy.props import BoolProperty, PointerProperty, CollectionProperty, IntProperty, StringProperty
 
 
+def get_uv_layer(self, context, edit_text):
+    return [uv.name for uv in self.object.data.uv_layers]
+
+
 class UBK_SourceObject(PropertyGroup):
     """Source object property"""
 
@@ -39,7 +43,9 @@ class UBK_TargetObject(PropertyGroup):
     )
     cache_object: PointerProperty(name="Cage Object", type=bpy.types.Object)
 
-    uv_layer: StringProperty(name="UV Map", description="UV layer used for baking", default="UVMap")
+    uv_layer: StringProperty(
+        name="UV Map", description="UV layer used for baking", default="UVMap", search=get_uv_layer
+    )
 
     detect_udim: BoolProperty(
         name="Detect UDIM",
