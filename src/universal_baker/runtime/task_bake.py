@@ -6,6 +6,8 @@ import bpy
 
 from typing import TYPE_CHECKING
 
+from universal_baker.services.uv import UVService
+
 
 if TYPE_CHECKING:
     from ..bakers.base import BakerBase
@@ -28,6 +30,9 @@ class BakeTask(Task):
     settings: BakeSettings
     image_name: str
     uv_layer: str
+
+    use_udim: bool
+    udim_tiles: set
 
     has_multiple_targets: bool = False
     # output_path: Path

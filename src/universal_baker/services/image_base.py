@@ -113,6 +113,7 @@ class ImageServiceBase:
             resource.height = path_settings.height
             resource.colorspace = color_settings.colorspace
             resource.image_format_settings = image_settings
+            # TODO: Need to pipe the information about the use of UDIM properly to the image resource
 
             resource.filepath = cls.resolve_filepath(task, suffix, sub_folder)
 

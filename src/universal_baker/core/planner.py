@@ -20,6 +20,7 @@ from ..factories.settings_pack import PackSettingsResolver
 from ..factories.settings_output import OutputSettingsResolver
 from ..output.output_tokens import get_variables
 from ..runtime.output_context import OutputContext
+from ..services.uv import UVService
 
 
 class ExecutionPlanner:
@@ -75,6 +76,8 @@ class ExecutionPlanner:
                     if obj.object is None:
                         continue
 
+                    udim_tiles = UVService.detect_udim_tiles(obj.object, obj.uv_layer)
+
                     task = BakeTask(
                         bake_group_uuid=group.uuid,
                         id=baker.name,
@@ -88,6 +91,8 @@ class ExecutionPlanner:
                         image_name=baker.image_name,
                         has_multiple_targets=has_multiple_targets,
                         uv_layer=obj.uv_layer,
+                        udim_tiles=udim_tiles,
+                        use_udim=obj.detect_udim and len(udim_tiles) == 1 and set((0, 0)) not in udim_tiles,
                         # cage_object=None,
                         # settings_cage=settings_cage,
                     )
