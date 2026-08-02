@@ -39,6 +39,13 @@ class UBK_TargetObject(PropertyGroup):
     )
     cache_object: PointerProperty(name="Cage Object", type=bpy.types.Object)
 
+    uv_layer: StringProperty(name="UV Map", description="UV layer used for baking", default="UVMap")
+
+    detect_udim: BoolProperty(
+        name="Detect UDIM",
+        default=False,
+    )
+
 
 classes = (
     UBK_SourceObject,
