@@ -87,6 +87,7 @@ class ExecutionPlanner:
                         settings=settings,
                         image_name=baker.image_name,
                         has_multiple_targets=has_multiple_targets,
+                        uv_layer=obj.uv_layer,
                         # cage_object=None,
                         # settings_cage=settings_cage,
                     )

@@ -29,3 +29,7 @@ class UVService:
             tiles.add(tile)
 
         return tiles
+
+    @staticmethod
+    def tile_number(x, y) -> int:
+        return 1001 + x + y * 10

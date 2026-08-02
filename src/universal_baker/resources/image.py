@@ -25,6 +25,8 @@ class ImageResource:
 
     generated_type: str = "BLANK"
 
+    tiles: bool = False
+
     object_name: str = ""
     map_name: str = ""
 
@@ -52,7 +54,7 @@ class ImageResource:
         colorspace: str,
         alpha: bool = False,
         float_buffer: bool = False,
-        tiled: bool = False,
+        tiles: bool = False,
     ) -> ImageResource:
         image = bpy.data.new(
             name,
@@ -62,7 +64,7 @@ class ImageResource:
             float_buffer,
             stereo3d=False,
             is_data=True if colorspace == "Non-Color" else False,
-            tiled=tiled,
+            tiles=tiles,
         )
         return cls(
             image=image,
@@ -71,6 +73,7 @@ class ImageResource:
             name=name,
             filepath=filepath,
             channels=4 if alpha else 3,
+            tiles=tiles,
         )
 
     @property
@@ -149,6 +152,7 @@ class ImageResource:
         self._height = self.image.size[1]
         self.name = self.image.name
         self.filepath = self.image.filepath_raw
+        self.tiles = self.image.tiles
 
     def __repr__(self) -> str:
         result = ""

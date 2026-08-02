@@ -60,6 +60,10 @@ class RendererService:
         if ctx.session.context.mode != "OBJECT":
             bpy.ops.object.mode_set(mode="OBJECT")
 
+        uv = ctx.task.target.object.data.uv_layers[ctx.task.uv_layer]
+
+        ctx.task.target.object.data.uv_layers.active = uv
+
     @classmethod
     def bake(cls, ctx: BakeContext):
         """Execute Blender bake."""
