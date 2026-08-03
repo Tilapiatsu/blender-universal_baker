@@ -6,11 +6,11 @@ from uuid import uuid4
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from universal_baker.runtime.bake_group import BakeGroup
 
-
+from ..constant import LOG
 from ..resources.image import ImageResource
 from ..enum.channels import Channel
+from ..runtime.bake_group import BakeGroup
 from ..runtime.output_base import OutputBase
 from ..services.image_io import ImageIOService
 
@@ -72,5 +72,8 @@ class OutputArtifact(OutputBase):
         """
         Returns an ImageResource.
         """
-        image = ImageIOService.load(self.path)
+        LOG.debug(f"Loading Image {self.name}")
+        image = bpy.data.images.get(self.name)
+        if image is None:
+            image = ImageIOService.load(self.path)
         return ImageIOService.init_resource(image)

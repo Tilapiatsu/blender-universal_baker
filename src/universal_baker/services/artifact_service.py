@@ -34,6 +34,7 @@ class ArtifactService:
         runtime: BakeRuntime,
         project: UBK_Project,
         *,
+        name: str,
         artifact_type: OutputStage,
         bake_group_uuid: str,
         target_object_uuid: str,
@@ -82,7 +83,7 @@ class ArtifactService:
         artifact_pg.file_format = file_format
         artifact_pg.checksum = checksum
         artifact_pg.created = datetime.now().isoformat()
-        artifact_pg.name = f"{artifact_type.value}_{filepath.name}"
+        artifact_pg.name = name
         #
         # Dependencies
         #

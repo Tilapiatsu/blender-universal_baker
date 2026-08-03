@@ -5,8 +5,8 @@ import math
 
 class UVService:
     @staticmethod
-    def detect_udim_tiles(obj, uv_name) -> set:
-        tiles = set()
+    def detect_udim_tiles(obj, uv_name) -> tuple:
+        tiles = tuple()
 
         mesh = obj.data
 
@@ -26,7 +26,7 @@ class UVService:
                 math.floor(uv.y),
             )
 
-            tiles.add(tile)
+            tiles += (tile,)
 
         return tiles
 

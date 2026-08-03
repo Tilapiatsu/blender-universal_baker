@@ -2,9 +2,13 @@ from __future__ import annotations
 
 import bpy
 
+from ..constant import LOG
 from ..runtime.context_bake import BakeContext
 from ..resources.material import MaterialResource
 from ..constant import BAKE_IMAGE_NODE_LABEL, BAKE_IMAGE_NODE_NAME, BAKE_MATERIAL_NAME
+
+
+LOG_SCOPE = "Material Service"
 
 
 class MaterialService:
@@ -30,7 +34,6 @@ class MaterialService:
         """
         Restore the material to its original state.
         """
-        # TODO : It doesn't work if no material is present initially
         resource = ctx.material
 
         if not resource.prepared:
@@ -46,25 +49,25 @@ class MaterialService:
         """
         Acquire the material used for baking.
         """
+        with LOG.scope(LOG_SCOPE):
+            obj = ctx.target
 
-        obj = ctx.target
+            if not obj.material_slots:
+                cls._create_bake_material(obj, None)
+                # raise RuntimeError(f"'{obj.name}' has no material.")
 
-        if not obj.material_slots:
-            cls._create_bake_material(obj, None)
-            # raise RuntimeError(f"'{obj.name}' has no material.")
+            slot = obj.material_slots[0]
 
-        slot = obj.material_slots[0]
+            material = slot.material
 
-        material = slot.material
+            if material is None:
+                material = cls._create_bake_material(obj, 0)
+                # raise RuntimeError(f"Material slot is empty.")
 
-        if material is None:
-            cls._create_bake_material(obj, 0)
-            # raise RuntimeError(f"Material slot is empty.")
-
-        resource.object = obj
-        resource.material_index = 0
-        resource.material = material
-        resource.node_tree = material.node_tree
+            resource.object = obj
+            resource.material_index = 0
+            resource.material = material
+            resource.node_tree = material.node_tree
 
     @classmethod
     def ensure_nodes(cls, resource: MaterialResource) -> None:
@@ -154,13 +157,20 @@ class MaterialService:
 
     @classmethod
     def _create_bake_material(cls, obj: bpy.types.Object, slot: int | None):
-        material = bpy.data.materials.new(
-            name=f"{obj.name}_{BAKE_MATERIAL_NAME}_{str(len(obj.material_slots)).zfill(2)}"
-        )
+        name = f"{obj.name}_{BAKE_MATERIAL_NAME}_{str(len(obj.material_slots)).zfill(2)}"
+
+        LOG.debug(f"Create Bake Material {name}")
+
+        if name in bpy.data.materials:
+            material = bpy.data.materials[name]
+        else:
+            material = bpy.data.materials.new(name=name)
+
         if slot is None:
             obj.data.materials.append(material)
         elif isinstance(slot, int):
             obj.material_slots[slot].material = material
         else:
             raise AttributeError
+
         return material

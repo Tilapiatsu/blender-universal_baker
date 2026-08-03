@@ -75,7 +75,9 @@ class OutputRepository:
 
             # Otherwise ask persistent artifacts.
             artifacts = self._artifacts.resolve(bake_group_uuid, producer_uuid)
+
             LOG.debug(f"{len(artifacts)} found")
+
             if not artifacts:
                 LOG.error(
                     "Artifacts not found",

@@ -112,6 +112,7 @@ class AccumulatorBase(ABC):
             runtime=ctx.session.runtime,
             project=ctx.project,
             artifact_type=OutputStage.ACCUMULATED,
+            name=ctx.task.output_name,
             bake_group_uuid=ctx.task.bake_group_uuid,
             target_object_uuid="",
             producer_uuid=ctx.task.uuid,
@@ -126,6 +127,6 @@ class AccumulatorBase(ABC):
     @abstractmethod
     def export_file(self, ctx: AccumulateContext) -> None:
         """Save Bake to disk."""
-        LOG.debug("Creating File ...")
+        LOG.debug("Saving File to Disk ...")
         if ctx.task.output_context.output_settings.path.export_file:
             ImageServiceBake.save(ctx.image)

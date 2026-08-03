@@ -4,8 +4,12 @@ from collections import defaultdict
 
 import bpy
 
+from ..constant import LOG
 from .output_artifact import OutputArtifact
 from ..properties.project import UBK_Project
+
+
+LOG_SCOPE = "Artifact Repository"
 
 
 class ArtifactRepository:
@@ -49,7 +53,11 @@ class ArtifactRepository:
         return list(self._target_object_index.get(target_object_uuid, []))
 
     def resolve(self, bake_group_uuid: str, producer_uuid: str) -> list[OutputArtifact]:
-        return [artifact for artifact in self.by_bake_group(bake_group_uuid) if artifact.producer_uuid == producer_uuid]
+        with LOG.scope(LOG_SCOPE):
+            LOG.debug("Resolving Output")
+            return [
+                artifact for artifact in self.by_bake_group(bake_group_uuid) if artifact.producer_uuid == producer_uuid
+            ]
 
     def exists(self, bake_group_uuid, producer_uuid) -> bool:
         return any(

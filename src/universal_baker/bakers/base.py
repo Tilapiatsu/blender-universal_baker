@@ -138,6 +138,7 @@ class BakerBase(ABC):
             runtime=ctx.session.runtime,
             project=ctx.project,
             artifact_type=OutputStage.BAKE,
+            name=ctx.task.output_name,
             bake_group_uuid=ctx.task.bake_group_uuid,
             target_object_uuid=ctx.task.target_object_uuid,
             producer_uuid=ctx.task.uuid,
@@ -152,6 +153,6 @@ class BakerBase(ABC):
     @abstractmethod
     def export_file(self, ctx: BakeContext) -> None:
         """Save Bake to disk."""
-        LOG.debug("Creating File ...")
+        LOG.debug("Saving File to Disk ...")
         if ctx.task.output_context.output_settings.path.export_file:
             ImageServiceBake.save(ctx.image)

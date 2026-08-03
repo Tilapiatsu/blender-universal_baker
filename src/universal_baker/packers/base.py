@@ -83,6 +83,7 @@ class PackerBase(ABC):
             project=ctx.project,
             artifact_type=OutputStage.PACK,
             bake_group_uuid=ctx.task.bake_group_uuid,
+            name=ctx.task.output_name,
             target_object_uuid="",
             producer_uuid=ctx.task.uuid,
             filepath=ctx.image.filepath,
