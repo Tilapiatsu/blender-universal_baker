@@ -13,7 +13,7 @@ class UVService:
         if mesh is None:
             return tiles
 
-        uv_layer = obj.data.uv_layer[uv_name]
+        uv_layer = obj.data.uv_layers[uv_name]
 
         if uv_layer is None:
             return tiles
