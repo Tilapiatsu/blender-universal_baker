@@ -76,7 +76,13 @@ class ExecutionPlanner:
                     if obj.object is None:
                         continue
 
-                    udim_tiles = UVService.detect_udim_tiles(obj.object, obj.uv_layer)
+                    udim_tiles = set()
+                    if obj.detect_udim:
+                        udim_tiles = UVService.detect_udim_tiles(obj.object, obj.uv_layer)
+                        with LOG.scope("Planner"):
+                            LOG.info(f"{len(udim_tiles)} udim tile(s) detected for {obj.object.name}:")
+                            for u in udim_tiles:
+                                LOG.info(str(UVService.tile_number(u[0], u[1])))
 
                     task = BakeTask(
                         bake_group_uuid=group.uuid,
