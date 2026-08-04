@@ -25,7 +25,7 @@ class ImageResource:
 
     generated_type: str = "BLANK"
 
-    tiles: bool = False
+    use_tiles: bool = False
 
     object_name: str = ""
     map_name: str = ""
@@ -55,7 +55,7 @@ class ImageResource:
         colorspace: str,
         alpha: bool = False,
         float_buffer: bool = False,
-        tiles: bool = False,
+        use_tiles: bool = False,
     ) -> ImageResource:
         image = bpy.data.new(
             name,
@@ -65,7 +65,7 @@ class ImageResource:
             float_buffer,
             stereo3d=False,
             is_data=True if colorspace == "Non-Color" else False,
-            tiles=tiles,
+            tiles=use_tiles,
         )
         return cls(
             image=image,
@@ -75,14 +75,14 @@ class ImageResource:
             _filepath=filepath,
             float_buffer=float_buffer,
             channels=4 if alpha else 3,
-            tiles=tiles,
+            use_tiles=use_tiles,
         )
 
     @property
     def filepath(self) -> Path:
         return (
             self._filepath.with_name(self._filepath.stem + ".<UDIM>" + self._filepath.suffix)
-            if self.tiles
+            if self.use_tiles
             else self._filepath
         )
 
@@ -123,6 +123,33 @@ class ImageResource:
         if self.filepath is None:
             return None
         return self.filepath.parent
+
+    @property
+    def tiles(self) -> list[bpy.types.UDIMTile]:
+        if self.image is None:
+            return []
+
+        if self.image.tiles is None:
+            return []
+
+        return self.image.tiles.values()
+
+    @property
+    def tile_numbers(self) -> set[int]:
+        tile_number = set([t.number for t in self.tiles])
+        return tile_number
+
+    def tiles_has_changed(self, tile_numbers: set[int]) -> bool:
+        if self.image is None:
+            return True
+
+        return len(tile_numbers.difference(self.tile_numbers)) > 0
+
+    def remove_image(self) -> None:
+        if self.image is None:
+            return
+
+        bpy.data.Image.remove(self.image)
 
     def scale(self, width: int, height: int) -> None:
         if self.image is None:
@@ -166,7 +193,7 @@ class ImageResource:
         self._height = self.image.size[1]
         self.name = self.image.name
         self.filepath = self.image.filepath_raw
-        self.tiles = self.image.tiles
+        self.use_tiles = self.image.tiles is not None
 
     def __repr__(self) -> str:
         result = ""

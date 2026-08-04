@@ -33,3 +33,8 @@ class UVService:
     @staticmethod
     def tile_number(x, y) -> int:
         return 1001 + x + y * 10
+
+    @classmethod
+    def tile_numbers(cls, udim_tiles: tuple[tuple[int, int], ...]) -> set[int]:
+
+        return set([cls.tile_number(*t) for t in udim_tiles])

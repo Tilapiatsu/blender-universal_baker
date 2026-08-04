@@ -115,7 +115,7 @@ class ImageServiceBase:
             resource.height = path_settings.height
             resource.colorspace = color_settings.colorspace
             resource.image_format_settings = image_settings
-            resource.tiles = task.uv_layout.image_layout == ImageLayout.UDIM
+            resource.use_tiles = task.uv_layout.image_layout == ImageLayout.UDIM
             LOG.debug(f"Configure Image to {task.uv_layout.image_layout}")
 
             resource.filepath = cls.resolve_filepath(task, suffix, sub_folder)
@@ -130,6 +130,9 @@ class ImageServiceBase:
     @classmethod
     def create(cls, resource: ImageResource, tiles: tuple[tuple[int, int], ...]) -> bpy.types.Image:
         with LOG.scope("Create"):
+            if resource.tiles_has_changed(UVService.tile_numbers(tiles)):
+                resource.remove_image()
+
             if resource.name not in bpy.data.images:
                 LOG.debug(f"Create Image : {resource.name}")
                 image = bpy.data.images.new(
@@ -138,10 +141,10 @@ class ImageServiceBase:
                     height=resource.height,
                     alpha=resource.image_format_settings.alpha,
                     float_buffer=resource.image_format_settings.float_buffer,
-                    tiled=resource.tiles,
+                    tiled=resource.use_tiles,
                 )
 
-                if resource.tiles:
+                if resource.use_tiles:
                     resource.image = image
                     cls.add_udim_tiles(resource, tiles)
             else:
@@ -235,6 +238,42 @@ class ImageServiceBase:
                 r = cls.copy(r)
                 r.scale(width, height)
 
+    @classmethod
+    def add_udim_tiles_01(cls, resource: ImageResource, tiles: tuple[tuple[int, int], ...]) -> None:
+        LOG.debug("Adding UDIM Tile")
+        image = resource.image
+
+        if image is None:
+            cls.create(resource, tiles)
+            image = resource.image
+
+        assert image is not None
+        assert image.tiles is not None
+
+        cls.clear_tiles(resource)
+
+        for tile in tiles:
+            number = UVService.tile_number(*tile)
+            LOG.debug(f"create UDIM Tile {number}")
+            image_tile = image.tiles.new(number, label=str(number))
+
+        first_tile = image.tiles.get(1001)
+        if first_tile is not None and 1001 not in UVService.tile_numbers(tiles):
+            image.tiles.remove(first_tile)
+
+    @classmethod
+    def clear_tiles(cls, resource: ImageResource):
+        image = resource.image
+
+        if image is None:
+            return
+
+        if image.tiles is None:
+            return
+
+        for tile in image.tiles.values():
+            image.tiles.remove(tile)
+
     # https://blender.stackexchange.com/questions/274964/how-to-add-udim-tiles-to-an-image-and-fill-them-via-python
     @classmethod
     def add_udim_tiles(cls, resource: ImageResource, tiles: tuple[tuple[int, int], ...]) -> None:
@@ -249,25 +288,6 @@ class ImageServiceBase:
         image_region = None
         old_area_type = None
 
-        # NOTE: it is possible to find image/uv editor and execute fill there
-        # but for some reason **context incorrect** error appears every time
-        # finding image_editor area to exec image OTs
-        # for screen in bpy.data.screens:
-        #     for area in screen.areas:
-        #         if area.ui_type in ['IMAGE_EDITOR', 'UV']:
-        #             image_area = area
-        #             for region in area.regions:
-        #                 print(region.height, region.type)
-        #                 if region.type == 'WINDOW':
-        #                     image_region = region
-        #             # XXX don't know if there's always a WINDOW region
-        #             if image_region is None:
-        #                 image_region = area.regions[0]
-        #             image_screen = screen
-        #             break
-
-        # NOTE: but looks like it works with just changing current area
-        # if not found: change context.area ui_type
         if any([image_area is None, image_screen is None]):
             old_area_type = context.area.ui_type
             context.area.ui_type = "UV"
@@ -304,9 +324,14 @@ class ImageServiceBase:
                     alpha=resource.channels == 4,
                 )
 
+        first_tile = image.tiles.get(1001)
+        if first_tile is not None and 1001 not in UVService.tile_numbers(tiles):
+            image.tiles.remove(first_tile)
+
         # restore old active image in the image_editor
         if old_active_image is not None:
             image_area.spaces.active.image = old_active_image
+
         # if context.area changed, restore back
         if context.area.ui_type != old_area_type and old_area_type is not None:
             context.area.ui_type = old_area_type
