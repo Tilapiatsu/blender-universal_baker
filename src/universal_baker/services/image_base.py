@@ -7,6 +7,8 @@ import bpy
 from ..constant import LOG
 from ..resources.image import ImageResource
 from ..runtime.task import Task
+from ..enum.image_layout import ImageLayout
+from ..services.uv import UVService
 
 LOG_SCOPE = "Image Service"
 
@@ -40,11 +42,11 @@ class ImageServiceBase:
             image = bpy.data.images.get(resource.name)
 
             if image is None:
-                image = cls.create(resource)
+                image = cls.create(resource, task.uv_layout.udim_tiles)
                 resource.created = True
 
             elif cls.is_image_settings_changed(image, resource):
-                image = cls.create(resource)
+                image = cls.create(resource, task.uv_layout.udim_tiles)
                 resource.created = True
 
             resource.image = image
@@ -64,6 +66,8 @@ class ImageServiceBase:
             image = resource.image
             image.filepath_raw = str(resource.filepath)
             image.file_format = resource.image_format_settings.file_format
+            # TODO : saving image in UDIM Format need to have a filename with .100X suffix in it. But How to make sure
+            # each tiles have the proper name ?
             image.save()
             image.pack()
 
@@ -113,7 +117,8 @@ class ImageServiceBase:
             resource.height = path_settings.height
             resource.colorspace = color_settings.colorspace
             resource.image_format_settings = image_settings
-            # TODO: Need to pipe the information about the use of UDIM properly to the image resource
+            resource.tiles = task.uv_layout.image_layout == ImageLayout.UDIM
+            LOG.debug(f"Configure Image to {task.uv_layout.image_layout}")
 
             resource.filepath = cls.resolve_filepath(task, suffix, sub_folder)
 
@@ -125,7 +130,7 @@ class ImageServiceBase:
         return file_output.absolute_path
 
     @classmethod
-    def create(cls, resource: ImageResource) -> bpy.types.Image:
+    def create(cls, resource: ImageResource, tiles: tuple[tuple[int, int], ...]) -> bpy.types.Image:
         with LOG.scope("Create"):
             if resource.name not in bpy.data.images:
                 LOG.debug(f"Create Image : {resource.name}")
@@ -135,7 +140,12 @@ class ImageServiceBase:
                     height=resource.height,
                     alpha=resource.image_format_settings.alpha,
                     float_buffer=resource.image_format_settings.float_buffer,
+                    tiled=resource.tiles,
                 )
+
+                if resource.tiles:
+                    resource.image = image
+                    cls.add_udim_tiles(resource, tiles)
             else:
                 LOG.debug(f"Image found : {resource.name}")
                 image = cls.find(resource.name)
@@ -226,3 +236,79 @@ class ImageServiceBase:
             if r.width != width or r.height != height:
                 r = cls.copy(r)
                 r.scale(width, height)
+
+    # https://blender.stackexchange.com/questions/274964/how-to-add-udim-tiles-to-an-image-and-fill-them-via-python
+    @classmethod
+    def add_udim_tiles(cls, resource: ImageResource, tiles: tuple[tuple[int, int], ...]) -> None:
+        context = bpy.context
+        areas = context.screen.areas
+        image = resource.image
+
+        assert image is not None
+
+        image_area = None
+        image_screen = None
+        image_region = None
+        old_area_type = None
+
+        # NOTE: it is possible to find image/uv editor and execute fill there
+        # but for some reason **context incorrect** error appears every time
+        # finding image_editor area to exec image OTs
+        # for screen in bpy.data.screens:
+        #     for area in screen.areas:
+        #         if area.ui_type in ['IMAGE_EDITOR', 'UV']:
+        #             image_area = area
+        #             for region in area.regions:
+        #                 print(region.height, region.type)
+        #                 if region.type == 'WINDOW':
+        #                     image_region = region
+        #             # XXX don't know if there's always a WINDOW region
+        #             if image_region is None:
+        #                 image_region = area.regions[0]
+        #             image_screen = screen
+        #             break
+
+        # NOTE: but looks like it works with just changing current area
+        # if not found: change context.area ui_type
+        if any([image_area is None, image_screen is None]):
+            old_area_type = context.area.ui_type
+            context.area.ui_type = "UV"
+            image_area = context.area
+            for region in image_area.regions:
+                if region.type == "WINDOW":
+                    image_region = region
+            # XXX don't know if there's always a WINDOW region
+            if image_region is None:
+                image_region = context.area.regions[0]
+            image_screen = context.screen
+
+        # set image_editor active image
+        old_active_image = image_area.spaces.active.image
+        image_area.spaces.active.image = image
+
+        # overriding context to avoid RuntimeError
+        context_overridden = context.copy()
+        context_overridden["area"] = image_area
+        context_overridden["screen"] = image_screen
+        context_overridden["region"] = image_region
+
+        with bpy.context.temp_override(area=image_area, screen=image_screen, region=image_region):
+            for tile in tiles:
+                bpy.ops.image.tile_add(
+                    number=UVService.tile_number(*tile),
+                    label="",
+                    fill=True,
+                    # color=color,
+                    generated_type=resource.generated_type,
+                    width=resource.width,
+                    height=resource.height,
+                    float=resource.float_buffer,
+                    alpha=resource.channels == 4,
+                )
+
+        # restore old active image in the image_editor
+        if old_active_image is not None:
+            image_area.spaces.active.image = old_active_image
+        # if context.area changed, restore back
+        if context.area.ui_type != old_area_type and old_area_type is not None:
+            context.area.ui_type = old_area_type

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+
 from .settings_output import OutputSettings
 
 from typing import Any

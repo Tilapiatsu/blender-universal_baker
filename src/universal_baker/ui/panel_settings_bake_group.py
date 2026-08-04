@@ -4,7 +4,7 @@ from typing import Callable
 import bpy
 
 from ..core.controller import BakeController
-from .panel import object_needed, UBK_PT_MainPanel
+from .panel import bake_group_needed, UBK_PT_MainPanel
 
 
 # -------------------------------------------------------------------------
@@ -12,30 +12,30 @@ from .panel import object_needed, UBK_PT_MainPanel
 # -------------------------------------------------------------------------
 
 
-class UBK_UL_TargetObjectSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
-    bl_idname = "UBK_PT_target_object_panel"
+class UBK_UL_BakeGroupSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
+    bl_idname = "UBK_PT_bake_group_panel"
     bl_label = ""
-    bl_parent_id = "UBK_PT_ObjectPanel"
+    bl_parent_id = "UBK_PT_BakeGroupPanel"
     bl_options = {"DEFAULT_CLOSED"}
 
-    @object_needed
+    @bake_group_needed
     def draw_header(self, context):
         layout = self.layout
-        active_object = BakeController.active_object(context)
+        active_bake_group = BakeController.active_bake_group(context)
 
-        layout.label(text=f"{active_object.object.name} Settings", icon="OBJECT_DATAMODE")
+        layout.label(text=f"{active_bake_group.name} Settings", icon="OUTLINER")
 
-    @object_needed
+    @bake_group_needed
     def draw(self, context):
         layout = self.layout
         box = layout.box()
 
-        active_object = BakeController.active_object(context)
+        active_bake_group = BakeController.active_bake_group(context)
 
-        box.prop(active_object, "uv_layer")
+        box.prop(active_bake_group, "detect_udim", toggle=1)
 
 
-classes = (UBK_UL_TargetObjectSettingsPanel,)
+classes = (UBK_UL_BakeGroupSettingsPanel,)
 
 
 def register():

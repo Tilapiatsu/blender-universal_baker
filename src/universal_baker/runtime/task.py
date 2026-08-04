@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .output_context import OutputContext
+from ..resources.uv import UVLayout
 
 
 @dataclass(slots=True, frozen=True)
@@ -14,6 +15,7 @@ class Task:
     enabled: bool
     output_context: OutputContext
     bake_group_uuid: str
+    uv_layout: UVLayout
 
     @property
     def output_name(self) -> str: ...

@@ -33,6 +33,11 @@ class UBK_BakeGroup(PropertyGroup):
 
     expanded: BoolProperty(default=True)
 
+    detect_udim: BoolProperty(
+        name="Detect UDIM",
+        default=False,
+    )
+
     target_objects: CollectionProperty(type=UBK_TargetObject)
 
     active_target_object_index: IntProperty(default=0)

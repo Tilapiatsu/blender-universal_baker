@@ -17,7 +17,6 @@ from .task import Task
 from ..runtime.settings_bake import BakeSettings
 from ..logger.event import ScopeState
 from ..logger_bake_middleware.bake_summary import BakeStatus, EventCategory
-from ..resources.uv import UVLayout
 
 
 @dataclass(slots=True, frozen=True)
@@ -28,8 +27,7 @@ class BakeTask(Task):
     baker: BakerBase
     settings: BakeSettings
     image_name: str
-
-    uv_layout: UVLayout
+    uv_layer: str
 
     has_multiple_targets: bool = False
     # output_path: Path

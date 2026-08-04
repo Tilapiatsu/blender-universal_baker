@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from ..enum.image_layout import ImageLayout
+
 
 @dataclass(frozen=True)
 class UVLayout:
-    uv_layer: str
-    use_udim: bool
+    image_layout: ImageLayout
     udim_tiles: tuple[tuple[int, int], ...]

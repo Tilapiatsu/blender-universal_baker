@@ -6,17 +6,17 @@ import math
 class UVService:
     @staticmethod
     def detect_udim_tiles(obj, uv_name) -> tuple:
-        tiles = tuple()
+        tiles = set()
 
         mesh = obj.data
 
         if mesh is None:
-            return tiles
+            return tuple(tiles)
 
         uv_layer = obj.data.uv_layers[uv_name]
 
         if uv_layer is None:
-            return tiles
+            return tuple(tiles)
 
         for loop in mesh.loops:
             uv = uv_layer.data[loop.index].uv
@@ -26,9 +26,9 @@ class UVService:
                 math.floor(uv.y),
             )
 
-            tiles += (tile,)
+            tiles.add(tile)
 
-        return tiles
+        return tuple(tiles)
 
     @staticmethod
     def tile_number(x, y) -> int:

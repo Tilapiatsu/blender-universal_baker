@@ -47,11 +47,6 @@ class UBK_TargetObject(PropertyGroup):
         name="UV Map", description="UV layer used for baking", default="UVMap", search=get_uv_layer
     )
 
-    detect_udim: BoolProperty(
-        name="Detect UDIM",
-        default=False,
-    )
-
 
 classes = (
     UBK_SourceObject,

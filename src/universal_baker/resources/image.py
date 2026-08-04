@@ -20,7 +20,7 @@ class ImageResource:
     _width: int = 2048
     _height: int = 2048
 
-    filepath: Path = field(default_factory=Path)
+    _filepath: Path = field(default_factory=Path)
     name: str = ""
 
     generated_type: str = "BLANK"
@@ -33,6 +33,7 @@ class ImageResource:
     channels: int = 4
     colorspace: str = "sRGB"
     is_data: bool = False
+    float_buffer: bool = False
 
     image_format_settings: ImageSettings | None = None
 
@@ -71,10 +72,23 @@ class ImageResource:
             _width=width,
             _height=height,
             name=name,
-            filepath=filepath,
+            _filepath=filepath,
+            float_buffer=float_buffer,
             channels=4 if alpha else 3,
             tiles=tiles,
         )
+
+    @property
+    def filepath(self) -> Path:
+        return (
+            self._filepath.with_name(self._filepath.stem + ".<UDIM>" + self._filepath.suffix)
+            if self.tiles
+            else self._filepath
+        )
+
+    @filepath.setter
+    def filepath(self, value: Path) -> None:
+        self._filepath = value
 
     @property
     def width(self) -> int:

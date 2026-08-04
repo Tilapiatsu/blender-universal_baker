@@ -4,6 +4,7 @@ import bpy
 
 from uuid import uuid4
 
+
 from ..constant import LOG
 from ..runtime.settings_accumulate import AccumulateSettings
 from ..runtime.job import Job
@@ -22,6 +23,7 @@ from ..output.output_tokens import get_variables
 from ..runtime.output_context import OutputContext
 from ..services.uv import UVService
 from ..resources.uv import UVLayout
+from ..enum.image_layout import ImageLayout
 
 
 class ExecutionPlanner:
@@ -35,6 +37,10 @@ class ExecutionPlanner:
             for group in project.bake_groups:
                 if not group.enabled:
                     continue
+
+                image_layout = ImageLayout.UDIM if group.detect_udim else ImageLayout.SINGLE
+
+                group_tiles = tuple()
 
                 for baker in group.bakers:
                     if not register_bakers:
@@ -79,15 +85,19 @@ class ExecutionPlanner:
                             continue
 
                         udim_tiles = tuple()
-                        if obj.detect_udim:
+
+                        if group.detect_udim:
                             udim_tiles = UVService.detect_udim_tiles(obj.object, obj.uv_layer)
                             LOG.info(f"{len(udim_tiles)} udim tile(s) detected for {obj.object.name}:")
+                            LOG.info(f"{udim_tiles}")
                             for u in udim_tiles:
                                 LOG.info(str(UVService.tile_number(u[0], u[1])))
 
+                            # using set to prevent duplication
+                            group_tiles = tuple(set(group_tiles).union(set(udim_tiles)))
+
                         uv_layout = UVLayout(
-                            uv_layer=obj.uv_layer,
-                            use_udim=obj.detect_udim,
+                            image_layout=ImageLayout.UDIM if group.detect_udim else ImageLayout.SINGLE,
                             udim_tiles=udim_tiles,
                         )
 
@@ -103,6 +113,7 @@ class ExecutionPlanner:
                             settings=settings,
                             image_name=baker.image_name,
                             has_multiple_targets=has_multiple_targets,
+                            uv_layer=obj.uv_layer,
                             uv_layout=uv_layout,
                             # cage_object=None,
                             # settings_cage=settings_cage,
@@ -112,6 +123,11 @@ class ExecutionPlanner:
 
                     if not has_multiple_targets:
                         continue
+
+                    uv_layout = UVLayout(
+                        image_layout=ImageLayout.UDIM if group.detect_udim else ImageLayout.SINGLE,
+                        udim_tiles=group_tiles,
+                    )
 
                     settings_accumulator = AccumulateSettings(baker_uuid=baker.uuid)
                     task = AccumulateTask(
@@ -124,11 +140,17 @@ class ExecutionPlanner:
                         accumulator=registry_accumulator[registry_baker[baker.baker].accumulator_id],
                         image_name=baker.image_name,
                         settings=settings_accumulator,
+                        uv_layout=uv_layout,
                     )
                     job.add_task(task)
 
                 if not register_packers:
                     continue
+
+                uv_layout = UVLayout(
+                    image_layout=ImageLayout.UDIM if group.detect_udim else ImageLayout.SINGLE,
+                    udim_tiles=group_tiles,
+                )
 
                 for packer in group.packers:
                     if not packer.enabled:
@@ -205,6 +227,7 @@ class ExecutionPlanner:
                         green=green,
                         blue=blue,
                         alpha=alpha,
+                        uv_layout=uv_layout,
                     )
                     job.add_task(task)
 
