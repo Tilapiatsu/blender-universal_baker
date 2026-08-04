@@ -66,8 +66,6 @@ class ImageServiceBase:
             image = resource.image
             image.filepath_raw = str(resource.filepath)
             image.file_format = resource.image_format_settings.file_format
-            # TODO : saving image in UDIM Format need to have a filename with .100X suffix in it. But How to make sure
-            # each tiles have the proper name ?
             image.save()
             image.pack()
 
