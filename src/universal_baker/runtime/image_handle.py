@@ -1,0 +1,167 @@
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+
+from typing import Iterator
+
+from .tile_set import TileData, TileSet
+
+from ..resources.image import ImageResource
+from ..resources.image_buffer import ImageBuffer
+from ..services.image_codec import ImageCodec
+from .output_artifact import OutputArtifact
+
+
+@dataclass(slots=True)
+class ImageHandle:
+    """
+    Runtime representation of one logical image.
+
+    An ImageHandle may represent either:
+
+        - One regular image
+        - One UDIM image
+
+    The caller never has to know which.
+
+    The handle lazily loads buffers, creates Blender images
+    when requested, and saves modified buffers back to disk.
+    """
+
+    # ------------------------------------------------------------
+    # Construction
+    # ------------------------------------------------------------
+
+    def __init__(self, artifact: OutputArtifact):
+        self._artifact = artifact
+        self._resource: ImageResource = field(default_factory=ImageResource)
+        self._tiles: TileSet = field(default_factory=TileSet)
+
+    # ------------------------------------------------------------
+    # Properties
+    # ------------------------------------------------------------
+
+    @property
+    def artifact(self) -> OutputArtifact:
+        return self._artifact
+
+    @property
+    def is_loaded(self) -> bool:
+        return not self._tiles.is_empty
+
+    @property
+    def is_udim(self) -> bool:
+        return self._artifact.is_udim
+
+    # ------------------------------------------------------------
+    # Tile access
+    # ------------------------------------------------------------
+
+    def tiles(self) -> tuple[int, ...]:
+        """
+        Return every available tile number.
+
+        Loads them if necessary.
+        """
+
+        self._ensure_loaded()
+
+        return tuple(self._tiles.keys())
+
+    def has_tile(self, tile: int) -> bool:
+        self._ensure_loaded()
+        return tile in self._tiles
+
+    def buffer(self, tile: int = 1001) -> ImageBuffer:
+        """
+        Return one tile buffer.
+        """
+        self._ensure_loaded()
+        return self._tiles[tile].buffer
+
+    def set_buffer(self, tile: int, buffer: ImageBuffer):
+        self._ensure_loaded()
+        td = TileData(buffer)
+        self._tiles[tile] = td
+
+    def buffers(self) -> Iterator[tuple[int, ImageBuffer]]:
+        self._ensure_loaded()
+        yield from self._tiles.tile_buffers
+
+    # ------------------------------------------------------------
+    # Blender image
+    # ------------------------------------------------------------
+
+    def image(self) -> ImageResource:
+        """
+        Return a Blender image.
+
+        Creates or reloads it if necessary.
+        """
+        if self._resource is None:
+            self._resource = ImageResource.from_artifact(self._artifact)
+
+        return self._resource
+
+    # ------------------------------------------------------------
+    # Disk
+    # ------------------------------------------------------------
+
+    def save(self):
+        self._ensure_loaded()
+
+        ImageCodec.export_tiles(
+            artifact=self._artifact,
+            tiles=self._tiles,
+        )
+
+        if self._resource is not None:
+            self._resource.reload()
+
+    def reload(self):
+        """
+        Discard cached buffers and reload them.
+        """
+        self._tiles.clear()
+        self._ensure_loaded()
+        if self._resource is not None:
+            self._resource.reload()
+
+    def invalidate(self):
+        """
+        Free runtime cache.
+        """
+        self._tiles.clear()
+
+    # ------------------------------------------------------------
+    # Internal
+    # ------------------------------------------------------------
+
+    def _ensure_loaded(self):
+        if self._tiles is not None:
+            return
+
+        self._tiles = ImageCodec.import_tiles(
+            self._artifact,
+        )
+
+    def __iter__(self):
+        self._ensure_loaded()
+        return iter(self._tiles.items())
+
+    def clear(self):
+        self._tiles.clear()
+
+    @classmethod
+    def from_artifact(cls, artifact):
+        return cls(artifact)
+
+    @classmethod
+    def from_image(cls, image): ...
+
+    # TODO : To be Written
+
+    @classmethod
+    def temporary(cls): ...
+
+    # TODO : To be Written

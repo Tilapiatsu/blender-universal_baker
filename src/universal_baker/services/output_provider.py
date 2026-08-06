@@ -1,15 +1,13 @@
 from __future__ import annotations
 
-from universal_baker.logger_bake_middleware.bake_summary import BakeStatus
+from ..logger_bake_middleware.bake_summary import BakeStatus
+from ..runtime.tile_set import TileSet
 
-from ..core.accumulator import ImageAccumulator
-from ..core.registry_compositor import registry_compositor
 from ..constant import LOG
 
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..runtime.image_buffer import ImageBuffer
     from ..runtime.output_repository import OutputRepository
 
 LOG_SCOPE = "Output Provider"
@@ -63,7 +61,7 @@ class OutputProvider:
         for key in keys:
             self._cache.pop(key, None)
 
-    def get_image(self, bake_group_uuid: str, baker_uuid: str) -> ImageBuffer | None:
+    def get_image(self, bake_group_uuid: str, baker_uuid: str) -> TileSet | None:
         with LOG.scope(LOG_SCOPE):
             LOG.debug("Request Image from repository")
             key = (bake_group_uuid, baker_uuid)
@@ -97,14 +95,11 @@ class OutputProvider:
             # Single object target
             #
             if len(outputs) == 1:
-                image = outputs[0].image
-
-                self._cache[key] = image
-
-                return image
+                tiles = outputs[0].tiles
+                self._cache[key] = tiles
+                return tiles
 
     def has_image(self, bake_group_uuid: str, baker_uuid: str) -> bool:
-
         return (
             self.get_image(
                 bake_group_uuid,

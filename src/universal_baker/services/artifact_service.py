@@ -6,8 +6,10 @@ from pathlib import Path
 from datetime import datetime
 from typing import Iterable
 
+
 from ..enum.output_stage import OutputStage
 from ..runtime.output_artifact import OutputArtifact
+from ..enum.image_layout import ImageLayout
 
 from typing import TYPE_CHECKING
 
@@ -45,6 +47,7 @@ class ArtifactService:
         channels: int,
         color_space: str,
         file_format: str,
+        image_layout: ImageLayout,
         checksum="",
         dependencies: Iterable[str] = (),
     ) -> OutputArtifact | None:
@@ -84,6 +87,7 @@ class ArtifactService:
         artifact_pg.checksum = checksum
         artifact_pg.created = datetime.now().isoformat()
         artifact_pg.name = name
+        artifact_pg.image_layout = image_layout.value
         #
         # Dependencies
         #

@@ -93,6 +93,7 @@ class PackerBase(ABC):
             color_space=ctx.image.colorspace,
             file_format=ctx.output_settings.image.file_format,
             dependencies=dependencies,
+            image_layout=ctx.task.uv_layout.image_layout,
         )
 
     @abstractmethod

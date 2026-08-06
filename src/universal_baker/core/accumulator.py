@@ -2,7 +2,7 @@ from __future__ import annotations
 
 
 from ..constant import LOG
-from ..runtime.image_buffer import ImageBuffer
+from ..resources.image_buffer import ImageBuffer
 from ..compositors.base import Compositor
 
 

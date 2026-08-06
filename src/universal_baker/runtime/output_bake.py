@@ -2,16 +2,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
-from uuid import uuid4
 
 from ..constant import LOG
 from .output_base import OutputBase
 from .bake_group import BakeGroup
 from .output_artifact import OutputArtifact
-from ..services.image_io import ImageIOService
+from .tile_set import TileSet
 
 if TYPE_CHECKING:
-    from .image_buffer import ImageBuffer
     from ..bakers.base import BakerBase
 
 LOG_SCOPE: str = "Output Bake"
@@ -44,12 +42,12 @@ class OutputBake(OutputBase):
         name: str,
         bake_group: BakeGroup,
         baker: BakerBase,
-        image: ImageBuffer,
+        tiles: TileSet,
     ) -> OutputBake:
         return cls(
             uuid=uuid,
             name=name,
-            image=image,
+            tiles=tiles,
             bake_group=bake_group,
             baker=baker,
         )
@@ -74,7 +72,7 @@ class OutputBake(OutputBase):
             from ..core.controller import BakeController
 
             image = artifact.load_image()
-            image_buffer = ImageIOService.read(image)
+            tiles = TileSet.from_blender_image(image.image)
 
             baker = BakeController.get_baker_from_uuid(artifact.producer_uuid)
 
@@ -83,7 +81,7 @@ class OutputBake(OutputBase):
                 name=artifact.name,
                 bake_group=BakeGroup(artifact.bake_group_uuid),
                 baker=baker,
-                image=image_buffer,
+                tiles=tiles,
             )
 
             return output

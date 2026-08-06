@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from .base import Compositor
-from ..runtime.image_buffer import ImageBuffer
+from ..resources.image_buffer import ImageBuffer
 from ..core.registry_compositor import registry_compositor
 
 

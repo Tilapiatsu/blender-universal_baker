@@ -122,6 +122,7 @@ class AccumulatorBase(ABC):
             channels=ctx.image.channels,
             color_space=ctx.image.colorspace,
             file_format=ctx.output_settings.image.file_format,
+            image_layout=ctx.task.uv_layout.image_layout,
         )
 
     @abstractmethod

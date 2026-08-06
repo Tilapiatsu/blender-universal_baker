@@ -28,6 +28,11 @@ class ImageBuffer:
     def flat_pixels(self) -> np.ndarray:
         return self.pixels.reshape(-1)
 
+    @property
+    def is_float(self) -> bool:
+        # TODO : To be written
+        return False
+
     @classmethod
     def empty(cls, width: int, height: int, channels: int = 4, name: str = "Image") -> ImageBuffer:
         """Create an Empty Buffer"""

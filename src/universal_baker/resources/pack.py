@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+
 from ..services.output_provider import OutputProvider
 from ..runtime.task_pack import PackingTask
-from ..runtime.image_buffer import ImageBuffer
+from ..runtime.tile_set import TileSet
 
 from .image import ImageResource
 from ..enum.channels import Channel
@@ -55,32 +56,32 @@ class PackResource:
             self.alpha_channel_mapping = task.alpha.source_channel
 
     @property
-    def red_buffer(self) -> ImageBuffer | None:
+    def red_buffer(self) -> TileSet | None:
         if self.red_uuid is None:
             return None
 
-        return self.get_buffer_from_baker_uuid(self.red_uuid)
+        return self.get_tile_set_from_baker_uuid(self.red_uuid)
 
     @property
-    def green_buffer(self) -> ImageBuffer | None:
+    def green_buffer(self) -> TileSet | None:
         if self.green_uuid is None:
             return None
 
-        return self.get_buffer_from_baker_uuid(self.green_uuid)
+        return self.get_tile_set_from_baker_uuid(self.green_uuid)
 
     @property
-    def blue_buffer(self) -> ImageBuffer | None:
+    def blue_buffer(self) -> TileSet | None:
         if self.blue_uuid is None:
             return None
 
-        return self.get_buffer_from_baker_uuid(self.blue_uuid)
+        return self.get_tile_set_from_baker_uuid(self.blue_uuid)
 
     @property
-    def alpha_buffer(self) -> ImageBuffer | None:
+    def alpha_buffer(self) -> TileSet | None:
         if self.alpha_uuid is None:
             return None
 
-        return self.get_buffer_from_baker_uuid(self.alpha_uuid)
+        return self.get_tile_set_from_baker_uuid(self.alpha_uuid)
 
     @property
     def uuids(self) -> list[str]:
@@ -97,5 +98,5 @@ class PackResource:
 
         return uuids
 
-    def get_buffer_from_baker_uuid(self, uuid: str) -> ImageBuffer | None:
+    def get_tile_set_from_baker_uuid(self, uuid: str) -> TileSet | None:
         return self.provider.get_image(self.bake_group_uuid, uuid)

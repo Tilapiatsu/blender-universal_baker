@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from .image_buffer import ImageBuffer
+    from ..resources.image_buffer import ImageBuffer
     from .settings_output import OutputSettings
 
 from ..constant import LOG

@@ -11,18 +11,18 @@ from ..constant import LOG
 from ..resources.image import ImageResource
 from ..enum.channels import Channel
 from ..runtime.bake_group import BakeGroup
-from ..runtime.output_base import OutputBase
-from ..services.image_io import ImageIOService
+from .logical_image import LogicalImage
 
 if TYPE_CHECKING:
     from bpy.types import Scene
     from ..properties.artifact import UBK_Artifact
 
 
-class OutputArtifact(OutputBase):
+class OutputArtifact:
     uuid: str
     dependencies: list[str]
     dependency_mapping: list[Channel]
+    image: LogicalImage
 
     def __init__(self, scene: Scene, property_group: UBK_Artifact):
         self.scene = scene
@@ -38,6 +38,10 @@ class OutputArtifact(OutputBase):
 
         for m in property_group.dependencies_mapping:
             self.dependency_mapping.append(m)
+
+    @property
+    def is_udim(self) -> bool:
+        return self.image.is_udim
 
     @property
     def type(self) -> str:
@@ -62,18 +66,22 @@ class OutputArtifact(OutputBase):
     @property
     def path(self) -> Path:
         """Returns the resolved path  of the file"""
-        return Path(bpy.path.abspath(self.data.relative_path))
+        return self.image.path
 
     def exists(self) -> bool:
         """Returns true if the file exists on disk"""
-        return self.path.exists()
+        return self.image.exists()
 
     def load_image(self) -> ImageResource:
         """
         Returns an ImageResource.
         """
+        from ..services.image_io import ImageIOService
+
         LOG.debug(f"Loading Image {self.name}")
         image = bpy.data.images.get(self.name)
+
         if image is None:
-            image = ImageIOService.load(self.path)
+            image = ImageIOService.load(self.path, self.image.is_udim)
+
         return ImageIOService.init_resource(image)

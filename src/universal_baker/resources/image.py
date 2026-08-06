@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 import bpy
+from universal_baker.runtime.output_artifact import OutputArtifact
 from ..runtime.settings_image import ImageSettings
 
 
@@ -25,7 +26,7 @@ class ImageResource:
 
     generated_type: str = "BLANK"
 
-    use_tiles: bool = False
+    is_udim: bool = False
 
     object_name: str = ""
     map_name: str = ""
@@ -55,7 +56,7 @@ class ImageResource:
         colorspace: str,
         alpha: bool = False,
         float_buffer: bool = False,
-        use_tiles: bool = False,
+        is_udim: bool = False,
     ) -> ImageResource:
         image = bpy.data.new(
             name,
@@ -65,7 +66,7 @@ class ImageResource:
             float_buffer,
             stereo3d=False,
             is_data=True if colorspace == "Non-Color" else False,
-            tiles=use_tiles,
+            tiles=is_udim,
         )
         return cls(
             image=image,
@@ -75,14 +76,14 @@ class ImageResource:
             _filepath=filepath,
             float_buffer=float_buffer,
             channels=4 if alpha else 3,
-            use_tiles=use_tiles,
+            is_udim=is_udim,
         )
 
     @property
     def filepath(self) -> Path:
         return (
             self._filepath.with_name(self._filepath.stem + ".<UDIM>" + self._filepath.suffix)
-            if self.use_tiles
+            if self.is_udim
             else self._filepath
         )
 
@@ -139,6 +140,10 @@ class ImageResource:
         tile_number = set([t.number for t in self.tiles])
         return tile_number
 
+    def reload(self) -> None: ...
+
+    # TODO : To be written
+
     def tiles_has_changed(self, tile_numbers: set[int]) -> bool:
         if self.image is None:
             return True
@@ -193,7 +198,12 @@ class ImageResource:
         self._height = self.image.size[1]
         self.name = self.image.name
         self.filepath = self.image.filepath_raw
-        self.use_tiles = self.image.tiles is not None
+        self.is_udim = self.image.tiles is not None
+
+    @classmethod
+    def from_artifact(cls, artifact: OutputArtifact) -> ImageResource: ...
+
+    # TODO: To be Written
 
     def __repr__(self) -> str:
         result = ""

@@ -8,7 +8,7 @@ from bpy.props import (
     EnumProperty,
     IntProperty,
     CollectionProperty,
-    PointerProperty,
+    BoolProperty,
 )
 from ..enum.channels import CHANNEL_ITEMS
 
@@ -38,6 +38,10 @@ class UBK_ChannelMapping(PropertyGroup):
         items=CHANNEL_ITEMS,
         default="R",
     )
+
+
+class UBK_UDIMTile(PropertyGroup):
+    number: IntProperty()
 
 
 class UBK_Artifact(PropertyGroup):
@@ -70,6 +74,8 @@ class UBK_Artifact(PropertyGroup):
     file_format: StringProperty()
     checksum: StringProperty()
     created: StringProperty()
+    image_layout: StringProperty()
+    udim_tiles: CollectionProperty(type=UBK_UDIMTile)
     dependencies: CollectionProperty(
         type=UBK_ArtifactDependency,
     )
@@ -80,6 +86,7 @@ classes = (
     UBK_ChannelMapping,
     UBK_ArtifactDependency,
     UBK_ProducerUUID,
+    UBK_UDIMTile,
     UBK_Artifact,
 )
 

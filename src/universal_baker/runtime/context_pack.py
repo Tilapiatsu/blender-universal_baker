@@ -6,11 +6,12 @@ import bpy
 
 from typing import TYPE_CHECKING
 
+
 if TYPE_CHECKING:
     from .task_pack import PackingTask
-    from .image_buffer import ImageBuffer
     from ..resources.pack import PackResource
     from .settings_output import OutputSettings
+    from ..runtime.tile_set import TileSet
 
 from .context import ExecutionContext
 from ..properties.project import UBK_Project
@@ -28,17 +29,17 @@ class PackContext(ExecutionContext):
 
     image: ImageResource = field(default_factory=ImageResource)
 
-    red_buffer: ImageBuffer | None = None
-    green_buffer: ImageBuffer | None = None
-    blue_buffer: ImageBuffer | None = None
-    alpha_buffer: ImageBuffer | None = None
+    red_buffer: TileSet | None = None
+    green_buffer: TileSet | None = None
+    blue_buffer: TileSet | None = None
+    alpha_buffer: TileSet | None = None
 
     pack_red: bool = False
     pack_green: bool = False
     pack_blue: bool = False
     pack_alpha: bool = False
 
-    output_buffer: ImageBuffer | None = None
+    output_buffer: TileSet | None = None
     pack_resource: PackResource | None = None
 
     finished: bool = False

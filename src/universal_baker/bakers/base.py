@@ -5,6 +5,9 @@ from abc import ABC
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 
+from universal_baker.enum import image_layout
+
+
 from ..constant import LOG
 from ..enum.output_stage import OutputStage
 from ..services.image_io import ImageIOService
@@ -13,6 +16,7 @@ from ..services.image_bake import ImageServiceBake
 from ..runtime.output_bake import OutputBake
 from ..services.artifact_service import ArtifactService
 from ..services.material import MaterialService
+from ..runtime.tile_set import TileSet
 
 if TYPE_CHECKING:
     from ..runtime.context_bake import BakeContext
@@ -86,7 +90,6 @@ class BakerBase(ABC):
         LOG.debug("Restoring ...")
         """Restore Blender."""
         ctx.image.reset()
-        # TODO : Need Further cleanup : Image data keep on adding inside blender file
 
     @abstractmethod
     def update_baker(self, ctx: BakeContext) -> None:
@@ -119,12 +122,12 @@ class BakerBase(ABC):
     @abstractmethod
     def create_output(self, ctx: BakeContext) -> None:
         LOG.debug("Creating Output ...")
-        buffer = ImageIOService.read(ctx.image)
+        tiles = TileSet.from_blender_image(ctx.image.image)
 
         output = OutputBake.create(
             uuid=ctx.task.uuid,
             name=ctx.image.name,
-            image=buffer,
+            tiles=tiles,
             bake_group=ctx.task.bake_group,
             baker=ctx.task.baker,
         )
@@ -148,6 +151,7 @@ class BakerBase(ABC):
             channels=ctx.image.channels,
             color_space=ctx.image.colorspace,
             file_format=ctx.output_settings.image.file_format,
+            image_layout=ctx.task.uv_layout.image_layout,
         )
 
     @abstractmethod

@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC
 from abc import abstractmethod
 
-from ..runtime.image_buffer import ImageBuffer
+from ..resources.image_buffer import ImageBuffer
 
 
 class Compositor(ABC):
