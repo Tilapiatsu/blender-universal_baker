@@ -14,6 +14,8 @@ from ..enum.image_layout import ImageLayout
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from ..runtime.settings_output import OutputSettings
+    from ..properties.artifact import UBK_Artifact
     from ..properties.project import UBK_Project
     from ..runtime.runtime import BakeRuntime
 
@@ -41,14 +43,10 @@ class ArtifactService:
         bake_group_uuid: str,
         target_object_uuid: str,
         producer_uuid: str,
-        filepath: Path,
-        width: int,
-        height: int,
         channels: int,
-        color_space: str,
-        file_format: str,
         image_layout: ImageLayout,
         checksum="",
+        output_settings: OutputSettings,
         dependencies: Iterable[str] = (),
     ) -> OutputArtifact | None:
         """
@@ -76,18 +74,20 @@ class ArtifactService:
         artifact_pg.bake_group_uuid = bake_group_uuid
         artifact_pg.producer_uuid = producer_uuid
         artifact_pg.target_object_uuid = target_object_uuid
-        artifact_pg.relative_path = str(filepath)
-        artifact_pg.filename = filepath.name
-        artifact_pg.extension = filepath.suffix.lower()
-        artifact_pg.width = width
-        artifact_pg.height = height
-        artifact_pg.channels = channels
-        artifact_pg.color_space = color_space
-        artifact_pg.file_format = file_format
         artifact_pg.checksum = checksum
         artifact_pg.created = datetime.now().isoformat()
         artifact_pg.name = name
         artifact_pg.image_layout = image_layout.value
+        artifact_pg.channels = channels
+        artifact_pg.feed_from_output_settings(output_settings)
+
+        # artifact_pg.output_path = str(filepath)
+        # artifact_pg.filename = filepath.name
+        # artifact_pg.extension = filepath.suffix.lower()
+        # artifact_pg.width = width
+        # artifact_pg.height = height
+        # artifact_pg.colorspace = colorspace
+        # artifact_pg.file_format = file_format
         #
         # Dependencies
         #
@@ -196,7 +196,7 @@ class ArtifactService:
         project: UBK_Project,
         bake_group_uuid: str,
         producer_uuid: str,
-    ):
+    ) -> UBK_Artifact | None:
 
         for artifact in project.artifacts:
             if artifact.bake_group_uuid == bake_group_uuid and artifact.producer_uuid == producer_uuid:

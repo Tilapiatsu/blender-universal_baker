@@ -23,6 +23,7 @@ class MaxAccumulator(AccumulatorBase):
         Prepare everything required before Blender's accumulate.
         """
         super().prepare(ctx)
+        # TODO : Need to change the input for accumulators from bpy.types.Image to ImageHandle
         ctx.image = ImageServiceBake.acquire(ctx.image, ctx.task)
 
     def accumulate(self, ctx: AccumulateContext) -> None:
@@ -36,6 +37,7 @@ class MaxAccumulator(AccumulatorBase):
         super().cleanup(ctx)
 
     def update_baker(self, ctx: AccumulateContext) -> None:
+        # TODO : Is this still necessary
         return super().update_baker(ctx)
 
     def create_artifact(self, ctx: AccumulateContext) -> None:

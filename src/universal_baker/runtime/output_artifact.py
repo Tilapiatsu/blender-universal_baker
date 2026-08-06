@@ -14,6 +14,7 @@ from ..runtime.bake_group import BakeGroup
 from .logical_image import LogicalImage
 
 if TYPE_CHECKING:
+    from .settings_output import OutputSettings
     from bpy.types import Scene
     from ..properties.artifact import UBK_Artifact
 
@@ -23,10 +24,12 @@ class OutputArtifact:
     dependencies: list[str]
     dependency_mapping: list[Channel]
     image: LogicalImage
+    output_settings: OutputSettings
 
     def __init__(self, scene: Scene, property_group: UBK_Artifact):
         self.scene = scene
         self.data = property_group
+        self.output_settings: OutputSettings = property_group.get_output_settings()
         self.name = self.data.name
         self.bake_group = BakeGroup(self.data.bake_group_uuid)
         self.uuid = str(uuid4())

@@ -116,21 +116,21 @@ class BakerBase(ABC):
         if not ctx.task.has_multiple_targets:
             baker.accumulated_image = ctx.image.image
 
-    @abstractmethod
-    def create_output(self, ctx: BakeContext) -> None:
-        LOG.debug("Creating Output ...")
-        tiles = TileSet.from_blender_image(ctx.image.image)
-
-        output = OutputBake.create(
-            uuid=ctx.task.uuid,
-            name=ctx.image.name,
-            tiles=tiles,
-            bake_group=ctx.task.bake_group,
-            baker=ctx.task.baker,
-        )
-
-        ctx.session.runtime.outputs.add(output)
-        ctx.session.runtime.provider.invalidate(ctx.task.bake_group_uuid, ctx.task.uuid)
+    # @abstractmethod
+    # def create_output(self, ctx: BakeContext) -> None:
+    #     LOG.debug("Creating Output ...")
+    #     tiles = TileSet.from_blender_image(ctx.image.image)
+    #
+    #     output = OutputBake.create(
+    #         uuid=ctx.task.uuid,
+    #         name=ctx.image.name,
+    #         tiles=tiles,
+    #         bake_group=ctx.task.bake_group,
+    #         baker=ctx.task.baker,
+    #     )
+    #
+    #     ctx.session.runtime.outputs.add(output)
+    #     ctx.session.runtime.provider.invalidate(ctx.task.bake_group_uuid, ctx.task.uuid)
 
     @abstractmethod
     def create_artifact(self, ctx: BakeContext) -> None:
@@ -142,13 +142,9 @@ class BakerBase(ABC):
             bake_group_uuid=ctx.task.bake_group_uuid,
             target_object_uuid=ctx.task.target_object_uuid,
             producer_uuid=ctx.task.uuid,
-            filepath=ctx.image.filepath,
-            width=ctx.image.width,
-            height=ctx.image.height,
             channels=ctx.image.channels,
-            color_space=ctx.image.colorspace,
-            file_format=ctx.output_settings.image.file_format,
             image_layout=ctx.task.uv_layout.image_layout,
+            output_settings=ctx.output_settings,
         )
 
     @abstractmethod

@@ -27,6 +27,8 @@ class OutputRepository:
     Producers refers to Bakers, Packers or accumulated sources.
     """
 
+    # TODO : Need to change the storage of OutputRepository from OutputBase to ImageHandle
+
     def __init__(self, artifact_repository: ArtifactRepository):
         self._artifacts = artifact_repository
         self._outputs = {}

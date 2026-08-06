@@ -86,14 +86,10 @@ class PackerBase(ABC):
             name=ctx.task.output_name,
             target_object_uuid="",
             producer_uuid=ctx.task.uuid,
-            filepath=ctx.image.filepath,
-            width=ctx.image.width,
-            height=ctx.image.height,
             channels=ctx.image.channels,
-            color_space=ctx.image.colorspace,
-            file_format=ctx.output_settings.image.file_format,
             dependencies=dependencies,
             image_layout=ctx.task.uv_layout.image_layout,
+            output_settings=ctx.output_settings,
         )
 
     @abstractmethod

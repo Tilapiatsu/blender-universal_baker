@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+import bpy
+
 from dataclasses import dataclass, field
 
 from typing import Iterator
 
+
 from .tile_set import TileData, TileSet
 
+from .settings_output import OutputSettings
 from ..resources.image import ImageResource
 from ..resources.image_buffer import ImageBuffer
 from ..services.image_codec import ImageCodec
@@ -34,6 +38,7 @@ class ImageHandle:
 
     def __init__(self, artifact: OutputArtifact):
         self._artifact = artifact
+        self._output_settings = artifact.output_settings
         self._resource: ImageResource = field(default_factory=ImageResource)
         self._tiles: TileSet = field(default_factory=TileSet)
 
@@ -113,6 +118,7 @@ class ImageHandle:
         ImageCodec.export_tiles(
             artifact=self._artifact,
             tiles=self._tiles,
+            output_settings=self._output_settings,
         )
 
         if self._resource is not None:
@@ -153,11 +159,11 @@ class ImageHandle:
         self._tiles.clear()
 
     @classmethod
-    def from_artifact(cls, artifact):
+    def from_artifact(cls, artifact: OutputArtifact):
         return cls(artifact)
 
     @classmethod
-    def from_image(cls, image): ...
+    def from_image(cls, image: bpy.types.Image): ...
 
     # TODO : To be Written
 

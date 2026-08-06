@@ -83,11 +83,15 @@ class ImageCodec:
         image.save_render
 
     @classmethod
-    def export_tiles(cls, artifact: OutputArtifact, tiles: TileSet): ...
-
-    # TODO: To be Written
+    def export_tiles(cls, artifact: OutputArtifact, tiles: TileSet, output_settings: OutputSettings):
+        for tile, buffer in tiles.tile_buffers:
+            cls.save(artifact.image.tile_path(tile), buffer, output_settings)
 
     @classmethod
-    def import_tiles(cls, artifact: OutputArtifact) -> TileSet: ...
+    def import_tiles(cls, artifact: OutputArtifact) -> TileSet:
+        tile_set = TileSet()
 
-    # TODO: To be Written
+        for t in artifact.image.files():
+            tile_set.add_tile(t.tile, cls.load(t.path))
+
+        return tile_set

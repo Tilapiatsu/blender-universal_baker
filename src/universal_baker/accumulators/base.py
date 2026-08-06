@@ -84,6 +84,7 @@ class AccumulatorBase(ABC):
             accumulator.accumulate(buffer, registry_compositor[self.id])
 
         ctx.output_buffer = accumulator.result()
+
         ImageIOService.write(ctx.image, ctx.output_buffer)
 
     @abstractmethod
@@ -116,13 +117,9 @@ class AccumulatorBase(ABC):
             bake_group_uuid=ctx.task.bake_group_uuid,
             target_object_uuid="",
             producer_uuid=ctx.task.uuid,
-            filepath=ctx.image.filepath,
-            width=ctx.image.width,
-            height=ctx.image.height,
             channels=ctx.image.channels,
-            color_space=ctx.image.colorspace,
-            file_format=ctx.output_settings.image.file_format,
             image_layout=ctx.task.uv_layout.image_layout,
+            output_settings=ctx.output_settings,
         )
 
     @abstractmethod

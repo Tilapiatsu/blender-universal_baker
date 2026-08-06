@@ -76,6 +76,12 @@ class TileSet:
     def is_empty(self) -> bool:
         return len(self._tiles) == 0
 
+    def add_tile(self, tile: int, buffer: ImageBuffer, override: bool = False) -> None:
+        if not override and tile in self.keys():
+            return
+        td = TileData(buffer)
+        self._tiles[tile] = td
+
     def clear(self) -> None:
         self._tiles = {}
 

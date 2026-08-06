@@ -143,9 +143,10 @@ class ImageResource:
         tile_number = set([t.number for t in self.tiles])
         return tile_number
 
-    def reload(self) -> None: ...
-
-    # TODO : To be written
+    def reload(self) -> None:
+        if self.image is None:
+            return
+        self.image.reload()
 
     def tiles_has_changed(self, tile_numbers: set[int]) -> bool:
         if self.image is None:
@@ -204,9 +205,27 @@ class ImageResource:
         self.is_udim = self.image.tiles is not None
 
     @classmethod
-    def from_artifact(cls, artifact: OutputArtifact) -> ImageResource: ...
+    def from_blender_image(cls, image: bpy.types.Image) -> ImageResource:
+        return cls.create(
+            width=image.size[0],
+            height=image.size[1],
+            name=image.name,
+            filepath=image.filepath_raw,
+            colorspace=image.colorspace_settings.name,
+            alpha=image.alpha_mode == "ALPHA",
+            float_buffer=image.is_float,
+            is_udim=image.source == "TILED",
+        )
 
-    # TODO: To be Written
+    @classmethod
+    def from_artifact(cls, artifact: OutputArtifact) -> ImageResource:
+        if artifact.name in bpy.data.Images and artifact.path == bpy.data.Images[artifact.name].filepath_raw:
+            image = bpy.data.images[artifact.name]
+            return cls.from_blender_image(image)
+
+        image = artifact.load_image()
+
+        return cls.from_blender_image(image)
 
     def __repr__(self) -> str:
         result = ""
