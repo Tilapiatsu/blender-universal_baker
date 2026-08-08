@@ -1,20 +1,33 @@
 from __future__ import annotations
 
-
 from ..constant import LOG
-from ..runtime.image_buffer import ImageBuffer
 from ..compositors.base import Compositor
+from ..runtime.image_handle import ImageHandle
 
 
 class ImageAccumulator:
-    def __init__(self, width, height, name: str = "Image"):
-        self._buffer = ImageBuffer.empty(width, height, name=name)
+    def __init__(self, image_handle: ImageHandle):
+        self._result = image_handle
 
-    def accumulate(self, image: ImageBuffer, compositor: Compositor) -> None:
+    def accumulate(self, image: ImageHandle, compositor: Compositor) -> None:
         """Accumulate Image to buffer"""
-        LOG.info(f"Accumulate image : {image.name}")
-        compositor.composite(self._buffer, image)
+        LOG.info(f"Accumulate image : {image.artifact.name}")
+        LOG.info(f"{len(image.tiles())} tile(s) found")
+        src_tiles = image.tiles()
+        dst_tiles = self._result.tiles()
 
-    def result(self) -> ImageBuffer:
+        for tile in src_tiles:
+            LOG.info(f"Accumulate tile : {tile}")
+
+            if tile not in dst_tiles:
+                self._result.set_empty_buffer(tile)
+
+            result_buffer = self._result.buffer(tile)
+
+            compositor.composite(result_buffer, image.buffer(tile))
+
+            self._result.set_buffer(tile, result_buffer)
+
+    def result(self) -> ImageHandle:
         """Returns Accumulated buffer"""
-        return self._buffer
+        return self._result

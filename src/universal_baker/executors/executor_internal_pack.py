@@ -68,7 +68,7 @@ class PackExecutorInternal(TaskExecutor):
             session.job.notify_task_started(task)
             start = perf_counter()
             LOG.info(
-                f"Init Task {session.job.current_task} / {session.job.total_tasks}",
+                self.init_task_message(session),
                 scope_state=ScopeState.ENTER,
                 category=EventCategory.PACK,
             )

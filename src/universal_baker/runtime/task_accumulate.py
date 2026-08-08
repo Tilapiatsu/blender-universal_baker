@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -13,6 +13,7 @@ from .task import Task
 from ..runtime.settings_accumulate import AccumulateSettings
 from ..logger.event import ScopeState
 from ..logger_bake_middleware.bake_summary import BakeStatus, EventCategory
+from ..core.output_resolver import OutputResolver
 
 
 @dataclass(slots=True, frozen=True)
@@ -41,6 +42,12 @@ class AccumulateTask(Task):
     @property
     def accumulator_name(self) -> str:
         return self.accumulator.name
+
+    @property
+    def absolute_filepath(self) -> Path:
+        file_output = OutputResolver.resolve(self.output_context, self.uv_layout.image_layout)
+
+        return file_output.absolute_path
 
     def __repr__(self) -> str:
         result = f"ACCUMULATOR_{self.accumulator_id:30} | {self.output_name:30} "

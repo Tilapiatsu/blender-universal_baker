@@ -1,17 +1,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+
+from .tile_set import TileSet
 
 from .bake_group import BakeGroup
-
-if TYPE_CHECKING:
-    from .image_buffer import ImageBuffer
 
 
 @dataclass(slots=True)
 class OutputBase:
     uuid: str
     name: str
-    image: ImageBuffer
+    tiles: TileSet
     bake_group: BakeGroup

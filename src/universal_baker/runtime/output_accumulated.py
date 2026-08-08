@@ -2,17 +2,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
-from uuid import uuid4
 
 from ..constant import LOG
 from .output_base import OutputBase
 from .output_bake import OutputBake
 from .bake_group import BakeGroup
 from .output_artifact import OutputArtifact
-from ..services.image_io import ImageIOService
+from .tile_set import TileSet
 
 if TYPE_CHECKING:
-    from .image_buffer import ImageBuffer
     from ..bakers.base import BakerBase
 
 LOG_SCOPE: str = "Output Accumulated"
@@ -48,12 +46,12 @@ class OutputAccumulated(OutputBase):
         bake_group: BakeGroup,
         output_bakes: list[OutputBake],
         baker: BakerBase,
-        image: ImageBuffer,
+        tiles: TileSet,
     ) -> OutputAccumulated:
         return cls(
             uuid=uuid,
             name=name,
-            image=image,
+            tiles=tiles,
             bake_group=bake_group,
             output_bakes=output_bakes,
             baker=baker,
@@ -78,7 +76,7 @@ class OutputAccumulated(OutputBase):
             from ..core.controller import BakeController
 
             image = artifact.load_image()
-            image_buffer = ImageIOService.read(image)
+            tiles = TileSet.from_blender_image(image.image)
 
             output_bakes = []
             for d in artifact.dependencies:
@@ -93,7 +91,7 @@ class OutputAccumulated(OutputBase):
             output = OutputAccumulated(
                 uuid=artifact.uuid,
                 name=artifact.name,
-                image=image_buffer,
+                tiles=tiles,
                 baker=baker,
                 bake_group=BakeGroup(artifact.bake_group_uuid),
                 output_bakes=output_bakes,

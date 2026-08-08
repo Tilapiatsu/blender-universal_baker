@@ -8,10 +8,11 @@ from ..runtime.context_pack import PackContext
 from .base import PackerBase
 
 from ..core.registry_packer import registry_packer
-from ..runtime.image_buffer import ImageBuffer
+from ..resources.image_buffer import ImageBuffer
 from ..services.image_pack import ImageServicePack
 from ..services.image_io import ImageIOService
 from ..enum.channels import Channel
+from ..runtime.tile_set import TileSet
 
 
 class PackerInternal(PackerBase):
@@ -42,7 +43,7 @@ class PackerInternal(PackerBase):
         ctx.blue_buffer = ctx.pack_resource.blue_buffer
         ctx.alpha_buffer = ctx.pack_resource.alpha_buffer
 
-        buffers: tuple[ImageBuffer, ...] = tuple([])
+        buffers: tuple[TileSet, ...] = tuple([])
 
         if ctx.red_buffer is not None and task.red and task.red.enabled:
             ctx.pack_red = True
@@ -62,22 +63,25 @@ class PackerInternal(PackerBase):
                 LOG.warning("No Image Resource Found")
             return
 
-        ctx.output_buffer = self.create_buffer(buffers[0].width, buffers[0].height, ctx.task.image_name)
+        buffur = buffers[0].values()[0]
+        ctx.output_buffer = self.create_tile_set(buffur.width, buffur.height, ctx.task.image_name)
 
     def pack(self, ctx: PackContext) -> None:
         """Execute the packing."""
 
         if ctx.output_buffer:
             if ctx.pack_red and ctx.red_buffer and ctx.pack_resource and ctx.pack_resource.red_channel_mapping:
-                self.copy_channel(ctx.output_buffer, ctx.pack_resource.red_channel_mapping, ctx.red_buffer, Channel.R)
+                self.copy_channels(ctx.output_buffer, ctx.pack_resource.red_channel_mapping, ctx.red_buffer, Channel.R)
             if ctx.pack_green and ctx.green_buffer and ctx.pack_resource and ctx.pack_resource.green_channel_mapping:
-                self.copy_channel(
+                self.copy_channels(
                     ctx.output_buffer, ctx.pack_resource.green_channel_mapping, ctx.green_buffer, Channel.G
                 )
             if ctx.pack_blue and ctx.blue_buffer and ctx.pack_resource and ctx.pack_resource.blue_channel_mapping:
-                self.copy_channel(ctx.output_buffer, ctx.pack_resource.blue_channel_mapping, ctx.blue_buffer, Channel.B)
+                self.copy_channels(
+                    ctx.output_buffer, ctx.pack_resource.blue_channel_mapping, ctx.blue_buffer, Channel.B
+                )
             if ctx.pack_alpha and ctx.alpha_buffer and ctx.pack_resource and ctx.pack_resource.alpha_channel_mapping:
-                self.copy_channel(
+                self.copy_channels(
                     ctx.output_buffer, ctx.pack_resource.alpha_channel_mapping, ctx.alpha_buffer, Channel.A
                 )
 
@@ -119,52 +123,75 @@ class PackerInternal(PackerBase):
     # -------------------------------------------------------------------------
 
     @staticmethod
-    def validate_same_size(*buffers: ImageBuffer) -> None:
+    def validate_same_size(*buffers: TileSet) -> None:
         """Check if the inputed buffers have the same size"""
         if not buffers:
             return
 
-        width = buffers[0].width
-        height = buffers[0].height
+        ref_width = buffers[0].values()[0].width
+        ref_height = buffers[0].values()[0].height
 
-        for buffer in buffers[1:]:
-            if buffer.width != width or buffer.height != height:
-                raise ValueError("All images must have identical dimensions.")
+        for ts in buffers:
+            for buffer in ts.values():
+                width = buffer.width
+                height = buffer.height
+
+                if ref_width != width or ref_height != height:
+                    raise ValueError("All images must have identical dimensions.")
+
+    @staticmethod
+    def validate_same_tilesets(*buffers: TileSet) -> None:
+        if not buffers:
+            return
+
+        ref_tileset = set(buffers[0].keys())
+
+        for ts in buffers[1:]:
+            curr_tileset = set(ts.keys())
+            if len(curr_tileset.difference(ref_tileset)) > 0:
+                raise ValueError(
+                    f"All tile set must have be the same between source and destination.\n{ref_tileset}\n{curr_tileset}."
+                )
 
     # -------------------------------------------------------------------------
     # Buffer creation
     # -------------------------------------------------------------------------
 
     @staticmethod
-    def create_buffer(width: int, height: int, name: str = "Image") -> ImageBuffer:
+    def create_tile_set(
+        width: int,
+        height: int,
+        name: str = "Image",
+        tiles: list[int] = [
+            1001,
+        ],
+    ) -> TileSet:
         """Create an Image Buffer with the given width and height"""
-        return ImageBuffer.empty(width, height, name=name)
+        ts = TileSet()
+
+        for t in tiles:
+            ts[t] = ImageBuffer.empty(width, height, name=name)
+
+        return ts
 
     # -------------------------------------------------------------------------
     # Public API
     # -------------------------------------------------------------------------
 
     @classmethod
-    def copy_channel(
-        cls, destination: ImageBuffer, destination_channel: Channel, source: ImageBuffer, source_channel: Channel
+    def copy_channels(
+        cls, destination: TileSet, destination_channel: Channel, source: TileSet, source_channel: Channel
     ) -> None:
         """Copy a channel from source ImageBuffer to a destination ImageBuffer"""
         cls.validate_same_size(destination, source)
-        if np is not None:
-            cls._copy_numpy(
-                destination,
-                destination_channel,
-                source,
-                source_channel,
-            )
+        cls.validate_same_tilesets(destination, source)
 
-        else:
-            cls._copy_python(
-                destination,
-                destination_channel,
-                source,
-                source_channel,
-            )
+        cls._copy_numpy(
+            destination,
+            destination_channel,
+            source,
+            source_channel,
+        )
 
     @classmethod
     def fill_channel(cls, destination: ImageBuffer, destination_channel: Channel, value: float) -> None:
@@ -186,38 +213,21 @@ class PackerInternal(PackerBase):
 
     @classmethod
     def _copy_numpy(
-        cls, destination: ImageBuffer, destination_channel: Channel, source: ImageBuffer, source_channel: Channel
+        cls, destination: TileSet, destination_channel: Channel, source: TileSet, source_channel: Channel
     ) -> None:
         """Copy a channel from source ImageBuffer to a destination ImageBuffer using numpy"""
 
-        dst = destination.reshape()
-        src = source.reshape()
+        for udim in source.keys():
+            if udim not in destination.keys():
+                raise ValueError(f"Destination don't have {udim} tileset")
 
-        dst_index = cls._channel_index(destination_channel)
-        src_index = cls._channel_index(source_channel)
+            dst = destination[udim].reshape()
+            src = source[udim].reshape()
 
-        dst[..., dst_index] = src[..., src_index]
+            dst_index = cls._channel_index(destination_channel)
+            src_index = cls._channel_index(source_channel)
 
-    # -------------------------------------------------------------------------
-    # Pure Python implementation
-    # -------------------------------------------------------------------------
-
-    @classmethod
-    def _copy_python(
-        cls, destination: ImageBuffer, destination_channel: Channel, source: ImageBuffer, source_channel: Channel
-    ) -> None:
-        """Copy a channel from source ImageBuffer to a destination ImageBuffer using python"""
-
-        dst = destination.pixels
-        src = source.pixels
-
-        dst_index = cls._channel_index(destination_channel)
-        src_index = cls._channel_index(source_channel)
-
-        for i in range(destination.size):
-            base = i * 4
-
-            dst[base + dst_index] = src[base + src_index]
+            dst[..., dst_index] = src[..., src_index]
 
     # -------------------------------------------------------------------------
     # Helpers

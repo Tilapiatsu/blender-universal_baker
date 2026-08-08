@@ -1,19 +1,25 @@
 from __future__ import annotations
 
-import bpy
-
-from pathlib import Path
 from datetime import datetime
 from typing import Iterable
+from pathlib import Path
 
+from universal_baker.resources.uv import UVLayout
+
+from ..constant import LOG
 from ..enum.output_stage import OutputStage
 from ..runtime.output_artifact import OutputArtifact
+from ..enum.image_layout import ImageLayout
 
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from ..runtime.settings_output import OutputSettings
+    from ..properties.artifact import UBK_Artifact
     from ..properties.project import UBK_Project
     from ..runtime.runtime import BakeRuntime
+
+LOG_SCOPE = "Artifact Service"
 
 
 class ArtifactService:
@@ -39,74 +45,88 @@ class ArtifactService:
         bake_group_uuid: str,
         target_object_uuid: str,
         producer_uuid: str,
-        filepath: Path,
-        width: int,
-        height: int,
-        channels: int,
-        color_space: str,
-        file_format: str,
+        image_layout: ImageLayout,
+        uv_layout: UVLayout,
+        absolute_path: Path,
+        output_settings: OutputSettings,
         checksum="",
         dependencies: Iterable[str] = (),
     ) -> OutputArtifact | None:
         """
         Creates or updates an artifact.
         """
+        with LOG.scope(LOG_SCOPE):
+            artifact_pg = cls._find_property_group(
+                project,
+                bake_group_uuid,
+                producer_uuid,
+                target_object_uuid,
+            )
 
-        artifact_pg = cls._find_property_group(
-            project,
-            bake_group_uuid,
-            producer_uuid,
-        )
+            #
+            # Existing artifact ?
+            #
+            if artifact_pg is None:
+                LOG.debug("Creating new Artifact")
+                artifact_pg = project.artifacts.add()
+                artifact_pg.uuid = cls._generate_uuid()
+            else:
+                LOG.debug(f"Updating existing Artifact : {artifact_pg.name}")
 
-        #
-        # Existing artifact ?
-        #
-        if artifact_pg is None:
-            artifact_pg = project.artifacts.add()
-            artifact_pg.uid = cls._generate_uuid()
+            #
+            # Fill metadata
+            #
 
-        #
-        # Fill metadata
-        #
+            artifact_pg.type = artifact_type.value
+            artifact_pg.bake_group_uuid = bake_group_uuid
+            artifact_pg.producer_uuid = producer_uuid
+            artifact_pg.target_object_uuid = target_object_uuid
+            artifact_pg.checksum = checksum
+            artifact_pg.created = datetime.now().isoformat()
+            artifact_pg.name = name
+            artifact_pg.image_layout = image_layout.value
+            artifact_pg.channels = output_settings.image.alpha
+            artifact_pg.feed_from_output_settings(output_settings)
+            artifact_pg.absolute_path = str(absolute_path)
 
-        artifact_pg.type = artifact_type.value
-        artifact_pg.bake_group_uuid = bake_group_uuid
-        artifact_pg.producer_uuid = producer_uuid
-        artifact_pg.target_object_uuid = target_object_uuid
-        artifact_pg.relative_path = str(filepath)
-        artifact_pg.filename = filepath.name
-        artifact_pg.extension = filepath.suffix.lower()
-        artifact_pg.width = width
-        artifact_pg.height = height
-        artifact_pg.channels = channels
-        artifact_pg.color_space = color_space
-        artifact_pg.file_format = file_format
-        artifact_pg.checksum = checksum
-        artifact_pg.created = datetime.now().isoformat()
-        artifact_pg.name = name
-        #
-        # Dependencies
-        #
+            tiles = uv_layout.tiles
 
-        artifact_pg.dependencies.clear()
+            for tile in tiles:
+                tile_pg = artifact_pg.udim_tiles.add()
 
-        for uuid in dependencies:
-            dep = artifact_pg.dependencies.add()
+                tile_pg.number = tile
 
-            dep.artifact_uuid = uuid
+            #
+            # Dependencies
+            #
 
-        #
-        # Runtime refresh
-        #
+            artifact_pg.dependencies.clear()
 
-        runtime.artifacts.rebuild()
+            for uuid in dependencies:
+                dep = artifact_pg.dependencies.add()
 
-        runtime.outputs.invalidate(
-            bake_group_uuid,
-            producer_uuid,
-        )
+                dep.artifact_uuid = uuid
 
-        return runtime.artifacts.get(artifact_pg.uuid)
+            #
+            # Runtime refresh
+            #
+
+            runtime.artifacts.rebuild()
+
+            runtime.outputs.invalidate(
+                bake_group_uuid,
+                producer_uuid,
+            )
+
+            artifact = runtime.artifacts.get(artifact_pg.uuid)
+
+            if artifact is not None:
+                LOG.debug(f"Artifact registered : {str(artifact)}")
+                # artifact.init_empty_image()
+            else:
+                LOG.warning("Artifact Creation Failed")
+
+            return artifact
 
     # ------------------------------------------------------------------
     # Removal
@@ -192,17 +212,21 @@ class ArtifactService:
         project: UBK_Project,
         bake_group_uuid: str,
         producer_uuid: str,
-    ):
+        target_object_uuid: str,
+    ) -> UBK_Artifact | None:
 
         for artifact in project.artifacts:
-            if artifact.bake_group_uuid == bake_group_uuid and artifact.producer_uuid == producer_uuid:
+            if (
+                artifact.bake_group_uuid == bake_group_uuid
+                and artifact.producer_uuid == producer_uuid
+                and artifact.target_object_uuid == target_object_uuid
+            ):
                 return artifact
 
         return None
 
     @staticmethod
     def _generate_uuid():
-
         from uuid import uuid4
 
         return str(uuid4())

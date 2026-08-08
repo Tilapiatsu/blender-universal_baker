@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from time import perf_counter
 import traceback
-import bpy
 
+import bpy
 
 from ..constant import LOG
 from ..runtime.context import ExecutionContext
@@ -69,7 +69,7 @@ class AccumulateExecutorInternal(TaskExecutor):
             session.job.notify_task_started(task)
             start = perf_counter()
             LOG.info(
-                f"Init Task {session.job.current_task} / {session.job.total_tasks}",
+                self.init_task_message(session),
                 scope_state=ScopeState.ENTER,
                 category=EventCategory.ACCUMULATE,
             )

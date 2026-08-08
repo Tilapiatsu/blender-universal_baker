@@ -75,7 +75,10 @@ class Job:
                 if "object" in f.data.keys():
                     message += f"{f.data['object']:20} | "
 
-                message += f"{f.scope[-1]} {f.message:30} ({f.scope_duration:.2f}s)"
+                message += f"{f.scope[-1]} {f.message:30}"
+
+                if getattr(f, "scope_duration", None) is not None:
+                    message += f" ({f.scope_duration:.2f}s)"
                 LOG.error(message)
 
             summary.clear()

@@ -4,6 +4,7 @@ from pathlib import Path
 
 import bpy
 
+from ..runtime.settings_image import ImageSettings
 from ..constant import LOG
 from ..resources.image import ImageResource
 from ..runtime.task import Task
@@ -17,27 +18,26 @@ class ImageServiceBase:
     """Manage destination images."""
 
     @classmethod
-    def init_resource(cls, image: bpy.types.Image) -> ImageResource:
-        resource = ImageResource(image)
+    def init_resource(cls, image: bpy.types.Image, image_format_settings: ImageSettings) -> ImageResource:
+        resource = ImageResource(image, image_format_settings=image_format_settings)
+
         resource.init_from_image()
         return resource
 
     @classmethod
-    def acquire(
-        cls, resource: ImageResource, task: Task, suffix: str | None = None, sub_folder: str | None = None
-    ) -> ImageResource:
+    def acquire(cls, resource: ImageResource, task: Task) -> ImageResource:
         """
-        Acquire the destination image for this bake.
+        Acquire the destination image for this task.
         """
         with LOG.scope(LOG_SCOPE):
             LOG.debug("Acquire image ...")
 
             if resource.image is not None:
                 LOG.debug("Update existing Image")
-                cls.configure(resource, task, suffix, sub_folder)
+                cls.configure(resource, task)
                 return resource
 
-            cls.configure(resource, task, suffix, sub_folder)
+            cls.configure(resource, task)
 
             image = bpy.data.images.get(resource.name)
 
@@ -80,7 +80,6 @@ class ImageServiceBase:
         """
         Release temporary images.
         """
-
         if not resource.temporary:
             return
 
@@ -97,8 +96,6 @@ class ImageServiceBase:
         cls,
         resource: ImageResource,
         task: Task,
-        suffix: str | None = None,
-        sub_folder: str | None = None,
     ) -> None:
         """
         Populate the resource from the Task.
@@ -115,20 +112,13 @@ class ImageServiceBase:
             resource.height = path_settings.height
             resource.colorspace = color_settings.colorspace
             resource.image_format_settings = image_settings
-            resource.use_tiles = task.uv_layout.image_layout == ImageLayout.UDIM
+            resource.is_udim = task.uv_layout.image_layout == ImageLayout.UDIM
             LOG.debug(f"Configure Image to {task.uv_layout.image_layout}")
 
-            resource.filepath = cls.resolve_filepath(task, suffix, sub_folder)
+            resource.filepath = task.absolute_filepath
 
     @classmethod
-    def resolve_filepath(cls, task: Task, suffix: str | None = None, sub_folder: str | None = None) -> Path:
-        from ..core.output_resolver import OutputResolver
-
-        file_output = OutputResolver.resolve(task.output_context, suffix, sub_folder)
-        return file_output.absolute_path
-
-    @classmethod
-    def create(cls, resource: ImageResource, tiles: tuple[tuple[int, int], ...]) -> bpy.types.Image:
+    def create(cls, resource: ImageResource, tiles: tuple[tuple[int, int], ...] = ((0, 0),)) -> bpy.types.Image:
         with LOG.scope("Create"):
             if resource.tiles_has_changed(UVService.tile_numbers(tiles)):
                 resource.remove_image()
@@ -141,10 +131,10 @@ class ImageServiceBase:
                     height=resource.height,
                     alpha=resource.image_format_settings.alpha,
                     float_buffer=resource.image_format_settings.float_buffer,
-                    tiled=resource.use_tiles,
+                    tiled=resource.is_udim,
                 )
 
-                if resource.use_tiles:
+                if resource.is_udim:
                     resource.image = image
                     cls.add_udim_tiles(resource, tiles)
             else:
@@ -164,7 +154,6 @@ class ImageServiceBase:
         resources_copy = ImageResource(
             image=image_copy,
             name=image_copy.name if image_copy is not None else "",
-            filepath=resource.filepath,
             generated_type=resource.generated_type,
             object_name=resource.object_name,
             map_name=resource.map_name,
@@ -173,7 +162,7 @@ class ImageServiceBase:
             image_format_settings=resource.image_format_settings,
             is_copy=True,
         )
-
+        resources_copy.filepath = resource.filepath
         return resources_copy
 
     @classmethod
@@ -239,7 +228,7 @@ class ImageServiceBase:
                 r.scale(width, height)
 
     @classmethod
-    def add_udim_tiles_01(cls, resource: ImageResource, tiles: tuple[tuple[int, int], ...]) -> None:
+    def add_udim_tiles_bak(cls, resource: ImageResource, tiles: tuple[tuple[int, int], ...]) -> None:
         LOG.debug("Adding UDIM Tile")
         image = resource.image
 
@@ -261,18 +250,7 @@ class ImageServiceBase:
         if first_tile is not None and 1001 not in UVService.tile_numbers(tiles):
             image.tiles.remove(first_tile)
 
-    @classmethod
-    def clear_tiles(cls, resource: ImageResource):
-        image = resource.image
-
-        if image is None:
-            return
-
-        if image.tiles is None:
-            return
-
-        for tile in image.tiles.values():
-            image.tiles.remove(tile)
+        image.update()
 
     # https://blender.stackexchange.com/questions/274964/how-to-add-udim-tiles-to-an-image-and-fill-them-via-python
     @classmethod
@@ -335,3 +313,16 @@ class ImageServiceBase:
         # if context.area changed, restore back
         if context.area.ui_type != old_area_type and old_area_type is not None:
             context.area.ui_type = old_area_type
+
+    @classmethod
+    def clear_tiles(cls, resource: ImageResource):
+        image = resource.image
+
+        if image is None:
+            return
+
+        if image.tiles is None:
+            return
+
+        for tile in image.tiles.values():
+            image.tiles.remove(tile)

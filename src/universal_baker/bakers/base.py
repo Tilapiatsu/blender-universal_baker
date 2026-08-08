@@ -5,12 +5,11 @@ from abc import ABC
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 
+
 from ..constant import LOG
 from ..enum.output_stage import OutputStage
-from ..services.image_io import ImageIOService
 from ..services.renderer import RendererService
 from ..services.image_bake import ImageServiceBake
-from ..runtime.output_bake import OutputBake
 from ..services.artifact_service import ArtifactService
 from ..services.material import MaterialService
 
@@ -59,7 +58,6 @@ class BakerBase(ABC):
             self.prepare(ctx)
             self.bake(ctx)
             self.update_baker(ctx)
-            # self.create_output(ctx)
             self.create_artifact(ctx)
             self.export_file(ctx)
             self.cleanup(ctx)
@@ -68,10 +66,7 @@ class BakerBase(ABC):
     def prepare(self, ctx: BakeContext) -> None:
         """Prepare Blender before baking."""
         LOG.debug("Preparing Scene ...")
-        if ctx.task.has_multiple_targets:
-            ctx.image = ImageServiceBake.acquire(ctx.image, ctx.task, ctx.task.object_name, "object_buffers")
-        else:
-            ctx.image = ImageServiceBake.acquire(ctx.image, ctx.task)
+        ctx.image = ImageServiceBake.acquire(ctx.image, ctx.task)
 
         MaterialService.prepare_target(ctx)
 
@@ -85,8 +80,8 @@ class BakerBase(ABC):
     def cleanup(self, ctx: BakeContext) -> None:
         LOG.debug("Restoring ...")
         """Restore Blender."""
+        # TODO : Need to remove material if there was no material at the first place ?
         ctx.image.reset()
-        # TODO : Need Further cleanup : Image data keep on adding inside blender file
 
     @abstractmethod
     def update_baker(self, ctx: BakeContext) -> None:
@@ -117,24 +112,8 @@ class BakerBase(ABC):
             baker.accumulated_image = ctx.image.image
 
     @abstractmethod
-    def create_output(self, ctx: BakeContext) -> None:
-        LOG.debug("Creating Output ...")
-        buffer = ImageIOService.read(ctx.image)
-
-        output = OutputBake.create(
-            uuid=ctx.task.uuid,
-            name=ctx.image.name,
-            image=buffer,
-            bake_group=ctx.task.bake_group,
-            baker=ctx.task.baker,
-        )
-
-        ctx.session.runtime.outputs.add(output)
-        ctx.session.runtime.provider.invalidate(ctx.task.bake_group_uuid, ctx.task.uuid)
-
-    @abstractmethod
     def create_artifact(self, ctx: BakeContext) -> None:
-        ArtifactService.register(
+        artifact = ArtifactService.register(
             runtime=ctx.session.runtime,
             project=ctx.project,
             artifact_type=OutputStage.BAKE,
@@ -142,13 +121,16 @@ class BakerBase(ABC):
             bake_group_uuid=ctx.task.bake_group_uuid,
             target_object_uuid=ctx.task.target_object_uuid,
             producer_uuid=ctx.task.uuid,
-            filepath=ctx.image.filepath,
-            width=ctx.image.width,
-            height=ctx.image.height,
-            channels=ctx.image.channels,
-            color_space=ctx.image.colorspace,
-            file_format=ctx.output_settings.image.file_format,
+            image_layout=ctx.task.uv_layout.image_layout,
+            uv_layout=ctx.task.uv_layout,
+            absolute_path=ctx.task.absolute_filepath,
+            output_settings=ctx.output_settings,
         )
+
+        if artifact is None:
+            return
+
+        ctx.output = ctx.session.runtime.outputs.get(artifact)
 
     @abstractmethod
     def export_file(self, ctx: BakeContext) -> None:

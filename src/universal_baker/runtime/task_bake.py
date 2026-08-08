@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 
 import bpy
 
@@ -17,6 +18,7 @@ from .task import Task
 from ..runtime.settings_bake import BakeSettings
 from ..logger.event import ScopeState
 from ..logger_bake_middleware.bake_summary import BakeStatus, EventCategory
+from ..core.output_resolver import OutputResolver
 
 
 @dataclass(slots=True, frozen=True)
@@ -30,8 +32,6 @@ class BakeTask(Task):
     uv_layer: str
 
     has_multiple_targets: bool = False
-    # output_path: Path
-    # cage_object: bpy.types.Object | None
 
     @property
     def bake_group(self) -> UBK_BakeGroup | None:
@@ -64,6 +64,17 @@ class BakeTask(Task):
     @property
     def selected_to_active(self) -> bool:
         return len(self.sources) > 0
+
+    @property
+    def absolute_filepath(self) -> Path:
+        file_output = OutputResolver.resolve(
+            self.output_context,
+            self.uv_layout.image_layout,
+            self.object_name,
+            "object_buffers" if self.has_multiple_targets else None,
+        )
+
+        return file_output.absolute_path
 
     def __repr__(self) -> str:
         result = f"BAKER_{self.baker_id} | {self.object_name:100} "

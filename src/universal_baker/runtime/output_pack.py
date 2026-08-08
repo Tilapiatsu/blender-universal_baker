@@ -1,14 +1,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from uuid import uuid4
 
 from ..constant import LOG
-from .image_buffer import ImageBuffer
 from .output_base import OutputBase
 from .bake_group import BakeGroup
 from .output_artifact import OutputArtifact
-from ..services.image_io import ImageIOService
+from .tile_set import TileSet
 
 from typing import TYPE_CHECKING
 
@@ -56,7 +54,7 @@ class OutputPack(OutputBase):
         cls,
         uuid: str,
         name: str,
-        image: ImageBuffer,
+        tiles: TileSet,
         bake_group: BakeGroup,
         packer: PackerBase,
         red_baker: BakerBase,
@@ -71,7 +69,7 @@ class OutputPack(OutputBase):
         return cls(
             uuid=uuid,
             name=name,
-            image=image,
+            tiles=tiles,
             bake_group=bake_group,
             packer=packer,
             red_baker=red_baker,
@@ -91,7 +89,7 @@ class OutputPack(OutputBase):
             from ..core.controller import BakeController
 
             image = artifact.load_image()
-            image_buffer = ImageIOService.read(image)
+            tiles = TileSet.from_blender_image(image.image)
 
             packer = BakeController.get_paker_from_uuid(artifact.producer_uuid)
             red_baker = BakeController.get_baker_from_uuid(artifact.dependencies[0])
@@ -102,7 +100,7 @@ class OutputPack(OutputBase):
             output = OutputPack(
                 uuid=artifact.uuid,
                 name=artifact.name,
-                image=image_buffer,
+                tiles=tiles,
                 bake_group=BakeGroup(artifact.bake_group_uuid),
                 packer=packer,
                 red_baker=red_baker,

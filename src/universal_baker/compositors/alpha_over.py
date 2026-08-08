@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from .base import Compositor
-from ..runtime.image_buffer import ImageBuffer
+from ..resources.image_buffer import ImageBuffer
 from ..core.registry_compositor import registry_compositor
 
 
@@ -15,6 +15,7 @@ class CompositeAlphaOver(Compositor):
         super().composite(buffer, image)
 
         alpha = image.pixels[..., 3:4]
+
         # RGB composite :
         buffer.pixels[..., 0:3] = image.pixels[..., 0:3] * alpha + buffer.pixels[..., 0:3] * (1 - alpha)
 

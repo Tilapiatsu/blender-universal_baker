@@ -1,35 +1,46 @@
 from __future__ import annotations
 
 import bpy
-from uuid import uuid4
 
 from pathlib import Path
 from typing import TYPE_CHECKING
+
+from universal_baker.resources.image_buffer import ImageBuffer
+from universal_baker.runtime.tile_set import TileSet
 
 
 from ..constant import LOG
 from ..resources.image import ImageResource
 from ..enum.channels import Channel
 from ..runtime.bake_group import BakeGroup
-from ..runtime.output_base import OutputBase
-from ..services.image_io import ImageIOService
+from .logical_image import LogicalImage
 
 if TYPE_CHECKING:
+    from .settings_output import OutputSettings
     from bpy.types import Scene
     from ..properties.artifact import UBK_Artifact
 
 
-class OutputArtifact(OutputBase):
+class OutputArtifact:
     uuid: str
     dependencies: list[str]
     dependency_mapping: list[Channel]
+    image: LogicalImage
+    output_settings: OutputSettings
 
     def __init__(self, scene: Scene, property_group: UBK_Artifact):
+        udim_tiles = property_group.get_udim_tiles()
+        self.image = LogicalImage.create(
+            layout=property_group.image_layout,
+            path=property_group.absolute_path,
+            tiles=udim_tiles,
+        )
         self.scene = scene
         self.data = property_group
+        self.output_settings: OutputSettings = property_group.get_output_settings()
         self.name = self.data.name
         self.bake_group = BakeGroup(self.data.bake_group_uuid)
-        self.uuid = str(uuid4())
+        self.uuid = property_group.uuid
         self.dependencies = []
         self.dependency_mapping = []
 
@@ -38,6 +49,10 @@ class OutputArtifact(OutputBase):
 
         for m in property_group.dependencies_mapping:
             self.dependency_mapping.append(m)
+
+    @property
+    def is_udim(self) -> bool:
+        return self.image.is_udim
 
     @property
     def type(self) -> str:
@@ -62,18 +77,36 @@ class OutputArtifact(OutputBase):
     @property
     def path(self) -> Path:
         """Returns the resolved path  of the file"""
-        return Path(bpy.path.abspath(self.data.relative_path))
+        return self.image.path
 
     def exists(self) -> bool:
         """Returns true if the file exists on disk"""
-        return self.path.exists()
+        return self.image.exists
 
     def load_image(self) -> ImageResource:
         """
         Returns an ImageResource.
         """
+        from ..services.image_io import ImageIOService
+
         LOG.debug(f"Loading Image {self.name}")
         image = bpy.data.images.get(self.name)
+
         if image is None:
-            image = ImageIOService.load(self.path)
-        return ImageIOService.init_resource(image)
+            image = ImageIOService.load(self.path, self.image.is_udim)
+
+        return ImageIOService.init_resource(image, self.output_settings.image)
+
+    def init_empty_image(self) -> None:
+        from ..services.image_codec import ImageCodec
+
+        LOG.debug("Init Empty image files for Artrifact")
+        tileset = TileSet()
+        for t in self.image.tiles:
+            tileset.add_empty_tile(t, self.output_settings)
+
+        ImageCodec.export_tiles(self, tileset, self.output_settings)
+
+    def __repr__(self) -> str:
+        result = f"{self.uuid} | {self.image}"
+        return result

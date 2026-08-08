@@ -9,7 +9,11 @@ from dataclasses import dataclass
 
 @dataclass(slots=True)
 class ImageBuffer:
-    """Raw Pixel manipulation used to pack images differently"""
+    """
+    Raw Pixel manipulation used to pack images differently
+
+    Represents raw pixel data for a single tile and is the only object compositors and packers need to manipulate.
+    """
 
     width: int
     height: int
@@ -17,7 +21,7 @@ class ImageBuffer:
     pixels: np.ndarray
 
     channels: int = 4
-    name: str | None = None
+    name: str = ""
 
     @property
     def size(self) -> int:
@@ -27,6 +31,11 @@ class ImageBuffer:
     @property
     def flat_pixels(self) -> np.ndarray:
         return self.pixels.reshape(-1)
+
+    @property
+    def is_float(self) -> bool:
+        # TODO : To be written
+        return False
 
     @classmethod
     def empty(cls, width: int, height: int, channels: int = 4, name: str = "Image") -> ImageBuffer:
@@ -40,7 +49,7 @@ class ImageBuffer:
     def from_blender_image(cls, image: bpy.types.Image) -> ImageBuffer:
         """Create an Empty Buffer"""
 
-        buffer = cls.empty(image.size[0], image.size[1], channels=image.channels, name=image.name)
+        buffer = cls.empty(image.size[0], image.size[1], channels=4, name=image.name)
         image.pixels.foreach_get(buffer.flat_pixels)
 
         return buffer
@@ -64,7 +73,7 @@ class ImageBuffer:
         if np is not None:
             result = np.greater(self.pixels, 0)
             for r in result:
-                if r:
+                if r.all():
                     return False
             return True
         return True
