@@ -21,6 +21,14 @@ class LogicalImage:
     _path: Path
     tiles: tuple[int, ...]
 
+    @classmethod
+    def create(cls, layout: ImageLayout, path: Path, tiles: tuple[int, ...]):
+        return cls(
+            layout=layout,
+            _path=path,
+            tiles=tiles,
+        )
+
     @property
     def path(self) -> Path:
         """Returns the resolved path of the file"""
@@ -47,3 +55,9 @@ class LogicalImage:
         else:
             for tile in self.tiles:
                 yield ArtifactFile(tile=tile, path=self.tile_path(tile))
+
+    def __repr__(self) -> str:
+        result = f"{self.path}"
+        if self.is_udim:
+            result += f" | {len(self.tiles)} UDIM tiles"
+        return result

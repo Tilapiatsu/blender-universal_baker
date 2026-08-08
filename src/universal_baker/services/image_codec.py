@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import bpy
+from universal_baker.constant import LOG
 
 from ..resources.image_buffer import ImageBuffer
 from ..runtime.settings_output import OutputSettings
@@ -31,6 +32,7 @@ class ImageCodec:
         buffer: ImageBuffer,
         output_settings: OutputSettings,
     ) -> None:
+        LOG.debug(f"Saving {filepath}")
         image = cls._create_image(buffer, output_settings)
         try:
             cls._configure_image(
@@ -46,6 +48,8 @@ class ImageCodec:
 
     @classmethod
     def load(cls, filepath: str | Path) -> ImageBuffer:
+        LOG.debug(f"Loading {filepath}")
+
         image = bpy.data.images.load(str(filepath), check_existing=False)
 
         try:
@@ -61,7 +65,7 @@ class ImageCodec:
             width=buffer.width,
             height=buffer.height,
             alpha=output_settings.image.alpha,
-            float_buffer=buffer.is_float,
+            float_buffer=output_settings.image.float_buffer,
         )
 
         image.pixels.foreach_set(buffer.flat_pixels)
@@ -76,6 +80,7 @@ class ImageCodec:
         filepath: str | Path,
         output_settings: OutputSettings,
     ) -> None:
+        LOG.debug("Configuring image")
         image.filepath_raw = str(filepath)
         image.file_format = output_settings.image.file_format
         settings = image

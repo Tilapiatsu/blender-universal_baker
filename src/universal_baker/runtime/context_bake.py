@@ -10,6 +10,7 @@ if TYPE_CHECKING:
     from ..bakers.base import BakerBase
     from .task_bake import BakeTask
     from .settings_output import OutputSettings
+    from .image_handle import ImageHandle
 
 from ..resources.image import ImageResource
 from ..resources.material import MaterialResource
@@ -24,7 +25,9 @@ class BakeContext(ExecutionContext):
 
     task: BakeTask
     baker: BakerBase
+
     image: ImageResource = field(default_factory=ImageResource)
+    output: ImageHandle | None = None
 
     material: MaterialResource = field(default_factory=MaterialResource)
     node_tree: bpy.types.NodeTree | None = None

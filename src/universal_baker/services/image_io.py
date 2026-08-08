@@ -68,12 +68,6 @@ class ImageIOService(ImageServiceBase):
         buffer.write_to_blender_image(image)
         image.update()
 
-    # TODO: Need to properly update udim images.
-    # Need to rely less on bpy.types.Image because of blender doesn't expose image.tiles.get(1001).pixels.foreach_get() -> more on TileSet or ImageBuffer
-    # When needed, convert bpy.types.Image to ImageBuffer / TileSet using ImageCodec for further manipulation.
-    # This means saving to disk -> load individual -> create ImageBuffer -> remove bpy.types.Image
-    # maybe it need a unified class to maniputalte images more easily ? ImageHandle ? and class that would behave the
-    # same weather it is a single or UDIM format !
     @staticmethod
     def write_udim(resource: ImageResource, tiles: TileSet) -> None:
         for udim, buffer in tiles.items():

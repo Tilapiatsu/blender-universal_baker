@@ -72,6 +72,7 @@ class UBK_Artifact(PropertyGroup):
     output_path: StringProperty()
     filename_template: StringProperty()
     filename: StringProperty()
+    absolute_path: StringProperty()
     extension: StringProperty()
     width: IntProperty()
     height: IntProperty()
@@ -111,6 +112,13 @@ class UBK_Artifact(PropertyGroup):
     use_jpeg2k_ycc: BoolProperty()
     use_preview: BoolProperty()
     views_format: StringProperty()
+
+    def get_udim_tiles(self) -> tuple[int, ...]:
+        tiles = []
+        for tile in self.udim_tiles:
+            tiles.append(tile.number)
+
+        return tuple(tiles)
 
     def feed_from_output_settings(self, output_settings: OutputSettings):
         self.width = output_settings.path.width

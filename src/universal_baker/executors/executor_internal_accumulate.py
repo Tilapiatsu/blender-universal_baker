@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from time import perf_counter
 import traceback
-import bpy
 
+import bpy
 
 from ..constant import LOG
 from ..runtime.context import ExecutionContext
@@ -73,6 +73,7 @@ class AccumulateExecutorInternal(TaskExecutor):
                 scope_state=ScopeState.ENTER,
                 category=EventCategory.ACCUMULATE,
             )
+            LOG.info("=" * 100)
 
             try:
                 self.before_task(ctx)

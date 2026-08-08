@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import bpy
-from uuid import uuid4
 
 from pathlib import Path
 from typing import TYPE_CHECKING
+
+from universal_baker.resources.image_buffer import ImageBuffer
+from universal_baker.runtime.tile_set import TileSet
 
 
 from ..constant import LOG
@@ -27,12 +29,18 @@ class OutputArtifact:
     output_settings: OutputSettings
 
     def __init__(self, scene: Scene, property_group: UBK_Artifact):
+        udim_tiles = property_group.get_udim_tiles()
+        self.image = LogicalImage.create(
+            layout=property_group.image_layout,
+            path=property_group.absolute_path,
+            tiles=udim_tiles,
+        )
         self.scene = scene
         self.data = property_group
         self.output_settings: OutputSettings = property_group.get_output_settings()
         self.name = self.data.name
         self.bake_group = BakeGroup(self.data.bake_group_uuid)
-        self.uuid = str(uuid4())
+        self.uuid = property_group.uuid
         self.dependencies = []
         self.dependency_mapping = []
 
@@ -87,4 +95,17 @@ class OutputArtifact:
         if image is None:
             image = ImageIOService.load(self.path, self.image.is_udim)
 
-        return ImageIOService.init_resource(image)
+        return ImageIOService.init_resource(image, self.output_settings.image)
+
+    def init_empty_image(self) -> None:
+        from ..services.image_codec import ImageCodec
+
+        tileset = TileSet()
+        for t in self.image.tiles:
+            tileset.add_empty_tile(t, self.output_settings)
+
+        ImageCodec.export_tiles(self, tileset, self.output_settings)
+
+    def __repr__(self) -> str:
+        result = f"{self.uuid} | {self.image}"
+        return result

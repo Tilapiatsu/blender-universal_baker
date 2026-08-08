@@ -15,6 +15,7 @@ LOG_SCOPE = "Artifact Repository"
 class ArtifactRepository:
     """
     Runtime view over the persistent artifact database.
+    Answers where the logical image lives and how it's named (including UDIM expansion)
     """
 
     def __init__(self, scene: bpy.types.Scene, project: UBK_Project) -> None:
@@ -40,16 +41,16 @@ class ArtifactRepository:
     def all(self) -> list[OutputArtifact]:
         return list(self._artifacts.values())
 
-    def get(self, uuid) -> OutputArtifact | None:
+    def get(self, uuid: str) -> OutputArtifact | None:
         return self._artifacts.get(uuid)
 
-    def by_bake_group(self, bake_group_uuid) -> list[OutputArtifact]:
+    def by_bake_group(self, bake_group_uuid: str) -> list[OutputArtifact]:
         return list(self._bake_group_index.get(bake_group_uuid, []))
 
-    def by_producer(self, producer_uuid) -> list[OutputArtifact]:
+    def by_producer(self, producer_uuid: str) -> list[OutputArtifact]:
         return list(self._producer_index.get(producer_uuid, []))
 
-    def by_target(self, target_object_uuid) -> list[OutputArtifact]:
+    def by_target(self, target_object_uuid: str) -> list[OutputArtifact]:
         return list(self._target_object_index.get(target_object_uuid, []))
 
     def resolve(self, bake_group_uuid: str, producer_uuid: str) -> list[OutputArtifact]:
@@ -59,14 +60,14 @@ class ArtifactRepository:
                 artifact for artifact in self.by_bake_group(bake_group_uuid) if artifact.producer_uuid == producer_uuid
             ]
 
-    def exists(self, bake_group_uuid, producer_uuid) -> bool:
+    def exists(self, bake_group_uuid: str, producer_uuid: str) -> bool:
         return any(
             artifact.exists
             for artifact in self.by_bake_group(bake_group_uuid)
             if artifact.producer_uuid == producer_uuid
         )
 
-    def remove(self, uuid) -> None:
+    def remove(self, uuid: str) -> None:
         artifact = self._artifacts.get(uuid)
 
         if artifact is None:

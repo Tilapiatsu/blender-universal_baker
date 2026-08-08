@@ -5,6 +5,8 @@ import bpy
 
 from typing import Iterable
 
+
+from .settings_output import OutputSettings
 from ..resources.image_buffer import ImageBuffer
 
 
@@ -80,6 +82,17 @@ class TileSet:
         if not override and tile in self.keys():
             return
         td = TileData(buffer)
+        self._tiles[tile] = td
+
+    def add_empty_tile(self, tile: int, output_settings: OutputSettings, override: bool = False) -> None:
+        if not override and tile in self.keys():
+            return
+        empty_buffer = ImageBuffer.empty(
+            width=output_settings.path.width,
+            height=output_settings.path.height,
+            channels=4,
+        )
+        td = TileData(empty_buffer)
         self._tiles[tile] = td
 
     def clear(self) -> None:

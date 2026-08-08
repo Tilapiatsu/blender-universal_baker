@@ -72,6 +72,7 @@ class PackExecutorInternal(TaskExecutor):
                 scope_state=ScopeState.ENTER,
                 category=EventCategory.PACK,
             )
+            LOG.info("=" * 100)
 
             try:
                 self.before_task(ctx)

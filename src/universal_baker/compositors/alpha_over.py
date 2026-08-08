@@ -15,6 +15,7 @@ class CompositeAlphaOver(Compositor):
         super().composite(buffer, image)
 
         alpha = image.pixels[..., 3:4]
+
         # RGB composite :
         buffer.pixels[..., 0:3] = image.pixels[..., 0:3] * alpha + buffer.pixels[..., 0:3] * (1 - alpha)
 

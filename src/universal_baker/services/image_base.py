@@ -4,6 +4,7 @@ from pathlib import Path
 
 import bpy
 
+from ..runtime.settings_image import ImageSettings
 from ..constant import LOG
 from ..resources.image import ImageResource
 from ..runtime.task import Task
@@ -17,15 +18,14 @@ class ImageServiceBase:
     """Manage destination images."""
 
     @classmethod
-    def init_resource(cls, image: bpy.types.Image) -> ImageResource:
-        resource = ImageResource(image)
+    def init_resource(cls, image: bpy.types.Image, image_format_settings: ImageSettings) -> ImageResource:
+        resource = ImageResource(image, image_format_settings=image_format_settings)
+
         resource.init_from_image()
         return resource
 
     @classmethod
-    def acquire(
-        cls, resource: ImageResource, task: Task, suffix: str | None = None, sub_folder: str | None = None
-    ) -> ImageResource:
+    def acquire(cls, resource: ImageResource, task: Task) -> ImageResource:
         """
         Acquire the destination image for this task.
         """
@@ -34,10 +34,10 @@ class ImageServiceBase:
 
             if resource.image is not None:
                 LOG.debug("Update existing Image")
-                cls.configure(resource, task, suffix, sub_folder)
+                cls.configure(resource, task)
                 return resource
 
-            cls.configure(resource, task, suffix, sub_folder)
+            cls.configure(resource, task)
 
             image = bpy.data.images.get(resource.name)
 
@@ -96,8 +96,6 @@ class ImageServiceBase:
         cls,
         resource: ImageResource,
         task: Task,
-        suffix: str | None = None,
-        sub_folder: str | None = None,
     ) -> None:
         """
         Populate the resource from the Task.
@@ -117,14 +115,7 @@ class ImageServiceBase:
             resource.is_udim = task.uv_layout.image_layout == ImageLayout.UDIM
             LOG.debug(f"Configure Image to {task.uv_layout.image_layout}")
 
-            resource.filepath = cls.resolve_filepath(task, suffix, sub_folder)
-
-    @classmethod
-    def resolve_filepath(cls, task: Task, suffix: str | None = None, sub_folder: str | None = None) -> Path:
-        from ..core.output_resolver import OutputResolver
-
-        file_output = OutputResolver.resolve(task.output_context, suffix, sub_folder)
-        return file_output.absolute_path
+            resource.filepath = task.absolute_filepath
 
     @classmethod
     def create(cls, resource: ImageResource, tiles: tuple[tuple[int, int], ...] = ((0, 0),)) -> bpy.types.Image:

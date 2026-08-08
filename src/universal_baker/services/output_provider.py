@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from ..logger_bake_middleware.bake_summary import BakeStatus
-from ..runtime.tile_set import TileSet
 
 from ..constant import LOG
+from ..runtime.image_handle import ImageHandle
+from ..logger_bake_middleware.bake_summary import BakeStatus
 
 from typing import TYPE_CHECKING
 
@@ -61,7 +61,7 @@ class OutputProvider:
         for key in keys:
             self._cache.pop(key, None)
 
-    def get_image(self, bake_group_uuid: str, baker_uuid: str) -> TileSet | None:
+    def get_image(self, bake_group_uuid: str, baker_uuid: str) -> ImageHandle | None:
         with LOG.scope(LOG_SCOPE):
             LOG.debug("Request Image from repository")
             key = (bake_group_uuid, baker_uuid)
@@ -95,7 +95,7 @@ class OutputProvider:
             # Single object target
             #
             if len(outputs) == 1:
-                tiles = outputs[0].tiles
+                tiles = outputs[0]
                 self._cache[key] = tiles
                 return tiles
 

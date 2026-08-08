@@ -86,9 +86,10 @@ class PackerBase(ABC):
             name=ctx.task.output_name,
             target_object_uuid="",
             producer_uuid=ctx.task.uuid,
-            channels=ctx.image.channels,
             dependencies=dependencies,
             image_layout=ctx.task.uv_layout.image_layout,
+            uv_layout=ctx.task.uv_layout,
+            absolute_path=ctx.task.absolute_filepath,
             output_settings=ctx.output_settings,
         )
 

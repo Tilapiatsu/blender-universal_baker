@@ -6,9 +6,11 @@ from dataclasses import dataclass, field
 
 from typing import Iterator
 
+from universal_baker.runtime.bake_group import BakeGroup
 
-from .tile_set import TileData, TileSet
 
+from ..constant import LOG
+from .tile_set import TileSet
 from .settings_output import OutputSettings
 from ..resources.image import ImageResource
 from ..resources.image_buffer import ImageBuffer
@@ -30,7 +32,15 @@ class ImageHandle:
 
     The handle lazily loads buffers, creates Blender images
     when requested, and saves modified buffers back to disk.
+
+    Orchestrates those three representations, performing lazy loading, caching, saving, invalidation, and synchronization.
     """
+
+    uuid: str
+    _artifact: OutputArtifact
+    _output_settings: OutputSettings
+    _resource: ImageResource = field(default_factory=ImageResource)
+    _tiles: TileSet = field(default_factory=TileSet)
 
     # ------------------------------------------------------------
     # Construction
@@ -39,8 +49,9 @@ class ImageHandle:
     def __init__(self, artifact: OutputArtifact):
         self._artifact = artifact
         self._output_settings = artifact.output_settings
-        self._resource: ImageResource = field(default_factory=ImageResource)
-        self._tiles: TileSet = field(default_factory=TileSet)
+        self._tiles = TileSet()
+        self._resource = ImageResource()
+        self.uuid = artifact.uuid
 
     # ------------------------------------------------------------
     # Properties
@@ -57,6 +68,10 @@ class ImageHandle:
     @property
     def is_udim(self) -> bool:
         return self._artifact.is_udim
+
+    @property
+    def bake_group(self) -> BakeGroup:
+        return self._artifact.bake_group
 
     # ------------------------------------------------------------
     # Tile access
@@ -86,8 +101,11 @@ class ImageHandle:
 
     def set_buffer(self, tile: int, buffer: ImageBuffer):
         self._ensure_loaded()
-        td = TileData(buffer)
-        self._tiles[tile] = td
+        self._tiles.add_tile(tile, buffer, override=True)
+
+    def set_empty_buffer(self, tile: int):
+        self._ensure_loaded()
+        self._tiles.add_empty_tile(tile, self._output_settings, override=True)
 
     def buffers(self) -> Iterator[tuple[int, ImageBuffer]]:
         self._ensure_loaded()
@@ -103,7 +121,7 @@ class ImageHandle:
 
         Creates or reloads it if necessary.
         """
-        if self._resource is None:
+        if not self._resource.created:
             self._resource = ImageResource.from_artifact(self._artifact)
 
         return self._resource
@@ -121,8 +139,7 @@ class ImageHandle:
             output_settings=self._output_settings,
         )
 
-        if self._resource is not None:
-            self._resource.reload()
+        self._resource.reload()
 
     def reload(self):
         """
@@ -130,8 +147,7 @@ class ImageHandle:
         """
         self._tiles.clear()
         self._ensure_loaded()
-        if self._resource is not None:
-            self._resource.reload()
+        self._resource.reload()
 
     def invalidate(self):
         """
@@ -144,7 +160,7 @@ class ImageHandle:
     # ------------------------------------------------------------
 
     def _ensure_loaded(self):
-        if self._tiles is not None:
+        if not self._tiles.is_empty:
             return
 
         self._tiles = ImageCodec.import_tiles(

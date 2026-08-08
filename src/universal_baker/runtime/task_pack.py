@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 
@@ -14,6 +15,7 @@ from .settings_pack import PackSettings
 from ..enum.channels import Channel
 from ..logger.event import ScopeState
 from ..logger_bake_middleware.bake_summary import BakeStatus, EventCategory
+from ..core.output_resolver import OutputResolver
 
 
 @dataclass(slots=True)
@@ -50,6 +52,12 @@ class PackingTask(Task):
     @property
     def packer_name(self) -> str:
         return self.packer.name
+
+    @property
+    def absolute_filepath(self) -> Path:
+        file_output = OutputResolver.resolve(self.output_context, self.uv_layout.image_layout)
+
+        return file_output.absolute_path
 
     def __repr__(self) -> str:
         result = ""

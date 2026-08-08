@@ -12,7 +12,6 @@ from ..services.artifact_service import ArtifactService
 from ..core.accumulator import ImageAccumulator
 from ..core.registry_compositor import registry_compositor
 from ..logger_bake_middleware.bake_summary import BakeStatus, EventCategory
-from ..services.image_io import ImageIOService
 
 if TYPE_CHECKING:
     from ..runtime.context_accumulate import AccumulateContext
@@ -47,10 +46,9 @@ class AccumulatorBase(ABC):
             LOG.info(f"{str(ctx.task)}")
 
             self.prepare(ctx)
+            self.create_artifact(ctx)
             self.accumulate(ctx)
             self.update_baker(ctx)
-            # self.create_output(ctx)
-            self.create_artifact(ctx)
             self.export_file(ctx)
             self.cleanup(ctx)
 
@@ -58,13 +56,8 @@ class AccumulatorBase(ABC):
     def prepare(self, ctx: AccumulateContext) -> None:
         """Prepare Blender before baking."""
         LOG.debug("Preparing Scene ...")
-
-    @abstractmethod
-    def accumulate(self, ctx: AccumulateContext) -> None:
-        """Execute the bake."""
-        LOG.debug("Accumulating ...")
-        images = ctx.get_input_images()
-        if not len(images):
+        inputs = ctx.get_input_image_handles(ctx.session.runtime.outputs)
+        if not len(inputs):
             LOG.error(
                 "No Image found",
                 category=EventCategory.ACCUMULATE,
@@ -73,19 +66,31 @@ class AccumulatorBase(ABC):
                 },
             )
 
-        accumulator = ImageAccumulator(
-            width=images[0].size[0],
-            height=images[0].size[1],
-            name=f"Accumulated_{ctx.image.name}",
-        )
+        ctx.inputs = inputs
 
-        for image in images:
-            buffer = ImageIOService.read_image(image)
-            accumulator.accumulate(buffer, registry_compositor[self.id])
+    @abstractmethod
+    def accumulate(self, ctx: AccumulateContext) -> None:
+        """Execute the Accumulation."""
+        LOG.debug("Accumulating ...")
 
-        ctx.output_buffer = accumulator.result()
+        if ctx.output is None:
+            LOG.error("Output is not defined")
+            return
 
-        ImageIOService.write(ctx.image, ctx.output_buffer)
+        if ctx.inputs is None:
+            LOG.error("Inputs are not defined")
+            return
+
+        accumulator = ImageAccumulator(ctx.output)
+
+        LOG.debug(f"{len(ctx.inputs)} input(s) found")
+
+        for image in ctx.inputs:
+            accumulator.accumulate(image, registry_compositor[self.id])
+
+        ctx.output = accumulator.result()
+
+        ctx.image = ctx.output.image()
 
     @abstractmethod
     def cleanup(self, ctx: AccumulateContext) -> None:
@@ -109,7 +114,7 @@ class AccumulatorBase(ABC):
     @abstractmethod
     def create_artifact(self, ctx: AccumulateContext) -> None:
         LOG.debug("Creating Artifact ...")
-        ArtifactService.register(
+        artifact = ArtifactService.register(
             runtime=ctx.session.runtime,
             project=ctx.project,
             artifact_type=OutputStage.ACCUMULATED,
@@ -117,14 +122,24 @@ class AccumulatorBase(ABC):
             bake_group_uuid=ctx.task.bake_group_uuid,
             target_object_uuid="",
             producer_uuid=ctx.task.uuid,
-            channels=ctx.image.channels,
             image_layout=ctx.task.uv_layout.image_layout,
+            uv_layout=ctx.task.uv_layout,
+            absolute_path=ctx.task.absolute_filepath,
             output_settings=ctx.output_settings,
         )
+
+        if artifact is None:
+            LOG.error("Artifact creation Failed")
+            return
+
+        LOG.info(str(artifact))
+
+        ctx.output = ctx.session.runtime.outputs.get(artifact)
 
     @abstractmethod
     def export_file(self, ctx: AccumulateContext) -> None:
         """Save Bake to disk."""
         LOG.debug("Saving File to Disk ...")
-        if ctx.task.output_context.output_settings.path.export_file:
-            ImageServiceBake.save(ctx.image)
+        if ctx.task.output_context.output_settings.path.export_file and ctx.output is not None:
+            ctx.output.save()
+            # ImageServiceBake.save(ctx.image)

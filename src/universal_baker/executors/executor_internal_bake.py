@@ -80,6 +80,7 @@ class BakeExecutorInternal(TaskExecutor):
                 scope_state=ScopeState.ENTER,
                 category=EventCategory.BAKE,
             )
+            LOG.info("=" * 100)
 
             try:
                 self.before_task(ctx)

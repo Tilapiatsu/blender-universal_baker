@@ -9,7 +9,11 @@ from dataclasses import dataclass
 
 @dataclass(slots=True)
 class ImageBuffer:
-    """Raw Pixel manipulation used to pack images differently"""
+    """
+    Raw Pixel manipulation used to pack images differently
+
+    Represents raw pixel data for a single tile and is the only object compositors and packers need to manipulate.
+    """
 
     width: int
     height: int
@@ -17,7 +21,7 @@ class ImageBuffer:
     pixels: np.ndarray
 
     channels: int = 4
-    name: str | None = None
+    name: str = ""
 
     @property
     def size(self) -> int:

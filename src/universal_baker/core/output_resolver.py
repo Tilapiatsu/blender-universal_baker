@@ -6,12 +6,12 @@ import re
 
 from pathlib import Path
 
-from typing import Callable
 
 from ..runtime.output_context import OutputContext
 from ..runtime.output_file import OutputFile
 from ..core.registry_token import registry_token
 from ..core.registry_transform import registry_transform
+from ..enum.image_layout import ImageLayout
 
 
 _TOKEN_PATTERN = re.compile(r"\{([^{}]+)\}")
@@ -27,7 +27,13 @@ class OutputResolver:
     # -------------------------------------------------------------------------
 
     @classmethod
-    def resolve(cls, ctx: OutputContext, suffix: str | None = None, sub_folder: str | None = None) -> OutputFile:
+    def resolve(
+        cls,
+        ctx: OutputContext,
+        image_layout: ImageLayout,
+        suffix: str | None = None,
+        sub_folder: str | None = None,
+    ) -> OutputFile:
         relative = ""
         dir = ctx.directory_template
         if dir.startswith(r"//"):
@@ -39,6 +45,9 @@ class OutputResolver:
 
         if suffix is not None:
             filename += f"_{suffix}"
+
+        if image_layout == ImageLayout.UDIM:
+            filename += ".<UDIM>"
 
         if sub_folder is not None:
             directory = directory / sub_folder

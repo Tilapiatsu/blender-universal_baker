@@ -10,10 +10,8 @@ from ..constant import LOG
 from ..enum.output_stage import OutputStage
 from ..services.renderer import RendererService
 from ..services.image_bake import ImageServiceBake
-from ..runtime.output_bake import OutputBake
 from ..services.artifact_service import ArtifactService
 from ..services.material import MaterialService
-from ..runtime.tile_set import TileSet
 
 if TYPE_CHECKING:
     from ..runtime.context_bake import BakeContext
@@ -60,7 +58,6 @@ class BakerBase(ABC):
             self.prepare(ctx)
             self.bake(ctx)
             self.update_baker(ctx)
-            # self.create_output(ctx)
             self.create_artifact(ctx)
             self.export_file(ctx)
             self.cleanup(ctx)
@@ -69,10 +66,7 @@ class BakerBase(ABC):
     def prepare(self, ctx: BakeContext) -> None:
         """Prepare Blender before baking."""
         LOG.debug("Preparing Scene ...")
-        if ctx.task.has_multiple_targets:
-            ctx.image = ImageServiceBake.acquire(ctx.image, ctx.task, ctx.task.object_name, "object_buffers")
-        else:
-            ctx.image = ImageServiceBake.acquire(ctx.image, ctx.task)
+        ctx.image = ImageServiceBake.acquire(ctx.image, ctx.task)
 
         MaterialService.prepare_target(ctx)
 
@@ -116,25 +110,9 @@ class BakerBase(ABC):
         if not ctx.task.has_multiple_targets:
             baker.accumulated_image = ctx.image.image
 
-    # @abstractmethod
-    # def create_output(self, ctx: BakeContext) -> None:
-    #     LOG.debug("Creating Output ...")
-    #     tiles = TileSet.from_blender_image(ctx.image.image)
-    #
-    #     output = OutputBake.create(
-    #         uuid=ctx.task.uuid,
-    #         name=ctx.image.name,
-    #         tiles=tiles,
-    #         bake_group=ctx.task.bake_group,
-    #         baker=ctx.task.baker,
-    #     )
-    #
-    #     ctx.session.runtime.outputs.add(output)
-    #     ctx.session.runtime.provider.invalidate(ctx.task.bake_group_uuid, ctx.task.uuid)
-
     @abstractmethod
     def create_artifact(self, ctx: BakeContext) -> None:
-        ArtifactService.register(
+        artifact = ArtifactService.register(
             runtime=ctx.session.runtime,
             project=ctx.project,
             artifact_type=OutputStage.BAKE,
@@ -142,10 +120,16 @@ class BakerBase(ABC):
             bake_group_uuid=ctx.task.bake_group_uuid,
             target_object_uuid=ctx.task.target_object_uuid,
             producer_uuid=ctx.task.uuid,
-            channels=ctx.image.channels,
             image_layout=ctx.task.uv_layout.image_layout,
+            uv_layout=ctx.task.uv_layout,
+            absolute_path=ctx.task.absolute_filepath,
             output_settings=ctx.output_settings,
         )
+
+        if artifact is None:
+            return
+
+        ctx.output = ctx.session.runtime.outputs.get(artifact)
 
     @abstractmethod
     def export_file(self, ctx: BakeContext) -> None:

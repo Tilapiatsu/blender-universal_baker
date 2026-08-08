@@ -12,10 +12,11 @@ if TYPE_CHECKING:
     from ..resources.pack import PackResource
     from .settings_output import OutputSettings
     from ..runtime.tile_set import TileSet
+    from .image_handle import ImageHandle
 
+from ..resources.image import ImageResource
 from .context import ExecutionContext
 from ..properties.project import UBK_Project
-from ..resources.image import ImageResource
 from .settings_pack import PackSettings
 
 
@@ -28,6 +29,8 @@ class PackContext(ExecutionContext):
     image_node: bpy.types.ShaderNodeTexImage | None = None
 
     image: ImageResource = field(default_factory=ImageResource)
+    inputs: list[ImageHandle] | None = None
+    output: ImageHandle | None = None
 
     red_buffer: TileSet | None = None
     green_buffer: TileSet | None = None

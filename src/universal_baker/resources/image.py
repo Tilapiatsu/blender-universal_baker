@@ -4,11 +4,14 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 import bpy
+from ..constant import LOG
 from ..runtime.settings_image import ImageSettings
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..runtime.output_artifact import OutputArtifact
+
+LOG_SCOPE = "Image Resource"
 
 
 @dataclass(slots=True)
@@ -18,6 +21,8 @@ class ImageResource:
 
     This object stores both the Blender Image and all metadata
     required by the baking pipeline.
+
+    Answers how to interact with Blender (bpy.types.Image), but only when baking or previewing.
     """
 
     image: bpy.types.Image | None = None
@@ -57,6 +62,7 @@ class ImageResource:
         name: str,
         filepath: Path,
         colorspace: str,
+        image_format_settings: ImageSettings,
         alpha: bool = False,
         float_buffer: bool = False,
         is_udim: bool = False,
@@ -80,15 +86,13 @@ class ImageResource:
             float_buffer=float_buffer,
             channels=4 if alpha else 3,
             is_udim=is_udim,
+            created=True,
+            image_format_settings=image_format_settings,
         )
 
     @property
     def filepath(self) -> Path:
-        return (
-            self._filepath.with_name(self._filepath.stem + ".<UDIM>" + self._filepath.suffix)
-            if self.is_udim
-            else self._filepath
-        )
+        return self._filepath
 
     @filepath.setter
     def filepath(self, value: Path) -> None:
@@ -145,6 +149,8 @@ class ImageResource:
 
     def reload(self) -> None:
         if self.image is None:
+            with LOG.scope(LOG_SCOPE):
+                LOG.warning("Image is None : Can't reload")
             return
         self.image.reload()
 
@@ -205,7 +211,7 @@ class ImageResource:
         self.is_udim = self.image.tiles is not None
 
     @classmethod
-    def from_blender_image(cls, image: bpy.types.Image) -> ImageResource:
+    def from_blender_image(cls, image: bpy.types.Image, image_format_settings: ImageSettings) -> ImageResource:
         return cls.create(
             width=image.size[0],
             height=image.size[1],
@@ -215,17 +221,18 @@ class ImageResource:
             alpha=image.alpha_mode == "ALPHA",
             float_buffer=image.is_float,
             is_udim=image.source == "TILED",
+            image_format_settings=image_format_settings,
         )
 
     @classmethod
     def from_artifact(cls, artifact: OutputArtifact) -> ImageResource:
-        if artifact.name in bpy.data.Images and artifact.path == bpy.data.Images[artifact.name].filepath_raw:
+        if artifact.name in bpy.data.images and artifact.path == bpy.data.images[artifact.name].filepath_raw:
             image = bpy.data.images[artifact.name]
-            return cls.from_blender_image(image)
+            return cls.from_blender_image(image, artifact.output_settings.image)
 
         image = artifact.load_image()
 
-        return cls.from_blender_image(image)
+        return image
 
     def __repr__(self) -> str:
         result = ""
