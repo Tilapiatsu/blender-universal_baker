@@ -20,6 +20,9 @@ class TaskExecutor(ABC):
         session.dispose()
         job.notify_finished()
 
+    def init_task_message(self, session) -> str:
+        return f"{'=' * 100} Init Task {session.job.current_task} / {session.job.total_tasks} {'=' * 100}"
+
     def before_job(self, session: ExecutionSession) -> None:
         """
         Hook called before the first task.
