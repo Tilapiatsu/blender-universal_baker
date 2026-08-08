@@ -32,7 +32,6 @@ class ImageCodec:
         buffer: ImageBuffer,
         output_settings: OutputSettings,
     ) -> None:
-        LOG.debug(f"Saving {filepath}")
         image = cls._create_image(buffer, output_settings)
         try:
             cls._configure_image(
@@ -41,22 +40,26 @@ class ImageCodec:
                 output_settings=output_settings,
             )
 
+            LOG.debug(f"Saving {filepath}")
             image.save()
 
         finally:
             bpy.data.images.remove(image)
 
     @classmethod
-    def load(cls, filepath: str | Path) -> ImageBuffer:
-        LOG.debug(f"Loading {filepath}")
+    def load(cls, filepath: Path) -> ImageBuffer | None:
 
-        image = bpy.data.images.load(str(filepath), check_existing=False)
+        if filepath.exists():
+            LOG.debug(f"Loading {filepath}")
+            image = bpy.data.images.load(str(filepath), check_existing=False)
 
-        try:
-            return ImageBuffer.from_blender_image(image)
+            try:
+                return ImageBuffer.from_blender_image(image)
 
-        finally:
-            bpy.data.images.remove(image)
+            finally:
+                bpy.data.images.remove(image)
+        else:
+            return None
 
     @classmethod
     def _create_image(cls, buffer: ImageBuffer, output_settings: OutputSettings) -> bpy.types.Image:
@@ -68,8 +71,9 @@ class ImageCodec:
             float_buffer=output_settings.image.float_buffer,
         )
 
-        image.pixels.foreach_set(buffer.flat_pixels)
+        buffer.write_to_blender_image(image)
         image.update()
+        image.pack()
         return image
 
     @classmethod
@@ -97,6 +101,12 @@ class ImageCodec:
         tile_set = TileSet()
 
         for t in artifact.image.files():
-            tile_set.add_tile(t.tile, cls.load(t.path))
+            buffer = cls.load(t.path)
+            if buffer is not None:
+                tile_set.add_tile(t.tile, buffer)
+            else:
+                LOG.debug("Create Empty Tile")
+                tile_set.add_empty_tile(t.tile, artifact.output_settings)
+                cls.save(artifact.image.tile_path(t.tile), tile_set[t.tile].buffer, artifact.output_settings)
 
         return tile_set

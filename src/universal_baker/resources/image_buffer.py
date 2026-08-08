@@ -49,7 +49,7 @@ class ImageBuffer:
     def from_blender_image(cls, image: bpy.types.Image) -> ImageBuffer:
         """Create an Empty Buffer"""
 
-        buffer = cls.empty(image.size[0], image.size[1], channels=image.channels, name=image.name)
+        buffer = cls.empty(image.size[0], image.size[1], channels=4, name=image.name)
         image.pixels.foreach_get(buffer.flat_pixels)
 
         return buffer
@@ -73,7 +73,7 @@ class ImageBuffer:
         if np is not None:
             result = np.greater(self.pixels, 0)
             for r in result:
-                if r:
+                if r.all():
                     return False
             return True
         return True

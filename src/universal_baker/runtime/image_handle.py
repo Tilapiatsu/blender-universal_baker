@@ -73,6 +73,10 @@ class ImageHandle:
     def bake_group(self) -> BakeGroup:
         return self._artifact.bake_group
 
+    @property
+    def is_dirty(self) -> bool:
+        return self._tiles.is_dirty
+
     # ------------------------------------------------------------
     # Tile access
     # ------------------------------------------------------------
@@ -121,6 +125,9 @@ class ImageHandle:
 
         Creates or reloads it if necessary.
         """
+        if self.is_dirty:
+            self.save()
+
         if not self._resource.created:
             self._resource = ImageResource.from_artifact(self._artifact)
 

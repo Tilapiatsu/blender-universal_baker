@@ -67,15 +67,15 @@ class ImageResource:
         float_buffer: bool = False,
         is_udim: bool = False,
     ) -> ImageResource:
-        image = bpy.data.new(
-            name,
-            width,
-            height,
-            alpha,
-            float_buffer,
+        image = bpy.data.images.new(
+            name=name,
+            width=width,
+            height=height,
+            alpha=alpha,
+            float_buffer=float_buffer,
             stereo3d=False,
             is_data=True if colorspace == "Non-Color" else False,
-            tiles=is_udim,
+            tiled=is_udim,
         )
         return cls(
             image=image,
@@ -152,6 +152,7 @@ class ImageResource:
             with LOG.scope(LOG_SCOPE):
                 LOG.warning("Image is None : Can't reload")
             return
+        LOG.debug(f"Reload Image : {self.filepath}")
         self.image.reload()
 
     def tiles_has_changed(self, tile_numbers: set[int]) -> bool:
@@ -212,6 +213,7 @@ class ImageResource:
 
     @classmethod
     def from_blender_image(cls, image: bpy.types.Image, image_format_settings: ImageSettings) -> ImageResource:
+        LOG.debug(f"Creating Image Resource from Blender Image : {image.name}")
         return cls.create(
             width=image.size[0],
             height=image.size[1],
@@ -226,8 +228,9 @@ class ImageResource:
 
     @classmethod
     def from_artifact(cls, artifact: OutputArtifact) -> ImageResource:
-        if artifact.name in bpy.data.images and artifact.path == bpy.data.images[artifact.name].filepath_raw:
-            image = bpy.data.images[artifact.name]
+        LOG.debug("Create Resource from Artifact")
+        if artifact.image.blender_image_name in bpy.data.images:
+            image = bpy.data.images[artifact.image.blender_image_name]
             return cls.from_blender_image(image, artifact.output_settings.image)
 
         image = artifact.load_image()

@@ -80,6 +80,7 @@ class BakerBase(ABC):
     def cleanup(self, ctx: BakeContext) -> None:
         LOG.debug("Restoring ...")
         """Restore Blender."""
+        # TODO : Need to remove material if there was no material at the first place ?
         ctx.image.reset()
 
     @abstractmethod

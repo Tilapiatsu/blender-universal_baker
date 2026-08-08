@@ -81,7 +81,7 @@ class OutputArtifact:
 
     def exists(self) -> bool:
         """Returns true if the file exists on disk"""
-        return self.image.exists()
+        return self.image.exists
 
     def load_image(self) -> ImageResource:
         """
@@ -100,6 +100,7 @@ class OutputArtifact:
     def init_empty_image(self) -> None:
         from ..services.image_codec import ImageCodec
 
+        LOG.debug("Init Empty image files for Artrifact")
         tileset = TileSet()
         for t in self.image.tiles:
             tileset.add_empty_tile(t, self.output_settings)

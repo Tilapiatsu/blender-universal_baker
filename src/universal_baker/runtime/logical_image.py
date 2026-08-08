@@ -34,6 +34,7 @@ class LogicalImage:
         """Returns the resolved path of the file"""
         return Path(bpy.path.abspath(self._path))
 
+    @property
     def exists(self) -> bool:
         """Returns true if the file exists on disk"""
         return self.path.exists()
@@ -41,6 +42,10 @@ class LogicalImage:
     @property
     def is_udim(self) -> bool:
         return self.layout == "UDIM"
+
+    @property
+    def blender_image_name(self) -> str:
+        return self.path.name
 
     def tile_path(self, tile: int) -> Path:
         if self.layout == ImageLayout.SINGLE:

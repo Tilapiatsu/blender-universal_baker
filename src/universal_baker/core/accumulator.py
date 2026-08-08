@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-
 from ..constant import LOG
 from ..compositors.base import Compositor
 from ..runtime.image_handle import ImageHandle
@@ -23,7 +22,11 @@ class ImageAccumulator:
             if tile not in dst_tiles:
                 self._result.set_empty_buffer(tile)
 
-            compositor.composite(self._result.buffer(tile), image.buffer(tile))
+            result_buffer = self._result.buffer(tile)
+
+            compositor.composite(result_buffer, image.buffer(tile))
+
+            self._result.set_buffer(tile, result_buffer)
 
     def result(self) -> ImageHandle:
         """Returns Accumulated buffer"""
