@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+
 if TYPE_CHECKING:
     from ..accumulators.base import AccumulatorBase
     from ..properties.bake_group import UBK_BakeGroup

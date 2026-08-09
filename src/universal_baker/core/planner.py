@@ -11,7 +11,11 @@ from ..runtime.job import Job
 from ..runtime.task_bake import BakeTask
 from ..runtime.task_pack import PackingTask, PackingChannel
 from ..runtime.task_accumulate import AccumulateTask
+from ..runtime.task_mask import MaskTask
+from ..runtime.task_uv_mask import UvMaskTask
+from ..runtime.tile_set import TileSet
 from ..enum.channels import Channel
+from ..core.registry_masker import registry_masker
 from ..core.registry_baker import registry_baker
 from ..core.registry_packer import registry_packer
 from ..core.registry_accumulator import registry_accumulator
@@ -42,6 +46,19 @@ class ExecutionPlanner:
 
                 group_tiles = tuple()
 
+                # for obj in group.target_objects:
+                #     if not obj.enabled:
+                #         continue
+                #
+                #     if obj.object is None:
+                #         continue
+                #
+                #     task = UvMaskTask(
+                #         uuid=str(uuid4()),
+                #         name=obj.object.name,
+                #         enabled=True,
+                #     )
+                #
                 for baker in group.bakers:
                     if not register_bakers:
                         continue
@@ -81,6 +98,9 @@ class ExecutionPlanner:
                     has_multiple_targets = len([o for o in group.target_objects if o.enabled]) > 1
 
                     for obj in group.target_objects:
+                        if not obj.enabled:
+                            continue
+
                         if obj.object is None:
                             continue
 
@@ -101,7 +121,22 @@ class ExecutionPlanner:
                             udim_tiles=udim_tiles,
                         )
 
+                        uv_mask_task = UvMaskTask(
+                            uuid=str(uuid4()),
+                            name=obj.object.name,
+                            enabled=True,
+                            output_context=output_context,
+                            bake_group_uuid=group.uuid,
+                            uv_layout=uv_layout,
+                            target_object=obj.object.name,
+                            uv_layer=obj.uv_layer,
+                            result=TileSet(),
+                        )
+
+                        job.add_task(uv_mask_task)
+
                         task = BakeTask(
+                            name=baker.image_name,
                             bake_group_uuid=group.uuid,
                             id=baker.name,
                             uuid=baker.uuid,
@@ -115,8 +150,25 @@ class ExecutionPlanner:
                             has_multiple_targets=has_multiple_targets,
                             uv_layer=obj.uv_layer,
                             uv_layout=uv_layout,
+                            result=TileSet(),
                             # cage_object=None,
                             # settings_cage=settings_cage,
+                        )
+
+                        job.add_task(task)
+
+                        task = MaskTask(
+                            uv_mask_task=uv_mask_task,
+                            uuid=str(uuid4()),
+                            baker_uuid=baker.uuid,
+                            name=obj.object.name,
+                            enabled=True,
+                            output_context=output_context,
+                            bake_group_uuid=group.uuid,
+                            uv_layout=uv_layout,
+                            has_multiple_targets=has_multiple_targets,
+                            masker=registry_masker["APPLY_MASK"],
+                            result=TileSet(),
                         )
 
                         job.add_task(task)
@@ -131,6 +183,7 @@ class ExecutionPlanner:
 
                     settings_accumulator = AccumulateSettings(baker_uuid=baker.uuid)
                     task = AccumulateTask(
+                        name=baker.image_name,
                         uuid=baker.uuid,
                         enabled=True,
                         output_context=output_context,
@@ -141,6 +194,7 @@ class ExecutionPlanner:
                         image_name=baker.image_name,
                         settings=settings_accumulator,
                         uv_layout=uv_layout,
+                        result=TileSet(),
                     )
                     job.add_task(task)
 
@@ -215,6 +269,7 @@ class ExecutionPlanner:
                     )
 
                     task = PackingTask(
+                        name=packer.name,
                         id=packer.name,
                         uuid=str(uuid4()),
                         bake_group_uuid=group.uuid,
@@ -228,6 +283,7 @@ class ExecutionPlanner:
                         blue=blue,
                         alpha=alpha,
                         uv_layout=uv_layout,
+                        result=TileSet(),
                     )
                     job.add_task(task)
 

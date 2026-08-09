@@ -2,9 +2,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from .output_context import OutputContext
-from ..resources.uv import UVLayout
+if TYPE_CHECKING:
+    from .output_context import OutputContext
+    from ..resources.uv import UVLayout
+    from .tile_set import TileSet
 
 
 @dataclass(slots=True, frozen=True)
@@ -12,10 +15,12 @@ class Task:
     """Base Task Class. This is the base class that each executor uses."""
 
     uuid: str
+    name: str
     enabled: bool
     output_context: OutputContext
     bake_group_uuid: str
     uv_layout: UVLayout
+    result: TileSet
 
     @property
     def output_name(self) -> str: ...

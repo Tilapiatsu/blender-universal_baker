@@ -14,17 +14,16 @@ from bpy.props import (
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+
 if TYPE_CHECKING:
     from ..runtime.settings_output import OutputSettings
 
 from ..enum.channels import CHANNEL_ITEMS
+from ..enum.output_stage import OutputStage
 
 
-ARTIFACT_TYPES = [
-    ("BAKE", "Bake", ""),
-    ("ACCUMULATED", "Accumulated", ""),
-    ("PACK", "Packed", ""),
-]
+def get_artifact_types(self, context):
+    return [(e.value, e.value.capitalize(), "") for e in OutputStage]
 
 
 class UBK_ArtifactDependency(PropertyGroup):
@@ -62,8 +61,7 @@ class UBK_Artifact(PropertyGroup):
     uuid: StringProperty()
     name: StringProperty()
     type: EnumProperty(
-        items=ARTIFACT_TYPES,
-        default="BAKE",
+        items=get_artifact_types,
     )
 
     bake_group_uuid: StringProperty()

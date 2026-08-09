@@ -131,6 +131,10 @@ class BakerBase(ABC):
             return
 
         ctx.output = ctx.session.runtime.outputs.get(artifact)
+        if ctx.output is None:
+            return
+
+        ctx.task.result.set_tileset(ctx.output._tiles, clear=True)
 
     @abstractmethod
     def export_file(self, ctx: BakeContext) -> None:

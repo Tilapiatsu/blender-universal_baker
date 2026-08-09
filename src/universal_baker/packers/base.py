@@ -78,7 +78,7 @@ class PackerBase(ABC):
         if ctx.pack_resource is not None:
             dependencies = ctx.pack_resource.uuids
 
-        ArtifactService.register(
+        artifact = ArtifactService.register(
             runtime=ctx.session.runtime,
             project=ctx.project,
             artifact_type=OutputStage.PACK,
@@ -92,6 +92,18 @@ class PackerBase(ABC):
             absolute_path=ctx.task.absolute_filepath,
             output_settings=ctx.output_settings,
         )
+        if artifact is None:
+            LOG.error("Artifact creation Failed")
+            return
+
+        LOG.info(str(artifact))
+
+        ctx.output = ctx.session.runtime.outputs.get(artifact)
+
+        if ctx.output is None:
+            return
+
+        ctx.task.result.set_tileset(ctx.output._tiles, clear=True)
 
     @abstractmethod
     def export_file(self, ctx: PackContext):

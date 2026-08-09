@@ -99,6 +99,12 @@ class TileSet:
         td = TileData(empty_buffer)
         self._tiles[tile] = td
 
+    def set_tileset(self, tileset: TileSet, clear: bool = False, override: bool = False) -> None:
+        if clear:
+            self.clear()
+        for tile, tile_data in tileset.tile_buffers:
+            self.add_tile(tile, tile_data, override=override)
+
     def clear(self) -> None:
         self._tiles = {}
 

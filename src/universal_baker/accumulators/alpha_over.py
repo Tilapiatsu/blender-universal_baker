@@ -3,7 +3,6 @@ from __future__ import annotations
 from .base import AccumulatorBase
 
 from ..runtime.context_accumulate import AccumulateContext
-from ..services.image_bake import ImageServiceBake
 from ..core.registry_accumulator import registry_accumulator
 
 

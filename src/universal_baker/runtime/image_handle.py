@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 
 from typing import Iterator
 
-from universal_baker.runtime.bake_group import BakeGroup
+from .bake_group import BakeGroup
 
 
 from ..constant import LOG
@@ -103,13 +103,16 @@ class ImageHandle:
         self._ensure_loaded()
         return self._tiles[tile].buffer
 
-    def set_buffer(self, tile: int, buffer: ImageBuffer):
+    def set_buffer(self, tile: int, buffer: ImageBuffer) -> None:
         self._ensure_loaded()
         self._tiles.add_tile(tile, buffer, override=True)
 
-    def set_empty_buffer(self, tile: int):
+    def set_empty_buffer(self, tile: int) -> None:
         self._ensure_loaded()
         self._tiles.add_empty_tile(tile, self._output_settings, override=True)
+
+    def set_tileset(self, tileset: TileSet) -> None:
+        self._tiles = tileset
 
     def buffers(self) -> Iterator[tuple[int, ImageBuffer]]:
         self._ensure_loaded()
@@ -184,13 +187,3 @@ class ImageHandle:
     @classmethod
     def from_artifact(cls, artifact: OutputArtifact):
         return cls(artifact)
-
-    @classmethod
-    def from_image(cls, image: bpy.types.Image): ...
-
-    # TODO : To be Written
-
-    @classmethod
-    def temporary(cls): ...
-
-    # TODO : To be Written

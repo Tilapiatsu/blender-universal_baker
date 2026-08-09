@@ -9,6 +9,9 @@ from ..runtime.context import ExecutionContext
 from ..runtime.job import Job
 
 
+# TODO: Need to make task Executor more generic, deduplicate code, and make it compatible with any task type -> BakeTask,
+# Accumulators, Packer, Maskers
+#
 class TaskExecutor(ABC):
     id: str
 

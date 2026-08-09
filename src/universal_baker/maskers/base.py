@@ -8,55 +8,55 @@ from typing import TYPE_CHECKING
 from ..constant import LOG
 from ..enum.output_stage import OutputStage
 from ..services.artifact_service import ArtifactService
-from ..core.accumulator import ImageAccumulator
+from ..core.maskers import ImageMasker
 from ..core.registry_compositor import registry_compositor
 from ..logger_bake_middleware.bake_summary import BakeStatus, EventCategory
 
 if TYPE_CHECKING:
-    from ..runtime.context_accumulate import AccumulateContext
+    from ..runtime.context_mask import MaskContext
     from ..runtime.task import Task
 
-LOG_SCOPE = "Accumulating"
+LOG_SCOPE = "Masking"
 
 
-class AccumulatorBase(ABC):
-    """Abstract accumulator interface.
+class MaskerBase(ABC):
+    """Abstract Masker interface.
 
-    Every accumulator is responsible for preparing Blender,
-    executing one bake, then restoring the scene.
+    Every masker is responsible for preparing Blender,
+    executing one masking, then restoring the scene.
     """
 
     id: str = ""
     name: str = ""
     description: str = ""
-    icon: str = "RENDER_STILL"
+    icon: str = "MOD_MASK"
 
     def poll(self, task: Task) -> bool:
         """Whether this baker can execute this task."""
         return True
 
     @abstractmethod
-    def execute(self, ctx: AccumulateContext) -> None:
+    def execute(self, ctx: MaskContext) -> None:
         """Prepare, bake and cleanup all at once."""
         with LOG.scope(LOG_SCOPE):
             LOG.info(f"{str(ctx.task)}")
 
             self.prepare(ctx)
             self.create_artifact(ctx)
-            self.accumulate(ctx)
+            self.masking(ctx)
             self.update_baker(ctx)
             self.export_file(ctx)
             self.cleanup(ctx)
 
     @abstractmethod
-    def prepare(self, ctx: AccumulateContext) -> None:
+    def prepare(self, ctx: MaskContext) -> None:
         """Prepare Blender before baking."""
         LOG.debug("Preparing Scene ...")
         inputs = ctx.get_input_image_handles(ctx.session.runtime.outputs)
         if not len(inputs):
             LOG.error(
                 "No Image found",
-                category=EventCategory.ACCUMULATE,
+                category=EventCategory.MASK,
                 data={
                     "status": BakeStatus.FAIL,
                 },
@@ -67,14 +67,10 @@ class AccumulatorBase(ABC):
         ctx.inputs = inputs
 
     @abstractmethod
-    def accumulate(self, ctx: AccumulateContext) -> None:
+    def masking(self, ctx: MaskContext) -> None:
         """Execute the Accumulation."""
-        LOG.debug("Accumulating ...")
+        LOG.debug("Masking ...")
 
-        # TODO: Need to improve alpha over or add a new accumulator to make sure the bakes don't overlaps
-        # Indeed because of the bake margins the alpha of one object may overlaps with the neighboor's one
-        #  -> Should always make a simple bake without margins to get a clean alpha for each target objects, and use it
-        #  for each accumulators ?
         if ctx.output is None:
             LOG.error("Output is not defined")
             return
@@ -83,23 +79,17 @@ class AccumulatorBase(ABC):
             LOG.error("Inputs are not defined")
             return
 
-        accumulator = ImageAccumulator(ctx.output)
-
         for image in ctx.inputs:
-            accumulator.accumulate(image, registry_compositor[self.id])
-
-        ctx.output = accumulator.result()
-
-        ctx.image = ctx.output.image()
+            ImageMasker.apply_mask(image, ctx.mask, registry_compositor[self.id])
 
     @abstractmethod
-    def cleanup(self, ctx: AccumulateContext) -> None:
+    def cleanup(self, ctx: MaskContext) -> None:
         """Restore Blender."""
         LOG.debug("Restoring ...")
         ctx.image.reset()
 
     @abstractmethod
-    def update_baker(self, ctx: AccumulateContext) -> None:
+    def update_baker(self, ctx: MaskContext) -> None:
         LOG.debug("Update Baker ...")
         from ..core.controller import BakeController
 
@@ -112,12 +102,12 @@ class AccumulatorBase(ABC):
         baker.accumulated_image = ctx.image.image
 
     @abstractmethod
-    def create_artifact(self, ctx: AccumulateContext) -> None:
+    def create_artifact(self, ctx: MaskContext) -> None:
         LOG.debug("Creating Artifact ...")
         artifact = ArtifactService.register(
             runtime=ctx.session.runtime,
             project=ctx.project,
-            artifact_type=OutputStage.ACCUMULATED,
+            artifact_type=OutputStage.MASKED,
             name=ctx.task.output_name,
             bake_group_uuid=ctx.task.bake_group_uuid,
             target_object_uuid="",
@@ -141,7 +131,7 @@ class AccumulatorBase(ABC):
         ctx.task.result.set_tileset(ctx.output._tiles, clear=True)
 
     @abstractmethod
-    def export_file(self, ctx: AccumulateContext) -> None:
+    def export_file(self, ctx: MaskContext) -> None:
         """Save Bake to disk."""
         LOG.debug("Saving File to Disk ...")
         if ctx.task.output_context.output_settings.path.export_file and ctx.output is not None:

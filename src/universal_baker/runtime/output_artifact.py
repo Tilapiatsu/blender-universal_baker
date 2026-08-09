@@ -5,9 +5,7 @@ import bpy
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from universal_baker.resources.image_buffer import ImageBuffer
-from universal_baker.runtime.tile_set import TileSet
-
+from .tile_set import TileSet
 
 from ..constant import LOG
 from ..resources.image import ImageResource

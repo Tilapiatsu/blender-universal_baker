@@ -1,14 +1,8 @@
 from . import (
-    alpha_over,
-    max,
-    apply_mask,
+    uv_boundry,
 )
 
-modules = (
-    alpha_over,
-    max,
-    apply_mask,
-)
+modules = (uv_boundry,)
 
 
 def register():

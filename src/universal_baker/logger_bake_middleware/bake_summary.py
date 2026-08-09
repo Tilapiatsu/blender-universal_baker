@@ -14,6 +14,7 @@ class EventCategory(Enum):
     BAKE = auto()
     PACK = auto()
     ACCUMULATE = auto()
+    MASK = auto()
 
 
 class BakeSummaryMiddleware(BaseMiddleware):

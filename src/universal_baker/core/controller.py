@@ -323,13 +323,19 @@ class BakeController:
         preferences = get_prefs()
 
         if preferences.use_background_blender:
+            uv_mask_executor = registry_executor["UVMaskExternal"]
             bake_executor = registry_executor["BakeExternal"]
+            mask_executor = registry_executor["MaskExternal"]
             accumulate_executor = registry_executor["AccumulateExternal"]
         else:
+            uv_mask_executor = registry_executor["UVMaskInternal"]
             bake_executor = registry_executor["BakeInternal"]
+            mask_executor = registry_executor["MaskInternal"]
             accumulate_executor = registry_executor["AccumulateInternal"]
 
+        uv_mask_executor.execute(context, job)
         bake_executor.execute(context, job)
+        mask_executor.execute(context, job)
         accumulate_executor.execute(context, job)
 
         return (
@@ -398,15 +404,21 @@ class BakeController:
         preferences = get_prefs()
 
         if preferences.use_background_blender:
+            uv_mask_executor = registry_executor["UVMaskExternal"]
             bake_executor = registry_executor["BakeExternal"]
+            mask_executor = registry_executor["MaskExternal"]
             accumulate_executor = registry_executor["AccumulateExternal"]
             pack_executor = registry_executor["PackExternal"]
         else:
+            uv_mask_executor = registry_executor["UVMaskInternal"]
             bake_executor = registry_executor["BakeInternal"]
+            mask_executor = registry_executor["MaskInternal"]
             accumulate_executor = registry_executor["AccumulateInternal"]
             pack_executor = registry_executor["PackInternal"]
 
+        uv_mask_executor.execute(context, job)
         bake_executor.execute(context, job)
+        mask_executor.execute(context, job)
         accumulate_executor.execute(context, job)
         pack_executor.execute(context, job)
 
