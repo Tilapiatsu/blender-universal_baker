@@ -50,7 +50,9 @@ class MaskContext(ExecutionContext):
         return self.task.uv_mask_task.result
 
     def get_input_image_handles(self, repository: OutputRepository) -> list[ImageHandle]:
-        return repository.resolve_outputs(self.task.bake_group_uuid, self.task.baker_uuid)
+        return repository.resolve_target_object_outputs(
+            self.task.bake_group_uuid, self.task.baker_uuid, self.task.target_object_uuid
+        )
 
     def succeed(self, message: str = "") -> None:
         self.finished = True

@@ -70,7 +70,7 @@ class AccumulateContext(ExecutionContext):
         return input_images
 
     def get_input_image_handles(self, repository: OutputRepository) -> list[ImageHandle]:
-        return repository.resolve_outputs(self.task.bake_group_uuid, self.task.baker_uuid)
+        return repository.resolve_baker_outputs(self.task.bake_group_uuid, self.task.baker_uuid)
 
     def succeed(self, message: str = "") -> None:
         self.finished = True

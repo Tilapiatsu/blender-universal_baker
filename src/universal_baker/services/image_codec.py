@@ -10,6 +10,8 @@ from ..runtime.settings_output import OutputSettings
 from ..runtime.output_artifact import OutputArtifact
 from ..runtime.tile_set import TileSet
 
+LOG_SCOPE = "Image Codec"
+
 
 class ImageCodec:
     """
@@ -48,7 +50,6 @@ class ImageCodec:
 
     @classmethod
     def load(cls, filepath: Path) -> ImageBuffer | None:
-
         if filepath.exists():
             LOG.debug(f"Loading {filepath}")
             image = bpy.data.images.load(str(filepath), check_existing=False)
@@ -93,20 +94,23 @@ class ImageCodec:
 
     @classmethod
     def export_tiles(cls, artifact: OutputArtifact, tiles: TileSet, output_settings: OutputSettings):
-        for tile, buffer in tiles.tile_buffers:
-            cls.save(artifact.image.tile_path(tile), buffer, output_settings)
+        with LOG.scope(LOG_SCOPE):
+            for tile, buffer in tiles.tile_buffers:
+                cls.save(artifact.image.tile_path(tile), buffer, output_settings)
 
     @classmethod
     def import_tiles(cls, artifact: OutputArtifact) -> TileSet:
         tile_set = TileSet()
 
         for t in artifact.image.files():
-            buffer = cls.load(t.path)
+            with LOG.scope(LOG_SCOPE):
+                buffer = cls.load(t.path)
             if buffer is not None:
                 tile_set.add_tile(t.tile, buffer)
             else:
-                LOG.debug("Create Empty Tile")
-                tile_set.add_empty_tile(t.tile, artifact.output_settings)
-                cls.save(artifact.image.tile_path(t.tile), tile_set[t.tile].buffer, artifact.output_settings)
+                with LOG.scope(LOG_SCOPE):
+                    LOG.debug("Create Empty Tile")
+                    tile_set.add_empty_tile(t.tile, artifact.output_settings)
+                    cls.save(artifact.image.tile_path(t.tile), tile_set[t.tile].buffer, artifact.output_settings)
 
         return tile_set

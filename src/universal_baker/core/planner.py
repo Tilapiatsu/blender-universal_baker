@@ -161,6 +161,7 @@ class ExecutionPlanner:
                             uv_mask_task=uv_mask_task,
                             uuid=str(uuid4()),
                             baker_uuid=baker.uuid,
+                            target_object_uuid=obj.uuid,
                             name=obj.object.name,
                             enabled=True,
                             output_context=output_context,

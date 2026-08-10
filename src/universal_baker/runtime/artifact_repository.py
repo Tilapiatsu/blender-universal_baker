@@ -53,11 +53,25 @@ class ArtifactRepository:
     def by_target(self, target_object_uuid: str) -> list[OutputArtifact]:
         return list(self._target_object_index.get(target_object_uuid, []))
 
-    def resolve(self, bake_group_uuid: str, producer_uuid: str) -> list[OutputArtifact]:
+    def resolve_baker(self, bake_group_uuid: str, producer_uuid: str) -> list[OutputArtifact]:
         with LOG.scope(LOG_SCOPE):
             LOG.debug("Resolving Output")
             return [
                 artifact for artifact in self.by_bake_group(bake_group_uuid) if artifact.producer_uuid == producer_uuid
+            ]
+
+    def resolve_target_object(
+        self,
+        bake_group_uuid: str,
+        producer_uuid: str,
+        target_object_uuid: str,
+    ) -> list[OutputArtifact]:
+        with LOG.scope(LOG_SCOPE):
+            LOG.debug("Resolving Output")
+            return [
+                artifact
+                for artifact in self.by_bake_group(bake_group_uuid)
+                if artifact.producer_uuid == producer_uuid and artifact.target_object_uuid == target_object_uuid
             ]
 
     def exists(self, bake_group_uuid: str, producer_uuid: str) -> bool:

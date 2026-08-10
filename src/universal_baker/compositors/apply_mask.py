@@ -16,9 +16,6 @@ class CompositeApplyMask(Compositor):
 
         alpha = image.pixels[..., 3:4]
 
-        # RGB composite :
-        buffer.pixels[..., 0:3] = image.pixels[..., 0:3] * alpha
-
         # Alpha composite :
         buffer.pixels[..., 3] = alpha[..., 0] * buffer.pixels[..., 3]
 

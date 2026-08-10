@@ -42,7 +42,7 @@ class MaskerBase(ABC):
             LOG.info(f"{str(ctx.task)}")
 
             self.prepare(ctx)
-            self.create_artifact(ctx)
+            # self.create_artifact(ctx)
             self.masking(ctx)
             self.update_baker(ctx)
             self.export_file(ctx)
@@ -71,18 +71,16 @@ class MaskerBase(ABC):
         """Execute the Accumulation."""
         LOG.debug("Masking ...")
 
-        if ctx.output is None:
-            LOG.error("Output is not defined")
-            return
+        # if ctx.output is None:
+        #     LOG.error("Output is not defined")
+        #     return
 
         if ctx.inputs is None:
             LOG.error("Inputs are not defined")
             return
 
         for image in ctx.inputs:
-            LOG.debug(f"Image : {image.tiles()}")
-            LOG.debug(f"Mask : {ctx.mask.tiles}")
-            if not ctx.mask.overlaps(image.tileset):
+            if not ctx.mask.contains(image.tileset):
                 LOG.debug(f"Skipping {image.artifact.name}")
                 continue
             ImageMasker.apply_mask(image, ctx.mask, registry_compositor[self.id])
@@ -133,7 +131,7 @@ class MaskerBase(ABC):
         if ctx.output is None:
             return
 
-        ctx.task.result.set_tileset(ctx.output._tiles, clear=True)
+        ctx.task.result.set_tileset(ctx.output.tileset, clear=True)
 
     @abstractmethod
     def export_file(self, ctx: MaskContext) -> None:
@@ -142,4 +140,3 @@ class MaskerBase(ABC):
         if ctx.task.output_context.output_settings.path.export_file and ctx.inputs is not None:
             for input in ctx.inputs:
                 input.save()
-            # ImageServiceBake.save(ctx.image)

@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import bpy
-
 from dataclasses import dataclass, field
 
 from typing import Iterator
@@ -74,6 +72,10 @@ class ImageHandle:
         return self._artifact.bake_group
 
     @property
+    def target_object_uuid(self) -> str:
+        return self._artifact.target_object_uuid
+
+    @property
     def is_dirty(self) -> bool:
         return self._tiles.is_dirty
 
@@ -83,6 +85,7 @@ class ImageHandle:
 
     @property
     def tileset(self) -> TileSet:
+        self._ensure_loaded()
         return self._tiles
 
     def tiles(self) -> tuple[int, ...]:

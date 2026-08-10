@@ -79,7 +79,7 @@ class OutputProvider:
             #     LOG.debug("Reuse cached image")
             #     return cached
 
-            outputs = self._repository.resolve_outputs(bake_group_uuid, baker_uuid)
+            outputs = self._repository.resolve_baker_outputs(bake_group_uuid, baker_uuid)
 
             if not outputs:
                 LOG.error(

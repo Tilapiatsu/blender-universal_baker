@@ -28,20 +28,24 @@ class OutputRepository:
     def __init__(self, artifact_repository: ArtifactRepository):
         self._artifacts = artifact_repository
         self._outputs = {}
-        self._index = defaultdict(list)
+        self._index_baker = defaultdict(list)
+        self._index_target_object = defaultdict(list)
         self._materialized = {}
         self.clear()
 
     def clear(self) -> None:
         self._outputs: dict[str, ImageHandle] = {}
-        self._index = defaultdict(list)
+        self._index_baker = defaultdict(list)
+        self._index_target_object = defaultdict(list)
 
     def add(self, output: ImageHandle) -> None:
         self._outputs[output.uuid] = output
 
         target_key = (output.bake_group.uuid, output.uuid)
 
-        self._index[target_key].append(output)
+        target_object_key = (output.bake_group.uuid, output.uuid, output.target_object_uuid)
+        self._index_baker[target_key].append(output)
+        self._index_target_object[target_object_key].append(output)
 
     def get(self, artifact: OutputArtifact) -> ImageHandle | None:
         if artifact.uuid in self._outputs:
@@ -57,28 +61,33 @@ class OutputRepository:
             output.uuid,
         )
 
-        outputs = self._index.get(target_key)
+        outputs = self._index_baker.get(target_key)
 
         if outputs and output in outputs:
             outputs.remove(output)
 
             if not outputs:
-                del self._index[target_key]
+                del self._index_baker[target_key]
 
-    def resolve_outputs(self, bake_group_uuid: str, producer_uuid: str, materialize: bool = True) -> list[ImageHandle]:
+    def resolve_baker_outputs(
+        self,
+        bake_group_uuid: str,
+        producer_uuid: str,
+        materialize: bool = True,
+    ) -> list[ImageHandle]:
         with LOG.scope(LOG_SCOPE):
+            # First try RAM
             LOG.debug("Resolving Output")
             key = (bake_group_uuid, producer_uuid)
 
-            # First try RAM
-            outputs = self._lookup(key)
+            outputs = self._lookup_baker(key)
 
             if outputs:
                 LOG.debug(f"{len(outputs)} found from memory")
                 return outputs
 
             # Otherwise ask persistent artifacts.
-            artifacts = self._artifacts.resolve(bake_group_uuid, producer_uuid)
+            artifacts = self._artifacts.resolve_baker(bake_group_uuid, producer_uuid)
 
             LOG.debug(f"{len(artifacts)} found")
 
@@ -101,8 +110,53 @@ class OutputRepository:
 
             return outputs
 
-    def _lookup(self, key: tuple[str, str]) -> list[ImageHandle]:
-        return self._index[key]
+    def resolve_target_object_outputs(
+        self,
+        bake_group_uuid: str,
+        producer_uuid: str,
+        target_object_uuid: str,
+        materialize: bool = True,
+    ) -> list[ImageHandle]:
+        with LOG.scope(LOG_SCOPE):
+            # First try RAM
+            LOG.debug("Resolving Output")
+            key = (bake_group_uuid, producer_uuid, target_object_uuid)
+
+            outputs = self._lookup_target_object(key)
+
+            if outputs:
+                LOG.debug(f"{len(outputs)} found from memory")
+                return outputs
+
+            # Otherwise ask persistent artifacts.
+            artifacts = self._artifacts.resolve_target_object(bake_group_uuid, producer_uuid, target_object_uuid)
+
+            LOG.debug(f"{len(artifacts)} found")
+
+            if not artifacts:
+                LOG.error(
+                    "Artifacts not found",
+                    data={
+                        "status": BakeStatus.FAIL,
+                    },
+                )
+                return []
+
+            outputs = []
+
+            for artifact in artifacts:
+                if materialize:
+                    outputs.append(self._materialize(artifact))
+                else:
+                    outputs.append(artifact)
+
+            return outputs
+
+    def _lookup_baker(self, key: tuple[str, str]) -> list[ImageHandle]:
+        return self._index_baker[key]
+
+    def _lookup_target_object(self, key: tuple[str, str, str]) -> list[ImageHandle]:
+        return self._index_target_object[key]
 
     def iter_outputs(self) -> Iterable[ImageHandle]:
         return self._outputs.values()
@@ -139,7 +193,7 @@ class OutputRepository:
         return output
 
     def get_outputs(self, bake_group_uuid: str, producer_uuid: str) -> list[ImageHandle]:
-        outputs = self._lookup((bake_group_uuid, producer_uuid))
+        outputs = self._lookup_baker((bake_group_uuid, producer_uuid))
 
         if outputs:
             return outputs
@@ -175,7 +229,7 @@ class OutputRepository:
         with one target/producer pair.
         """
 
-        outputs = self.resolve_outputs(
+        outputs = self.resolve_baker_outputs(
             bake_group_uuid,
             producer_uuid,
             materialize=False,

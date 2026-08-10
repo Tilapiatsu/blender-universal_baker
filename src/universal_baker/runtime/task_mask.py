@@ -15,6 +15,7 @@ from .task import Task
 class MaskTask(Task):
     uv_mask_task: UvMaskTask
     baker_uuid: str
+    target_object_uuid: str
     masker: MaskerBase
     has_multiple_targets: bool
 

@@ -134,7 +134,7 @@ class BakerBase(ABC):
         if ctx.output is None:
             return
 
-        ctx.task.result.set_tileset(ctx.output._tiles, clear=True)
+        ctx.task.result.set_tileset(ctx.output.tileset, clear=True)
 
     @abstractmethod
     def export_file(self, ctx: BakeContext) -> None:

@@ -124,6 +124,14 @@ class TileSet:
                 return False
         return True
 
+    def contains(self, tileset: TileSet) -> bool:
+        contains = False
+        for tile in tileset.keys():
+            if tile in self._tiles.keys():
+                return True
+
+        return contains
+
     def __contains__(self, key: int) -> bool:
         return key in self._tiles
 

@@ -138,7 +138,7 @@ class AccumulatorBase(ABC):
         if ctx.output is None:
             return
 
-        ctx.task.result.set_tileset(ctx.output._tiles, clear=True)
+        ctx.task.result.set_tileset(ctx.output.tileset, clear=True)
 
     @abstractmethod
     def export_file(self, ctx: AccumulateContext) -> None:
@@ -146,4 +146,3 @@ class AccumulatorBase(ABC):
         LOG.debug("Saving File to Disk ...")
         if ctx.task.output_context.output_settings.path.export_file and ctx.output is not None:
             ctx.output.save()
-            # ImageServiceBake.save(ctx.image)

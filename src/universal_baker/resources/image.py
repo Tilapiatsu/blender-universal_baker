@@ -74,7 +74,7 @@ class ImageResource:
             alpha=alpha,
             float_buffer=float_buffer,
             stereo3d=False,
-            is_data=True if colorspace == "Non-Color" else False,
+            is_data=colorspace == "Non-Color",
             tiled=is_udim,
         )
         return cls(
@@ -239,5 +239,5 @@ class ImageResource:
 
     def __repr__(self) -> str:
         result = ""
-        result += f"{self.name} : {self.filepath}\nwidth = {self.width}\nheight = {self.height}"
+        result += f"{self.name} : {self.filepath}\n{self.image}\nwidth = {self.width}\nheight = {self.height}"
         return result
