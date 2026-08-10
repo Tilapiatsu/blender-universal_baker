@@ -55,6 +55,15 @@ class UvMaskTask(Task):
 
             self.result.set_tileset(result, clear=True)
 
+            from ..services.image_codec import ImageCodec
+            from ..core.output_resolver import OutputResolver
+
+            for buffer in self.result.buffers:
+                output = OutputResolver.resolve(
+                    self.output_context, ImageLayout.UDIM, suffix=buffer.name, sub_folder="Mask"
+                )
+                ImageCodec.save(output.absolute_path, buffer, self.output_context.output_settings)
+
             return result
 
     def __repr__(self) -> str:
