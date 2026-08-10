@@ -58,9 +58,10 @@ class UvMaskTask(Task):
             from ..services.image_codec import ImageCodec
             from ..core.output_resolver import OutputResolver
 
-            for buffer in self.result.buffers:
+            for tile, buffer in self.result.tile_buffers:
+                LOG.debug(f"{buffer.name}_{tile}")
                 output = OutputResolver.resolve(
-                    self.output_context, ImageLayout.UDIM, suffix=buffer.name, sub_folder="Mask"
+                    self.output_context, ImageLayout.SINGLE, suffix=buffer.name + str(tile), sub_folder="Mask"
                 )
                 ImageCodec.save(output.absolute_path, buffer, self.output_context.output_settings)
 

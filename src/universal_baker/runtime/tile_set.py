@@ -47,6 +47,10 @@ class TileSet:
     def numbers(self) -> Iterable[int]:
         return iter(self.keys())
 
+    @property
+    def tiles(self) -> tuple[int, ...]:
+        return tuple(self._tiles.keys())
+
     # @property
     # def is_udim(self) -> bool:
     #     return len(self._tiles) != 0 and (len(self._tiles) > 1 or 1001 not in self.keys())
@@ -114,8 +118,14 @@ class TileSet:
 
         self._tiles[key].dirty = value
 
+    def overlaps(self, tileset: TileSet) -> bool:
+        for tile in tileset.keys():
+            if tile not in self._tiles.keys():
+                return False
+        return True
+
     def __contains__(self, key: int) -> bool:
-        return key in self._tiles.keys()
+        return key in self._tiles
 
     def keys(self):
         return list(self._tiles.keys())

@@ -81,6 +81,10 @@ class ImageHandle:
     # Tile access
     # ------------------------------------------------------------
 
+    @property
+    def tileset(self) -> TileSet:
+        return self._tiles
+
     def tiles(self) -> tuple[int, ...]:
         """
         Return every available tile number.
@@ -90,7 +94,10 @@ class ImageHandle:
 
         self._ensure_loaded()
 
-        return tuple(self._tiles.keys())
+        return self._tiles.tiles
+
+    def overlaps(self, tileset: TileSet) -> bool:
+        return self._tiles.overlaps(tileset)
 
     def has_tile(self, tile: int) -> bool:
         self._ensure_loaded()

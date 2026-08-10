@@ -24,7 +24,7 @@ class TaskExecutor(ABC):
         job.notify_finished()
 
     def init_task_message(self, session) -> str:
-        return f"{'=' * 100} Init Task {session.job.current_task} / {session.job.total_tasks} {'=' * 100}"
+        return f"{'=' * 100} Task {session.job.current_task} / {session.job.total_tasks} {'=' * 100}"
 
     def before_job(self, session: ExecutionSession) -> None:
         """

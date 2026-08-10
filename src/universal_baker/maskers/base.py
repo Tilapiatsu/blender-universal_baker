@@ -80,6 +80,11 @@ class MaskerBase(ABC):
             return
 
         for image in ctx.inputs:
+            LOG.debug(f"Image : {image.tiles()}")
+            LOG.debug(f"Mask : {ctx.mask.tiles}")
+            if not ctx.mask.overlaps(image.tileset):
+                LOG.debug(f"Skipping {image.artifact.name}")
+                continue
             ImageMasker.apply_mask(image, ctx.mask, registry_compositor[self.id])
 
     @abstractmethod
@@ -134,6 +139,7 @@ class MaskerBase(ABC):
     def export_file(self, ctx: MaskContext) -> None:
         """Save Bake to disk."""
         LOG.debug("Saving File to Disk ...")
-        if ctx.task.output_context.output_settings.path.export_file and ctx.output is not None:
-            ctx.output.save()
+        if ctx.task.output_context.output_settings.path.export_file and ctx.inputs is not None:
+            for input in ctx.inputs:
+                input.save()
             # ImageServiceBake.save(ctx.image)
