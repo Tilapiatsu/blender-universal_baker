@@ -71,10 +71,6 @@ class MaskerBase(ABC):
         """Execute the Accumulation."""
         LOG.debug("Masking ...")
 
-        # if ctx.output is None:
-        #     LOG.error("Output is not defined")
-        #     return
-
         if ctx.inputs is None:
             LOG.error("Inputs are not defined")
             return
@@ -84,6 +80,8 @@ class MaskerBase(ABC):
                 LOG.debug(f"Skipping {image.artifact.name}")
                 continue
             ImageMasker.apply_mask(image, ctx.mask, registry_compositor[self.id])
+            image.image()
+            image.reload()
 
     @abstractmethod
     def cleanup(self, ctx: MaskContext) -> None:

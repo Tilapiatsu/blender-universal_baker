@@ -71,10 +71,6 @@ class AccumulatorBase(ABC):
         """Execute the Accumulation."""
         LOG.debug("Accumulating ...")
 
-        # TODO: Need to improve alpha over or add a new accumulator to make sure the bakes don't overlaps
-        # Indeed because of the bake margins the alpha of one object may overlaps with the neighboor's one
-        #  -> Should always make a simple bake without margins to get a clean alpha for each target objects, and use it
-        #  for each accumulators ?
         if ctx.output is None:
             LOG.error("Output is not defined")
             return
@@ -131,8 +127,6 @@ class AccumulatorBase(ABC):
         if artifact is None:
             LOG.error("Artifact creation Failed")
             return
-
-        LOG.info(str(artifact))
 
         ctx.output = ctx.session.runtime.outputs.get(artifact)
         if ctx.output is None:
