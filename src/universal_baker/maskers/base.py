@@ -75,13 +75,13 @@ class MaskerBase(ABC):
             LOG.error("Inputs are not defined")
             return
 
-        for image in ctx.inputs:
-            if not ctx.mask.contains(image.tileset):
-                LOG.debug(f"Skipping {image.artifact.name}")
+        for input in ctx.inputs:
+            if not ctx.mask.contains(input.tileset):
+                LOG.debug(f"Skipping {input.artifact.name}")
                 continue
-            ImageMasker.apply_mask(image, ctx.mask, registry_compositor[self.id])
-            image.image()
-            image.reload()
+            ImageMasker.apply_mask(input, ctx.mask, registry_compositor[self.id])
+            input.image()
+            input.reload()
 
     @abstractmethod
     def cleanup(self, ctx: MaskContext) -> None:

@@ -218,7 +218,7 @@ class OutputRepository:
         return outputs
 
     def _create_image_handle(self, artifact: OutputArtifact) -> ImageHandle | None:
-        LOG.debug("Create Image Handle from Artifact")
+        LOG.debug(f"Create Image Handle from Artifact : {artifact.name}")
 
         image_handle = ImageHandle(artifact)
         return image_handle
