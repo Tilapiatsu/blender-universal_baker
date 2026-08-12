@@ -254,6 +254,7 @@ class ExecutionPlanner:
                         project.settings_bake,
                         packer.settings if packer.override_settings else None,
                     )
+                    # TODO: Outputed ImageHandle's Images is in sRGB instead of Non-Color. Its creating weird colors
                     output_context = OutputContext(
                         directory_template=output_settings.path.output_path,
                         filename_template=output_settings.path.filename_template,
