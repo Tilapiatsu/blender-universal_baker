@@ -103,7 +103,9 @@ class PackerBase(ABC):
         if ctx.output is None:
             return
 
-        ctx.task.result.set_tileset(ctx.output.tileset, clear=True)
+        ctx.output.tileset.set_tileset(ctx.task.result, clear=True)
+
+        ctx.image = ctx.output.image()
 
     @abstractmethod
     def export_file(self, ctx: PackContext):

@@ -226,7 +226,7 @@ class OutputRepository:
     def invalidate(self, bake_group_uuid: str, producer_uuid: str) -> None:
         """
         Removes all runtime BakeOutputs associated
-        with one target/producer pair.
+        with one bake_group/producer pair.
         """
 
         outputs = self.resolve_baker_outputs(

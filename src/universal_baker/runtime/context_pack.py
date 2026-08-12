@@ -42,7 +42,6 @@ class PackContext(ExecutionContext):
     pack_blue: bool = False
     pack_alpha: bool = False
 
-    output_buffer: TileSet | None = None
     pack_resource: PackResource | None = None
 
     finished: bool = False

@@ -43,6 +43,7 @@ class UBK_Baker(PropertyGroup):
     images: CollectionProperty(type=UBK_BakerOutput)
 
     accumulated_image: PointerProperty(type=bpy.types.Image)
+    accumulated_uuid: StringProperty()
 
     override_settings: BoolProperty(
         name="Override Settings",

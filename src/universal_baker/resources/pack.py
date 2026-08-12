@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+
 from ..constant import LOG
 from ..services.output_provider import OutputProvider
-from ..runtime.task_pack import PackingTask
+from ..runtime.task_pack import PackingChannel, PackingTask
 from ..runtime.tile_set import TileSet
 
 from .image import ImageResource
@@ -43,16 +44,16 @@ class PackResource:
         self.bake_group_uuid = task.bake_group_uuid
         self.provider = ctx.session.runtime.provider
         if task.red:
-            self.red_uuid = task.red.source_map_uuid if task.red.source_map_uuid != "NONE" else None
+            self.red_uuid = self.get_accumulated_uuid(task.red)
             self.red_channel_mapping = task.red.source_channel
         if task.green:
-            self.green_uuid = task.green.source_map_uuid if task.green.source_map_uuid != "NONE" else None
+            self.green_uuid = self.get_accumulated_uuid(task.green)
             self.green_channel_mapping = task.green.source_channel
         if task.blue:
-            self.blue_uuid = task.blue.source_map_uuid if task.blue.source_map_uuid != "NONE" else None
+            self.blue_uuid = self.get_accumulated_uuid(task.blue)
             self.blue_channel_mapping = task.blue.source_channel
         if task.alpha:
-            self.alpha_uuid = task.alpha.source_map_uuid if task.alpha.source_map_uuid != "NONE" else None
+            self.alpha_uuid = self.get_accumulated_uuid(task.alpha)
             self.alpha_channel_mapping = task.alpha.source_channel
 
     @property
@@ -106,11 +107,25 @@ class PackResource:
 
         return uuids
 
-    def get_tile_set_from_baker_uuid(self, uuid: str) -> TileSet | None:
-        handle = self.provider.get_image(self.bake_group_uuid, uuid)
+    def get_accumulated_uuid(self, channel: PackingChannel) -> str | None:
+        from universal_baker.core.controller import BakeController
 
-        if handle is None:
+        baker_uuid = channel.source_map_uuid if channel.source_map_uuid != "NONE" else None
+        if baker_uuid is not None:
+            baker = BakeController.get_baker_from_uuid(baker_uuid)
+            if baker is not None:
+                return baker.accumulated_uuid
+
+        return None
+
+    def get_tile_set_from_baker_uuid(self, uuid: str) -> TileSet | None:
+        handles = self.provider.get_producer_image(self.bake_group_uuid, uuid)
+
+        if handles is None:
             LOG.debug("Handle is None")
             return None
 
-        return handle.tileset
+        if len(handles) > 1:
+            LOG.warning("Too many accumulated images found")
+
+        return handles[0].tileset

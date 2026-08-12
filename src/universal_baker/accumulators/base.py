@@ -106,6 +106,7 @@ class AccumulatorBase(ABC):
             return
 
         baker.accumulated_image = ctx.image.image
+        baker.accumulated_uuid = ctx.task.uuid
 
     @abstractmethod
     def create_artifact(self, ctx: AccumulateContext) -> None:

@@ -185,7 +185,7 @@ class ExecutionPlanner:
                     settings_accumulator = AccumulateSettings(baker_uuid=baker.uuid)
                     task = AccumulateTask(
                         name=baker.image_name,
-                        uuid=baker.uuid,
+                        uuid=str(uuid4()),
                         enabled=True,
                         output_context=output_context,
                         bake_group_uuid=group.uuid,

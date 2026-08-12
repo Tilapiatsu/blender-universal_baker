@@ -61,15 +61,15 @@ class OutputProvider:
         for key in keys:
             self._cache.pop(key, None)
 
-    def get_image(self, bake_group_uuid: str, producer_uuid: str) -> list[ImageHandle] | None:
+    def get_producer_image(self, bake_group_uuid: str, producer_uuid: str) -> list[ImageHandle] | None:
         with LOG.scope(LOG_SCOPE):
             LOG.debug("Request Image from repository")
             key = (bake_group_uuid, producer_uuid)
 
             # ISSUE : Cached image is a bit too dumb right now. If the user change the resolution for exemple, the
-            # cached version can be with the wrong size.
-            # TODO : Need to store othere metadata like resolution with cached buffer in order to invalidate the cached
-            # if the metadata differed from the requested image
+            # cached version will be considered valid and reterned but the size will be wrong.
+            # TODO : Need to store other metadata like resolution with cached buffer in order to invalidate the cached
+            # if the metadata differes from the requested image
             #
             # Cached ?
             #
@@ -94,13 +94,34 @@ class OutputProvider:
             for o in outputs:
                 LOG.debug(o.artifact.name)
 
-            # TODO: Need to find a way to get the composited output of each bakes instead of the bake result of each
+            # TODO: Need to find a way to get the composited output of each accumulated bakes instead of the bake result of each
             # indivisual bakes -> Maybe by registering the artifact with a different producer_uuid ?
+            return outputs
+
+    def get_target_object_image(
+        self, bake_group_uuid: str, producer_uuid: str, target_object_uuid: str
+    ) -> list[ImageHandle] | None:
+        with LOG.scope(LOG_SCOPE):
+            LOG.debug("Request Image from repository")
+            outputs = self._repository.resolve_target_object_outputs(bake_group_uuid, producer_uuid, target_object_uuid)
+            if not outputs:
+                LOG.error(
+                    "Output not found",
+                    data={
+                        "status": BakeStatus.FAIL,
+                    },
+                )
+                return None
+
+            LOG.debug(f"{len(outputs)} image(s) found :")
+            for o in outputs:
+                LOG.debug(o.artifact.name)
+
             return outputs
 
     def has_image(self, bake_group_uuid: str, baker_uuid: str) -> bool:
         return (
-            self.get_image(
+            self.get_producer_image(
                 bake_group_uuid,
                 baker_uuid,
             )
@@ -119,4 +140,4 @@ class OutputProvider:
         }
 
         for baker in bakers:
-            self.get_image(bake_group_uuid, baker)
+            self.get_producer_image(bake_group_uuid, baker)

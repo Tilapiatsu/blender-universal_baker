@@ -10,7 +10,6 @@ from .base import PackerBase
 from ..core.registry_packer import registry_packer
 from ..resources.image_buffer import ImageBuffer
 from ..services.image_pack import ImagePackService
-from ..services.image_io import ImageIOService
 from ..enum.channels import Channel
 from ..runtime.tile_set import TileSet
 
@@ -43,7 +42,7 @@ class PackerInternal(PackerBase):
         ctx.blue_buffer = ctx.pack_resource.blue_buffer
         ctx.alpha_buffer = ctx.pack_resource.alpha_buffer
 
-        buffers: tuple[TileSet, ...] = tuple([])
+        buffers: tuple[TileSet, ...] = ()
 
         if ctx.red_buffer is not None and task.red and task.red.enabled:
             ctx.pack_red = True
@@ -58,45 +57,54 @@ class PackerInternal(PackerBase):
             ctx.pack_alpha = True
             buffers += (ctx.alpha_buffer,)
 
-        print(buffers)
-        print(ctx.red_buffer)
-        print(ctx.green_buffer)
-        print(ctx.blue_buffer)
-        print(ctx.alpha_buffer)
-        print(ctx.pack_red)
-        print(ctx.pack_green)
-        print(ctx.pack_blue)
-        print(ctx.pack_alpha)
-        if not len(buffers):
+        if len(buffers) == 0:
             with LOG.scope(self.id.capitalize()):
                 LOG.warning("No Image Resource Found")
             return
 
         LOG.debug(f"{len(buffers)} buffer(s) found")
         buffer = buffers[0].values()[0]
-        ctx.output_buffer = self.create_tile_set(buffer.width, buffer.height, ctx.task.image_name)
+        ctx.task.result.set_tileset(
+            self.create_tile_set(
+                buffer.width,
+                buffer.height,
+                ctx.task.image_name,
+                buffers[0].tiles,
+            )
+        )
 
     def pack(self, ctx: PackContext) -> None:
         """Execute the packing."""
 
-        if ctx.output_buffer:
+        if ctx.task.result:
             if ctx.pack_red and ctx.red_buffer and ctx.pack_resource and ctx.pack_resource.red_channel_mapping:
-                self.copy_channels(ctx.output_buffer, ctx.pack_resource.red_channel_mapping, ctx.red_buffer, Channel.R)
+                self.copy_channels(
+                    ctx.task.result,
+                    ctx.pack_resource.red_channel_mapping,
+                    ctx.red_buffer,
+                    Channel.R,
+                )
             if ctx.pack_green and ctx.green_buffer and ctx.pack_resource and ctx.pack_resource.green_channel_mapping:
                 self.copy_channels(
-                    ctx.output_buffer, ctx.pack_resource.green_channel_mapping, ctx.green_buffer, Channel.G
+                    ctx.task.result,
+                    ctx.pack_resource.green_channel_mapping,
+                    ctx.green_buffer,
+                    Channel.G,
                 )
             if ctx.pack_blue and ctx.blue_buffer and ctx.pack_resource and ctx.pack_resource.blue_channel_mapping:
                 self.copy_channels(
-                    ctx.output_buffer, ctx.pack_resource.blue_channel_mapping, ctx.blue_buffer, Channel.B
+                    ctx.task.result,
+                    ctx.pack_resource.blue_channel_mapping,
+                    ctx.blue_buffer,
+                    Channel.B,
                 )
             if ctx.pack_alpha and ctx.alpha_buffer and ctx.pack_resource and ctx.pack_resource.alpha_channel_mapping:
                 self.copy_channels(
-                    ctx.output_buffer, ctx.pack_resource.alpha_channel_mapping, ctx.alpha_buffer, Channel.A
+                    ctx.task.result,
+                    ctx.pack_resource.alpha_channel_mapping,
+                    ctx.alpha_buffer,
+                    Channel.A,
                 )
-
-            ctx.image = ImageIOService.acquire(ctx.image, ctx.task)
-            ImageIOService.write(ctx.image, ctx.output_buffer)
 
         else:
             with LOG.scope(self.id.capitalize()):
@@ -160,7 +168,7 @@ class PackerInternal(PackerBase):
             curr_tileset = set(ts.keys())
             if len(curr_tileset.difference(ref_tileset)) > 0:
                 raise ValueError(
-                    f"All tile set must have be the same between source and destination.\n{ref_tileset}\n{curr_tileset}."
+                    f"Source and Destination tileset should have the tiles count and id.\nSource : {curr_tileset}\nDestination : {ref_tileset}."
                 )
 
     # -------------------------------------------------------------------------
@@ -168,14 +176,7 @@ class PackerInternal(PackerBase):
     # -------------------------------------------------------------------------
 
     @staticmethod
-    def create_tile_set(
-        width: int,
-        height: int,
-        name: str = "Image",
-        tiles: list[int] = [
-            1001,
-        ],
-    ) -> TileSet:
+    def create_tile_set(width: int, height: int, name: str = "Image", tiles: tuple[int, ...] = (1001,)) -> TileSet:
         """Create an Image Buffer with the given width and height"""
         ts = TileSet()
 
@@ -196,6 +197,7 @@ class PackerInternal(PackerBase):
         cls.validate_same_size(destination, source)
         cls.validate_same_tilesets(destination, source)
 
+        LOG.debug(f"Copy {source_channel.value} to {destination_channel.value}")
         cls._copy_numpy(
             destination,
             destination_channel,
