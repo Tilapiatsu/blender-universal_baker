@@ -3,7 +3,6 @@ from __future__ import annotations
 from .base import BakerBase
 
 from ..runtime.context_bake import BakeContext
-from ..services.image_bake import ImageServiceBake
 from ..services.material import MaterialService
 from ..core.registry_baker import registry_baker
 
@@ -43,9 +42,6 @@ class DiffuseBaker(BakerBase):
 
     def create_artifact(self, ctx: BakeContext) -> None:
         return super().create_artifact(ctx)
-
-    def create_output(self, ctx: BakeContext):
-        return super().create_output(ctx)
 
     def export_file(self, ctx: BakeContext):
         """Save Bake to disk."""

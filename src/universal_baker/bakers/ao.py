@@ -3,7 +3,6 @@ from __future__ import annotations
 from .base import BakerBase
 
 from ..runtime.context_bake import BakeContext
-from ..services.image_bake import ImageServiceBake
 from ..services.material import MaterialService
 from ..core.registry_baker import registry_baker
 
@@ -16,7 +15,7 @@ class AmbientOcclusionBaker(BakerBase):
     description = "Bake Ambient Occlusion"
     icon = "TEXTURE"
     blender_bake_type = "AO"
-    accumulator_id = "MAX"
+    accumulator_id = "ALPHA_OVER"
 
     def execute(self, ctx: BakeContext) -> None:
         return super().execute(ctx)
@@ -44,11 +43,8 @@ class AmbientOcclusionBaker(BakerBase):
     def create_artifact(self, ctx: BakeContext) -> None:
         return super().create_artifact(ctx)
 
-    def create_output(self, ctx: BakeContext):
-        return super().create_output(ctx)
-
     def export_file(self, ctx: BakeContext):
-        """Save Pack to disk."""
+        """Save Bake to disk."""
         super().export_file(ctx)
 
 
