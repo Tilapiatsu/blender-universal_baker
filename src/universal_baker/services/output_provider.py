@@ -94,8 +94,6 @@ class OutputProvider:
             for o in outputs:
                 LOG.debug(o.artifact.name)
 
-            # TODO: Need to find a way to get the composited output of each accumulated bakes instead of the bake result of each
-            # indivisual bakes -> Maybe by registering the artifact with a different producer_uuid ?
             return outputs
 
     def get_target_object_image(
