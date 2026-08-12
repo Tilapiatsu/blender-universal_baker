@@ -111,7 +111,7 @@ class ImageHandle:
         Return one tile buffer.
         """
         self._ensure_loaded()
-        return self._tiles[tile].buffer
+        return self._tiles[tile]
 
     def set_buffer(self, tile: int, buffer: ImageBuffer) -> None:
         self._ensure_loaded()

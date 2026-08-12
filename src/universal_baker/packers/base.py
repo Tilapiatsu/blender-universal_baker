@@ -5,7 +5,7 @@ from abc import abstractmethod
 
 from ..constant import LOG
 from ..enum.output_stage import OutputStage
-from ..services.image_pack import ImageServicePack
+from ..services.image_pack import ImagePackService
 from ..services.artifact_service import ArtifactService
 
 from typing import TYPE_CHECKING
@@ -108,5 +108,5 @@ class PackerBase(ABC):
     @abstractmethod
     def export_file(self, ctx: PackContext):
         """Save Pack to disk."""
-        if ctx.task.output_context.output_settings.path.export_file:
-            ImageServicePack.save(ctx.image)
+        if ctx.task.output_context.output_settings.path.export_file and ctx.output is not None:
+            ctx.output.save()

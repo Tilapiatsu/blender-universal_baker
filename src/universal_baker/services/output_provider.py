@@ -61,10 +61,10 @@ class OutputProvider:
         for key in keys:
             self._cache.pop(key, None)
 
-    def get_image(self, bake_group_uuid: str, baker_uuid: str) -> ImageHandle | None:
+    def get_image(self, bake_group_uuid: str, producer_uuid: str) -> list[ImageHandle] | None:
         with LOG.scope(LOG_SCOPE):
             LOG.debug("Request Image from repository")
-            key = (bake_group_uuid, baker_uuid)
+            key = (bake_group_uuid, producer_uuid)
 
             # ISSUE : Cached image is a bit too dumb right now. If the user change the resolution for exemple, the
             # cached version can be with the wrong size.
@@ -79,7 +79,7 @@ class OutputProvider:
             #     LOG.debug("Reuse cached image")
             #     return cached
 
-            outputs = self._repository.resolve_baker_outputs(bake_group_uuid, baker_uuid)
+            outputs = self._repository.resolve_baker_outputs(bake_group_uuid, producer_uuid)
 
             if not outputs:
                 LOG.error(
@@ -91,13 +91,12 @@ class OutputProvider:
                 return None
 
             LOG.debug(f"{len(outputs)} image(s) found :")
-            #
-            # Single object target
-            #
-            if len(outputs) == 1:
-                tiles = outputs[0]
-                self._cache[key] = tiles
-                return tiles
+            for o in outputs:
+                LOG.debug(o.artifact.name)
+
+            # TODO: Need to find a way to get the composited output of each bakes instead of the bake result of each
+            # indivisual bakes -> Maybe by registering the artifact with a different producer_uuid ?
+            return outputs
 
     def has_image(self, bake_group_uuid: str, baker_uuid: str) -> bool:
         return (

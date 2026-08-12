@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-
+from ..constant import LOG
 from ..services.output_provider import OutputProvider
 from ..runtime.task_pack import PackingTask
 from ..runtime.tile_set import TileSet
@@ -43,44 +43,52 @@ class PackResource:
         self.bake_group_uuid = task.bake_group_uuid
         self.provider = ctx.session.runtime.provider
         if task.red:
-            self.red_uuid = task.red.source_map_uuid
+            self.red_uuid = task.red.source_map_uuid if task.red.source_map_uuid != "NONE" else None
             self.red_channel_mapping = task.red.source_channel
         if task.green:
-            self.green_uuid = task.green.source_map_uuid
+            self.green_uuid = task.green.source_map_uuid if task.green.source_map_uuid != "NONE" else None
             self.green_channel_mapping = task.green.source_channel
         if task.blue:
-            self.blue_uuid = task.blue.source_map_uuid
+            self.blue_uuid = task.blue.source_map_uuid if task.blue.source_map_uuid != "NONE" else None
             self.blue_channel_mapping = task.blue.source_channel
         if task.alpha:
-            self.alpha_uuid = task.alpha.source_map_uuid
+            self.alpha_uuid = task.alpha.source_map_uuid if task.alpha.source_map_uuid != "NONE" else None
             self.alpha_channel_mapping = task.alpha.source_channel
 
     @property
     def red_buffer(self) -> TileSet | None:
         if self.red_uuid is None:
+            LOG.debug("Skipping : Red Channel is None")
             return None
 
+        LOG.debug("Fetching Red Buffer")
         return self.get_tile_set_from_baker_uuid(self.red_uuid)
 
     @property
     def green_buffer(self) -> TileSet | None:
         if self.green_uuid is None:
+            LOG.debug("Skipping : Green Channel is None")
             return None
 
+        LOG.debug("Fetching Green Buffer")
         return self.get_tile_set_from_baker_uuid(self.green_uuid)
 
     @property
     def blue_buffer(self) -> TileSet | None:
         if self.blue_uuid is None:
+            LOG.debug("Skipping : Blue Channel is None")
             return None
 
+        LOG.debug("Fetching Blue Buffer")
         return self.get_tile_set_from_baker_uuid(self.blue_uuid)
 
     @property
     def alpha_buffer(self) -> TileSet | None:
         if self.alpha_uuid is None:
+            LOG.debug("Skipping : Alpha Channel is None")
             return None
 
+        LOG.debug("Fetching Alpha Buffer")
         return self.get_tile_set_from_baker_uuid(self.alpha_uuid)
 
     @property
@@ -99,4 +107,10 @@ class PackResource:
         return uuids
 
     def get_tile_set_from_baker_uuid(self, uuid: str) -> TileSet | None:
-        return self.provider.get_image(self.bake_group_uuid, uuid)
+        handle = self.provider.get_image(self.bake_group_uuid, uuid)
+
+        if handle is None:
+            LOG.debug("Handle is None")
+            return None
+
+        return handle.tileset

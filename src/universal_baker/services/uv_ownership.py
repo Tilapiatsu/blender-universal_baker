@@ -8,7 +8,7 @@ from ..resources.image_buffer import ImageBuffer
 from ..runtime.tile_set import TileSet
 
 
-class UvMaskService:
+class UvOwnershipService:
     """Generate zero-margin UV ownership masks from a Blender mesh."""
 
     @classmethod

@@ -32,12 +32,12 @@ class TileSet:
         ts = TileSet()
 
         if image.tiles is None:
-            ts[1001] = TileData(buffer=ImageBuffer.from_blender_image(image))
+            ts[1001] = ImageBuffer.from_blender_image(image)
             return ts
 
         for t in image.tiles.values():
             tile_image = ImageIOService.load(image.filepath_raw.replace("<UDIM>", str(t.number)))
-            ts[t.number] = TileData(ImageBuffer.from_blender_image(tile_image))
+            ts[t.number] = ImageBuffer.from_blender_image(tile_image)
 
             bpy.data.images.remove(tile_image)
 
@@ -72,11 +72,11 @@ class TileSet:
 
     @property
     def buffers(self) -> list[ImageBuffer]:
-        return [t.buffer for t in self.values()]
+        return [t.buffer for t in self._tiles.values()]
 
     @property
     def dirty_buffers(self) -> list[ImageBuffer]:
-        return [t.buffer for t in self.values() if t.dirty]
+        return [t.buffer for t in self._tiles.values() if t.dirty]
 
     @property
     def is_empty(self) -> bool:
@@ -139,7 +139,8 @@ class TileSet:
         return list(self._tiles.keys())
 
     def values(self):
-        return list(self._tiles.values())
+        values = [t.buffer for t in self._tiles.values()]
+        return values
 
     def update(self, *args, **kwargs):
         return self._tiles.update(*args, **kwargs)
@@ -147,12 +148,15 @@ class TileSet:
     def items(self):
         return self._tiles.items()
 
-    def __setitem__(self, key: int, item: TileData):
-        item.dirty = True
-        self._tiles[key] = item
+    def __setitem__(self, key: int, item: ImageBuffer):
+        td = TileData(item)
+        self._tiles[key] = td
 
-    def __getitem__(self, key: int) -> TileData:
-        return self._tiles[key]
+    def __getitem__(self, key: int) -> ImageBuffer:
+        td = self._tiles[key]
+        if td is None:
+            return td
+        return td.buffer
 
     def __repr__(self) -> str:
         return repr(self._tiles)

@@ -9,7 +9,7 @@ from .base import PackerBase
 
 from ..core.registry_packer import registry_packer
 from ..resources.image_buffer import ImageBuffer
-from ..services.image_pack import ImageServicePack
+from ..services.image_pack import ImagePackService
 from ..services.image_io import ImageIOService
 from ..enum.channels import Channel
 from ..runtime.tile_set import TileSet
@@ -36,7 +36,7 @@ class PackerInternal(PackerBase):
     def prepare(self, ctx: PackContext) -> None:
         """Prepare Blender before packing."""
         task = ctx.task
-        ctx.pack_resource = ImageServicePack.create_pack_resource(task, ctx)
+        ctx.pack_resource = ImagePackService.create_pack_resource(task, ctx)
 
         ctx.red_buffer = ctx.pack_resource.red_buffer
         ctx.green_buffer = ctx.pack_resource.green_buffer
@@ -58,13 +58,23 @@ class PackerInternal(PackerBase):
             ctx.pack_alpha = True
             buffers += (ctx.alpha_buffer,)
 
+        print(buffers)
+        print(ctx.red_buffer)
+        print(ctx.green_buffer)
+        print(ctx.blue_buffer)
+        print(ctx.alpha_buffer)
+        print(ctx.pack_red)
+        print(ctx.pack_green)
+        print(ctx.pack_blue)
+        print(ctx.pack_alpha)
         if not len(buffers):
             with LOG.scope(self.id.capitalize()):
                 LOG.warning("No Image Resource Found")
             return
 
-        buffur = buffers[0].values()[0]
-        ctx.output_buffer = self.create_tile_set(buffur.width, buffur.height, ctx.task.image_name)
+        LOG.debug(f"{len(buffers)} buffer(s) found")
+        buffer = buffers[0].values()[0]
+        ctx.output_buffer = self.create_tile_set(buffer.width, buffer.height, ctx.task.image_name)
 
     def pack(self, ctx: PackContext) -> None:
         """Execute the packing."""

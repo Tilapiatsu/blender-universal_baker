@@ -39,10 +39,10 @@ class UvMaskTask(Task):
                 LOG.error(message)
                 raise RuntimeError(message)
 
-            from ..services.uv_mask import UvMaskService
+            from ..services.uv_ownership import UvOwnershipService
 
             LOG.info(f"Generting UV Mask for {self.uv_layer}")
-            result = UvMaskService.create_mask(
+            result = UvOwnershipService.create_mask(
                 obj=obj,
                 resolution=(
                     self.output_context.output_settings.path.width,

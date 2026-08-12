@@ -19,7 +19,7 @@ class ImageMasker:
                 continue
 
             result_buffer = image.buffer(tile)
-            mask_buffer = mask[tile].buffer
+            mask_buffer = mask[tile]
 
             LOG.info(f"Masking tile : {result_buffer.name} with {mask_buffer.name}_{tile}")
 

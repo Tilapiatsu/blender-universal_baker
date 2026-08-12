@@ -8,7 +8,7 @@ from ..resources.pack import PackResource
 from .image_base import ImageServiceBase
 
 
-class ImageServicePack(ImageServiceBase):
+class ImagePackService(ImageServiceBase):
     """Manage destination images."""
 
     @classmethod
