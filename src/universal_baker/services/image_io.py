@@ -86,7 +86,9 @@ class ImageIOService(ImageServiceBase):
 
     @staticmethod
     def load(path: Path, is_udim: bool = False) -> bpy.types.Image:
-        image = bpy.data.images.load(str(path))
-        if is_udim:
-            image.source = "TILED"
-        return image
+        with LOG.scope(LOG_SCOPE):
+            LOG.debug(f"Loading image : {str(path)}")
+            image = bpy.data.images.load(str(path))
+            if is_udim:
+                image.source = "TILED"
+            return image

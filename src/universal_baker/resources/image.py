@@ -66,17 +66,27 @@ class ImageResource:
         alpha: bool = False,
         float_buffer: bool = False,
         is_udim: bool = False,
+        create_image: bool = True,
     ) -> ImageResource:
-        image = bpy.data.images.new(
-            name=name,
-            width=width,
-            height=height,
-            alpha=alpha,
-            float_buffer=float_buffer,
-            stereo3d=False,
-            is_data=colorspace == "Non-Color",
-            tiled=is_udim,
-        )
+        image = bpy.data.images[name]
+
+        if create_image or image is None:
+            image = bpy.data.images.new(
+                name=name,
+                width=width,
+                height=height,
+                alpha=alpha,
+                float_buffer=float_buffer,
+                stereo3d=False,
+                is_data=colorspace == "Non-Color",
+                tiled=is_udim,
+            )
+        else:
+            image.name = name
+            image.filepath_raw = str(filepath)
+            image.colorspace_settings.name = colorspace
+            image.alpha_mode = "STRAIGHT" if alpha else "NONE"
+
         return cls(
             image=image,
             _width=width,
@@ -210,6 +220,7 @@ class ImageResource:
         self.name = self.image.name
         self.filepath = self.image.filepath_raw
         self.is_udim = self.image.tiles is not None
+        self.colorspace = self.image.colorspace_settings.name
 
     @classmethod
     def from_blender_image(cls, image: bpy.types.Image, image_format_settings: ImageSettings) -> ImageResource:

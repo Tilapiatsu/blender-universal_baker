@@ -87,13 +87,13 @@ class OutputArtifact:
         """
         from ..services.image_io import ImageIOService
 
-        LOG.debug(f"Loading Image {self.name}")
         image = bpy.data.images.get(self.name)
 
         if image is None:
+            LOG.debug(f"Loading Image {self.name}")
             image = ImageIOService.load(self.path, self.image.is_udim)
 
-        return ImageIOService.init_resource(image, self.output_settings.image)
+        return ImageIOService.init_resource(image, self.output_settings)
 
     def init_empty_image(self) -> None:
         from ..services.image_codec import ImageCodec

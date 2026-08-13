@@ -4,12 +4,12 @@ from pathlib import Path
 
 import bpy
 
-from ..runtime.settings_image import ImageSettings
 from ..constant import LOG
 from ..resources.image import ImageResource
 from ..runtime.task import Task
 from ..enum.image_layout import ImageLayout
 from ..services.uv import UVService
+from ..runtime.settings_output import OutputSettings
 
 LOG_SCOPE = "Image Service"
 
@@ -18,11 +18,24 @@ class ImageServiceBase:
     """Manage destination images."""
 
     @classmethod
-    def init_resource(cls, image: bpy.types.Image, image_format_settings: ImageSettings) -> ImageResource:
-        resource = ImageResource(image, image_format_settings=image_format_settings)
+    def init_resource(cls, image: bpy.types.Image, output_settings: OutputSettings) -> ImageResource:
+        with LOG.scope(LOG_SCOPE):
+            print(output_settings.color.colorspace)
+            LOG.debug(f"Init Image Resource : {image.name}")
+            resource = ImageResource.create(
+                width=output_settings.path.width,
+                height=output_settings.path.height,
+                name=image.name,
+                filepath=image.filepath_raw,
+                colorspace=output_settings.color.colorspace,
+                image_format_settings=output_settings.image,
+                alpha=output_settings.image.alpha,
+                float_buffer=output_settings.image.float_buffer,
+                is_udim=len(image.tiles) > 1,
+                create_image=False,
+            )
 
-        resource.init_from_image()
-        return resource
+            return resource
 
     @classmethod
     def acquire(cls, resource: ImageResource, task: Task) -> ImageResource:
