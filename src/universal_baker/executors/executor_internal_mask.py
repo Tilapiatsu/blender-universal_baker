@@ -8,7 +8,7 @@ from ..constant import LOG
 from ..runtime.context import ExecutionContext
 from ..runtime.session import ExecutionSession
 from ..runtime.context_mask import MaskContext
-from ..runtime.task_mask import MaskTask
+from ..runtime.task_mask import MaskBufferTask
 from ..core.registry_executor import registry_executor
 from .executor_base import TaskExecutor
 from ..logger.event import ScopeState
@@ -41,7 +41,7 @@ class MaskExecutorInternal(TaskExecutor):
                 self.before_job(session)
 
                 for task in job.tasks:
-                    if not isinstance(task, (MaskTask)):
+                    if not isinstance(task, (MaskBufferTask)):
                         continue
                     if self._cancel_requested:
                         session.cancel()
@@ -57,7 +57,7 @@ class MaskExecutorInternal(TaskExecutor):
 
             return session
 
-    def execute_task(self, session: ExecutionSession, task: MaskTask) -> None:
+    def execute_task(self, session: ExecutionSession, task: MaskBufferTask) -> None:
         with LOG.scope(
             task.name,
             width=task.output_context.output_settings.path.width,

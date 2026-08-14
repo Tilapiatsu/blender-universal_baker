@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from .output_repository import OutputRepository
     from .settings_output import OutputSettings
     from ..runtime.image_handle import ImageHandle
-    from .task_mask import MaskTask
+    from .task_mask_buffer import MaskBufferTask
     from .tile_set import TileSet
 
 from ..constant import LOG
@@ -24,7 +24,7 @@ from ..resources.image import ImageResource
 class MaskContext(ExecutionContext):
     """Runtime context used while executing a single MaskTask."""
 
-    task: MaskTask
+    task: MaskBufferTask
 
     image: ImageResource = field(default_factory=ImageResource)
     inputs: list[ImageHandle] | None = None
@@ -47,7 +47,7 @@ class MaskContext(ExecutionContext):
 
     @property
     def mask(self) -> TileSet:
-        return self.task.uv_mask_task.result
+        return self.task.uv_ownership_task.result
 
     def get_input_image_handles(self, repository: OutputRepository) -> list[ImageHandle]:
         return repository.resolve_target_object_outputs(

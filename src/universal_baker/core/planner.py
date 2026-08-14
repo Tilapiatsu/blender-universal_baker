@@ -4,14 +4,18 @@ import bpy
 
 from uuid import uuid4
 
+from universal_baker.runtime.label_set import LabelSet
+from universal_baker.runtime.uv_ownership_mask import UvOwnershipMask
+
 
 from ..constant import LOG
+from ..runtime.task_ownership_mask import UvOwnershipTask
 from ..runtime.settings_accumulate import AccumulateSettings
 from ..runtime.job import Job
 from ..runtime.task_bake import BakeTask
 from ..runtime.task_pack import PackingTask, PackingChannel
 from ..runtime.task_accumulate import AccumulateTask
-from ..runtime.task_mask import MaskTask
+from ..runtime.task_mask_buffer import MaskBufferTask
 from ..runtime.task_uv_mask import UvMaskTask
 from ..runtime.tile_set import TileSet
 from ..enum.channels import Channel
@@ -22,11 +26,10 @@ from ..core.registry_accumulator import registry_accumulator
 from ..factories.settings_bake import BakeSettingsResolver
 from ..factories.settings_cage import CageSettingsResolver
 from ..factories.settings_pack import PackSettingsResolver
-from ..factories.settings_output import OutputSettingsResolver
-from ..output.output_tokens import get_variables
-from ..runtime.output_context import OutputContext
+from ..factories.settings_output import OutputContextResolver, UvOwnershipOutputContextResolver
 from ..services.uv import UVService
 from ..resources.uv import UVLayout
+from ..resources.ownership import OwnershipData
 from ..enum.image_layout import ImageLayout
 
 
@@ -42,23 +45,78 @@ class ExecutionPlanner:
                 if not group.enabled:
                     continue
 
-                image_layout = ImageLayout.UDIM if group.detect_udim else ImageLayout.SINGLE
+                #
+                # Store UDIM Uv Informations
+                #
+                ownership_datas = []
+                object_tiles = {}
+                group_tiles = tuple()
+                object_uuids = {}
+                for index, obj in enumerate(group.target_objects):
+                    if not obj.enabled:
+                        continue
+
+                    if obj.object is None:
+                        continue
+
+                    ownership_data = OwnershipData(
+                        object_name=obj.name,
+                        layer_name=obj.layer_name,
+                    )
+                    ownership_datas.append(ownership_data)
+
+                    udim_tiles = tuple()
+
+                    if group.detect_udim:
+                        udim_tiles = UVService.detect_udim_tiles(obj.object, obj.uv_layer)
+                        LOG.info(f"{len(udim_tiles)} udim tile(s) detected for {obj.object.name}:")
+                        LOG.info(f"{udim_tiles}")
+                        for u in udim_tiles:
+                            LOG.info(str(UVService.tile_number(u[0], u[1])))
+
+                        # using set to prevent duplication
+                        group_tiles = tuple(set(group_tiles).union(set(udim_tiles)))
+
+                        object_tiles[obj.object.name] = udim_tiles
+
+                    object_uuids[index] = obj.uuid
+
+                uv_layout = UVLayout(
+                    image_layout=ImageLayout.UDIM if group.detect_udim else ImageLayout.SINGLE,
+                    udim_tiles=group_tiles,
+                )
+
+                output_context = UvOwnershipOutputContextResolver.resolve(
+                    group=group, scene=bpy.context.scene, global_settings=project.settings_bake
+                )
+
+                #
+                # Create UvOwnershipTask
+                #
+                ownership_mask = UvOwnershipMask(
+                    labels=LabelSet(),
+                    resolution=(
+                        output_context.output_settings.path.width,
+                        output_context.output_settings.path.height,
+                    ),
+                    object_uuids=object_uuids,
+                )
+
+                ownership_task = UvOwnershipTask(
+                    uuid=str(uuid4()),
+                    name="UVOwnership",
+                    enabled=True,
+                    output_context=output_context,
+                    bake_group_uuid=group.uuid,
+                    uv_layout=uv_layout,
+                    result=TileSet(),
+                    target_objects=ownership_datas,
+                    ownership_mask=ownership_mask,
+                )
+
+                job.add_task(ownership_task)
 
                 group_tiles = tuple()
-
-                # for obj in group.target_objects:
-                #     if not obj.enabled:
-                #         continue
-                #
-                #     if obj.object is None:
-                #         continue
-                #
-                #     task = UvMaskTask(
-                #         uuid=str(uuid4()),
-                #         name=obj.object.name,
-                #         enabled=True,
-                #     )
-                #
                 for baker in group.bakers:
                     if not register_bakers:
                         continue
@@ -75,26 +133,13 @@ class ExecutionPlanner:
                     #     baker.settings_cage if baker.override_settings_cage else None,
                     # )
 
-                    output_settings = OutputSettingsResolver.resolve(
-                        project.settings_bake,
-                        baker.settings if baker.override_settings else None,
+                    output_context = OutputContextResolver.resolve(
+                        group_name=group.name,
+                        baker=baker,
+                        scene=bpy.context.scene,
+                        global_settings=project.settings_bake,
+                        override_settings=baker.settings if baker.override_settings else None,
                     )
-
-                    output_context = OutputContext(
-                        directory_template=output_settings.path.output_path,
-                        filename_template=output_settings.path.filename_template,
-                        extension=output_settings.image.file_format,
-                        variables=get_variables(
-                            bake_group_name=group.name,
-                            baker=baker,
-                            packer=None,
-                            image_name=baker.image_name,
-                            scene=bpy.context.scene,
-                            extension=output_settings.image.file_format,
-                        ),
-                        output_settings=output_settings,
-                    )
-
                     has_multiple_targets = len([o for o in group.target_objects if o.enabled]) > 1
 
                     for obj in group.target_objects:
@@ -104,36 +149,26 @@ class ExecutionPlanner:
                         if obj.object is None:
                             continue
 
-                        udim_tiles = tuple()
-
-                        if group.detect_udim:
-                            udim_tiles = UVService.detect_udim_tiles(obj.object, obj.uv_layer)
-                            LOG.info(f"{len(udim_tiles)} udim tile(s) detected for {obj.object.name}:")
-                            LOG.info(f"{udim_tiles}")
-                            for u in udim_tiles:
-                                LOG.info(str(UVService.tile_number(u[0], u[1])))
-
-                            # using set to prevent duplication
-                            group_tiles = tuple(set(group_tiles).union(set(udim_tiles)))
-
                         uv_layout = UVLayout(
                             image_layout=ImageLayout.UDIM if group.detect_udim else ImageLayout.SINGLE,
-                            udim_tiles=udim_tiles,
+                            udim_tiles=object_tiles[obj.name],
                         )
 
-                        uv_mask_task = UvMaskTask(
-                            uuid=str(uuid4()),
-                            name=obj.object.name,
-                            enabled=True,
-                            output_context=output_context,
-                            bake_group_uuid=group.uuid,
-                            uv_layout=uv_layout,
-                            target_object=obj.object.name,
-                            uv_layer=obj.uv_layer,
-                            result=TileSet(),
-                        )
+                        # TODO: May need to add a task to generate a ImageMask from UvOwnershipMask ?
 
-                        job.add_task(uv_mask_task)
+                        # ownership_mask_task = OwnershipMaskTask(
+                        #     uuid=str(uuid4()),
+                        #     name=obj.object.name,
+                        #     enabled=True,
+                        #     output_context=output_context,
+                        #     bake_group_uuid=group.uuid,
+                        #     uv_layout=uv_layout,
+                        #     target_object=obj.object.name,
+                        #     uv_layer=obj.uv_layer,
+                        #     result=TileSet(),
+                        # )
+                        #
+                        # job.add_task(ownership_mask_task)
 
                         task = BakeTask(
                             name=baker.image_name,
@@ -157,8 +192,8 @@ class ExecutionPlanner:
 
                         job.add_task(task)
 
-                        task = MaskTask(
-                            uv_mask_task=uv_mask_task,
+                        task = MaskBufferTask(
+                            uv_ownership_task=ownership_task,
                             uuid=str(uuid4()),
                             baker_uuid=baker.uuid,
                             target_object_uuid=obj.uuid,
@@ -250,23 +285,12 @@ class ExecutionPlanner:
                         packer.settings if packer.override_settings else None,
                     )
 
-                    output_settings = OutputSettingsResolver.resolve(
-                        project.settings_bake,
-                        packer.settings if packer.override_settings else None,
-                    )
-                    output_context = OutputContext(
-                        directory_template=output_settings.path.output_path,
-                        filename_template=output_settings.path.filename_template,
-                        extension=output_settings.image.file_format,
-                        variables=get_variables(
-                            bake_group_name=group.name,
-                            baker=None,
-                            packer=packer,
-                            image_name=packer.image_name,
-                            scene=bpy.context.scene,
-                            extension=output_settings.image.file_format,
-                        ),
-                        output_settings=output_settings,
+                    output_context = OutputContextResolver.resolve(
+                        group_name=group.name,
+                        scene=bpy.context.scene,
+                        global_settings=project.settings_bake,
+                        packer=packer,
+                        override_settings=packer.settings if packer.override_settings else None,
                     )
 
                     task = PackingTask(

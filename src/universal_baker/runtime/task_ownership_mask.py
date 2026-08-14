@@ -6,31 +6,32 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 
+from ..resources.ownership import OwnershipData
 from ..constant import LOG
 from .task import Task
+from .uv_ownership_mask import UvOwnershipMask
 from ..enum.image_layout import ImageLayout
 
 if TYPE_CHECKING:
     from .tile_set import TileSet
 
-LOG_SCOPE = "Uv Mask"
+LOG_SCOPE = "Uv Ownership"
+
+
+# TODO : Need to finish writing of UVOwnershipTask to generate a UvOwnershipMask which will be used to create ImageMask
+# to mask each bakes output
 
 
 @dataclass(slots=True, frozen=True)
-class UvMaskTask(Task):
+class UvOwnershipTask(Task):
     """
     Generate the UV ownership mask for one target object.
-
-    This is a transient task:
-        - it does not create an OutputArtifact
-        - it does not register anything in ArtifactRepository
-        - its result only exists for the duration of the execution
     """
 
-    target_object: str
-    uv_layer: str
+    target_objects: list[OwnershipData]
+    ownership_mask: UvOwnershipMask
 
-    def execute(self, context: bpy.types.Context) -> TileSet:
+    def execute(self, context: bpy.types.Context) -> UvOwnershipMask:
         with LOG.scope(LOG_SCOPE):
             obj = context.scene.objects.get(self.target_object)
 
@@ -41,7 +42,7 @@ class UvMaskTask(Task):
 
             from ..services.uv_ownership import UvOwnershipService
 
-            LOG.info(f"Generting UV Mask for {self.uv_layer}")
+            LOG.info(f"Generting UV Ownership for {self.uv_layer}")
             result = UvOwnershipService.create_mask(
                 obj=obj,
                 resolution=(
@@ -55,7 +56,7 @@ class UvMaskTask(Task):
 
             self.result.set_tileset(result, clear=True)
 
-            # NOTE: This is for debug purpose only. Need to be removed !!!
+            # NOTE: Saving Map to disk : This is for debug purpose only. Need to be removed !!!
             from ..services.image_codec import ImageCodec
             from ..core.output_resolver import OutputResolver
 

@@ -1,7 +1,17 @@
 from __future__ import annotations
 
-from ..runtime.settings_output import OutputSettings, PathSettings
+import bpy
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..properties.bake_group import UBK_BakeGroup
+    from ..properties.baker import UBK_Baker
+    from ..properties.packer import UBK_Packer
+
+from ..output.output_tokens import get_variables
+from ..runtime.output_context import OutputContext
+from ..runtime.settings_output import OutputSettings, PathSettings
 from ..runtime.settings_image import (
     ImageSettings,
     ColorManagementSettings,
@@ -54,3 +64,86 @@ class OutputSettingsResolver:
                 filename_template=settings.output_settings.filename_template,
             ),
         )
+
+
+class OutputContextResolver:
+    @classmethod
+    def resolve(
+        cls,
+        group_name: str,
+        scene: bpy.context.Scene,
+        global_settings,
+        baker: UBK_Baker | None = None,
+        packer: UBK_Packer | None = None,
+        override_settings=None,
+    ) -> OutputContext:
+        output_settings = OutputSettingsResolver.resolve(global_settings, override_settings)
+
+        image_name = "Image"
+        if baker is not None:
+            image_name = baker.image_name
+        elif packer is not None:
+            image_name = packer.image_name
+
+        output_context = OutputContext(
+            directory_template=output_settings.path.output_path,
+            filename_template=output_settings.path.filename_template,
+            extension=output_settings.image.file_format,
+            variables=get_variables(
+                bake_group_name=group_name,
+                baker=baker,
+                packer=packer,
+                image_name=image_name,
+                scene=scene,
+                extension=output_settings.image.file_format,
+            ),
+            output_settings=output_settings,
+        )
+        return output_context
+
+
+class UvOwnershipOutputContextResolver:
+    @classmethod
+    def resolve(
+        cls,
+        group: UBK_BakeGroup,
+        scene: bpy.context.Scene,
+        global_settings,
+    ) -> OutputContext:
+
+        max_output_settings: OutputSettings | None = None
+
+        for baker in group.bakers:
+            curr_output_settings = OutputSettingsResolver.resolve(
+                global_settings=global_settings,
+                override_settings=baker.settings if baker.override_settings else None,
+            )
+
+            if max_output_settings is None:
+                max_output_settings = curr_output_settings
+                continue
+
+            if (
+                curr_output_settings.path.width > max_output_settings.path.width
+                or curr_output_settings.path.height > max_output_settings.path.height
+            ):
+                max_output_settings = curr_output_settings
+
+        assert max_output_settings is not None
+        output_settings = max_output_settings
+
+        output_context = OutputContext(
+            directory_template=output_settings.path.output_path,
+            filename_template=output_settings.path.filename_template,
+            extension=output_settings.image.file_format,
+            variables=get_variables(
+                bake_group_name=group.name,
+                baker=None,
+                packer=None,
+                image_name="UVOwnership",
+                scene=scene,
+                extension=output_settings.image.file_format,
+            ),
+            output_settings=output_settings,
+        )
+        return output_context
