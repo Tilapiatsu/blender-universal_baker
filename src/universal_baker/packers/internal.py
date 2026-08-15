@@ -63,6 +63,7 @@ class PackerInternal(PackerBase):
             return
 
         LOG.debug(f"{len(buffers)} buffer(s) found")
+        # TODO: buffers arrive empty : need to investigate
         print(buffers[0].values())
         buffer = buffers[0].values()[0]
         ctx.task.result.set_tileset(
