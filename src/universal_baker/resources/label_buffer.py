@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import numpy as np
-from numpy.dtypes import StringDType
 from ..constant import LOG
 
 from dataclasses import dataclass
@@ -41,7 +40,7 @@ class LabelBuffer:
     @classmethod
     def empty(cls, width: int, height: int, name: str = "Image") -> LabelBuffer:
         """Create an Empty Buffer"""
-        pixels = np.array((width, height), dtype="<U36")
+        pixels = np.zeros((width, height), dtype=np.uint32)
 
         return cls(width, height, pixels, name=name)
 

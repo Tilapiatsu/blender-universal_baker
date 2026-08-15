@@ -41,7 +41,12 @@ class ImageBuffer:
     def empty(cls, width: int, height: int, channels: int = 4, name: str = "Image") -> ImageBuffer:
         """Create an Empty Buffer"""
 
-        pixels = np.zeros((width, height, channels), dtype=np.float32)
+        if channels > 1:
+            shape = (width, height, channels)
+        else:
+            shape = (width, height)
+
+        pixels = np.zeros(shape, dtype=np.float32)
 
         return cls(width, height, pixels, channels=channels, name=name)
 

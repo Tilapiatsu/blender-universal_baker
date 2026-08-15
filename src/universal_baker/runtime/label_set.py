@@ -70,12 +70,19 @@ class LabelSet:
         td = LabelData(buffer)
         self._labels[tile] = td
 
-    def add_empty_tile(self, tile: int, output_settings: OutputSettings, override: bool = False) -> None:
+    def add_empty_tile(
+        self,
+        tile: int,
+        resolution: tuple[int, int],
+        name: str = "Tile",
+        override: bool = False,
+    ) -> None:
         if not override and tile in self.keys():
             return
         empty_buffer = LabelBuffer.empty(
-            width=output_settings.path.width,
-            height=output_settings.path.height,
+            width=resolution[0],
+            height=resolution[1],
+            name=name,
         )
         td = LabelData(empty_buffer)
         self._labels[tile] = td

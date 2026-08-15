@@ -9,19 +9,19 @@ from ..core.registry_executor import registry_executor
 from ..logger.event import ScopeState
 from ..logger_bake_middleware.bake_summary import EventCategory
 from ..runtime.context import ExecutionContext
-from ..runtime.context_uv_mask import UvMaskContext
 from ..runtime.job import Job
 from ..runtime.session import ExecutionSession
-from ..runtime.task_uv_mask import UvMaskTask
+from ..runtime.task_ownership_mask import UvOwnershipTask
+from ..runtime.context_ownership_mask import OwnershipMaskContext
 from .executor_base import TaskExecutor
 
 
-class UVMaskExecutorInternal(TaskExecutor):
+class OwnershipMaskExecutorInternal(TaskExecutor):
     """
     Executes a Job inside the current Blender instance.
     """
 
-    id: str = "UVMaskInternal"
+    id: str = "OwnershipMaskInternal"
 
     def __init__(self):
         self._cancel_requested = False
@@ -41,7 +41,7 @@ class UVMaskExecutorInternal(TaskExecutor):
                 self.before_job(session)
 
                 for task in job.tasks:
-                    if not isinstance(task, (UvMaskTask)):
+                    if not isinstance(task, (UvOwnershipTask)):
                         continue
                     if self._cancel_requested:
                         session.cancel()
@@ -57,13 +57,13 @@ class UVMaskExecutorInternal(TaskExecutor):
 
             return session
 
-    def execute_task(self, session: ExecutionSession, task: UvMaskTask) -> None:
+    def execute_task(self, session: ExecutionSession, task: UvOwnershipTask) -> None:
         with LOG.scope(
             task.name,
             width=task.output_context.output_settings.path.width,
             height=task.output_context.output_settings.path.height,
         ):
-            session.current_context = UvMaskContext(
+            session.current_context = OwnershipMaskContext(
                 session=session,
                 task=task,
             )
@@ -126,7 +126,7 @@ class UVMaskExecutorInternal(TaskExecutor):
         return self._cancel_requested
 
 
-classes = (UVMaskExecutorInternal,)
+classes = (OwnershipMaskExecutorInternal,)
 
 
 def register():

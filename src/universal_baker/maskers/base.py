@@ -75,11 +75,13 @@ class MaskerBase(ABC):
             LOG.error("Inputs are not defined")
             return
 
+        mask = ctx.mask.mask_for_object(ctx.task.target_object_uuid)
+
         for input in ctx.inputs:
-            if not ctx.mask.contains(input.tileset):
+            if not mask.contains(input.tileset):
                 LOG.debug(f"Skipping {input.artifact.name}")
                 continue
-            ImageMasker.apply_mask(input, ctx.mask, registry_compositor[self.id])
+            ImageMasker.apply_mask(input, mask, registry_compositor[self.id])
             input.image()
             input.reload()
 

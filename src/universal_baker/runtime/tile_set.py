@@ -92,12 +92,12 @@ class TileSet:
         td = TileData(buffer)
         self._tiles[tile] = td
 
-    def add_empty_tile(self, tile: int, output_settings: OutputSettings, override: bool = False) -> None:
+    def add_empty_tile(self, tile: int, resolution: tuple[int, int], override: bool = False) -> None:
         if not override and tile in self.keys():
             return
         empty_buffer = ImageBuffer.empty(
-            width=output_settings.path.width,
-            height=output_settings.path.height,
+            width=resolution[0],
+            height=resolution[1],
             channels=4,
         )
         td = TileData(empty_buffer)

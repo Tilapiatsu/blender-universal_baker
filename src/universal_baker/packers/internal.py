@@ -63,6 +63,7 @@ class PackerInternal(PackerBase):
             return
 
         LOG.debug(f"{len(buffers)} buffer(s) found")
+        print(buffers[0].values())
         buffer = buffers[0].values()[0]
         ctx.task.result.set_tileset(
             self.create_tile_set(

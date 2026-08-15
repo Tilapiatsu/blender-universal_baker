@@ -16,7 +16,6 @@ from ..runtime.task_bake import BakeTask
 from ..runtime.task_pack import PackingTask, PackingChannel
 from ..runtime.task_accumulate import AccumulateTask
 from ..runtime.task_mask_buffer import MaskBufferTask
-from ..runtime.task_uv_mask import UvMaskTask
 from ..runtime.tile_set import TileSet
 from ..enum.channels import Channel
 from ..core.registry_masker import registry_masker
@@ -59,9 +58,14 @@ class ExecutionPlanner:
                     if obj.object is None:
                         continue
 
+                    # NOTE: Object Index need to start and 1 because the LabelBuffer need a index of 0 to represent no Object
+                    # TODO: Need to create a dataclass to construct Object index to make sure it starts with 1
+                    index += 1
                     ownership_data = OwnershipData(
-                        object_name=obj.name,
-                        layer_name=obj.layer_name,
+                        object_name=obj.object.name,
+                        object_index=index,
+                        object_uuid=obj.uuid,
+                        uv_layer=obj.uv_layer,
                     )
                     ownership_datas.append(ownership_data)
 
@@ -99,7 +103,7 @@ class ExecutionPlanner:
                         output_context.output_settings.path.width,
                         output_context.output_settings.path.height,
                     ),
-                    object_uuids=object_uuids,
+                    object_index_uuids=object_uuids,
                 )
 
                 ownership_task = UvOwnershipTask(
@@ -151,7 +155,7 @@ class ExecutionPlanner:
 
                         uv_layout = UVLayout(
                             image_layout=ImageLayout.UDIM if group.detect_udim else ImageLayout.SINGLE,
-                            udim_tiles=object_tiles[obj.name],
+                            udim_tiles=object_tiles[obj.object.name],
                         )
 
                         # TODO: May need to add a task to generate a ImageMask from UvOwnershipMask ?

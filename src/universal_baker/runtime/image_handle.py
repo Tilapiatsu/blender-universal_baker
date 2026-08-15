@@ -119,7 +119,14 @@ class ImageHandle:
 
     def set_empty_buffer(self, tile: int) -> None:
         self._ensure_loaded()
-        self._tiles.add_empty_tile(tile, self._output_settings, override=True)
+        self._tiles.add_empty_tile(
+            tile,
+            (
+                self._output_settings.path.width,
+                self._output_settings.path.height,
+            ),
+            override=True,
+        )
 
     def set_tileset(self, tileset: TileSet) -> None:
         self._tiles = tileset

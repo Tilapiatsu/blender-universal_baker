@@ -6,6 +6,8 @@ import bpy
 
 from typing import TYPE_CHECKING
 
+from universal_baker.runtime.uv_ownership_mask import UvOwnershipMask
+
 
 if TYPE_CHECKING:
     from .output_repository import OutputRepository
@@ -46,8 +48,8 @@ class MaskContext(ExecutionContext):
         return self.task.output_context.output_settings
 
     @property
-    def mask(self) -> TileSet:
-        return self.task.uv_ownership_task.result
+    def mask(self) -> UvOwnershipMask:
+        return self.task.uv_ownership_task.ownership_mask
 
     def get_input_image_handles(self, repository: OutputRepository) -> list[ImageHandle]:
         return repository.resolve_target_object_outputs(
