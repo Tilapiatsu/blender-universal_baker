@@ -10,6 +10,8 @@ from ..constant import LOG
 from .task import Task
 from .uv_ownership_mask import UvOwnershipMask
 from ..enum.image_layout import ImageLayout
+from ..logger_bake_middleware.bake_summary import EventCategory, BakeStatus
+from ..logger.event import ScopeState
 
 if TYPE_CHECKING:
     from ..resources.ownership import OwnershipData
@@ -79,3 +81,34 @@ class UvOwnershipTask(Task):
     def __repr__(self) -> str:
         result = f"UV_OWNERSHIP_MASK_{self.bake_group_name}"
         return result
+
+    def notify_finished(self, time_elapsed: float) -> None:
+        with LOG.scope("Ownership Mask"):
+            LOG.info(
+                message=f"{self.__repr__()} succeeded",
+                category=EventCategory.MASK,
+                scope_state=ScopeState.EXIT,
+                scope_duration=time_elapsed,
+                data={
+                    "status": BakeStatus.SUCCESS,
+                },
+            )
+
+    def notify_failed(self, time_elapsed: float, error: str) -> None:
+        with LOG.scope("Ownership Mask"):
+            LOG.error(
+                message="Ownership Mask failed",
+                category=EventCategory.MASK,
+                scope_state=ScopeState.EXIT,
+                scope_duration=time_elapsed,
+                data={
+                    "status": BakeStatus.FAIL,
+                },
+            )
+            LOG.error(
+                message=error,
+                category=EventCategory.BAKE,
+                data={
+                    "status": BakeStatus.FAIL,
+                },
+            )
