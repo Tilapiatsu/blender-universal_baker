@@ -26,7 +26,7 @@ class BakeTask(Task):
     id: str
     target_object_uuid: str
     sources: tuple[bpy.types.Object]
-    baker: BakerBase
+    producer: BakerBase
     settings: BakeSettings
     image_name: str
     uv_layer: str
@@ -51,7 +51,7 @@ class BakeTask(Task):
 
     @property
     def baker_id(self) -> str:
-        return self.baker.id
+        return self.producer.id
 
     @property
     def output_name(self) -> str:
@@ -59,7 +59,7 @@ class BakeTask(Task):
 
     @property
     def baker_name(self) -> str:
-        return self.baker.name
+        return self.producer.name
 
     @property
     def selected_to_active(self) -> bool:

@@ -21,7 +21,7 @@ from ..core.output_resolver import OutputResolver
 class AccumulateTask(Task):
     baker_name: str
     baker_uuid: str
-    accumulator: AccumulatorBase
+    producer: AccumulatorBase
     settings: AccumulateSettings
     image_name: str
 
@@ -33,7 +33,7 @@ class AccumulateTask(Task):
 
     @property
     def accumulator_id(self) -> str:
-        return self.accumulator.id
+        return self.producer.id
 
     @property
     def output_name(self) -> str:
@@ -42,7 +42,7 @@ class AccumulateTask(Task):
 
     @property
     def accumulator_name(self) -> str:
-        return self.accumulator.name
+        return self.producer.name
 
     @property
     def absolute_filepath(self) -> Path:
@@ -70,7 +70,7 @@ class AccumulateTask(Task):
     def notify_failed(self, time_elapsed: float, error: str) -> None:
         with LOG.scope("Accumulating"):
             LOG.error(
-                message=f"{self.accumulator.name.capitalize()} failed",
+                message=f"{self.producer.name.capitalize()} failed",
                 category=EventCategory.ACCUMULATE,
                 scope_state=ScopeState.EXIT,
                 scope_duration=time_elapsed,

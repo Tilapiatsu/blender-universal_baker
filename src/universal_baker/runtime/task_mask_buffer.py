@@ -16,12 +16,12 @@ class MaskBufferTask(Task):
     uv_ownership_task: UvOwnershipTask
     baker_uuid: str
     target_object_uuid: str
-    masker: MaskerBase
+    producer: MaskerBase
     has_multiple_targets: bool
 
     @property
     def output_name(self) -> str:
-        return f"{self.uv_ownership_task.name}_{self.masker.name}"
+        return f"{self.uv_ownership_task.name}_{self.producer.name}"
 
     @property
     def absolute_filepath(self) -> Path:
@@ -35,5 +35,5 @@ class MaskBufferTask(Task):
         return file_output.absolute_path
 
     def __repr__(self) -> str:
-        result = f"MASK_{self.masker.id} | {self.uv_ownership_task.name}"
+        result = f"MASK_{self.producer.id} | {self.uv_ownership_task.name}"
         return result

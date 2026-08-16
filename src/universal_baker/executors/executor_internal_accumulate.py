@@ -1,9 +1,6 @@
 from __future__ import annotations
 
-from time import perf_counter
-import traceback
-
-import bpy
+from typing import Callable
 
 from ..constant import LOG
 from ..runtime.context import ExecutionContext
@@ -14,7 +11,6 @@ from ..core.registry_executor import registry_executor
 from .executor_base import TaskExecutor
 from ..logger.event import ScopeState
 from ..logger_bake_middleware.bake_summary import EventCategory
-from ..runtime.job import Job
 
 
 class AccumulateExecutorInternal(TaskExecutor):
@@ -23,74 +19,24 @@ class AccumulateExecutorInternal(TaskExecutor):
     """
 
     id: str = "AccumulateInternal"
+    task_types: list[Callable] = [AccumulateTask]
 
     def __init__(self):
         self._cancel_requested = False
 
-    def execute(self, context: bpy.types.Context, job: Job) -> ExecutionSession:
-        """
-        Execute a Job.
-
-        Returns the ExecutionSession containing execution statistics.
-        """
-        with LOG.scope(self.id):
-            session = ExecutionSession(context=context, job=job)
-            session.initialize(context)
-            job.notify_started()
-
-            try:
-                self.before_job(session)
-
-                for task in job.tasks:
-                    if not isinstance(task, AccumulateTask):
-                        continue
-                    if self._cancel_requested:
-                        session.cancel()
-
-                        break
-
-                    self.execute_task(session, task)
-
-                self.after_job(session)
-
-            finally:
-                self.finish(session, context, job)
-
-            return session
-
     def execute_task(self, session: ExecutionSession, task: AccumulateTask) -> None:
-        with LOG.scope(task.accumulator.name):
-            session.current_context = AccumulateContext(
+        with LOG.scope(task.producer.name):
+            ctx = AccumulateContext(
                 session=session,
                 task=task,
             )
-            ctx = session.current_context
-            session.current_task = task
-            session.job.notify_task_started(task)
-            start = perf_counter()
-            LOG.info(
-                self.init_task_message(session),
+            self._execute(
+                session=session,
+                task=task,
+                context=ctx,
                 scope_state=ScopeState.ENTER,
-                category=EventCategory.ACCUMULATE,
+                event_category=EventCategory.MASK,
             )
-
-            try:
-                self.before_task(ctx)
-                task.accumulator.execute(ctx)
-                ctx.succeed(f"{task.accumulator.name} succeeded")
-                session.job.notify_task_finished(task, True, perf_counter() - start)
-
-            except Exception as exc:
-                traceback.print_exc()
-                ctx.fail(f"{task.accumulator.name} failed\n" + str(exc))
-                session.job.notify_task_failed(
-                    task,
-                    perf_counter() - start,
-                    str(exc),
-                )
-
-            finally:
-                self.after_task(ctx)
 
     def before_job(self, session: ExecutionSession) -> None:
         """

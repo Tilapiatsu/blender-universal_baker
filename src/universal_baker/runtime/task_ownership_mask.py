@@ -12,11 +12,52 @@ from .uv_ownership_mask import UvOwnershipMask
 from ..enum.image_layout import ImageLayout
 from ..logger_bake_middleware.bake_summary import EventCategory, BakeStatus
 from ..logger.event import ScopeState
+from .context_ownership_mask import OwnershipMaskContext
 
 if TYPE_CHECKING:
     from ..resources.ownership import OwnershipDatas
 
 LOG_SCOPE = "Uv Ownership"
+
+
+class UvOwnership:
+    name: str = "UvOwnership"
+
+    def execute(self, ctx: OwnershipMaskContext) -> UvOwnershipMask:
+        with LOG.scope(LOG_SCOPE):
+            from ..services.uv_ownership import UvOwnershipService
+
+            LOG.info("Generting UV Ownership mask")
+            result = UvOwnershipService.create_uv_ownership_mask(
+                ownership_datas=ctx.task.ownership_datas,
+                resolution=(
+                    ctx.task.output_context.output_settings.path.width,
+                    ctx.task.output_context.output_settings.path.height,
+                ),
+                name=f"{ctx.task.bake_group_name}_UVOwnership",
+                use_udim=ctx.task.uv_layout.image_layout == ImageLayout.UDIM,
+            )
+
+            ctx.task.ownership_mask.set(result)
+
+            # NOTE: Saving Map to disk : This is for debug purpose only. Need to be removed !!!
+            from ..services.image_codec import ImageCodec
+            from ..core.output_resolver import OutputResolver
+
+            for o in ctx.task.ownership_datas.values():
+                LOG.debug(f"Writing mask for {o.object_name}")
+                mask = ctx.task.ownership_mask.mask_for_object(o.object_uuid)
+                for tile, buffer in mask.tile_buffers:
+                    LOG.debug(f"{tile}")
+                    output = OutputResolver.resolve(
+                        ctx.task.output_context,
+                        ImageLayout.SINGLE,
+                        suffix=f"{o.object_name}." + str(tile),
+                        sub_folder="Mask",
+                    )
+                    ImageCodec.save(output.absolute_path, buffer, ctx.task.output_context.output_settings)
+
+            return result
 
 
 @dataclass(slots=True, frozen=True)
@@ -27,6 +68,7 @@ class UvOwnershipTask(Task):
 
     ownership_datas: OwnershipDatas
     ownership_mask: UvOwnershipMask
+    producer: UvOwnership = UvOwnership()
 
     @property
     def bake_group_name(self) -> str:
@@ -37,42 +79,6 @@ class UvOwnershipTask(Task):
             return ""
 
         return bake_group.name
-
-    def execute(self, context: bpy.types.Context) -> UvOwnershipMask:
-        with LOG.scope(LOG_SCOPE):
-            from ..services.uv_ownership import UvOwnershipService
-
-            LOG.info("Generting UV Ownership mask")
-            result = UvOwnershipService.create_uv_ownership_mask(
-                ownership_datas=self.ownership_datas,
-                resolution=(
-                    self.output_context.output_settings.path.width,
-                    self.output_context.output_settings.path.height,
-                ),
-                name=f"{self.bake_group_name}_UVOwnership",
-                use_udim=self.uv_layout.image_layout == ImageLayout.UDIM,
-            )
-
-            self.ownership_mask.set(result)
-
-            # NOTE: Saving Map to disk : This is for debug purpose only. Need to be removed !!!
-            from ..services.image_codec import ImageCodec
-            from ..core.output_resolver import OutputResolver
-
-            for o in self.ownership_datas.values():
-                LOG.debug(f"Writing mask for {o.object_name}")
-                mask = self.ownership_mask.mask_for_object(o.object_uuid)
-                for tile, buffer in mask.tile_buffers:
-                    LOG.debug(f"{tile}")
-                    output = OutputResolver.resolve(
-                        self.output_context,
-                        ImageLayout.SINGLE,
-                        suffix=f"{o.object_name}." + str(tile),
-                        sub_folder="Mask",
-                    )
-                    ImageCodec.save(output.absolute_path, buffer, self.output_context.output_settings)
-
-            return result
 
     def __repr__(self) -> str:
         result = f"UV_OWNERSHIP_MASK_{self.bake_group_name}"
