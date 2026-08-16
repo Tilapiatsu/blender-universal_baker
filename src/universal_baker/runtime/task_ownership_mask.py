@@ -59,7 +59,7 @@ class UvOwnershipTask(Task):
             from ..services.image_codec import ImageCodec
             from ..core.output_resolver import OutputResolver
 
-            for o in self.ownership_datas:
+            for o in self.ownership_datas.values():
                 LOG.debug(f"Writing mask for {o.object_name}")
                 mask = self.ownership_mask.mask_for_object(o.object_uuid)
                 for tile, buffer in mask.tile_buffers:
