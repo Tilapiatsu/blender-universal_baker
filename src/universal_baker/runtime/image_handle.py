@@ -85,6 +85,7 @@ class ImageHandle:
 
     @property
     def tileset(self) -> TileSet:
+        LOG.debug("Fetching TileSet")
         self._ensure_loaded()
         return self._tiles
 

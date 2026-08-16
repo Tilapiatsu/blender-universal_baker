@@ -28,6 +28,8 @@ class OutputArtifact:
 
     def __init__(self, scene: Scene, property_group: UBK_Artifact):
         udim_tiles = property_group.get_udim_tiles()
+        # ISSUE: udim_tiles arrive empty for some reason, because the artifact is created with no tiles ?
+        print(udim_tiles)
         self.image = LogicalImage.create(
             layout=property_group.image_layout,
             path=property_group.absolute_path,
