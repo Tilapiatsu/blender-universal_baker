@@ -28,7 +28,7 @@ from ..factories.settings_pack import PackSettingsResolver
 from ..factories.settings_output import OutputContextResolver, UvOwnershipOutputContextResolver
 from ..services.uv import UVService
 from ..resources.uv import UVLayout
-from ..resources.ownership import OwnershipData
+from ..resources.ownership import OwnershipDatas, OwnershipData
 from ..enum.image_layout import ImageLayout
 
 
@@ -47,10 +47,10 @@ class ExecutionPlanner:
                 #
                 # Store UDIM Uv Informations
                 #
-                ownership_datas = []
                 object_tiles = {}
                 group_tiles = tuple()
                 object_uuids = {}
+                ownership_datas = OwnershipDatas()
                 for index, obj in enumerate(group.target_objects):
                     if not obj.enabled:
                         continue
@@ -58,16 +58,7 @@ class ExecutionPlanner:
                     if obj.object is None:
                         continue
 
-                    # NOTE: Object Index need to start and 1 because the LabelBuffer need a index of 0 to represent no Object
-                    # TODO: Need to create a dataclass to construct Object index to make sure it starts with 1
-                    index += 1
-                    ownership_data = OwnershipData(
-                        object_name=obj.object.name,
-                        object_index=index,
-                        object_uuid=obj.uuid,
-                        uv_layer=obj.uv_layer,
-                    )
-                    ownership_datas.append(ownership_data)
+                    ownership_datas.add(name=obj.object.name, uuid=obj.uuid, uv_layer=obj.uv_layer)
 
                     udim_tiles = tuple()
 
@@ -114,7 +105,7 @@ class ExecutionPlanner:
                     bake_group_uuid=group.uuid,
                     uv_layout=uv_layout,
                     result=TileSet(),
-                    target_objects=ownership_datas,
+                    ownership_datas=ownership_datas,
                     ownership_mask=ownership_mask,
                 )
 

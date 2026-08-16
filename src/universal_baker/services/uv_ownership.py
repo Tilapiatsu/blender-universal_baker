@@ -6,7 +6,7 @@ import bpy
 
 from ..runtime.label_set import LabelSet
 from ..resources.image_buffer import ImageBuffer
-from ..resources.ownership import OwnershipData
+from ..resources.ownership import OwnershipDatas
 from ..runtime.uv_ownership_mask import UvOwnershipMask
 from ..runtime.tile_set import TileSet
 
@@ -17,14 +17,14 @@ class UvOwnershipService:
     @classmethod
     def create_uv_ownership_mask(
         cls,
-        target_objects: list[OwnershipData],
+        ownership_datas: OwnershipDatas,
         resolution: tuple[int, int],
         name: str,
         use_udim: bool = False,
     ) -> UvOwnershipMask:
 
         object_masks = {}
-        for o in target_objects:
+        for i, o in ownership_datas.items():
             object_mask = cls.create_mask(
                 obj=o.blender_object,
                 resolution=resolution,
@@ -32,14 +32,13 @@ class UvOwnershipService:
                 use_udim=use_udim,
                 name=f"{o.object_name}_mask",
             )
-            object_masks[o.object_index] = object_mask
+            object_masks[i] = object_mask
 
         labels = LabelSet()
 
         cls._feed_labels_from_object_masks(labels=labels, object_masks=object_masks)
 
-        # NOTE: object index need to start at 1 because index 0 means no object
-        object_uuids = {i + 1: o.object_uuid for i, o in enumerate(target_objects)}
+        object_uuids = {i: o.object_uuid for i, o in ownership_datas.items()}
 
         uv_ownership_mask = UvOwnershipMask(
             labels=labels,

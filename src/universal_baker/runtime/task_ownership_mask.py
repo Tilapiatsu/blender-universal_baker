@@ -14,7 +14,7 @@ from ..logger_bake_middleware.bake_summary import EventCategory, BakeStatus
 from ..logger.event import ScopeState
 
 if TYPE_CHECKING:
-    from ..resources.ownership import OwnershipData
+    from ..resources.ownership import OwnershipDatas
 
 LOG_SCOPE = "Uv Ownership"
 
@@ -25,7 +25,7 @@ class UvOwnershipTask(Task):
     Generate the UV ownership mask for one target object.
     """
 
-    target_objects: list[OwnershipData]
+    ownership_datas: OwnershipDatas
     ownership_mask: UvOwnershipMask
 
     @property
@@ -44,7 +44,7 @@ class UvOwnershipTask(Task):
 
             LOG.info("Generting UV Ownership mask")
             result = UvOwnershipService.create_uv_ownership_mask(
-                target_objects=self.target_objects,
+                ownership_datas=self.ownership_datas,
                 resolution=(
                     self.output_context.output_settings.path.width,
                     self.output_context.output_settings.path.height,
@@ -59,7 +59,7 @@ class UvOwnershipTask(Task):
             from ..services.image_codec import ImageCodec
             from ..core.output_resolver import OutputResolver
 
-            for o in self.target_objects:
+            for o in self.ownership_datas:
                 LOG.debug(f"Writing mask for {o.object_name}")
                 mask = self.ownership_mask.mask_for_object(o.object_uuid)
                 for tile, buffer in mask.tile_buffers:

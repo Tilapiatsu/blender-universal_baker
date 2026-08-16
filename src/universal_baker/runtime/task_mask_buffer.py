@@ -13,8 +13,6 @@ from .task import Task
 
 @dataclass(slots=True, frozen=True)
 class MaskBufferTask(Task):
-    # TODO: Maybe it is better to keep MaskBufferTask Genering and input ImageMask or TileSet Instead of UvOwnershipTask which
-    # looks too specific
     uv_ownership_task: UvOwnershipTask
     baker_uuid: str
     target_object_uuid: str
