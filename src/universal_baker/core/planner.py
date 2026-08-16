@@ -120,7 +120,6 @@ class ExecutionPlanner:
 
                 job.add_task(ownership_task)
 
-                group_tiles = tuple()
                 for baker in group.bakers:
                     if not register_bakers:
                         continue

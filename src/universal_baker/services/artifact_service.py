@@ -91,6 +91,8 @@ class ArtifactService:
 
             tiles = uv_layout.tiles
 
+            artifact_pg.udim_tiles.clear()
+
             for tile in tiles:
                 tile_pg = artifact_pg.udim_tiles.add()
 

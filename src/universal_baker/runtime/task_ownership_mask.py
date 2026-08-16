@@ -19,10 +19,6 @@ if TYPE_CHECKING:
 LOG_SCOPE = "Uv Ownership"
 
 
-# TODO : Need to finish writing of UVOwnershipTask to generate a UvOwnershipMask which will be used to create ImageMask
-# to mask each bakes output
-
-
 @dataclass(slots=True, frozen=True)
 class UvOwnershipTask(Task):
     """

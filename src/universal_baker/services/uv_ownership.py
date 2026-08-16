@@ -11,7 +11,6 @@ from ..runtime.uv_ownership_mask import UvOwnershipMask
 from ..runtime.tile_set import TileSet
 
 
-# TODO: Need to adapt UVOwnershipService to work with multiple objects and be complient with UVOwnershipMasks with Labels ?
 class UvOwnershipService:
     """Generate zero-margin UV ownership masks from a Blender mesh."""
 
