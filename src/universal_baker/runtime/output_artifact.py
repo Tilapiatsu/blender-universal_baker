@@ -101,7 +101,13 @@ class OutputArtifact:
         LOG.debug("Init Empty image files for Artrifact")
         tileset = TileSet()
         for t in self.image.tiles:
-            tileset.add_empty_tile(t, self.output_settings)
+            tileset.add_empty_tile(
+                t,
+                (
+                    self.output_settings.path.width,
+                    self.output_settings.path.height,
+                ),
+            )
 
         ImageCodec.export_tiles(self, tileset, self.output_settings)
 

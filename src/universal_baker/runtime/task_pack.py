@@ -29,8 +29,7 @@ class PackingChannel:
 
 @dataclass(slots=True, frozen=True)
 class PackingTask(Task):
-    id: str
-    packer: PackerBase
+    producer: PackerBase
     settings: PackSettings
     image_name: str
 
@@ -38,6 +37,7 @@ class PackingTask(Task):
     green: PackingChannel | None
     blue: PackingChannel | None
     alpha: PackingChannel | None
+    id: str = "PACK"
 
     @property
     def bake_group(self) -> UBK_BakeGroup | None:
@@ -51,7 +51,7 @@ class PackingTask(Task):
 
     @property
     def packer_name(self) -> str:
-        return self.packer.name
+        return self.producer.name
 
     @property
     def absolute_filepath(self) -> Path:
@@ -90,7 +90,7 @@ class PackingTask(Task):
                 self.alpha.source_map_name + "_" + self.alpha.source_channel + " -> " + self.alpha.destination_channel
             )
 
-        return f"PACKER_{self.packer.id} | {result:50}"
+        return f"PACKER_{self.producer.id} | {result:50}"
 
     def notify_finished(self, time_elapsed: float) -> None:
         with LOG.scope("Packing"):
@@ -108,7 +108,7 @@ class PackingTask(Task):
     def notify_failed(self, time_elapsed: float, error: str) -> None:
         with LOG.scope("Packing"):
             LOG.error(
-                message=f"{self.packer.name} failed",
+                message=f"{self.producer.name} failed",
                 category=EventCategory.PACK,
                 scope_state=ScopeState.EXIT,
                 scope_duration=time_elapsed,

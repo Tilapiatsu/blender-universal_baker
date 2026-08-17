@@ -41,7 +41,12 @@ class ImageBuffer:
     def empty(cls, width: int, height: int, channels: int = 4, name: str = "Image") -> ImageBuffer:
         """Create an Empty Buffer"""
 
-        pixels = np.zeros((width, height, channels), dtype=np.float32)
+        if channels > 1:
+            shape = (width, height, channels)
+        else:
+            shape = (width, height)
+
+        pixels = np.zeros(shape, dtype=np.float32)
 
         return cls(width, height, pixels, channels=channels, name=name)
 
@@ -53,6 +58,19 @@ class ImageBuffer:
         image.pixels.foreach_get(buffer.flat_pixels)
 
         return buffer
+
+    @classmethod
+    def from_nd_array(cls, array: np.ndarray, name: str = "Image") -> ImageBuffer:
+        shape = array.shape
+
+        # TODO: Need to test if the channels number are correct with this implementation
+
+        if array.ndim == 2:
+            channels = 1
+        else:
+            channels = array.shape[-1]
+
+        return cls(width=shape[0], height=shape[1], pixels=array, channels=channels, name=name)
 
     @classmethod
     def copy(cls): ...

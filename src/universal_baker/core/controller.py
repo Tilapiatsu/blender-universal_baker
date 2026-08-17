@@ -5,27 +5,29 @@ from typing import List
 import bpy
 from uuid import uuid4
 
-from universal_baker.runtime.task import Task
+from universal_baker.enum.execution import Execution
+from universal_baker.executors.executor import Executor
+from universal_baker.runtime.task_accumulate import AccumulateTask
+from universal_baker.runtime.task_bake import BakeTask
+from universal_baker.runtime.task_mask_buffer import MaskBufferTask
+from universal_baker.runtime.task_ownership_mask import UvOwnershipTask
+from universal_baker.runtime.task_pack import PackingTask
 
 
 from ..properties.packer import UBK_Packer
 
 from ..constant import LOG
-from ..resources.image import ImageResource
 from .planner import ExecutionPlanner
 from ..runtime.job import Job
-from ..runtime.bake_group import BakeGroup
 from ..services.project import ProjectService
 from ..services.target_object import TargetObjectService
 from ..services.packer import PackerService
 from ..services.baker import BakerService
 from ..services.bake_group import BakeGroupService
 from ..services.internal_data import InternalDataService
-from ..services.output_provider import OutputProvider
-from ..services.image_io import ImageIOService
 from ..constant import get_prefs
-from ..core.registry_executor import registry_executor
-from ..runtime.session import ExecutionSession
+from .registry_executor import registry_executor
+from ..executors.executor_base import TaskExecutor
 
 from typing import TYPE_CHECKING
 
@@ -323,20 +325,20 @@ class BakeController:
         preferences = get_prefs()
 
         if preferences.use_background_blender:
-            uv_mask_executor = registry_executor["UVMaskExternal"]
-            bake_executor = registry_executor["BakeExternal"]
-            mask_executor = registry_executor["MaskExternal"]
-            accumulate_executor = registry_executor["AccumulateExternal"]
+            execution = Execution.EXTERNAL
         else:
-            uv_mask_executor = registry_executor["UVMaskInternal"]
-            bake_executor = registry_executor["BakeInternal"]
-            mask_executor = registry_executor["MaskInternal"]
-            accumulate_executor = registry_executor["AccumulateInternal"]
+            execution = Execution.INTERNAL
 
-        uv_mask_executor.execute(context, job)
-        bake_executor.execute(context, job)
-        mask_executor.execute(context, job)
-        accumulate_executor.execute(context, job)
+        executor = Executor(
+            execution=execution,
+            task_types=[
+                BakeTask,
+                AccumulateTask,
+                UvOwnershipTask,
+                MaskBufferTask,
+            ],
+        )
+        executor.execute(context, job)
 
         return (
             True,
@@ -378,10 +380,16 @@ class BakeController:
         preferences = get_prefs()
 
         if preferences.use_background_blender:
-            executor = registry_executor["PackExternal"]
+            execution = Execution.EXTERNAL
         else:
-            executor = registry_executor["PackInternal"]
+            execution = Execution.INTERNAL
 
+        executor = Executor(
+            execution=execution,
+            task_types=[
+                PackingTask,
+            ],
+        )
         executor.execute(context, job)
 
         return (
@@ -404,24 +412,21 @@ class BakeController:
         preferences = get_prefs()
 
         if preferences.use_background_blender:
-            uv_mask_executor = registry_executor["UVMaskExternal"]
-            bake_executor = registry_executor["BakeExternal"]
-            mask_executor = registry_executor["MaskExternal"]
-            accumulate_executor = registry_executor["AccumulateExternal"]
-            pack_executor = registry_executor["PackExternal"]
+            execution = Execution.EXTERNAL
         else:
-            uv_mask_executor = registry_executor["UVMaskInternal"]
-            bake_executor = registry_executor["BakeInternal"]
-            mask_executor = registry_executor["MaskInternal"]
-            accumulate_executor = registry_executor["AccumulateInternal"]
-            pack_executor = registry_executor["PackInternal"]
+            execution = Execution.INTERNAL
 
-        uv_mask_executor.execute(context, job)
-        bake_executor.execute(context, job)
-        mask_executor.execute(context, job)
-        accumulate_executor.execute(context, job)
-        pack_executor.execute(context, job)
-
+        executor = Executor(
+            execution=execution,
+            task_types=[
+                BakeTask,
+                AccumulateTask,
+                UvOwnershipTask,
+                PackingTask,
+                MaskBufferTask,
+            ],
+        )
+        executor.execute(context, job)
         return (
             True,
             job,

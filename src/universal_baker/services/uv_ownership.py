@@ -1,15 +1,52 @@
 from __future__ import annotations
 
 import math
-
+import numpy as np
 import bpy
 
+from ..runtime.label_set import LabelSet
 from ..resources.image_buffer import ImageBuffer
+from ..resources.ownership import OwnershipDatas
+from ..runtime.uv_ownership_mask import UvOwnershipMask
 from ..runtime.tile_set import TileSet
+from .voronoi_jfa import VoronoiJFA
 
 
 class UvOwnershipService:
     """Generate zero-margin UV ownership masks from a Blender mesh."""
+
+    @classmethod
+    def create_uv_ownership_mask(
+        cls,
+        ownership_datas: OwnershipDatas,
+        resolution: tuple[int, int],
+        name: str,
+        use_udim: bool = False,
+    ) -> UvOwnershipMask:
+
+        object_masks: dict[str, TileSet] = {}
+        for i, o in ownership_datas.items():
+            object_mask = cls.create_mask(
+                obj=o.blender_object,
+                resolution=resolution,
+                uv_map=o.uv_layer,
+                use_udim=use_udim,
+                name=f"{o.object_name}_mask",
+            )
+            object_masks[o.object_uuid] = object_mask
+
+        ownership, _ = VoronoiJFA.calculate_ownership(object_masks)
+
+        object_uuids = {i: o.object_uuid for i, o in ownership_datas.items()}
+
+        uv_ownership_mask = UvOwnershipMask(
+            labels=ownership,
+            resolution=resolution,
+            object_index_uuids=object_uuids,
+            name=name,
+        )
+
+        return uv_ownership_mask
 
     @classmethod
     def create_mask(
@@ -65,6 +102,7 @@ class UvOwnershipService:
             buffer = ImageBuffer.empty(
                 width,
                 height,
+                channels=1,
                 name=(name or f"{obj.name}_{uv_layer}_UVOwnership_{tile_number}"),
             )
 
@@ -79,6 +117,25 @@ class UvOwnershipService:
             tiles.add_tile(tile_number, buffer, override=True)
 
         return tiles
+
+    @classmethod
+    def _feed_labels_from_object_masks(cls, labels: LabelSet, object_masks: dict[int, TileSet]) -> None:
+        for index, mask in object_masks.items():
+            for tile, buffer in mask.tile_buffers:
+                if tile not in labels.keys():
+                    labels.add_empty_tile(
+                        tile=tile,
+                        resolution=(
+                            buffer.width,
+                            buffer.height,
+                        ),
+                        name=buffer.name,
+                    )
+
+                label_buffer = labels[tile]
+
+                # Set the label for each pixels which alpha is 1.0 : Meaning that is is part of the object UV Shell
+                label_buffer.pixels[buffer.pixels > 0.0] = index
 
     # ------------------------------------------------------------------
     # UV extraction
@@ -196,11 +253,8 @@ class UvOwnershipService:
         The triangle is converted from UV space into pixel space.
         The mask writes:
 
-            R = 1
-            G = 1
-            B = 1
-            A = 1
-
+            0 -> No triangles
+            1 -> On a triangle
         for covered pixels.
         """
 
@@ -301,12 +355,13 @@ class UvOwnershipService:
 
                 # Works regardless of triangle winding.
                 if (w0 >= 0 and w1 >= 0 and w2 >= 0) or (w0 <= 0 and w1 <= 0 and w2 <= 0):
-                    index = (py * width + px) * 4
+                    # index = (py * width + px) * 4
+                    index = py * width + px
 
-                    # pixels[index] = 1.0
+                    pixels[index] = 1.0
                     # pixels[index + 1] = 1.0
                     # pixels[index + 2] = 1.0
-                    pixels[index + 3] = 1.0
+                    # pixels[index + 3] = 1.0
 
     @staticmethod
     def _edge(

@@ -110,7 +110,13 @@ class ImageCodec:
             else:
                 with LOG.scope(LOG_SCOPE):
                     LOG.debug("Create Empty Tile")
-                    tile_set.add_empty_tile(t.tile, artifact.output_settings)
+                    tile_set.add_empty_tile(
+                        t.tile,
+                        (
+                            artifact.output_settings.path.width,
+                            artifact.output_settings.path.height,
+                        ),
+                    )
                     cls.save(artifact.image.tile_path(t.tile), tile_set[t.tile], artifact.output_settings)
 
         return tile_set

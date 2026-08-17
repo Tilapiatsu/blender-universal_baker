@@ -11,3 +11,7 @@ class ExecutionContext:
 
     def __init__(self, session: ExecutionSession) -> None:
         self.session = session
+
+    def succeed(self, message: str = "") -> None: ...
+
+    def fail(self, message: str) -> None: ...

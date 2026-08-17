@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from .settings_output import OutputSettings
     from .tile_set import TileSet
-    from .task_uv_mask import UvMaskTask
+    from .task_ownership_mask import UvOwnershipTask
 
 from ..constant import LOG
 from .context import ExecutionContext
@@ -18,10 +18,10 @@ from ..properties.project import UBK_Project
 
 
 @dataclass(slots=True)
-class UvMaskContext(ExecutionContext):
+class OwnershipMaskContext(ExecutionContext):
     """Runtime context used while executing a single MaskTask."""
 
-    task: UvMaskTask
+    task: UvOwnershipTask
 
     finished: bool = False
     success: bool = False

@@ -20,7 +20,6 @@ class ImageServiceBase:
     @classmethod
     def init_resource(cls, image: bpy.types.Image, output_settings: OutputSettings) -> ImageResource:
         with LOG.scope(LOG_SCOPE):
-            print(output_settings.color.colorspace)
             LOG.debug(f"Init Image Resource : {image.name}")
             resource = ImageResource.create(
                 width=output_settings.path.width,

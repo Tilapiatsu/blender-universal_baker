@@ -3,37 +3,39 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from universal_baker.core.output_resolver import OutputResolver
 
 from ..maskers.base import MaskerBase
-from .task_uv_mask import UvMaskTask
+from ..core.output_resolver import OutputResolver
+from ..runtime.task_ownership_mask import UvOwnershipTask
 
 from .task import Task
 
 
 @dataclass(slots=True, frozen=True)
-class MaskTask(Task):
-    uv_mask_task: UvMaskTask
+class MaskBufferTask(Task):
+    uv_ownership_task: UvOwnershipTask
     baker_uuid: str
     target_object_uuid: str
-    masker: MaskerBase
+    producer: MaskerBase
     has_multiple_targets: bool
+
+    id: str = "MASK"
 
     @property
     def output_name(self) -> str:
-        return f"{self.uv_mask_task.target_object}_{self.masker.name}"
+        return f"{self.uv_ownership_task.name}_{self.producer.name}"
 
     @property
     def absolute_filepath(self) -> Path:
         file_output = OutputResolver.resolve(
             self.output_context,
             self.uv_layout.image_layout,
-            self.uv_mask_task.target_object,
+            self.uv_ownership_task.name,
             "object_buffers" if self.has_multiple_targets else None,
         )
 
         return file_output.absolute_path
 
     def __repr__(self) -> str:
-        result = f"MASK_{self.masker.id} | {self.uv_mask_task.target_object}"
+        result = f"MASK_{self.producer.id} | {self.uv_ownership_task.name}"
         return result

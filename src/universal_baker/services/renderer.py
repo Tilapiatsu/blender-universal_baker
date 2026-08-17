@@ -68,4 +68,4 @@ class RendererService:
     def bake(cls, ctx: BakeContext):
         """Execute Blender bake."""
 
-        bpy.ops.object.bake(type=ctx.task.baker.blender_bake_type)
+        bpy.ops.object.bake(type=ctx.task.producer.blender_bake_type)
