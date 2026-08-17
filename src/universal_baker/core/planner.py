@@ -167,7 +167,6 @@ class ExecutionPlanner:
                         task = BakeTask(
                             name=baker.image_name,
                             bake_group_uuid=group.uuid,
-                            id=baker.name,
                             uuid=baker.uuid,
                             enabled=True,
                             output_context=output_context,
@@ -289,7 +288,6 @@ class ExecutionPlanner:
 
                     task = PackingTask(
                         name=packer.name,
-                        id=packer.name,
                         uuid=str(uuid4()),
                         bake_group_uuid=group.uuid,
                         enabled=True,

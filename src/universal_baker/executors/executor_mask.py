@@ -1,45 +1,39 @@
 from __future__ import annotations
 
-from typing import Callable
-
 from ..constant import LOG
-from ..core.registry_executor import registry_executor
-from ..logger.event import ScopeState
-from ..logger_bake_middleware.bake_summary import EventCategory
 from ..runtime.context import ExecutionContext
 from ..runtime.session import ExecutionSession
-from ..runtime.task_ownership_mask import UvOwnershipTask
-from ..runtime.context_ownership_mask import OwnershipMaskContext
+from ..runtime.context_mask import MaskContext
+from ..runtime.task_mask_buffer import MaskBufferTask
+from ..core.registry_executor import registry_executor
 from .executor_base import TaskExecutor
+from ..logger.event import ScopeState
+from ..logger_bake_middleware.bake_summary import EventCategory
+from .execution_target import ExecutionTarget
 
 
-class OwnershipMaskExecutorInternal(TaskExecutor):
+class MaskExecutorInternal(TaskExecutor):
     """
     Executes a Job inside the current Blender instance.
     """
 
-    id: str = "OwnershipMaskInternal"
-    task_types: list[Callable] = [UvOwnershipTask]
+    id: str = "MASK"
 
     def __init__(self):
         self._cancel_requested = False
 
-    def execute_task(self, session: ExecutionSession, task: UvOwnershipTask) -> None:
+    def execute_task(self, session: ExecutionSession, execution: ExecutionTarget, task: MaskBufferTask) -> None:
         with LOG.scope(
             task.name,
             width=task.output_context.output_settings.path.width,
             height=task.output_context.output_settings.path.height,
         ):
-            ctx = OwnershipMaskContext(
+            ctx = MaskContext(
                 session=session,
                 task=task,
             )
-            self._execute(
-                session=session,
-                task=task,
-                context=ctx,
-                scope_state=ScopeState.ENTER,
-                event_category=EventCategory.MASK,
+            execution.execute(
+                session=session, task=task, context=ctx, scope_state=ScopeState.ENTER, event_category=EventCategory.MASK
             )
 
     def before_job(self, session: ExecutionSession) -> None:
@@ -73,7 +67,7 @@ class OwnershipMaskExecutorInternal(TaskExecutor):
         return self._cancel_requested
 
 
-classes = (OwnershipMaskExecutorInternal,)
+classes = (MaskExecutorInternal,)
 
 
 def register():

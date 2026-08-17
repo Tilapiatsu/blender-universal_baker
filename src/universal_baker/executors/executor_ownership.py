@@ -1,41 +1,43 @@
 from __future__ import annotations
 
-from typing import Callable
-
 from ..constant import LOG
-from ..runtime.context import ExecutionContext
-from ..runtime.context_pack import PackContext
-from ..runtime.session import ExecutionSession
-from ..runtime.task_pack import PackingTask
 from ..core.registry_executor import registry_executor
-from .executor_base import TaskExecutor
 from ..logger.event import ScopeState
 from ..logger_bake_middleware.bake_summary import EventCategory
+from ..runtime.context import ExecutionContext
+from ..runtime.session import ExecutionSession
+from ..runtime.task_ownership_mask import UvOwnershipTask
+from ..runtime.context_ownership_mask import OwnershipMaskContext
+from .executor_base import TaskExecutor
+from .execution_target import ExecutionTarget
 
 
-class PackExecutorInternal(TaskExecutor):
+class OwnershipMaskExecutorInternal(TaskExecutor):
     """
     Executes a Job inside the current Blender instance.
     """
 
-    id: str = "PackInternal"
-    task_types: list[Callable] = [PackingTask]
+    id: str = "UV_OWNERSHIP"
 
     def __init__(self):
         self._cancel_requested = False
 
-    def execute_task(self, session: ExecutionSession, task: PackingTask) -> None:
-        with LOG.scope(task.producer.name):
-            ctx = PackContext(
+    def execute_task(self, session: ExecutionSession, execution: ExecutionTarget, task: UvOwnershipTask) -> None:
+        with LOG.scope(
+            task.name,
+            width=task.output_context.output_settings.path.width,
+            height=task.output_context.output_settings.path.height,
+        ):
+            ctx = OwnershipMaskContext(
                 session=session,
                 task=task,
             )
-            self._execute(
+            execution.execute(
                 session=session,
                 task=task,
                 context=ctx,
                 scope_state=ScopeState.ENTER,
-                event_category=EventCategory.PACK,
+                event_category=EventCategory.MASK,
             )
 
     def before_job(self, session: ExecutionSession) -> None:
@@ -48,7 +50,6 @@ class PackExecutorInternal(TaskExecutor):
         """
         Hook called after the last task.
         """
-        pass
 
     def before_task(self, ctx: ExecutionContext) -> None:
         """
@@ -70,7 +71,7 @@ class PackExecutorInternal(TaskExecutor):
         return self._cancel_requested
 
 
-classes = (PackExecutorInternal,)
+classes = (OwnershipMaskExecutorInternal,)
 
 
 def register():

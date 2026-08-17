@@ -1,18 +1,20 @@
 from . import (
-    executor_internal_bake,
-    executor_internal_ownership_mask,
-    executor_internal_mask,
-    executor_internal_pack,
-    executor_internal_accumulate,
+    execution_target_internal,
+    executor_bake,
+    executor_ownership,
+    executor_mask,
+    executor_pack,
+    executor_accumulate,
     executor_external,
 )
 
 modules = (
-    executor_internal_bake,
-    executor_internal_ownership_mask,
-    executor_internal_mask,
-    executor_internal_pack,
-    executor_internal_accumulate,
+    execution_target_internal,
+    executor_bake,
+    executor_ownership,
+    executor_mask,
+    executor_pack,
+    executor_accumulate,
     executor_external,
 )
 

@@ -1,49 +1,39 @@
 from __future__ import annotations
 
-from typing import Callable
-
 from ..constant import LOG
 from ..runtime.context import ExecutionContext
-from ..runtime.context_bake import BakeContext
+from ..runtime.context_pack import PackContext
 from ..runtime.session import ExecutionSession
-from ..runtime.task_bake import BakeTask
-from ..core.registry_baker import registry_baker
+from ..runtime.task_pack import PackingTask
 from ..core.registry_executor import registry_executor
 from .executor_base import TaskExecutor
 from ..logger.event import ScopeState
 from ..logger_bake_middleware.bake_summary import EventCategory
+from .execution_target import ExecutionTarget
 
 
-class BakeExecutorInternal(TaskExecutor):
+class PackExecutorInternal(TaskExecutor):
     """
     Executes a Job inside the current Blender instance.
     """
 
-    id: str = "BakeInternal"
-    task_types: list[Callable] = [BakeTask]
+    id: str = "PACK"
 
     def __init__(self):
         self._cancel_requested = False
 
-    def execute_task(self, session: ExecutionSession, task: BakeTask) -> None:
-        with LOG.scope(
-            task.baker_name,
-            object=task.object_name,
-            baker=task.producer.name,
-            width=task.output_context.output_settings.path.width,
-            height=task.output_context.output_settings.path.height,
-        ):
-            ctx = BakeContext(
+    def execute_task(self, session: ExecutionSession, execution: ExecutionTarget, task: PackingTask) -> None:
+        with LOG.scope(task.producer.name):
+            ctx = PackContext(
                 session=session,
                 task=task,
-                baker=registry_baker[task.baker_id],
             )
-            self._execute(
+            execution.execute(
                 session=session,
                 task=task,
                 context=ctx,
                 scope_state=ScopeState.ENTER,
-                event_category=EventCategory.BAKE,
+                event_category=EventCategory.PACK,
             )
 
     def before_job(self, session: ExecutionSession) -> None:
@@ -56,6 +46,7 @@ class BakeExecutorInternal(TaskExecutor):
         """
         Hook called after the last task.
         """
+        pass
 
     def before_task(self, ctx: ExecutionContext) -> None:
         """
@@ -77,7 +68,7 @@ class BakeExecutorInternal(TaskExecutor):
         return self._cancel_requested
 
 
-classes = (BakeExecutorInternal,)
+classes = (PackExecutorInternal,)
 
 
 def register():

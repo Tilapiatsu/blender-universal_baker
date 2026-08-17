@@ -25,6 +25,8 @@ class AccumulateTask(Task):
     settings: AccumulateSettings
     image_name: str
 
+    id: str = "ACCUMULATE"
+
     @property
     def bake_group(self) -> UBK_BakeGroup | None:
         from ..core.controller import BakeController

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Callable
+from universal_baker.executors.execution_target import ExecutionTarget
 
 from ..constant import LOG
 from ..runtime.context import ExecutionContext
@@ -18,19 +18,18 @@ class AccumulateExecutorInternal(TaskExecutor):
     Executes a Job inside the current Blender instance.
     """
 
-    id: str = "AccumulateInternal"
-    task_types: list[Callable] = [AccumulateTask]
+    id: str = "ACCUMULATE"
 
     def __init__(self):
         self._cancel_requested = False
 
-    def execute_task(self, session: ExecutionSession, task: AccumulateTask) -> None:
+    def execute_task(self, session: ExecutionSession, execution: ExecutionTarget, task: AccumulateTask) -> None:
         with LOG.scope(task.producer.name):
             ctx = AccumulateContext(
                 session=session,
                 task=task,
             )
-            self._execute(
+            execution.execute(
                 session=session,
                 task=task,
                 context=ctx,

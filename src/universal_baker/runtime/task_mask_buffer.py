@@ -19,6 +19,8 @@ class MaskBufferTask(Task):
     producer: MaskerBase
     has_multiple_targets: bool
 
+    id: str = "MASK"
+
     @property
     def output_name(self) -> str:
         return f"{self.uv_ownership_task.name}_{self.producer.name}"

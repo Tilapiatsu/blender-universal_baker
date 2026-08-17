@@ -1,41 +1,47 @@
 from __future__ import annotations
 
-from typing import Callable
-
 from ..constant import LOG
 from ..runtime.context import ExecutionContext
+from ..runtime.context_bake import BakeContext
 from ..runtime.session import ExecutionSession
-from ..runtime.context_mask import MaskContext
-from ..runtime.task_mask_buffer import MaskBufferTask
+from ..runtime.task_bake import BakeTask
+from ..core.registry_baker import registry_baker
 from ..core.registry_executor import registry_executor
 from .executor_base import TaskExecutor
 from ..logger.event import ScopeState
 from ..logger_bake_middleware.bake_summary import EventCategory
+from .execution_target import ExecutionTarget
 
 
-class MaskExecutorInternal(TaskExecutor):
+class BakeExecutorInternal(TaskExecutor):
     """
     Executes a Job inside the current Blender instance.
     """
 
-    id: str = "MaskInternal"
-    task_types: list[Callable] = [MaskBufferTask]
+    id: str = "BAKE"
 
     def __init__(self):
         self._cancel_requested = False
 
-    def execute_task(self, session: ExecutionSession, task: MaskBufferTask) -> None:
+    def execute_task(self, session: ExecutionSession, execution: ExecutionTarget, task: BakeTask) -> None:
         with LOG.scope(
-            task.name,
+            task.baker_name,
+            object=task.object_name,
+            baker=task.producer.name,
             width=task.output_context.output_settings.path.width,
             height=task.output_context.output_settings.path.height,
         ):
-            ctx = MaskContext(
+            ctx = BakeContext(
                 session=session,
                 task=task,
+                baker=registry_baker[task.baker_id],
             )
-            self._execute(
-                session=session, task=task, context=ctx, scope_state=ScopeState.ENTER, event_category=EventCategory.MASK
+            execution.execute(
+                session=session,
+                task=task,
+                context=ctx,
+                scope_state=ScopeState.ENTER,
+                event_category=EventCategory.BAKE,
             )
 
     def before_job(self, session: ExecutionSession) -> None:
@@ -69,7 +75,7 @@ class MaskExecutorInternal(TaskExecutor):
         return self._cancel_requested
 
 
-classes = (MaskExecutorInternal,)
+classes = (BakeExecutorInternal,)
 
 
 def register():

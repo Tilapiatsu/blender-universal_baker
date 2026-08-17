@@ -69,6 +69,7 @@ class UvOwnershipTask(Task):
     ownership_datas: OwnershipDatas
     ownership_mask: UvOwnershipMask
     producer: UvOwnership = UvOwnership()
+    id: str = "UV_OWNERSHIP"
 
     @property
     def bake_group_name(self) -> str:

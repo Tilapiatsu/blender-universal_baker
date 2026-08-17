@@ -29,7 +29,6 @@ class PackingChannel:
 
 @dataclass(slots=True, frozen=True)
 class PackingTask(Task):
-    id: str
     producer: PackerBase
     settings: PackSettings
     image_name: str
@@ -38,6 +37,7 @@ class PackingTask(Task):
     green: PackingChannel | None
     blue: PackingChannel | None
     alpha: PackingChannel | None
+    id: str = "PACK"
 
     @property
     def bake_group(self) -> UBK_BakeGroup | None:
