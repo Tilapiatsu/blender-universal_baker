@@ -28,7 +28,7 @@ from ..factories.settings_pack import PackSettingsResolver
 from ..factories.settings_output import OutputContextResolver, UvOwnershipOutputContextResolver
 from ..services.uv import UVService
 from ..resources.uv import UVLayout
-from ..resources.ownership import OwnershipDatas, OwnershipData
+from ..resources.ownership import OwnershipDatas
 from ..enum.image_layout import ImageLayout
 
 
@@ -147,22 +147,6 @@ class ExecutionPlanner:
                             image_layout=ImageLayout.UDIM if group.detect_udim else ImageLayout.SINGLE,
                             udim_tiles=object_tiles[obj.object.name],
                         )
-
-                        # TODO: May need to add a task to generate a ImageMask from UvOwnershipMask ?
-
-                        # ownership_mask_task = OwnershipMaskTask(
-                        #     uuid=str(uuid4()),
-                        #     name=obj.object.name,
-                        #     enabled=True,
-                        #     output_context=output_context,
-                        #     bake_group_uuid=group.uuid,
-                        #     uv_layout=uv_layout,
-                        #     target_object=obj.object.name,
-                        #     uv_layer=obj.uv_layer,
-                        #     result=TileSet(),
-                        # )
-                        #
-                        # job.add_task(ownership_mask_task)
 
                         task = BakeTask(
                             name=baker.image_name,

@@ -9,6 +9,7 @@ from ..resources.image_buffer import ImageBuffer
 from ..resources.ownership import OwnershipDatas
 from ..runtime.uv_ownership_mask import UvOwnershipMask
 from ..runtime.tile_set import TileSet
+from .voronoi_jfa import VoronoiJFA
 
 
 class UvOwnershipService:
@@ -23,7 +24,7 @@ class UvOwnershipService:
         use_udim: bool = False,
     ) -> UvOwnershipMask:
 
-        object_masks = {}
+        object_masks: dict[str, TileSet] = {}
         for i, o in ownership_datas.items():
             object_mask = cls.create_mask(
                 obj=o.blender_object,
@@ -32,16 +33,14 @@ class UvOwnershipService:
                 use_udim=use_udim,
                 name=f"{o.object_name}_mask",
             )
-            object_masks[i] = object_mask
+            object_masks[o.object_uuid] = object_mask
 
-        labels = LabelSet()
-
-        cls._feed_labels_from_object_masks(labels=labels, object_masks=object_masks)
+        ownership, _ = VoronoiJFA.calculate_ownership(object_masks)
 
         object_uuids = {i: o.object_uuid for i, o in ownership_datas.items()}
 
         uv_ownership_mask = UvOwnershipMask(
-            labels=labels,
+            labels=ownership,
             resolution=resolution,
             object_index_uuids=object_uuids,
             name=name,

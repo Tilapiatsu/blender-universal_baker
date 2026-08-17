@@ -45,6 +45,11 @@ class LabelBuffer:
         return cls(width, height, pixels, name=name)
 
     @classmethod
+    def from_nd_array(cls, array: np.ndarray, name="Image"):
+        shape = array.shape
+        return cls(width=shape[0], height=shape[1], pixels=array, name=name)
+
+    @classmethod
     def copy(cls): ...
 
     @classmethod
