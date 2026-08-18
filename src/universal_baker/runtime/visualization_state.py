@@ -22,6 +22,10 @@ class ViewportState:
     shading_type: str
     color_type: str
     shading_light: str
+    show_object_outline: bool
+    show_xray: bool
+    show_shadows: bool
+    show_cavity: bool
 
 
 @dataclass

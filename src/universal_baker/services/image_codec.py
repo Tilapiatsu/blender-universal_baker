@@ -97,6 +97,7 @@ class ImageCodec:
         with LOG.scope(LOG_SCOPE):
             for tile, buffer in tiles.tile_buffers:
                 cls.save(artifact.image.tile_path(tile), buffer, output_settings)
+                tiles.set_dirty(tile, False)
 
     @classmethod
     def import_tiles(cls, artifact: OutputArtifact) -> TileSet:

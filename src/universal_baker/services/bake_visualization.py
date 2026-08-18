@@ -9,19 +9,60 @@ from ..runtime.visualization_state import (
 )
 
 from .viewport import ViewportService
-from .preview_material import (
-    PreviewMaterialService,
-)
-from .material_display import (
-    DisplayMaterialService,
-)
-from .material_override import (
-    MaterialOverrideService,
-)
+from .preview_material import PreviewMaterialService
+from .material_display import DisplayMaterialService
+from .material_override import MaterialOverrideService
+from ..core.registry_baker import registry_baker
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..bakers.base import BakerBase
+
+
+def update_visualization(self, context):
+    from ..core.controller import BakeController
+
+    project = BakeController.project(context)
+
+    if project is None:
+        LOG.warning("Project not found")
+        return
+
+    bake_group = BakeController.active_bake_group(context)
+
+    if bake_group is None:
+        LOG.warning("Bake Group not found")
+        return
+
+    baker = BakeController.active_baker(context)
+
+    if baker is None:
+        LOG.warning("Baker not found")
+        return
+
+    viz = project.visualization
+
+    if viz.baker_idx != bake_group.active_baker_index:
+        LOG.debug(f"{viz.baker_idx} | {bake_group.active_baker_index}")
+        viz.baker_idx = bake_group.active_baker_index
+        producer = registry_baker[baker.baker]
+        BakeVisualizationService.refresh(producer, bake_group.uuid, baker.uuid)
+
+    elif not viz.enabled_preview and not viz.enabled_display:
+        viz.mode = "NONE"
+        BakeVisualizationService.disable()
+        return
+
+    if viz.enabled_preview:
+        viz.enable_display = False
+        viz.mode = "PREVIEW"
+        producer = registry_baker[baker.baker]
+        BakeVisualizationService.enable_preview(producer)
+
+    elif viz.enabled_display:
+        viz.enable_preview = False
+        viz.mode = "DISPLAY"
+        BakeVisualizationService.enable_display(bake_group.uuid, baker.accumulated_uuid)
 
 
 class BakeVisualizationService:

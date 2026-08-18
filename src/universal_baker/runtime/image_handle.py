@@ -15,6 +15,8 @@ from ..resources.image_buffer import ImageBuffer
 from ..services.image_codec import ImageCodec
 from .output_artifact import OutputArtifact
 
+LOG_SCOPE = "Image Handle"
+
 
 @dataclass(slots=True)
 class ImageHandle:
@@ -70,6 +72,10 @@ class ImageHandle:
     @property
     def bake_group(self) -> BakeGroup:
         return self._artifact.bake_group
+
+    @property
+    def producer_uuid(self) -> str:
+        return self._artifact.producer_uuid
 
     @property
     def target_object_uuid(self) -> str:
@@ -132,6 +138,10 @@ class ImageHandle:
     def set_tileset(self, tileset: TileSet) -> None:
         self._tiles = tileset
 
+    def set_dirty(self, dirty: bool) -> None:
+        for tile in self._tiles.tiles:
+            self._tiles.set_dirty(tile, dirty)
+
     def buffers(self) -> Iterator[tuple[int, ImageBuffer]]:
         self._ensure_loaded()
         yield from self._tiles.tile_buffers
@@ -147,6 +157,7 @@ class ImageHandle:
         Creates or reloads it if necessary.
         """
         if self.is_dirty:
+            LOG.debug("Handle is dirty")
             self.save()
 
         if not self._resource.created:
@@ -159,15 +170,16 @@ class ImageHandle:
     # ------------------------------------------------------------
 
     def save(self):
-        self._ensure_loaded()
+        with LOG.scope(LOG_SCOPE):
+            self._ensure_loaded()
 
-        ImageCodec.export_tiles(
-            artifact=self._artifact,
-            tiles=self._tiles,
-            output_settings=self._output_settings,
-        )
+            ImageCodec.export_tiles(
+                artifact=self._artifact,
+                tiles=self._tiles,
+                output_settings=self._output_settings,
+            )
 
-        self._resource.reload()
+            self._resource.reload()
 
     def reload(self):
         """
@@ -189,6 +201,7 @@ class ImageHandle:
 
     def _ensure_loaded(self):
         if not self._tiles.is_empty:
+            LOG.warning("TileSet is already loaded")
             return
 
         self._tiles = ImageCodec.import_tiles(

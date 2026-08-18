@@ -72,8 +72,8 @@ class BakerBase(ABC):
             self.prepare(ctx)
             self.bake(ctx)
             self.update_baker(ctx)
-            self.create_artifact(ctx)
             self.export_file(ctx)
+            self.create_artifact(ctx)
             self.cleanup(ctx)
 
     @abstractmethod
@@ -127,6 +127,8 @@ class BakerBase(ABC):
 
     @abstractmethod
     def create_artifact(self, ctx: BakeContext) -> None:
+        LOG.debug("Creating Artifact ...")
+
         artifact = ArtifactService.register(
             runtime=ctx.session.runtime,
             project=ctx.project,
@@ -149,6 +151,7 @@ class BakerBase(ABC):
             return
 
         ctx.task.result.set_tileset(ctx.output.tileset, clear=True)
+        ctx.output.set_dirty(False)
 
     @abstractmethod
     def export_file(self, ctx: BakeContext) -> None:

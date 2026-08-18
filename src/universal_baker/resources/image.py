@@ -235,6 +235,7 @@ class ImageResource:
             float_buffer=image.is_float,
             is_udim=image.source == "TILED",
             image_format_settings=image_format_settings,
+            create_image=False,
         )
 
     @classmethod

@@ -44,6 +44,10 @@ class ViewportService:
                         shading_type=shading.type,
                         color_type=shading.color_type,
                         shading_light=shading.light,
+                        show_object_outline=shading.show_object_outline,
+                        show_xray=shading.show_xray,
+                        show_shadows=shading.show_shadows,
+                        show_cavity=shading.show_cavity,
                     )
                 )
 
@@ -70,6 +74,10 @@ class ViewportService:
                 shading.type = "SOLID"
                 shading.color_type = "TEXTURE"
                 shading.light = "FLAT"
+                shading.show_object_outline = False
+                shading.show_shadows = False
+                shading.show_xray = False
+                shading.show_cavity = False
 
     @staticmethod
     def restore(state: VisualizationState):
@@ -93,3 +101,7 @@ class ViewportService:
                 shading.type = viewport.shading_type
                 shading.color_type = viewport.color_type
                 shading.light = viewport.shading_light
+                shading.show_object_outline = viewport.show_object_outline
+                shading.show_xray = viewport.show_xray
+                shading.show_shadows = viewport.show_shadows
+                shading.show_cavity = viewport.show_cavity

@@ -4,6 +4,8 @@ from collections import defaultdict
 from typing import Iterable, Generator
 from typing import TYPE_CHECKING
 
+from universal_baker.resources import image
+
 
 from ..constant import LOG
 from ..logger_bake_middleware.bake_summary import BakeStatus
@@ -28,8 +30,8 @@ class OutputRepository:
     def __init__(self, artifact_repository: ArtifactRepository):
         self._artifacts = artifact_repository
         self._outputs = {}
-        self._index_baker = defaultdict(list)
-        self._index_target_object = defaultdict(list)
+        self._index_baker = defaultdict(list[ImageHandle])
+        self._index_target_object = defaultdict(list[ImageHandle])
         self._materialized = {}
         self.clear()
 
@@ -41,9 +43,9 @@ class OutputRepository:
     def add(self, output: ImageHandle) -> None:
         self._outputs[output.uuid] = output
 
-        target_key = (output.bake_group.uuid, output.uuid)
+        target_key = (output.bake_group.uuid, output.producer_uuid)
 
-        target_object_key = (output.bake_group.uuid, output.uuid, output.target_object_uuid)
+        target_object_key = (output.bake_group.uuid, output.producer_uuid, output.target_object_uuid)
         self._index_baker[target_key].append(output)
         self._index_target_object[target_object_key].append(output)
 
@@ -221,6 +223,9 @@ class OutputRepository:
         LOG.debug(f"Create Image Handle from Artifact : {artifact.name}")
 
         image_handle = ImageHandle(artifact)
+
+        self._materialized[artifact.uuid] = image_handle
+
         return image_handle
 
     def invalidate(self, bake_group_uuid: str, producer_uuid: str) -> None:
