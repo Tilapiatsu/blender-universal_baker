@@ -35,13 +35,26 @@ from ..enum.image_layout import ImageLayout
 class ExecutionPlanner:
     """Converts the project into executable bake tasks."""
 
-    def build_job(self, project, register_bakers: bool = False, register_packers: bool = False) -> Job:
+    def build_job(
+        self,
+        project,
+        register_bakers: bool = False,
+        register_packers: bool = False,
+        group_index: int = -1,
+        baker_index: int = -1,
+        packer_index: int = -1,
+    ) -> Job:
         with LOG.scope("Planner"):
             from .controller import BakeController
 
             job = Job()
-            for group in project.bake_groups:
-                if not group.enabled:
+            for grp_idx, group in enumerate(project.bake_groups):
+                if group_index == -1:
+                    if not group.enabled:
+                        continue
+                elif group_index >= 0 and grp_idx == group_index:
+                    pass
+                else:
                     continue
 
                 #
@@ -111,11 +124,16 @@ class ExecutionPlanner:
 
                 job.add_task(ownership_task)
 
-                for baker in group.bakers:
+                for bk_idx, baker in enumerate(group.bakers):
                     if not register_bakers:
                         continue
 
-                    if not baker.enabled:
+                    if baker_index == -1:
+                        if not baker.enabled:
+                            continue
+                    elif baker_index >= 0 and bk_idx == baker_index:
+                        pass
+                    else:
                         continue
 
                     settings = BakeSettingsResolver.resolve(
@@ -219,8 +237,13 @@ class ExecutionPlanner:
                     udim_tiles=group_tiles,
                 )
 
-                for packer in group.packers:
-                    if not packer.enabled:
+                for pk_idx, packer in enumerate(group.packers):
+                    if packer_index == -1:
+                        if not packer.enabled:
+                            continue
+                    elif packer_index >= 0 and pk_idx == packer_index:
+                        pass
+                    else:
                         continue
 
                     red_baker = BakeController.get_baker_from_uuid(packer.mappings[0].source_map_uuid)
