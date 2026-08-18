@@ -9,6 +9,9 @@ class Baker(BakerBase):
         """
         return super().prepare(ctx)
 
+    def configure_preview_material(self, material):
+        super().configure_preview_material(material)
+
     def bake(self, ctx: BakeContext):
         """Execute the bake."""
         return super().bake(ctx)
@@ -21,9 +24,6 @@ class Baker(BakerBase):
 
     def update_baker(self, ctx: BakeContext) -> None:
         return super().update_baker(ctx)
-
-    def create_output(self, ctx: BakeContext):
-        return super().create_output(ctx)
 
     def export_file(self, ctx: BakeContext):
         """Save Bake to disk."""

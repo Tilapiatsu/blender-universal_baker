@@ -50,6 +50,20 @@ class BakerBase(ABC):
         return True
 
     @abstractmethod
+    def configure_preview_material(self, material):
+        material.use_nodes = True
+        nodes = material.node_tree.nodes
+        nodes.clear()
+
+        output = nodes.new("ShaderNodeOutputMaterial")
+        shader = nodes.new("ShaderNodeBsdfPrincipled")
+
+        material.node_tree.links.new(
+            shader.outputs["BSDF"],
+            output.inputs["Surface"],
+        )
+
+    @abstractmethod
     def execute(self, ctx: BakeContext) -> None:
         """Prepare, bake and cleanup all at once."""
         with LOG.scope(LOG_SCOPE):

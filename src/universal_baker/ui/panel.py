@@ -282,6 +282,8 @@ class UBK_PT_BakerPanel(UBK_PT_MainPanel, bpy.types.Panel):
         box = self.layout.box()
         active_bake_group = BakeController.active_bake_group(context)
 
+        assert active_bake_group is not None
+
         box.template_list(
             "UBK_UL_BakerList", "", active_bake_group, "bakers", active_bake_group, "active_baker_index", rows=5
         )
@@ -289,6 +291,30 @@ class UBK_PT_BakerPanel(UBK_PT_MainPanel, bpy.types.Panel):
         row = box.row(align=True)
         row.menu("UBK_MT_BakerAddMenu", icon="ADD")
         row.operator("ubk.remove_baker", text="", icon="REMOVE")
+
+        if len(active_bake_group.bakers) > 0:
+            box = self.layout.box()
+            project = BakeController.project(context)
+            box.prop(
+                project.visualization,
+                "enabled",
+                toggle=1,
+            )
+
+            if project.visualization.enabled:
+                row = box.row(align=True)
+
+                if project.visualization.mode == "PREVIEW":
+                    row.operator(
+                        "ubk.visualization_toggle",
+                        text="Preview",
+                    )
+
+                elif project.visualization.mode == "DISPLAY":
+                    row.operator(
+                        "ubk.visualization_toggle",
+                        text="Display",
+                    )
 
 
 class UBK_PT_ProcessPanel(UBK_PT_MainPanel, bpy.types.Panel):

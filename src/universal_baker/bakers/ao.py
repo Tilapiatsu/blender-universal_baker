@@ -20,6 +20,9 @@ class AmbientOcclusionBaker(BakerBase):
     def execute(self, ctx: BakeContext) -> None:
         return super().execute(ctx)
 
+    def configure_preview_material(self, material):
+        super().configure_preview_material(material)
+
     def prepare(self, ctx: BakeContext):
         """
         Prepare everything required before Blender's bake.

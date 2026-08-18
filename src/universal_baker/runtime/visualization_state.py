@@ -1,0 +1,57 @@
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+
+import bpy
+
+from ..services.material_override import (
+    MaterialSnapshot,
+)
+
+
+@dataclass
+class ViewportState:
+    """
+    Runtime state of one 3D viewport.
+
+    This is intentionally not stored in Blender properties.
+    """
+
+    area: bpy.types.Area
+
+    shading_type: str
+    color_type: str
+
+
+@dataclass
+class SceneVisualizationState:
+    """
+    Runtime state belonging to a Blender scene.
+    """
+
+    render_engine: str | None = None
+    material_overrides: dict[
+        str,
+        bpy.types.Material | None,
+    ] = field(default_factory=dict)
+
+    viewports: list[ViewportState] = field(default_factory=list)
+
+
+@dataclass
+class VisualizationState:
+    """
+    Runtime snapshot used to restore Blender after
+    visualization is disabled.
+    """
+
+    scenes: dict[
+        str,
+        SceneVisualizationState,
+    ] = field(default_factory=dict)
+
+    material_snapshots: list[MaterialSnapshot] = field(default_factory=list)
+
+    active: bool = False
+
+    mode: str | None = None

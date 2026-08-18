@@ -20,6 +20,20 @@ class DiffuseBaker(BakerBase):
     def execute(self, ctx: BakeContext) -> None:
         return super().execute(ctx)
 
+    def configure_preview_material(self, material):
+        material.use_nodes = True
+        nodes = material.node_tree.nodes
+        links = material.node_tree.links
+        nodes.clear()
+
+        output = nodes.new("ShaderNodeOutputMaterial")
+        shader = nodes.new("ShaderNodeBsdfPrincipled")
+        diffuse = nodes.new("ShaderNodeBsdfDiffuse")
+        links.new(
+            diffuse.outputs["BSDF"],
+            output.inputs["Surface"],
+        )
+
     def prepare(self, ctx: BakeContext):
         """
         Prepare everything required before Blender's bake.
