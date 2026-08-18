@@ -20,49 +20,58 @@ if TYPE_CHECKING:
 
 
 def update_visualization(self, context):
-    from ..core.controller import BakeController
+    with LOG.scope("Visualization"):
+        from ..core.controller import BakeController
 
-    project = BakeController.project(context)
+        project = BakeController.project(context)
 
-    if project is None:
-        LOG.warning("Project not found")
-        return
+        viz = project.visualization
 
-    bake_group = BakeController.active_bake_group(context)
+        if viz.refreshing:
+            return
 
-    if bake_group is None:
-        LOG.warning("Bake Group not found")
-        return
+        if project is None:
+            LOG.warning("Project not found")
+            return
 
-    baker = BakeController.active_baker(context)
+        bake_group = BakeController.active_bake_group(context)
 
-    if baker is None:
-        LOG.warning("Baker not found")
-        return
+        if bake_group is None:
+            LOG.warning("Bake Group not found")
+            return
 
-    viz = project.visualization
+        baker = BakeController.active_baker(context)
 
-    if viz.baker_idx != bake_group.active_baker_index:
-        LOG.debug(f"{viz.baker_idx} | {bake_group.active_baker_index}")
-        viz.baker_idx = bake_group.active_baker_index
-        producer = registry_baker[baker.baker]
-        BakeVisualizationService.refresh(producer, bake_group.uuid, baker.uuid)
+        if baker is None:
+            LOG.warning("Baker not found")
+            return
 
-    elif not viz.enabled_preview and not viz.enabled_display:
-        viz.mode = "NONE"
-        BakeVisualizationService.disable()
-        return
+        if viz.baker_idx != bake_group.active_baker_index:
+            viz.baker_idx = bake_group.active_baker_index
+            producer = registry_baker[baker.baker]
+            BakeVisualizationService.refresh(producer, bake_group.uuid, baker.accumulated_uuid)
 
-    if viz.enabled_preview:
-        viz.enable_display = False
-        viz.mode = "PREVIEW"
-        producer = registry_baker[baker.baker]
-        BakeVisualizationService.enable_preview(producer)
+        elif not viz.enabled_preview and not viz.enabled_display:
+            viz.mode = "NONE"
+            BakeVisualizationService.disable()
+            return
 
-    elif viz.enabled_display:
-        viz.enable_preview = False
-        viz.mode = "DISPLAY"
-        BakeVisualizationService.enable_display(bake_group.uuid, baker.accumulated_uuid)
+        if viz.enabled_preview and viz.mode != "PREVIEW":
+            LOG.debug("Enabling Preview")
+            viz.refreshing = True
+            viz.enabled_display = False
+            viz.mode = "PREVIEW"
+            producer = registry_baker[baker.baker]
+            BakeVisualizationService.enable_preview(producer)
+            viz.refreshing = False
+
+        elif viz.enabled_display and viz.mode != "DISPLAY":
+            LOG.debug("Enabling Display")
+            viz.refreshing = True
+            viz.enabled_preview = False
+            viz.mode = "DISPLAY"
+            BakeVisualizationService.enable_display(bake_group.uuid, baker.accumulated_uuid)
+            viz.refreshing = False
 
 
 class BakeVisualizationService:

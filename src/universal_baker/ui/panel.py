@@ -306,6 +306,7 @@ class UBK_PT_BakerPanel(UBK_PT_MainPanel, bpy.types.Panel):
                 "enabled_preview",
                 text=f"Preview {baker.image_name}",
                 toggle=1,
+                icon="VIEW_CAMERA" if project.visualization.enabled_preview else "VIEW_CAMERA_UNSELECTED",
             )
             if not baker.has_image:
                 return
@@ -315,6 +316,7 @@ class UBK_PT_BakerPanel(UBK_PT_MainPanel, bpy.types.Panel):
                 "enabled_display",
                 text=f"Display {baker.accumulated_image.name}",
                 toggle=1,
+                icon="HIDE_OFF" if project.visualization.enabled_display else "HIDE_ON",
             )
 
 

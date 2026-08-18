@@ -57,6 +57,7 @@ class UBK_Visualization(PropertyGroup):
         default="NONE",
     )
     baker_idx: IntProperty(default=0)
+    refreshing: BoolProperty(default=False)
 
 
 classes = (UBK_Visualization,)
