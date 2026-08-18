@@ -10,6 +10,7 @@ class Baker(BakerBase):
         return super().prepare(ctx)
 
     def configure_preview_material(self, material):
+        # TODO: Need to implement the proper preview
         super().configure_preview_material(material)
 
     def bake(self, ctx: BakeContext):

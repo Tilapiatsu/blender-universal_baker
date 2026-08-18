@@ -21,7 +21,18 @@ class AmbientOcclusionBaker(BakerBase):
         return super().execute(ctx)
 
     def configure_preview_material(self, material):
-        super().configure_preview_material(material)
+        # TODO: Need to implement the proper preview
+        material.use_nodes = True
+        nodes = material.node_tree.nodes
+        nodes.clear()
+
+        output = nodes.new("ShaderNodeOutputMaterial")
+        shader = nodes.new("ShaderNodeBsdfPrincipled")
+
+        material.node_tree.links.new(
+            shader.outputs["BSDF"],
+            output.inputs["Surface"],
+        )
 
     def prepare(self, ctx: BakeContext):
         """

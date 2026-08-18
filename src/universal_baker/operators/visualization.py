@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import bpy
 
+from ..constant import LOG
 from ..services.bake_visualization import BakeVisualizationService
 from ..core.controller import BakeController
+from ..core.registry_baker import registry_baker
 
 
 class UBK_OT_VisualizationToggle(bpy.types.Operator):
@@ -32,22 +34,24 @@ class UBK_OT_VisualizationToggle(bpy.types.Operator):
         return {"FINISHED"}
 
     def _enable(self, context, mode):
+        bake_group = BakeController.active_bake_group(context)
+
+        if bake_group is None:
+            LOG.warning("Bake Group not found")
+            return
 
         baker = BakeController.active_baker(context)
 
         if baker is None:
+            LOG.warning("Baker not found")
             return
 
         if mode == "PREVIEW":
-            BakeVisualizationService.enable_preview(baker)
+            producer = registry_baker[baker.baker]
+            BakeVisualizationService.enable_preview(producer)
 
         elif mode == "DISPLAY":
-            # TODO:
-            # This will eventually use
-            # OutputProvider.
-            image = ...
-
-            BakeVisualizationService.enable_display(image)
+            BakeVisualizationService.enable_display(bake_group.uuid, baker.accumulated_uuid)
 
 
 classes = (UBK_OT_VisualizationToggle,)

@@ -21,6 +21,7 @@ class ViewportState:
 
     shading_type: str
     color_type: str
+    shading_light: str
 
 
 @dataclass

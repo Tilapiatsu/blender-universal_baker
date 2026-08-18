@@ -1,5 +1,5 @@
 from __future__ import annotations
-import bpy
+
 from typing import TYPE_CHECKING
 
 from .output_repository import OutputRepository

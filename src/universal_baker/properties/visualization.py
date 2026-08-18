@@ -6,27 +6,43 @@ from bpy.props import (
 )
 from bpy.types import PropertyGroup
 
+from ..constant import LOG
 from ..services.bake_visualization import BakeVisualizationService
+from ..core.registry_baker import registry_baker
 
 
 def update_visualization(self, context):
     from ..core.controller import BakeController
 
-    if not self.enabled:
+    # ISSUE: Switching active baker doesn't refresh the display
+    if not self.enabled_preview and not self.enabled_display:
+        self.mode = "NONE"
         BakeVisualizationService.disable()
+        return
+
+    bake_group = BakeController.active_bake_group(context)
+
+    if bake_group is None:
+        LOG.warning("Bake Gourp not found")
         return
 
     baker = BakeController.active_baker(context)
 
     if baker is None:
+        LOG.warning("Baker not found")
         return
 
-    if self.mode == "PREVIEW":
-        BakeVisualizationService.enable_preview(baker)
+    if self.enabled_preview:
+        self.enable_display = False
+        self.mode = "PREVIEW"
+        producer = registry_baker[baker.baker]
+        BakeVisualizationService.enable_preview(producer)
 
-    elif self.mode == "DISPLAY":
-        # Later resolved through OutputProvider.
-        ...
+    elif self.enabled_display:
+        self.enable_preview = False
+        self.mode = "DISPLAY"
+        # ISSUE: querring accumulated_uuid from provider created a new empty image
+        BakeVisualizationService.enable_display(bake_group.uuid, baker.accumulated_uuid)
 
 
 class UBK_Visualization(PropertyGroup):
@@ -39,9 +55,16 @@ class UBK_Visualization(PropertyGroup):
     runtime.visualization_state.
     """
 
-    enabled: BoolProperty(
-        name="Visualization",
-        description="Enable Universal Baker bake visualization",
+    enabled_preview: BoolProperty(
+        name="Enable Preview",
+        description="Preview the result of the active baker",
+        default=False,
+        update=update_visualization,
+    )
+
+    enabled_display: BoolProperty(
+        name="Enable Preview",
+        description="Display the baked map for the active baker",
         default=False,
         update=update_visualization,
     )
@@ -50,6 +73,11 @@ class UBK_Visualization(PropertyGroup):
         name="Mode",
         description="Visualization mode",
         items=[
+            (
+                "NONE",
+                "None",
+                "Preview and Display are Disabled",
+            ),
             (
                 "PREVIEW",
                 "Preview",
@@ -61,7 +89,7 @@ class UBK_Visualization(PropertyGroup):
                 "Display the latest baked result",
             ),
         ],
-        default="PREVIEW",
+        default="NONE",
     )
 
 

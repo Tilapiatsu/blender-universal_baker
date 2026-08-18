@@ -43,6 +43,7 @@ class ViewportService:
                         area=area,
                         shading_type=shading.type,
                         color_type=shading.color_type,
+                        shading_light=shading.light,
                     )
                 )
 
@@ -68,6 +69,7 @@ class ViewportService:
 
                 shading.type = "SOLID"
                 shading.color_type = "TEXTURE"
+                shading.light = "FLAT"
 
     @staticmethod
     def restore(state: VisualizationState):
@@ -90,3 +92,4 @@ class ViewportService:
 
                 shading.type = viewport.shading_type
                 shading.color_type = viewport.color_type
+                shading.light = viewport.shading_light

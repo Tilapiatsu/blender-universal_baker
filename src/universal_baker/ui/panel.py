@@ -295,26 +295,27 @@ class UBK_PT_BakerPanel(UBK_PT_MainPanel, bpy.types.Panel):
         if len(active_bake_group.bakers) > 0:
             box = self.layout.box()
             project = BakeController.project(context)
-            box.prop(
+            baker = BakeController.active_baker(context)
+            if baker is None:
+                return
+
+            column = box.column(align=True)
+
+            column.prop(
                 project.visualization,
-                "enabled",
+                "enabled_preview",
+                text=f"Preview {baker.image_name}",
                 toggle=1,
             )
+            if not baker.has_image:
+                return
 
-            if project.visualization.enabled:
-                row = box.row(align=True)
-
-                if project.visualization.mode == "PREVIEW":
-                    row.operator(
-                        "ubk.visualization_toggle",
-                        text="Preview",
-                    )
-
-                elif project.visualization.mode == "DISPLAY":
-                    row.operator(
-                        "ubk.visualization_toggle",
-                        text="Display",
-                    )
+            column.prop(
+                project.visualization,
+                "enabled_display",
+                text=f"Display {baker.accumulated_image.name}",
+                toggle=1,
+            )
 
 
 class UBK_PT_ProcessPanel(UBK_PT_MainPanel, bpy.types.Panel):
