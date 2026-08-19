@@ -153,6 +153,7 @@ class BakeVisualizationService:
         baker_uuid: str,
     ):
 
+        # ISSUE: All materials turns to pink if baking wile in diplay mode
         if cls.is_active():
             cls.disable()
 
