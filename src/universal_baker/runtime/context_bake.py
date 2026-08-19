@@ -6,6 +6,8 @@ import bpy
 
 from typing import TYPE_CHECKING
 
+from universal_baker import resources
+
 if TYPE_CHECKING:
     from ..bakers.base import BakerBase
     from .task_bake import BakeTask
@@ -13,7 +15,7 @@ if TYPE_CHECKING:
     from .image_handle import ImageHandle
 
 from ..resources.image import ImageResource
-from ..resources.material import MaterialResource
+from ..resources.material import MaterialResources
 from .settings_bake import BakeSettings
 from .context import ExecutionContext
 from ..properties.project import UBK_Project
@@ -29,7 +31,7 @@ class BakeContext(ExecutionContext):
     image: ImageResource = field(default_factory=ImageResource)
     output: ImageHandle | None = None
 
-    material: MaterialResource = field(default_factory=MaterialResource)
+    materials: MaterialResources = field(default_factory=MaterialResources)
     node_tree: bpy.types.NodeTree | None = None
     image_node: bpy.types.ShaderNodeTexImage | None = None
 

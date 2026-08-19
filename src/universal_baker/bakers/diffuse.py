@@ -49,7 +49,6 @@ class DiffuseBaker(BakerBase):
         Cleanup after baking.
         """
         super().cleanup(ctx)
-        MaterialService.restore_target(ctx)
 
     def update_baker(self, ctx: BakeContext) -> None:
         return super().update_baker(ctx)

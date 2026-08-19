@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 import bpy
+from ..services.material_override import MaterialSnapshot
 
 
 @dataclass(slots=True)
@@ -87,3 +88,9 @@ class MaterialResource:
 
     def mark_restored(self) -> None:
         self.restored = True
+
+
+@dataclass(slots=True)
+class MaterialResources:
+    resources: dict[int, MaterialResource] = field(default_factory=dict[int, MaterialResource])
+    material_overrides: list[MaterialSnapshot] | None = None

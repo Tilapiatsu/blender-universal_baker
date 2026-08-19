@@ -21,7 +21,7 @@ class AmbientOcclusionBaker(BakerBase):
         return super().execute(ctx)
 
     def configure_preview_material(self, material):
-        # TODO: Need to implement the proper preview
+        # TODO: Need to expose the AO Parameters
         material.use_nodes = True
         nodes = material.node_tree.nodes
         nodes.clear()
@@ -49,7 +49,6 @@ class AmbientOcclusionBaker(BakerBase):
         Cleanup after baking.
         """
         super().cleanup(ctx)
-        MaterialService.restore_target(ctx)
 
     def update_baker(self, ctx: BakeContext) -> None:
         return super().update_baker(ctx)

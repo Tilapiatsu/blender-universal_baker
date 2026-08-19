@@ -116,7 +116,7 @@ class BakeVisualizationService:
         # Baker-specific hook.
         baker.configure_preview_material(material)
 
-        cls._state.material_snapshots = MaterialOverrideService.apply(material)
+        cls._state.material_snapshots = MaterialOverrideService.apply(bpy.context.scene.objects, material)
 
         # Cycles
         for scene in bpy.data.scenes:
@@ -173,7 +173,7 @@ class BakeVisualizationService:
             image.image,
         )
 
-        cls._state.material_snapshots = MaterialOverrideService.apply(material)
+        cls._state.material_snapshots = MaterialOverrideService.apply(bpy.context.scene.objects, material)
 
         ViewportService.set_texture()
 

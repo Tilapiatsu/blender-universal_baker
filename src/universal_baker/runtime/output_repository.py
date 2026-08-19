@@ -77,14 +77,6 @@ class OutputRepository:
         producer_uuid: str,
         materialize: bool = True,
     ) -> list[ImageHandle]:
-        # ISSUE: Re-run same baking and the images / renders / output / artifact doesn't get refreshed :
-        # -> Is it retrieving and old one in memory --> I need to check the time stamps ? or compare the render settings
-        # -> The images on disk are still the old ones
-        # -> Should I invalidate any ImageHandle before each bakes ?
-        # -> need to force disable render visibility on all objects except the target objects before baking and recover
-        # after ?
-        # -> need to check the case where the images has been removed by hand before each bakes : Where the blender image
-        # exists and the disk image is not
         with LOG.scope(LOG_SCOPE):
             # First try RAM
             LOG.debug("Resolving Output")

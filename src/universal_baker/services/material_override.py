@@ -18,13 +18,14 @@ class MaterialSnapshot:
 class MaterialOverrideService:
     @staticmethod
     def apply(
+        objects: list[bpy.types.Object],
         material: bpy.types.Material,
     ) -> list[MaterialSnapshot]:
 
         with LOG.scope(LOG_SCOPE):
             snapshots = []
 
-            for obj in bpy.context.scene.objects:
+            for obj in objects:
                 if obj.type != "MESH":
                     continue
 
@@ -57,13 +58,14 @@ class MaterialOverrideService:
 
                 if obj is None:
                     continue
+                LOG.debug(f"Restoring materials for {obj.name}")
 
                 # NOTE: Remove all materials the object didn't had materials at the first place
                 if not len(snapshot.materials):
                     obj.data.materials.clear()
 
                 for index, material in enumerate(snapshot.materials):
-                    if index >= len(obj.material_slots):
+                    if obj.material_slots is None or index >= len(obj.material_slots):
                         continue
 
                     LOG.debug(f"Restoring material slot {index} : {material.name if material is not None else 'EMPTY'}")
