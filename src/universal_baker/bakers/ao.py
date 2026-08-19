@@ -27,10 +27,10 @@ class AmbientOcclusionBaker(BakerBase):
         nodes.clear()
 
         output = nodes.new("ShaderNodeOutputMaterial")
-        shader = nodes.new("ShaderNodeBsdfPrincipled")
+        shader = nodes.new("ShaderNodeAmbientOcclusion")
 
         material.node_tree.links.new(
-            shader.outputs["BSDF"],
+            shader.outputs["Color"],
             output.inputs["Surface"],
         )
 
