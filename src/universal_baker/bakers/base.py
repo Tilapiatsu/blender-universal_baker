@@ -80,6 +80,7 @@ class BakerBase(ABC):
     def prepare(self, ctx: BakeContext) -> None:
         """Prepare Blender before baking."""
         LOG.debug("Preparing Scene ...")
+
         ctx.image = ImageServiceBake.acquire(ctx.image, ctx.task)
 
         MaterialService.prepare_target(ctx)

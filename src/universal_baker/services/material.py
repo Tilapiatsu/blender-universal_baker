@@ -49,6 +49,8 @@ class MaterialService:
         """
         Acquire the material used for baking.
         """
+        # TODO: Need to make sure all slot got assigned a bake material, and that the original materials are restored
+        # afterward
         with LOG.scope(LOG_SCOPE):
             obj = ctx.target
 
@@ -68,6 +70,9 @@ class MaterialService:
             resource.material_index = 0
             resource.material = material
             resource.node_tree = material.node_tree
+
+            for slot in obj.material_slots:
+                slot.material = material
 
     @classmethod
     def ensure_nodes(cls, resource: MaterialResource) -> None:

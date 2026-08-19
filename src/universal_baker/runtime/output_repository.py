@@ -29,10 +29,10 @@ class OutputRepository:
 
     def __init__(self, artifact_repository: ArtifactRepository):
         self._artifacts = artifact_repository
-        self._outputs = {}
+        self._outputs: dict[str, ImageHandle] = {}
         self._index_baker = defaultdict(list[ImageHandle])
         self._index_target_object = defaultdict(list[ImageHandle])
-        self._materialized = {}
+        self._materialized: dict[str, ImageHandle] = {}
         self.clear()
 
     def clear(self) -> None:
@@ -77,6 +77,14 @@ class OutputRepository:
         producer_uuid: str,
         materialize: bool = True,
     ) -> list[ImageHandle]:
+        # ISSUE: Re-run same baking and the images / renders / output / artifact doesn't get refreshed :
+        # -> Is it retrieving and old one in memory --> I need to check the time stamps ? or compare the render settings
+        # -> The images on disk are still the old ones
+        # -> Should I invalidate any ImageHandle before each bakes ?
+        # -> need to force disable render visibility on all objects except the target objects before baking and recover
+        # after ?
+        # -> need to check the case where the images has been removed by hand before each bakes : Where the blender image
+        # exists and the disk image is not
         with LOG.scope(LOG_SCOPE):
             # First try RAM
             LOG.debug("Resolving Output")
@@ -180,10 +188,13 @@ class OutputRepository:
 
     def _materialize(self, artifact: OutputArtifact) -> ImageHandle | None:
         """Get output from memory if exists or create a new one if not."""
-        if artifact.uuid in self._materialized:
-            LOG.debug("Retreive from Memory")
-
-            return self._outputs[artifact.uuid]
+        # TODO: Need to check how to gather artifact from materialized properly without preventing handle to be replaced after baking
+        # retreiving from memory that way result to make the handle always valid
+        #
+        # if artifact.uuid in self._materialized:
+        #     LOG.debug("Retrieve from Memory")
+        #
+        #     return self._materialized[artifact.uuid]
 
         output = self._create_image_handle(artifact)
 
@@ -230,7 +241,7 @@ class OutputRepository:
 
     def invalidate(self, bake_group_uuid: str, producer_uuid: str) -> None:
         """
-        Removes all runtime BakeOutputs associated
+        Removes all runtime ImageHandle associated
         with one bake_group/producer pair.
         """
 
@@ -244,8 +255,12 @@ class OutputRepository:
             self.remove(output)
 
     def clear_materialized(self, artifact_uuid: str):
-        output_uuid = self._materialized.pop(artifact_uuid, None)
+        output = self._materialized.pop(artifact_uuid, None)
 
+        if output is None:
+            return
+
+        output_uuid = output.artifact.uuid
         if output_uuid is None:
             return
 

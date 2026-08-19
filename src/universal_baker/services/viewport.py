@@ -13,6 +13,7 @@ class ViewportService:
     @staticmethod
     def capture_state() -> VisualizationState:
 
+        # ISSUE: If Baking while preview or display enabled, cannot recover viewport state properly
         state = VisualizationState()
 
         for scene in bpy.data.scenes:

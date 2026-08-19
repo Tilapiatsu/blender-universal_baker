@@ -125,7 +125,7 @@ class ImageServiceBase:
             resource.colorspace = color_settings.colorspace
             resource.image_format_settings = image_settings
             resource.is_udim = task.uv_layout.image_layout == ImageLayout.UDIM
-            LOG.debug(f"Configure Image to {task.uv_layout.image_layout}")
+            LOG.debug(f"Configure Image to {task.uv_layout.image_layout.value}")
 
             resource.filepath = task.absolute_filepath
 
