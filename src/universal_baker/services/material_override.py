@@ -22,7 +22,6 @@ class MaterialOverrideService:
     ) -> list[MaterialSnapshot]:
 
         with LOG.scope(LOG_SCOPE):
-            # ISSUE: When restoring, the previous materials didn't get reapplied to the objects properly
             snapshots = []
 
             for obj in bpy.context.scene.objects:
