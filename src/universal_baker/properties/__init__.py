@@ -8,6 +8,7 @@ from . import (
     object,
     bake_group,
     artifact,
+    visualization,
     project,
 )
 
@@ -21,6 +22,7 @@ modules = (
     object,
     bake_group,
     artifact,
+    visualization,
     project,
 )
 

@@ -1,10 +1,12 @@
 from __future__ import annotations
-import bpy
+
 from typing import TYPE_CHECKING
+
 
 from .output_repository import OutputRepository
 from ..services.output_provider import OutputProvider
 from .artifact_repository import ArtifactRepository
+from .runtime_visualization import VisualizationRuntime
 
 if TYPE_CHECKING:
     from bpy.types import Scene
@@ -46,6 +48,8 @@ class BakeRuntime:
             repository=self.outputs,
         )
 
+        self.visualization = VisualizationRuntime()
+
         #
         # Future runtime objects
         #
@@ -79,6 +83,7 @@ class BakeRuntime:
         self.outputs.clear()
         self.provider.clear()
         self.preview_cache.clear()
+        self.visualization.clear()
         self.image_cache.clear()
         self.statistics.clear()
         self.active_sessions.clear()

@@ -207,7 +207,7 @@ class BakeController:
     # ---------------------------------------------------------
     # Pack Operations
     # ---------------------------------------------------------
-    # TODO: every "adder" should check for name collision and and prevent is by adding a suffix like "_001"
+    # TODO: every "adder" should check for name collision and and prevent it by adding a suffix like "_001"
     @classmethod
     def add_packer(cls, context: bpy.types.Context, packer_id: str = "INTERNAL"):
         bake_group = cls.active_bake_group(context)
@@ -300,11 +300,24 @@ class BakeController:
 
     @classmethod
     def create_job(
-        cls, context: bpy.types.Context, register_bakers: bool = False, register_packers: bool = False
+        cls,
+        context: bpy.types.Context,
+        register_bakers: bool = False,
+        register_packers: bool = False,
+        group_index: int = -1,
+        baker_index: int = -1,
+        packer_index: int = -1,
     ) -> Job:
         planner = ExecutionPlanner()
 
-        return planner.build_job(cls.project(context), register_bakers, register_packers)
+        return planner.build_job(
+            cls.project(context),
+            register_bakers=register_bakers,
+            register_packers=register_packers,
+            group_index=group_index,
+            baker_index=baker_index,
+            packer_index=packer_index,
+        )
 
     # ---------------------------------------------------------
     # Baking
@@ -346,20 +359,75 @@ class BakeController:
         )
 
     @classmethod
-    def bake_group(cls, context: bpy.types.Context, object_index: int):
+    def bake_group(cls, context: bpy.types.Context, group_index: int) -> tuple[bool, Job | list[str]]:
+        errors = cls.validate(context)
 
-        #
-        # TODO
-        #
-        raise NotImplementedError()
+        if errors:
+            return (
+                False,
+                errors,
+            )
+
+        job = cls.create_job(context, register_bakers=True, register_packers=True, group_index=group_index)
+
+        preferences = get_prefs()
+
+        if preferences.use_background_blender:
+            execution = Execution.EXTERNAL
+        else:
+            execution = Execution.INTERNAL
+
+        executor = Executor(
+            execution=execution,
+            task_types=[
+                BakeTask,
+                AccumulateTask,
+                UvOwnershipTask,
+                MaskBufferTask,
+                PackingTask,
+            ],
+        )
+        executor.execute(context, job)
+
+        return (
+            True,
+            job,
+        )
 
     @classmethod
-    def bake_baker(cls, context: bpy.types.Context, baker_index: int):
+    def bake_baker(cls, context: bpy.types.Context, baker_index: int) -> tuple[bool, Job | list[str]]:
+        errors = cls.validate(context)
 
-        #
-        # TODO
-        #
-        raise NotImplementedError()
+        if errors:
+            return (
+                False,
+                errors,
+            )
+
+        job = cls.create_job(context, register_bakers=True, baker_index=baker_index)
+
+        preferences = get_prefs()
+
+        if preferences.use_background_blender:
+            execution = Execution.EXTERNAL
+        else:
+            execution = Execution.INTERNAL
+
+        executor = Executor(
+            execution=execution,
+            task_types=[
+                BakeTask,
+                AccumulateTask,
+                UvOwnershipTask,
+                MaskBufferTask,
+            ],
+        )
+        executor.execute(context, job)
+
+        return (
+            True,
+            job,
+        )
 
     # ---------------------------------------------------------
     # Paking
@@ -433,9 +501,33 @@ class BakeController:
         )
 
     @classmethod
-    def pack_selected(cls, context: bpy.types.Context, object_index: int):
+    def pack_selected(cls, context: bpy.types.Context, packer_index: int) -> tuple[bool, Job | list[str]]:
+        errors = cls.validate(context)
 
-        #
-        # TODO
-        #
-        raise NotImplementedError()
+        if errors:
+            return (
+                False,
+                errors,
+            )
+
+        job = cls.create_job(context, register_packers=True, packer_index=packer_index)
+
+        preferences = get_prefs()
+
+        if preferences.use_background_blender:
+            execution = Execution.EXTERNAL
+        else:
+            execution = Execution.INTERNAL
+
+        executor = Executor(
+            execution=execution,
+            task_types=[
+                PackingTask,
+            ],
+        )
+        executor.execute(context, job)
+
+        return (
+            True,
+            job,
+        )

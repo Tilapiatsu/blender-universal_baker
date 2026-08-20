@@ -126,11 +126,12 @@ class AccumulatorBase(ABC):
         )
 
         if artifact is None:
-            LOG.error("Artifact creation Failed")
+            LOG.error("Artifact Creation Failed")
             return
 
         ctx.output = ctx.session.runtime.outputs.get(artifact)
         if ctx.output is None:
+            LOG.error("Output Creation Failed")
             return
 
         ctx.task.result.set_tileset(ctx.output.tileset, clear=True)

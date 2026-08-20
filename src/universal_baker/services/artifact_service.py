@@ -124,7 +124,6 @@ class ArtifactService:
 
             if artifact is not None:
                 LOG.debug(f"Artifact registered : {str(artifact)}")
-                # artifact.init_empty_image()
             else:
                 LOG.warning("Artifact Creation Failed")
 

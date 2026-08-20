@@ -3,7 +3,6 @@ from __future__ import annotations
 from .base import BakerBase
 
 from ..runtime.context_bake import BakeContext
-from ..services.material import MaterialService
 from ..core.registry_baker import registry_baker
 
 
@@ -20,6 +19,20 @@ class AmbientOcclusionBaker(BakerBase):
     def execute(self, ctx: BakeContext) -> None:
         return super().execute(ctx)
 
+    def configure_preview_material(self, material):
+        # TODO: Need to expose the AO Parameters
+        material.use_nodes = True
+        nodes = material.node_tree.nodes
+        nodes.clear()
+
+        output = nodes.new("ShaderNodeOutputMaterial")
+        shader = nodes.new("ShaderNodeAmbientOcclusion")
+
+        material.node_tree.links.new(
+            shader.outputs["Color"],
+            output.inputs["Surface"],
+        )
+
     def prepare(self, ctx: BakeContext):
         """
         Prepare everything required before Blender's bake.
@@ -35,7 +48,6 @@ class AmbientOcclusionBaker(BakerBase):
         Cleanup after baking.
         """
         super().cleanup(ctx)
-        MaterialService.restore_target(ctx)
 
     def update_baker(self, ctx: BakeContext) -> None:
         return super().update_baker(ctx)

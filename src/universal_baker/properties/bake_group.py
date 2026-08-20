@@ -15,6 +15,7 @@ from .object import UBK_TargetObject
 from .baker import UBK_Baker
 from .packer import UBK_Packer
 from .settings_bake import UBK_BakeSettings
+from ..services.bake_visualization import update_visualization
 
 
 class UBK_BakeGroup(PropertyGroup):
@@ -43,7 +44,9 @@ class UBK_BakeGroup(PropertyGroup):
     active_target_object_index: IntProperty(default=0)
 
     bakers: CollectionProperty(type=UBK_Baker)
-    active_baker_index: IntProperty()
+    active_baker_index: IntProperty(
+        update=update_visualization,
+    )
 
     packers: CollectionProperty(type=UBK_Packer)
     active_packer_index: bpy.props.IntProperty(

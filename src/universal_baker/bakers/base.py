@@ -50,6 +50,20 @@ class BakerBase(ABC):
         return True
 
     @abstractmethod
+    def configure_preview_material(self, material):
+        material.use_nodes = True
+        nodes = material.node_tree.nodes
+        nodes.clear()
+
+        output = nodes.new("ShaderNodeOutputMaterial")
+        shader = nodes.new("ShaderNodeBsdfPrincipled")
+
+        material.node_tree.links.new(
+            shader.outputs["BSDF"],
+            output.inputs["Surface"],
+        )
+
+    @abstractmethod
     def execute(self, ctx: BakeContext) -> None:
         """Prepare, bake and cleanup all at once."""
         with LOG.scope(LOG_SCOPE):
@@ -58,14 +72,15 @@ class BakerBase(ABC):
             self.prepare(ctx)
             self.bake(ctx)
             self.update_baker(ctx)
-            self.create_artifact(ctx)
             self.export_file(ctx)
+            self.create_artifact(ctx)
             self.cleanup(ctx)
 
     @abstractmethod
     def prepare(self, ctx: BakeContext) -> None:
         """Prepare Blender before baking."""
         LOG.debug("Preparing Scene ...")
+
         ctx.image = ImageServiceBake.acquire(ctx.image, ctx.task)
 
         MaterialService.prepare_target(ctx)
@@ -80,8 +95,8 @@ class BakerBase(ABC):
     def cleanup(self, ctx: BakeContext) -> None:
         LOG.debug("Restoring ...")
         """Restore Blender."""
-        # TODO : Need to remove material if there was no material at the first place ?
         ctx.image.reset()
+        MaterialService.restore_target(ctx)
 
     @abstractmethod
     def update_baker(self, ctx: BakeContext) -> None:
@@ -113,6 +128,8 @@ class BakerBase(ABC):
 
     @abstractmethod
     def create_artifact(self, ctx: BakeContext) -> None:
+        LOG.debug("Creating Artifact ...")
+
         artifact = ArtifactService.register(
             runtime=ctx.session.runtime,
             project=ctx.project,
@@ -135,6 +152,7 @@ class BakerBase(ABC):
             return
 
         ctx.task.result.set_tileset(ctx.output.tileset, clear=True)
+        ctx.output.set_dirty(False)
 
     @abstractmethod
     def export_file(self, ctx: BakeContext) -> None:

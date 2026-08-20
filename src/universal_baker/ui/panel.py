@@ -282,6 +282,8 @@ class UBK_PT_BakerPanel(UBK_PT_MainPanel, bpy.types.Panel):
         box = self.layout.box()
         active_bake_group = BakeController.active_bake_group(context)
 
+        assert active_bake_group is not None
+
         box.template_list(
             "UBK_UL_BakerList", "", active_bake_group, "bakers", active_bake_group, "active_baker_index", rows=5
         )
@@ -289,6 +291,33 @@ class UBK_PT_BakerPanel(UBK_PT_MainPanel, bpy.types.Panel):
         row = box.row(align=True)
         row.menu("UBK_MT_BakerAddMenu", icon="ADD")
         row.operator("ubk.remove_baker", text="", icon="REMOVE")
+
+        if len(active_bake_group.bakers) > 0:
+            box = self.layout.box()
+            project = BakeController.project(context)
+            baker = BakeController.active_baker(context)
+            if baker is None:
+                return
+
+            column = box.column(align=True)
+
+            column.prop(
+                project.visualization,
+                "enabled_preview",
+                text=f"Preview {baker.image_name}",
+                toggle=1,
+                icon="VIEW_CAMERA" if project.visualization.enabled_preview else "VIEW_CAMERA_UNSELECTED",
+            )
+            if not baker.has_image:
+                return
+
+            column.prop(
+                project.visualization,
+                "enabled_display",
+                text=f"Display {baker.accumulated_image.name}",
+                toggle=1,
+                icon="HIDE_OFF" if project.visualization.enabled_display else "HIDE_ON",
+            )
 
 
 class UBK_PT_ProcessPanel(UBK_PT_MainPanel, bpy.types.Panel):

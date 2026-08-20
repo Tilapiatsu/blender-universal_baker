@@ -14,6 +14,7 @@ from . import (
     pack_all,
     pack_selected,
     pack_mapping_fix,
+    visualization,
 )
 
 modules = (
@@ -32,6 +33,7 @@ modules = (
     pack_all,
     pack_selected,
     pack_mapping_fix,
+    visualization,
 )
 
 

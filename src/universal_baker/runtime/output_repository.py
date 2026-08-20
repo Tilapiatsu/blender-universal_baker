@@ -4,6 +4,8 @@ from collections import defaultdict
 from typing import Iterable, Generator
 from typing import TYPE_CHECKING
 
+from universal_baker.resources import image
+
 
 from ..constant import LOG
 from ..logger_bake_middleware.bake_summary import BakeStatus
@@ -27,10 +29,10 @@ class OutputRepository:
 
     def __init__(self, artifact_repository: ArtifactRepository):
         self._artifacts = artifact_repository
-        self._outputs = {}
-        self._index_baker = defaultdict(list)
-        self._index_target_object = defaultdict(list)
-        self._materialized = {}
+        self._outputs: dict[str, ImageHandle] = {}
+        self._index_baker = defaultdict(list[ImageHandle])
+        self._index_target_object = defaultdict(list[ImageHandle])
+        self._materialized: dict[str, ImageHandle] = {}
         self.clear()
 
     def clear(self) -> None:
@@ -41,9 +43,9 @@ class OutputRepository:
     def add(self, output: ImageHandle) -> None:
         self._outputs[output.uuid] = output
 
-        target_key = (output.bake_group.uuid, output.uuid)
+        target_key = (output.bake_group.uuid, output.producer_uuid)
 
-        target_object_key = (output.bake_group.uuid, output.uuid, output.target_object_uuid)
+        target_object_key = (output.bake_group.uuid, output.producer_uuid, output.target_object_uuid)
         self._index_baker[target_key].append(output)
         self._index_target_object[target_object_key].append(output)
 
@@ -178,10 +180,13 @@ class OutputRepository:
 
     def _materialize(self, artifact: OutputArtifact) -> ImageHandle | None:
         """Get output from memory if exists or create a new one if not."""
-        if artifact.uuid in self._materialized:
-            LOG.debug("Retreive from Memory")
-
-            return self._outputs[artifact.uuid]
+        # TODO: Need to check how to gather artifact from materialized properly without preventing handle to be replaced after baking
+        # retreiving from memory that way result to make the handle always valid
+        #
+        # if artifact.uuid in self._materialized:
+        #     LOG.debug("Retrieve from Memory")
+        #
+        #     return self._materialized[artifact.uuid]
 
         output = self._create_image_handle(artifact)
 
@@ -221,11 +226,14 @@ class OutputRepository:
         LOG.debug(f"Create Image Handle from Artifact : {artifact.name}")
 
         image_handle = ImageHandle(artifact)
+
+        self._materialized[artifact.uuid] = image_handle
+
         return image_handle
 
     def invalidate(self, bake_group_uuid: str, producer_uuid: str) -> None:
         """
-        Removes all runtime BakeOutputs associated
+        Removes all runtime ImageHandle associated
         with one bake_group/producer pair.
         """
 
@@ -239,8 +247,12 @@ class OutputRepository:
             self.remove(output)
 
     def clear_materialized(self, artifact_uuid: str):
-        output_uuid = self._materialized.pop(artifact_uuid, None)
+        output = self._materialized.pop(artifact_uuid, None)
 
+        if output is None:
+            return
+
+        output_uuid = output.artifact.uuid
         if output_uuid is None:
             return
 

@@ -29,15 +29,19 @@ class UBK_OT_BakeMap(UBK_OT_Base):
     def execute(self, context):
         success, result = BakeController.bake_baker(context, self.index)
 
-        if not success:
+        if not success and isinstance(result, list):
             for error in result:
                 self.error(error)
 
             return {"CANCELLED"}
 
+        assert isinstance(result, Job)
+
         job: Job = result
 
         self.info(f"Created bake job with {job.total_tasks} task(s).")
+
+        return {"FINISHED"}
 
 
 classes = (UBK_OT_BakeMap,)
