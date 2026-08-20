@@ -18,7 +18,11 @@ class ViewportService:
 
         for scene in bpy.data.scenes:
             scene_state = SceneVisualizationState(
+                scene_name=scene.name,
                 render_engine=scene.render.engine,
+                view_transform=scene.view_settings.view_transform,
+                exposure=scene.view_settings.exposure,
+                gamma=scene.view_settings.gamma,
             )
 
             state.scenes[scene.name] = scene_state
@@ -41,7 +45,6 @@ class ViewportService:
 
                 scene_state.viewports.append(
                     ViewportState(
-                        area=area,
                         shading_type=shading.type,
                         color_type=shading.color_type,
                         shading_light=shading.light,
@@ -56,6 +59,10 @@ class ViewportService:
 
     @staticmethod
     def set_rendered():
+        view_settings = bpy.context.scene.view_settings
+        view_settings.view_transform = "Standard"
+        view_settings.exposure = 0.0
+        view_settings.gamma = 1.0
         for window in bpy.context.window_manager.windows:
             for area in window.screen.areas:
                 if area.type != "VIEW_3D":
@@ -87,21 +94,26 @@ class ViewportService:
 
             if scene is not None and scene_state.render_engine:
                 scene.render.engine = scene_state.render_engine
+                scene.view_settings.view_transform = scene_state.view_transform
+                scene.view_settings.exposure = scene_state.exposure
+                scene.view_settings.gamma = scene_state.gamma
 
             for viewport in scene_state.viewports:
-                area = viewport.area
+                for window in bpy.context.window_manager.windows:
+                    screen = window.screen
 
-                # The area may have disappeared while
-                # visualization was active.
-                if area.type != "VIEW_3D":
-                    continue
+                    for area in screen.areas:
+                        # The area may have disappeared while
+                        # visualization was active.
+                        if area.type != "VIEW_3D":
+                            continue
 
-                shading = area.spaces.active.shading
+                        shading = area.spaces.active.shading
 
-                shading.type = viewport.shading_type
-                shading.color_type = viewport.color_type
-                shading.light = viewport.shading_light
-                shading.show_object_outline = viewport.show_object_outline
-                shading.show_xray = viewport.show_xray
-                shading.show_shadows = viewport.show_shadows
-                shading.show_cavity = viewport.show_cavity
+                        shading.type = viewport.shading_type
+                        shading.color_type = viewport.color_type
+                        shading.light = viewport.shading_light
+                        shading.show_object_outline = viewport.show_object_outline
+                        shading.show_xray = viewport.show_xray
+                        shading.show_shadows = viewport.show_shadows
+                        shading.show_cavity = viewport.show_cavity

@@ -17,8 +17,6 @@ class ViewportState:
     This is intentionally not stored in Blender properties.
     """
 
-    area: bpy.types.Area
-
     shading_type: str
     color_type: str
     shading_light: str
@@ -34,6 +32,10 @@ class SceneVisualizationState:
     Runtime state belonging to a Blender scene.
     """
 
+    scene_name: str
+    view_transform: str
+    exposure: float
+    gamma: float
     render_engine: str | None = None
     material_overrides: dict[
         str,
