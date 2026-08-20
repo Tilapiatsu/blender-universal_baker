@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import bpy
 
+from ..runtime.runtime_visualization import VisualizationRuntime
+
 from ..runtime.visualization_state import (
     VisualizationState,
     SceneVisualizationState,
@@ -12,8 +14,6 @@ from ..runtime.visualization_state import (
 class ViewportService:
     @staticmethod
     def capture_state() -> VisualizationState:
-
-        # ISSUE: If Baking while preview or display enabled, cannot recover viewport state properly
         state = VisualizationState()
 
         for scene in bpy.data.scenes:
@@ -81,13 +81,12 @@ class ViewportService:
                 shading.show_cavity = False
 
     @staticmethod
-    def restore(state: VisualizationState):
+    def restore(state: VisualizationRuntime):
         for scene_name, scene_state in state.scenes.items():
             scene = bpy.data.scenes.get(scene_name)
 
-            if scene is not None:
-                if scene_state.render_engine:
-                    scene.render.engine = scene_state.render_engine
+            if scene is not None and scene_state.render_engine:
+                scene.render.engine = scene_state.render_engine
 
             for viewport in scene_state.viewports:
                 area = viewport.area

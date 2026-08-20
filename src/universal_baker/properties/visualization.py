@@ -58,6 +58,7 @@ class UBK_Visualization(PropertyGroup):
     )
     baker_idx: IntProperty(default=0)
     refreshing: BoolProperty(default=False)
+    # ISSUE: mode and refreshing can get stuck and prevent the preview to work properly
 
 
 classes = (UBK_Visualization,)

@@ -1,13 +1,14 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 import bpy
 
 from ..constant import LOG
 
-from ..runtime.visualization_state import (
-    VisualizationState,
-)
+from ..runtime.runtime_visualization import VisualizationRuntime
 
+from ..enum.visualization import VisualizationMode
 from .viewport import ViewportService
 from .preview_material import PreviewMaterialService
 from .material_display import DisplayMaterialService
@@ -17,6 +18,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..bakers.base import BakerBase
+    from ..packers.base import PackerBase
 
 
 def update_visualization(self, context):
@@ -74,8 +76,22 @@ def update_visualization(self, context):
             viz.refreshing = False
 
 
+@dataclass(slots=True, frozen=True)
+class PreviewData:
+    producer: BakerBase | PackerBase
+    mode: VisualizationMode = VisualizationMode.PREVIEW
+
+
+@dataclass(slots=True, frozen=True)
+class DisplayData:
+    bake_group_uuid: str
+    producer_uuid: str
+    mode: VisualizationMode = VisualizationMode.DISPLAY
+    producer: None = None
+
+
 class BakeVisualizationService:
-    _state: VisualizationState | None = None
+    _runtime: VisualizationRuntime | None = None
 
     # ---------------------------------------------------------
     # State
@@ -83,15 +99,23 @@ class BakeVisualizationService:
 
     @classmethod
     def is_active(cls) -> bool:
-        return cls._state is not None and cls._state.active
+        return cls._runtime is not None and cls._runtime.active
 
     @classmethod
-    def mode(cls) -> str | None:
+    def mode(cls) -> VisualizationMode | None:
 
-        if cls._state is None:
+        if cls._runtime is None:
             return None
 
-        return cls._state.mode
+        return cls._runtime.mode
+
+    @classmethod
+    def _ensure_runtime(cls):
+        if cls._runtime is None:
+            from ..runtime.runtime_manager import RuntimeManager
+
+            runtime = RuntimeManager.current(bpy.context)
+            cls._runtime = runtime.visualization
 
     # ---------------------------------------------------------
     # Preview
@@ -100,23 +124,15 @@ class BakeVisualizationService:
     @classmethod
     def enable_preview(
         cls,
-        baker: BakerBase,
+        producer: BakerBase | PackerBase,
     ):
-
+        cls._ensure_runtime()
         if cls.is_active():
             cls.disable()
 
-        cls._state = ViewportService.capture_state()
+        data = PreviewData(producer=producer)
 
-        cls._state.active = True
-        cls._state.mode = "PREVIEW"
-
-        material = PreviewMaterialService.get_or_create()
-
-        # Baker-specific hook.
-        baker.configure_preview_material(material)
-
-        cls._state.material_snapshots = MaterialOverrideService.apply(bpy.context.scene.objects, material)
+        cls._begin(data)
 
         # Cycles
         for scene in bpy.data.scenes:
@@ -150,30 +166,19 @@ class BakeVisualizationService:
     def enable_display(
         cls,
         bake_group_uuid: str,
-        baker_uuid: str,
+        producer_uuid: str,
     ):
+        cls._ensure_runtime()
 
         if cls.is_active():
             cls.disable()
 
-        cls._state = ViewportService.capture_state()
-
-        cls._state.active = True
-        cls._state.mode = "DISPLAY"
-
-        material = DisplayMaterialService.get_or_create()
-
-        image = cls._get_image(bake_group_uuid, baker_uuid)
-
-        if image is None:
-            return
-
-        DisplayMaterialService.set_image(
-            material,
-            image.image,
+        data = DisplayData(
+            bake_group_uuid=bake_group_uuid,
+            producer_uuid=producer_uuid,
         )
 
-        cls._state.material_snapshots = MaterialOverrideService.apply(bpy.context.scene.objects, material)
+        cls._begin(data)
 
         ViewportService.set_texture()
 
@@ -184,16 +189,16 @@ class BakeVisualizationService:
     @classmethod
     def disable(cls):
 
-        state = cls._state
-
-        if state is None:
+        if not cls.is_active() or cls._runtime is None:
             return
 
-        MaterialOverrideService.restore(state.material_snapshots)
+        try:
+            MaterialOverrideService.restore(cls._runtime.material_snapshots)
 
-        ViewportService.restore(state)
+            ViewportService.restore(cls._runtime)
 
-        cls._state = None
+        finally:
+            cls._runtime.clear()
 
     # ---------------------------------------------------------
     # Refresh
@@ -212,7 +217,7 @@ class BakeVisualizationService:
 
         mode = cls.mode()
 
-        if mode == "PREVIEW":
+        if mode == VisualizationMode.PREVIEW:
             if baker is None:
                 return
 
@@ -220,10 +225,68 @@ class BakeVisualizationService:
 
             cls.enable_preview(baker)
 
-        elif mode == "DISPLAY":
+        elif mode == VisualizationMode.DISPLAY:
             if bake_group_uuid is None or baker_uuid is None:
                 return
 
             cls.disable()
 
             cls.enable_display(bake_group_uuid, baker_uuid)
+
+    # ------------------------------------------------------------------
+    # Internal
+    # ------------------------------------------------------------------
+    @classmethod
+    def _begin(cls, data: PreviewData | DisplayData) -> None:
+
+        if cls._runtime is None:
+            return
+
+        # If another visualization is already active,
+        # restore it first.
+
+        if cls._runtime.active:
+            cls.disable()
+
+        cls._runtime.begin(
+            mode=data.mode,
+            producer=data.producer,
+        )
+
+        cls._capture_state(data)
+
+    @classmethod
+    def _capture_state(cls, data: PreviewData | DisplayData) -> None:
+        LOG.debug("Capture State")
+        if cls._runtime is None:
+            return
+
+        scenes = ViewportService.capture_state()
+
+        for scene_name, scene_state in scenes.scenes.items():
+            cls._runtime.set_scene_state(
+                scene_name,
+                scene_state,
+            )
+
+        if isinstance(data, PreviewData):
+            material = PreviewMaterialService.get_or_create()
+            data.producer.configure_preview_material(material)
+
+            cls._runtime.set_active_producer(data.producer)
+            cls._runtime.set_material_snapshots(MaterialOverrideService.apply(bpy.context.scene.objects, material))
+
+        else:
+            material = DisplayMaterialService.get_or_create()
+            image = cls._get_image(data.bake_group_uuid, data.producer_uuid)
+
+            if image is None:
+                return
+
+            DisplayMaterialService.set_image(
+                material,
+                image.image,
+            )
+            cls._runtime.set_active_image_handle(image)
+            cls._runtime.set_active_producer(data.producer)
+            cls._runtime.set_material_snapshots(MaterialOverrideService.apply(bpy.context.scene.objects, material))

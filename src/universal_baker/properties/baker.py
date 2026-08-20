@@ -45,6 +45,9 @@ class UBK_Baker(PropertyGroup):
     accumulated_image: PointerProperty(type=bpy.types.Image)
     accumulated_uuid: StringProperty()
 
+    # ISSUE: accumulated_image get depopulated for a reason making the display impossible -> should it use artifact
+    # instead ? will it be slower
+
     override_settings: BoolProperty(
         name="Override Settings",
         default=False,

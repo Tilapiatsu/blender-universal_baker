@@ -25,6 +25,10 @@ class PackerInternal(PackerBase):
     name: str = "Internal"
     description: str = "Pack rendered bake using blender"
 
+    def configure_preview_material(self, material):
+        # TODO: Need to implement the proper preview
+        super().configure_preview_material(material)
+
     def execute(self, ctx: PackContext) -> None:
         return super().execute(ctx)
 

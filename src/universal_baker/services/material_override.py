@@ -58,6 +58,12 @@ class MaterialOverrideService:
 
                 if obj is None:
                     continue
+                # ISSUE: switch to preview / display then, move object then CTRL + Z finally disable preview / display
+                # make snapshot invalid
+                # ReferenceError on object stored in shapshots -> Should I store obj name instead ? What happen if the user rename an object
+                # After CTRL + Z : The previous viewport state got lost
+                # should this use the context manager ? with ... : for it to always restore in case of problems
+
                 LOG.debug(f"Restoring materials for {obj.name}")
 
                 # NOTE: Remove all materials the object didn't had materials at the first place

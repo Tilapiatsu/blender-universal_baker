@@ -1,41 +1,16 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
-import bpy
+from ..enum.visualization import VisualizationMode
+from .image_handle import ImageHandle
+
 
 if TYPE_CHECKING:
-    from ..bakers.base import BakerBase
     from ..services.material_override import MaterialSnapshot
-
-
-@dataclass
-class ViewportState:
-    """
-    Snapshot of a single 3D viewport.
-
-    This is runtime-only and must never be stored in a
-    Blender PropertyGroup.
-    """
-
-    area: bpy.types.Area
-
-    shading_type: str
-    color_type: str
-
-
-@dataclass
-class SceneVisualizationState:
-    """
-    Runtime snapshot of the Blender state belonging to a scene.
-    """
-
-    render_engine: str | None = None
-
-    viewports: list[ViewportState] = field(
-        default_factory=list,
-    )
+    from .visualization_state import SceneVisualizationState
+    from ..bakers.base import BakerBase
+    from ..packers.base import PackerBase
 
 
 class VisualizationRuntime:
@@ -52,11 +27,9 @@ class VisualizationRuntime:
 
     def __init__(self):
         self._active: bool = False
-
-        self._mode: str | None = None
-
+        self._mode: VisualizationMode | None = None
         self._active_producer = None
-
+        self._active_image_handle = None
         self._scenes: dict[
             str,
             SceneVisualizationState,
@@ -77,7 +50,7 @@ class VisualizationRuntime:
         return self._active
 
     @property
-    def mode(self) -> str | None:
+    def mode(self) -> VisualizationMode | None:
         """
         Current visualization mode.
 
@@ -95,6 +68,13 @@ class VisualizationRuntime:
         Baker currently being visualized.
         """
         return self._active_producer
+
+    @property
+    def active_image_handle(self):
+        """
+        ImageHandle currently being visualized.
+        """
+        return self._active_image_handle
 
     @property
     def scenes(
@@ -123,8 +103,9 @@ class VisualizationRuntime:
 
     def begin(
         self,
-        mode: str,
-        producer=None,
+        mode: VisualizationMode,
+        producer: BakerBase | PackerBase | None = None,
+        image_handle: ImageHandle | None = None,
     ) -> None:
         """
         Start a new visualization session.
@@ -139,6 +120,7 @@ class VisualizationRuntime:
         self._active = True
         self._mode = mode
         self._active_producer = producer
+        self._active_image_handle = image_handle
 
     # ------------------------------------------------------------------
     # State registration
@@ -172,12 +154,12 @@ class VisualizationRuntime:
         self._material_snapshots = list(snapshots)
 
     # ------------------------------------------------------------------
-    # Baker
+    # Producer
     # ------------------------------------------------------------------
 
     def set_active_producer(
         self,
-        producer,
+        producer: BakerBase | PackerBase | None,
     ) -> None:
         """
         Change the baker currently being visualized.
@@ -186,12 +168,26 @@ class VisualizationRuntime:
         self._active_producer = producer
 
     # ------------------------------------------------------------------
+    # Image Handle
+    # ------------------------------------------------------------------
+
+    def set_active_image_handle(
+        self,
+        image_handle: ImageHandle,
+    ) -> None:
+        """
+        Change the baker currently being visualized.
+        """
+
+        self._active_image_handle = image_handle
+
+    # ------------------------------------------------------------------
     # Mode
     # ------------------------------------------------------------------
 
     def set_mode(
         self,
-        mode: str,
+        mode: VisualizationMode,
     ) -> None:
         """
         Change visualization mode.
@@ -225,6 +221,7 @@ class VisualizationRuntime:
         self._active = False
         self._mode = None
         self._active_producer = None
+        self._active_image_handle = None
 
         self._scenes.clear()
         self._material_snapshots.clear()
@@ -239,7 +236,8 @@ class VisualizationRuntime:
             f"{self.__class__.__name__}("
             f"active={self._active!r}, "
             f"mode={self._mode!r}, "
-            f"active_baker={self._active_producer!r}, "
+            f"active_producer={self._active_producer!r}, "
+            f"active_image_handler={self._active_image_handle!r}, "
             f"scenes={len(self._scenes)}, "
             f"material_snapshots="
             f"{len(self._material_snapshots)}"
