@@ -207,7 +207,7 @@ class BakeController:
     # ---------------------------------------------------------
     # Pack Operations
     # ---------------------------------------------------------
-    # TODO: every "adder" should check for name collision and and prevent is by adding a suffix like "_001"
+    # TODO: every "adder" should check for name collision and and prevent it by adding a suffix like "_001"
     @classmethod
     def add_packer(cls, context: bpy.types.Context, packer_id: str = "INTERNAL"):
         bake_group = cls.active_bake_group(context)

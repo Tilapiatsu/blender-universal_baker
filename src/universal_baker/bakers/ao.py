@@ -3,7 +3,6 @@ from __future__ import annotations
 from .base import BakerBase
 
 from ..runtime.context_bake import BakeContext
-from ..services.material import MaterialService
 from ..core.registry_baker import registry_baker
 
 
