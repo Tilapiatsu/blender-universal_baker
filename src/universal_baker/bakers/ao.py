@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import bpy
+
 from .base import BakerBase
 
 from ..runtime.context_bake import BakeContext
@@ -18,6 +20,9 @@ class AmbientOcclusionBaker(BakerBase):
 
     def execute(self, ctx: BakeContext) -> None:
         return super().execute(ctx)
+
+    def prepare_execution(self, target: bpy.types.Object):
+        return super().prepare_execution(target)
 
     def configure_preview_material(self, material):
         # TODO: Need to expose the AO Parameters

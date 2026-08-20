@@ -1,12 +1,16 @@
 from __future__ import annotations
+import bpy
 
 from enum import Enum, auto
 from abc import ABC
 from abc import abstractmethod
+from contextlib import ContextDecorator, nullcontext
+
 from typing import TYPE_CHECKING
 
 
 from ..constant import LOG
+from ..runtime.baker_setup import BakerSetup
 from ..enum.output_stage import OutputStage
 from ..services.renderer import RendererService
 from ..services.image_bake import ImageServiceBake
@@ -48,6 +52,10 @@ class BakerBase(ABC):
     def poll(self, task: Task) -> bool:
         """Whether this baker can execute this task."""
         return True
+
+    @abstractmethod
+    def prepare_execution(self, target: bpy.types.Object) -> nullcontext | BakerSetup:
+        return nullcontext(target)
 
     @abstractmethod
     def configure_preview_material(self, material):

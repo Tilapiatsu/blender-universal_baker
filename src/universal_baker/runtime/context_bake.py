@@ -35,6 +35,8 @@ class BakeContext(ExecutionContext):
     node_tree: bpy.types.NodeTree | None = None
     image_node: bpy.types.ShaderNodeTexImage | None = None
 
+    _target: bpy.types.Object | None = None
+
     finished: bool = False
     success: bool = False
     message: str = ""
@@ -53,7 +55,14 @@ class BakeContext(ExecutionContext):
 
     @property
     def target(self) -> bpy.types.Object:
-        return self.task.target.object
+        if self._target is None:
+            self._target = self.task.target.object
+
+        return self._target
+
+    @target.setter
+    def target(self, value: bpy.types.Object) -> None:
+        self._target = value
 
     @property
     def sources(self) -> tuple[bpy.types.Object]:

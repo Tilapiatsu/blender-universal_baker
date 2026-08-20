@@ -1,41 +1,47 @@
 from __future__ import annotations
+from contextlib import ContextDecorator
+
+import bpy
 
 from .base import BakerBase
 
+from ..runtime.baker_setup import BakerSetup
 from ..runtime.context_bake import BakeContext
-from ..services.material import MaterialService
 from ..core.registry_baker import registry_baker
+from ..resources.baker_asset import BakerAsset
+from ..services.custom_baker_setup import CustomBakerSetupService
+from pathlib import Path
 
 
-class DiffuseBaker(BakerBase):
-    """Bake the diffuse/albedo color."""
+class CustomBaker(BakerBase):
+    """Custom bake defined in an external blend file."""
 
-    id = "DIFFUSE"
-    name = "Diffuse"
-    description = "Bake diffuse color"
+    id = "CUSTOM"
+    name = "Custom"
+    description = "Custom bake defined in an external blend file."
     icon = "TEXTURE"
-    blender_bake_type = "DIFFUSE"
+    blender_bake_type = "NONE"
     accumulator_id = "ALPHA_OVER"
+
+    def prepare_execution(self, target: bpy.types.Object) -> BakerSetup:
+        # TODO: Need to pipe the asset path for the custom baker
+        asset = BakerAsset(
+            filepath=self.asset_path,
+        )
+
+        setup_service = CustomBakerSetupService()
+        context = setup_service.prepare(
+            asset=asset,
+            target=target,
+        )
+        return context
 
     def execute(self, ctx: BakeContext) -> None:
         return super().execute(ctx)
 
-    def prepare_execution(self, target):
-        return super().prepare_execution(target)
-
     def configure_preview_material(self, material):
-        material.use_nodes = True
-        nodes = material.node_tree.nodes
-        links = material.node_tree.links
-        nodes.clear()
-
-        output = nodes.new("ShaderNodeOutputMaterial")
-        shader = nodes.new("ShaderNodeBsdfPrincipled")
-        diffuse = nodes.new("ShaderNodeBsdfDiffuse")
-        links.new(
-            diffuse.outputs["BSDF"],
-            output.inputs["Surface"],
-        )
+        # TODO: to be writen
+        super().configure_preview_material(material)
 
     def prepare(self, ctx: BakeContext):
         """
@@ -64,7 +70,7 @@ class DiffuseBaker(BakerBase):
         super().export_file(ctx)
 
 
-classes = (DiffuseBaker,)
+classes = (CustomBaker,)
 
 
 def register():

@@ -3,6 +3,9 @@ from ..runtime.context_bake import BakeContext
 
 
 class Baker(BakerBase):
+    def prepare_execution(self, target):
+        return super().prepare_execution(target)
+
     def prepare(self, ctx: BakeContext):
         """
         Prepare everything required before Blender's bake.

@@ -36,13 +36,16 @@ class BakeExecutorInternal(TaskExecutor):
                 task=task,
                 baker=registry_baker[task.baker_id],
             )
-            execution.execute(
-                session=session,
-                task=task,
-                context=ctx,
-                scope_state=ScopeState.ENTER,
-                event_category=EventCategory.BAKE,
-            )
+            # NOTE: Prepare the target in case of CustomBaker
+            with task.producer.prepare_execution(ctx.target) as bake_target:
+                ctx.target = bake_target
+                execution.execute(
+                    session=session,
+                    task=task,
+                    context=ctx,
+                    scope_state=ScopeState.ENTER,
+                    event_category=EventCategory.BAKE,
+                )
 
     def before_job(self, session: ExecutionSession) -> None:
         """
