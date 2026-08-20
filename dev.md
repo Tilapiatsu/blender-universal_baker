@@ -5,6 +5,9 @@
 - [] Baker based on custom Shader
   - Node group is imported to, and all parameters are driven by the UI of the Baker
 - [] Bake from source ( selected to active )
+  - [] Cherry pick the list of sources for each target object
+  - [] option to match source and target by name ?
+  - [] option to load collection instead of objects -> updating objects in the collection change the setup ?
   - [] Bake from source with Cage
   - [] Cage Automatic Creation
   - [] Cage Shader
