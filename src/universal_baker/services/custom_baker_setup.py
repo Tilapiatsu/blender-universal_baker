@@ -5,6 +5,9 @@ import bpy
 from ..runtime.baker_setup import BakerSetup
 from .baker_asset import BakerAssetService
 from ..resources.baker_asset import BakerAsset
+from ..constant import LOG
+
+LOG_SCOPE = "Custom Baker Setup Service"
 
 
 class CustomBakerSetupError(RuntimeError):
@@ -16,32 +19,36 @@ class CustomBakerSetupService:
         self.baker_asset_service = BakerAssetService()
 
     def prepare(self, asset: BakerAsset, target: bpy.types.Object) -> BakerSetup:
-        prototype = self.baker_asset_service.load_prototype(asset)
+        with LOG.scope(LOG_SCOPE):
+            LOG.debug(f"Prepare setup for {target.name}")
+            prototype = self.baker_asset_service.load_prototype(asset)
 
-        setup = BakerSetup()
+            setup = BakerSetup()
 
-        try:
-            bake_object = self._duplicate_target(target)
+            try:
+                bake_object = self._duplicate_target(target)
 
-            setup.target = bake_object
-            setup.temporary_objects.append(bake_object)
+                setup.target = bake_object
+                setup.temporary_objects.append(bake_object)
 
-            self._copy_material(prototype, bake_object, setup)
+                self._copy_material(prototype, bake_object, setup)
 
-            self._copy_modifiers(prototype, bake_object)
+                self._copy_modifiers(prototype, bake_object)
 
-            return setup
+                return setup
 
-        except Exception:
-            setup.cleanup()
+            except Exception:
+                LOG.error("Preparation Failed")
+                setup.cleanup()
 
-            # The prototype itself was appended from the
-            # external blend and must also be removed.
-            self._remove_object(prototype)
+                # The prototype itself was appended from the
+                # external blend and must also be removed.
+                self._remove_object(prototype)
 
-            raise
+                raise
 
     def _duplicate_target(self, target: bpy.types.Object) -> bpy.types.Object:
+        LOG.debug("Duplicate Target")
         bake_object = target.copy()
 
         if target.data is not None:
@@ -56,6 +63,8 @@ class CustomBakerSetupService:
         return bake_object
 
     def _copy_material(self, prototype: bpy.types.Object, target: bpy.types.Object, setup: BakerSetup) -> None:
+        LOG.debug("Copying Material")
+
         material = prototype.active_material
 
         if material is None:
@@ -71,6 +80,7 @@ class CustomBakerSetupService:
         setup.temporary_materials.append(material_copy)
 
     def _copy_modifiers(self, prototype: bpy.types.Object, target: bpy.types.Object) -> None:
+        LOG.debug("Copying Modifiers")
         for source_modifier in prototype.modifiers:
             modifier = target.modifiers.new(
                 name=source_modifier.name,

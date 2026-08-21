@@ -26,8 +26,7 @@ from ..services.baker import BakerService
 from ..services.bake_group import BakeGroupService
 from ..services.internal_data import InternalDataService
 from ..constant import get_prefs
-from .registry_executor import registry_executor
-from ..executors.executor_base import TaskExecutor
+from .registry_baker import registry_baker
 
 from typing import TYPE_CHECKING
 
@@ -115,7 +114,7 @@ class BakeController:
 
         baker = bake_group.bakers.add()
         baker.baker = baker_id
-        baker.image_name = baker_id.title()
+        baker.image_name = registry_baker[baker_id].name.title()
         baker.uuid = str(uuid4())
         bake_group.active_baker_index = len(bake_group.bakers) - 1
 

@@ -33,7 +33,7 @@ class MaterialOverrideService:
                 snapshots.append(
                     MaterialSnapshot(
                         object_name=obj.name,
-                        material_names=[slot.material.name for slot in obj.material_slots],
+                        material_names=[slot.material.name for slot in obj.material_slots if slot.material is not None],
                     )
                 )
 

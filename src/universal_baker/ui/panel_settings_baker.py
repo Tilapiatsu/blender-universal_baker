@@ -56,7 +56,7 @@ class UBK_PT_BakerSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
             layout.label(text="Baker Settings", icon="TEXTURE")
             return
 
-        layout.label(text=f"{active_baker.baker.capitalize()} Settings", icon="TEXTURE")
+        layout.label(text=f"{active_baker.image_name} Settings", icon="TEXTURE")
 
     @baker_needed
     def draw(self, context):

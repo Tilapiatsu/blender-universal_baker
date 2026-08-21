@@ -20,7 +20,7 @@ class CustomBaker(BakerBase):
     name = "Custom"
     description = "Custom bake defined in an external blend file."
     icon = "TEXTURE"
-    blender_bake_type = "NONE"
+    blender_bake_type = "EMIT"
     accumulator_id = "ALPHA_OVER"
     asset_path: Path
 
@@ -94,6 +94,7 @@ def register():
                 baker_name = blend_file.stem.upper().replace(" ", "_")
                 custom_baker.id += f"_{baker_name}"
                 custom_baker.asset_path = blend_file
+                custom_baker.name = blend_file.stem.capitalize()
                 LOG.info(f"Registering Custom Baker : {baker_name}")
                 registry_baker.register(custom_baker)
 

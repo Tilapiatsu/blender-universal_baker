@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 import bpy
+from ..constant import LOG
+
+LOG_SCOPE = "Baker Asset"
 
 
 @dataclass
@@ -19,37 +22,39 @@ class BakerSetup:
         """
         Remove all temporary Blender datablocks created by this setup.
         """
+        with LOG.scope(LOG_SCOPE):
+            LOG.debug("Cleaning up BakerAsset")
 
-        # Objects first.
-        for obj in list(self.temporary_objects):
-            if obj is None:
-                continue
+            # Objects first.
+            for obj in list(self.temporary_objects):
+                if obj is None:
+                    continue
 
-            if obj.name in bpy.data.objects:
-                bpy.data.objects.remove(
-                    obj,
-                    do_unlink=True,
-                )
+                if obj.name in bpy.data.objects:
+                    bpy.data.objects.remove(
+                        obj,
+                        do_unlink=True,
+                    )
 
-        self.temporary_objects.clear()
+            self.temporary_objects.clear()
 
-        # Materials created specifically by the setup.
-        for material in list(self.temporary_materials):
-            if material is None:
-                continue
+            # Materials created specifically by the setup.
+            for material in list(self.temporary_materials):
+                if material is None:
+                    continue
 
-            if material.name in bpy.data.materials:
-                bpy.data.materials.remove(
-                    material,
-                    do_unlink=True,
-                )
+                if material.name in bpy.data.materials:
+                    bpy.data.materials.remove(
+                        material,
+                        do_unlink=True,
+                    )
 
-        self.temporary_materials.clear()
+            self.temporary_materials.clear()
 
-        self.temporary_modifiers.clear()
+            self.temporary_modifiers.clear()
 
     def __enter__(self):
-        return self
+        return self.target
 
     def __exit__(
         self,
