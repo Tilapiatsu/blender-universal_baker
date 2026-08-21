@@ -99,4 +99,5 @@ def register():
 
 
 def unregister():
-    pass
+    for c in classes:
+        registry_execution.unregister(c.execution)

@@ -15,6 +15,8 @@ from . import (
     pack_selected,
     pack_mapping_fix,
     visualization,
+    baker_library_add,
+    baker_library_remove,
 )
 
 modules = (
@@ -34,6 +36,8 @@ modules = (
     pack_selected,
     pack_mapping_fix,
     visualization,
+    baker_library_add,
+    baker_library_remove,
 )
 
 

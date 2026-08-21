@@ -5,7 +5,6 @@ from . import (
     executor_mask,
     executor_pack,
     executor_accumulate,
-    executor_external,
 )
 
 modules = (
@@ -15,7 +14,6 @@ modules = (
     executor_mask,
     executor_pack,
     executor_accumulate,
-    executor_external,
 )
 
 

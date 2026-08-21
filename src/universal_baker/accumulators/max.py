@@ -55,4 +55,5 @@ def register():
 
 
 def unregister():
-    pass
+    for c in classes:
+        registry_accumulator.unregister(c.id)

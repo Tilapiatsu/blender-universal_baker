@@ -22,6 +22,7 @@ class CustomBaker(BakerBase):
     icon = "TEXTURE"
     blender_bake_type = "NONE"
     accumulator_id = "ALPHA_OVER"
+    asset_path: Path
 
     def prepare_execution(self, target: bpy.types.Object) -> BakerSetup:
         # TODO: Need to pipe the asset path for the custom baker

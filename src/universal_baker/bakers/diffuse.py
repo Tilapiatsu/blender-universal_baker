@@ -73,4 +73,5 @@ def register():
 
 
 def unregister():
-    pass
+    for c in classes:
+        registry_baker.unregister(c.id)

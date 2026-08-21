@@ -18,6 +18,9 @@ class BakerRegistry:
 
         self._bakers[baker.id] = baker
 
+    def register_custom(self, baker: BakerBase) -> None:
+        pass
+
     def unregister(self, baker_id: str) -> None:
         self._bakers.pop(baker_id, None)
 

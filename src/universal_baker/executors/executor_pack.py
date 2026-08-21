@@ -77,4 +77,5 @@ def register():
 
 
 def unregister():
-    pass
+    for c in classes:
+        registry_executor.unregister(c.id)
