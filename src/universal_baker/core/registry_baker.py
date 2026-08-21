@@ -18,8 +18,14 @@ class BakerRegistry:
 
         self._bakers[baker.id] = baker
 
-    def register_custom(self, baker: BakerBase) -> None:
-        pass
+    def unregister_custom(self, baker_id: str) -> None:
+        bakers = []
+        for baker in self._bakers:
+            if baker.startswith(baker_id):
+                bakers.append(baker)
+
+        for baker in bakers:
+            self._bakers.pop(baker, None)
 
     def unregister(self, baker_id: str) -> None:
         self._bakers.pop(baker_id, None)

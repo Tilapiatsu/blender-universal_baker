@@ -4,6 +4,7 @@ import bpy
 
 from ..constant import LOG, get_prefs
 from .base import UBK_OT_Base
+from ..bakers.custom import refresh
 
 
 class UBK_OT_BakerlibraryAdd(UBK_OT_Base):
@@ -47,6 +48,8 @@ class UBK_OT_BakerlibraryAdd(UBK_OT_Base):
 
         if context.area:
             context.area.tag_redraw()
+
+        refresh()
 
         return {"FINISHED"}
 

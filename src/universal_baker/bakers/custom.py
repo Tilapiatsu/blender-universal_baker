@@ -1,6 +1,6 @@
 from __future__ import annotations
-from contextlib import ContextDecorator
 
+from pathlib import Path
 import bpy
 
 from .base import BakerBase
@@ -10,7 +10,7 @@ from ..runtime.context_bake import BakeContext
 from ..core.registry_baker import registry_baker
 from ..resources.baker_asset import BakerAsset
 from ..services.custom_baker_setup import CustomBakerSetupService
-from pathlib import Path
+from ..constant import LOG, get_prefs
 
 
 class CustomBaker(BakerBase):
@@ -75,9 +75,34 @@ classes = (CustomBaker,)
 
 
 def register():
+    prefs = get_prefs()
     for c in classes:
-        registry_baker.register(c())
+        for library in prefs.baker_libraries:
+            LOG.info(f"Registering Library : {library.name}")
+            library_root = Path(library.path)
+            if not library_root.exists() or not library_root.is_dir():
+                LOG.warning(f"Library path is not valid : {library_root}")
+                continue
+
+            blend_files = [f for f in library_root.iterdir() if f.is_file() and f.suffix.lower() == ".blend"]
+
+            if len(blend_files) == 0:
+                LOG.warning(f"No blend file found in {library.name} library")
+
+            for blend_file in blend_files:
+                custom_baker = c()
+                baker_name = blend_file.stem.upper().replace(" ", "_")
+                custom_baker.id += f"_{baker_name}"
+                custom_baker.asset_path = blend_file
+                LOG.info(f"Registering Custom Baker : {baker_name}")
+                registry_baker.register(custom_baker)
 
 
 def unregister():
-    pass
+    for c in classes:
+        registry_baker.unregister_custom(c.id)
+
+
+def refresh():
+    unregister()
+    register()

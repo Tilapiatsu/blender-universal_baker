@@ -5,6 +5,16 @@ from bpy.props import StringProperty, BoolProperty, CollectionProperty, IntPrope
 from bpy.types import PropertyGroup, AddonPreferences
 
 
+class UBK_BakerLibraryFile(PropertyGroup):
+    name: StringProperty(name="Name", default="Baker Name")
+    path: StringProperty(
+        name="Assets Path",
+        subtype="DIR_PATH",
+        default="",
+    )
+    builtin: BoolProperty(name="Builtin", default=False)
+
+
 class UBK_BakerPath(PropertyGroup):
     name: StringProperty(name="Name", default="Baker Library")
     enabled: BoolProperty(name="Enabled", default=True)
@@ -14,6 +24,7 @@ class UBK_BakerPath(PropertyGroup):
         default="",
     )
     builtin: BoolProperty(name="Builtin", default=False)
+    # files: CollectionProperty(type=UBK_BakerLibraryFile, name="Files")
 
 
 class UBK_Preferences(AddonPreferences):
@@ -44,11 +55,11 @@ class UBK_Preferences(AddonPreferences):
         layout.use_property_split = True
         layout.use_property_decorate = False  # No animation.
 
-        col = layout.column()
+        col_general = layout.column()
 
-        col.label(text="General")
+        col_general.label(text="General")
 
-        box = col.box()
+        box = col_general.box()
         box.label(text="Baker Libraries")
         row = box.row(align=True)
         row.template_list(
@@ -58,6 +69,8 @@ class UBK_Preferences(AddonPreferences):
         col_box = row.column(align=True)
         col_box.operator("ubk.add_baker_library", text="", icon="ADD")
         col_box.operator("ubk.remove_baker_library", text="", icon="REMOVE")
+        col_box.separator()
+        col_box.operator("ubk.refresh_baker_library", text="", icon="FILE_REFRESH")
 
         if len(self.baker_libraries) and 0 <= self.active_baker_library_idx < len(self.baker_libraries):
             active_lib = self.baker_libraries[self.active_baker_library_idx]
@@ -68,7 +81,7 @@ class UBK_Preferences(AddonPreferences):
                 if active_lib.builtin:
                     col.enabled = False
 
-        col.prop(self, "temp_directory")
+        col_general.prop(self, "temp_directory")
 
         layout.separator()
 
@@ -78,6 +91,7 @@ class UBK_Preferences(AddonPreferences):
 
 
 classes = (
+    # UBK_BakerLibraryFile,
     UBK_BakerPath,
     UBK_Preferences,
 )
@@ -95,9 +109,9 @@ def register():
 
     if len(prefs.baker_libraries) == 0:
         builtin = prefs.baker_libraries.add()
-        builtin.name = "builtin"
+        builtin.name = "Builtin"
         builtin.builtin = True
-        builtin.path = str(Path(__file__).parent.resolve() / "custom_bakers")
+        builtin.path = str(Path(__file__).parent.resolve() / "bakers_custom")
 
 
 def unregister():

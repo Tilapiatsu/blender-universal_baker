@@ -17,6 +17,7 @@ from . import (
     visualization,
     baker_library_add,
     baker_library_remove,
+    baker_library_refresh,
 )
 
 modules = (
@@ -38,6 +39,7 @@ modules = (
     visualization,
     baker_library_add,
     baker_library_remove,
+    baker_library_refresh,
 )
 
 

@@ -1,11 +1,13 @@
 from . import (
     diffuse,
     ao,
+    custom,
 )
 
 modules = (
     diffuse,
     ao,
+    custom,
 )
 
 

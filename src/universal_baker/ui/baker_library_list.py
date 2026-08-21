@@ -28,23 +28,15 @@ class UBK_UL_BakerLibraryList(bpy.types.UIList):
 
     def draw_default(self, layout, item, index: int):
         row = layout.row()
-        row.alignment = "LEFT"
-
-        if not item.builtin:
-            row.prop(item, "enabled", text="")
-        else:
-            row.separator()
-            row.separator()
-            row.separator()
-            row.separator()
-
-        row = layout.row()
         row.label(text=item.name, icon="PACKAGE" if item.builtin else "DOCUMENTS")
 
         row = layout.row()
         row.alignment = "RIGHT"
-        row.enabled = False
-        row.label(text="Builtin" if item.builtin else "       ")
+        if item.builtin:
+            row.enabled = False
+            row.label(text="Builtin")
+        else:
+            row.prop(item, "enabled", text="")
 
     def draw_filter(self, context, layout):
         """Reserved for future filtering."""
