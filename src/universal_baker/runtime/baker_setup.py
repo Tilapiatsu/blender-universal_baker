@@ -62,6 +62,7 @@ class BakerSetup:
         exc_value,
         traceback,
     ):
-        self.cleanup()
+        # TODO: Need to uncomment to make the cleanup happen
+        # self.cleanup()
 
         return False

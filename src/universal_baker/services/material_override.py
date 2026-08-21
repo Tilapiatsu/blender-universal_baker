@@ -6,7 +6,7 @@ import bpy
 
 from ..constant import LOG
 
-LOG_SCOPE = "Material Overide"
+LOG_SCOPE = "Material Override"
 
 
 @dataclass

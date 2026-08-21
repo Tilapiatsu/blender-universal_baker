@@ -19,21 +19,22 @@ class MaterialService:
         """
         Prepare the target object's active material for baking.
         """
-        cls.init_material_resources(ctx)
-        resources = ctx.materials
+        with LOG.scope(LOG_SCOPE):
+            cls.init_material_resources(ctx)
+            resources = ctx.materials
 
-        material = cls.acquire(ctx)
+            material = cls.acquire(ctx)
 
-        for resource in resources.resources.values():
-            cls._store_material_info(resource, ctx.target, resource.material_index, material)
-            cls.ensure_nodes(resource)
-            cls.ensure_image_node(resource)
-            cls.assign_image(resource, ctx)
-            cls.activate_image_node(resource)
+            for resource in resources.resources.values():
+                cls._store_material_info(resource, ctx.target, resource.material_index, material)
+                cls.ensure_nodes(resource)
+                cls.ensure_image_node(resource)
+                cls.assign_image(resource, ctx)
+                cls.activate_image_node(resource)
 
-            resource.mark_prepared()
+                resource.mark_prepared()
 
-        resources.material_overrides = MaterialOverrideService.apply([ctx.target], material)
+            resources.material_overrides = MaterialOverrideService.apply([ctx.target], material)
 
     @classmethod
     def restore_target(cls, ctx: BakeContext) -> None:
@@ -56,6 +57,7 @@ class MaterialService:
 
     @classmethod
     def init_material_resources(cls, ctx: BakeContext) -> None:
+        """Create all material ressources for each material slots"""
         obj = ctx.target
 
         resources = ctx.materials.resources
@@ -105,7 +107,7 @@ class MaterialService:
         tree = resource.node_tree
 
         if tree is None:
-            LOG.warning("Tree is None")
+            LOG.error("Tree is None")
             return
 
         for node in tree.nodes:
@@ -113,9 +115,15 @@ class MaterialService:
                 continue
 
             if node.label == BAKE_IMAGE_NODE_LABEL:
+                LOG.debug(f"Reuse Existig Image Node : {node.label}")
                 resource.image_node = node
                 return
 
+        if resource.material is None:
+            LOG.error("Ressource has invalid material")
+            return
+
+        LOG.debug(f"Add Image node to bake material : {resource.material.name}")
         node = tree.nodes.new("ShaderNodeTexImage")
 
         node.label = BAKE_IMAGE_NODE_LABEL
@@ -129,6 +137,11 @@ class MaterialService:
         if resource.image_node is None:
             return
 
+        if ctx.image.image is None:
+            LOG.error("Image is None")
+            return
+
+        LOG.debug(f"Set Image {ctx.image.image.name} to Image node")
         resource.image_node.image = ctx.image.image
 
     @classmethod
@@ -164,6 +177,7 @@ class MaterialService:
         if resource.image_node is None:
             return
 
+        LOG.debug("Remove Temporary Image Node")
         tree.nodes.remove(resource.image_node)
 
         resource.image_node = None

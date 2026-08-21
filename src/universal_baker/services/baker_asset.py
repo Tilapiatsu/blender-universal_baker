@@ -43,7 +43,7 @@ class BakerAssetService:
             if prototype is None:
                 raise BakerAssetError(f"Failed to load prototype '{asset.prototype_name}'.")
 
-            LOG.debug(f"Prototype {prototype} properly loaded")
+            LOG.debug(f"Prototype {asset.prototype_name} properly loaded")
             # TODO: material need to be copy:
             # material = prototype.active_material.copy()
             return prototype

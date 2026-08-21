@@ -55,7 +55,7 @@ class BakeTask(Task):
 
     @property
     def output_name(self) -> str:
-        return f"{self.object_name}_{self.baker_id.lower()}"
+        return f"{self.object_name}_{self.image_name.replace(' ', '_')}"
 
     @property
     def baker_name(self) -> str:
