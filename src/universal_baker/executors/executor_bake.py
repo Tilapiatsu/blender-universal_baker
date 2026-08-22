@@ -31,21 +31,23 @@ class BakeExecutorInternal(TaskExecutor):
             width=task.output_context.output_settings.path.width,
             height=task.output_context.output_settings.path.height,
         ):
-            ctx = BakeContext(
-                session=session,
-                task=task,
-                baker=registry_baker[task.baker_id],
-            )
-            # NOTE: Prepare the target in case of CustomBaker
-            with task.producer.prepare_execution(ctx.target) as bake_target:
-                ctx.target = bake_target
-                execution.execute(
+            # NOTE: Temporarly disable preview or display
+            with session.runtime.visualization.suspend():
+                ctx = BakeContext(
                     session=session,
                     task=task,
-                    context=ctx,
-                    scope_state=ScopeState.ENTER,
-                    event_category=EventCategory.BAKE,
+                    baker=registry_baker[task.baker_id],
                 )
+                # NOTE: Prepare the target in case of CustomBaker
+                with task.producer.prepare_execution(ctx.target) as bake_target:
+                    ctx.target = bake_target
+                    execution.execute(
+                        session=session,
+                        task=task,
+                        context=ctx,
+                        scope_state=ScopeState.ENTER,
+                        event_category=EventCategory.BAKE,
+                    )
 
     def before_job(self, session: ExecutionSession) -> None:
         """

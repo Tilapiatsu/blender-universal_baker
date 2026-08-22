@@ -76,6 +76,9 @@ def update_visualization(self, context):
             viz.refreshing = False
 
 
+# TODO: Need to disable the preview or display before running any bake process
+
+
 @dataclass(slots=True, frozen=True)
 class PreviewData:
     producer: BakerBase | PackerBase

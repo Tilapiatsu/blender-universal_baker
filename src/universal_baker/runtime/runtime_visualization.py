@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from contextlib import contextmanager
+
 from typing import TYPE_CHECKING
 
 from ..enum.visualization import VisualizationMode
@@ -55,7 +57,6 @@ class VisualizationRuntime:
         Current visualization mode.
 
         Expected values:
-
             None
             "PREVIEW"
             "DISPLAY"
@@ -63,7 +64,7 @@ class VisualizationRuntime:
         return self._mode
 
     @property
-    def active_baker(self):
+    def active_producer(self):
         """
         Baker currently being visualized.
         """
@@ -201,6 +202,9 @@ class VisualizationRuntime:
 
         self._mode = mode
 
+    def disable(self) -> None:
+        self.set_mode(VisualizationMode.NONE)
+
     # ------------------------------------------------------------------
     # Reset
     # ------------------------------------------------------------------
@@ -226,6 +230,21 @@ class VisualizationRuntime:
         self._scenes.clear()
         self._material_snapshots.clear()
 
+    @contextmanager
+    def suspend(self):
+        suspension = VisualizationSuspension(self)
+
+        suspension.capture()
+
+        try:
+            if suspension.was_enabled:
+                self.disable()
+
+            yield
+
+        finally:
+            suspension.restore()
+
     # ------------------------------------------------------------------
     # Debugging
     # ------------------------------------------------------------------
@@ -237,9 +256,37 @@ class VisualizationRuntime:
             f"active={self._active!r}, "
             f"mode={self._mode!r}, "
             f"active_producer={self._active_producer!r}, "
-            f"active_image_handler={self._active_image_handle!r}, "
+            f"active_image_handle={self._active_image_handle!r}, "
             f"scenes={len(self._scenes)}, "
             f"material_snapshots="
             f"{len(self._material_snapshots)}"
             f")"
+        )
+
+
+class VisualizationSuspension:
+    def __init__(
+        self,
+        runtime: VisualizationRuntime,
+    ):
+        self.runtime = runtime
+        self.was_enabled = False
+        self.mode = None
+        self.active_producer = None
+        self.active_image_handle = None
+
+    def capture(self):
+        self.was_enabled = self.runtime._active
+        self.mode = self.runtime.mode
+        self.active_producer = self.runtime.active_producer
+        self.active_image_handle = self.runtime.active_image_handle
+
+    def restore(self):
+        if not self.was_enabled or self.mode is None or self.mode == VisualizationMode.NONE:
+            return
+
+        self.runtime.begin(
+            mode=self.mode,
+            producer=self.active_producer,
+            image_handle=self.active_image_handle,
         )

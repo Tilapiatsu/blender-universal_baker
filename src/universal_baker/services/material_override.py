@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import bpy
 
@@ -12,7 +12,30 @@ LOG_SCOPE = "Material Override"
 @dataclass
 class MaterialSnapshot:
     object_name: str
-    material_names: list[str | None]
+    material_names: list[str | None] = field(default_factory=list)
+
+    @property
+    def object(self) -> bpy.types.Object | None:
+        if self.object_name not in bpy.data.objects:
+            return None
+
+        return bpy.data.objects[self.object_name]
+
+    @property
+    def materials(self) -> list[bpy.types.Material | None]:
+        materials = []
+        for mat in self.material_names:
+            if mat is None:
+                materials.append(None)
+                continue
+
+            if mat not in bpy.data.materials:
+                materials.append(None)
+                continue
+
+            materials.append(bpy.data.materials[mat])
+
+        return materials
 
 
 class MaterialOverrideService:
@@ -54,7 +77,7 @@ class MaterialOverrideService:
 
         with LOG.scope(LOG_SCOPE):
             for snapshot in snapshots:
-                obj = bpy.data.objects.get(snapshot.object_name)
+                obj = snapshot.object
 
                 if obj is None:
                     LOG.error(f"Object {snapshot.object_name} not found, Can't recover")
@@ -71,16 +94,13 @@ class MaterialOverrideService:
                 if not len(snapshot.material_names):
                     obj.data.materials.clear()
 
-                for index, material_name in enumerate(snapshot.material_names):
+                for index, material in enumerate(snapshot.materials):
                     if obj.material_slots is None or index >= len(obj.material_slots):
                         continue
 
-                    LOG.debug(
-                        f"Restoring material slot {index} : {material_name if material_name is not None else 'EMPTY'}"
-                    )
-                    if material_name is None:
-                        LOG.error(f"Material {material_name} not found, can't recover")
+                    LOG.debug(f"Restoring material slot {index} : {material.name if material is not None else 'EMPTY'}")
+                    if material is None:
+                        LOG.error(f"Material {snapshot.material_names[index]} not found, can't recover")
                         return
 
-                    material = bpy.data.materials.get(material_name)
                     obj.material_slots[index].material = material

@@ -4,18 +4,19 @@ import bpy
 from enum import Enum, auto
 from abc import ABC
 from abc import abstractmethod
-from contextlib import ContextDecorator, nullcontext
+from contextlib import nullcontext, _GeneratorContextManager
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Generator
 
 
 from ..constant import LOG
-from ..runtime.baker_setup import BakerSetup
+from ..runtime.baker_setup import BakerExecution
 from ..enum.output_stage import OutputStage
 from ..services.renderer import RendererService
 from ..services.image_bake import ImageServiceBake
 from ..services.artifact_service import ArtifactService
 from ..services.material import MaterialService
+from ..services.bake_material import BakeMaterialService
 
 if TYPE_CHECKING:
     from ..runtime.context_bake import BakeContext
@@ -54,8 +55,21 @@ class BakerBase(ABC):
         return True
 
     @abstractmethod
-    def prepare_execution(self, target: bpy.types.Object) -> nullcontext | BakerSetup:
-        return nullcontext(target)
+    def prepare_execution(
+        self, target: bpy.types.Object
+    ) -> nullcontext | _GeneratorContextManager[BakerExecution, Any, Any]:
+
+        material_setup = BakeMaterialService.prepare(objects=[target])
+
+        # TODO: need to properly handle bake material override:
+        try:
+            yield BakerExecution(
+                target=target,
+                material_setup=material_setup,
+            )
+
+        finally:
+            material_setup.cleanup()
 
     @abstractmethod
     def configure_preview_material(self, material):

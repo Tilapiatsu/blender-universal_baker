@@ -75,12 +75,11 @@ class MaterialService:
         """
         Acquire the material used for baking and assign it to the proper object.
         """
-        with LOG.scope(LOG_SCOPE):
-            obj = ctx.target
+        obj = ctx.target
 
-            material = cls._create_bake_material(obj)
+        material = cls._create_bake_material(obj)
 
-            return material
+        return material
 
     @classmethod
     def ensure_nodes(cls, resource: MaterialResource) -> None:

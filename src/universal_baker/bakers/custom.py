@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+from contextlib import contextmanager, _GeneratorContextManager
 from pathlib import Path
+from typing import Any, Generator
 import bpy
 
 from .base import BakerBase
 
-from ..runtime.baker_setup import BakerSetup
+from ..runtime.baker_setup import BakerExecution
 from ..runtime.context_bake import BakeContext
 from ..core.registry_baker import registry_baker
 from ..resources.baker_asset import BakerAsset
@@ -24,18 +26,26 @@ class CustomBaker(BakerBase):
     accumulator_id = "ALPHA_OVER"
     asset_path: Path
 
-    def prepare_execution(self, target: bpy.types.Object) -> BakerSetup:
-        # TODO: Need to pipe the asset path for the custom baker
+    @contextmanager
+    def prepare_execution(self, target: bpy.types.Object) -> Generator[BakerExecution, Any, Any]:
         asset = BakerAsset(
             filepath=self.asset_path,
         )
 
         setup_service = CustomBakerSetupService()
-        context = setup_service.prepare(
+        setup = setup_service.prepare(
             asset=asset,
             target=target,
         )
-        return context
+
+        try:
+            yield BakerExecution(
+                target=setup.target,
+                setup=setup,
+            )
+
+        finally:
+            setup.cleanup()
 
     def execute(self, ctx: BakeContext) -> None:
         return super().execute(ctx)
