@@ -48,15 +48,26 @@ class MaterialOverrideService:
         with LOG.scope(LOG_SCOPE):
             snapshots = []
 
+            stored_instances = []
             for obj in objects:
                 if obj.type != "MESH":
                     continue
 
-                LOG.debug(f"Storing materials for {obj.name}")
+                # NOTE: Check if the object has muliple users and prevent to register snapshot multiple times
+                if obj.data.name in stored_instances:
+                    continue
+
+                if obj.data.users > 1:
+                    stored_instances.append(obj.data.name)
+
+                material_names = [slot.material.name for slot in obj.material_slots if slot.material is not None]
+
+                LOG.debug(f"Storing materials for {obj.name} : {material_names}")
+
                 snapshots.append(
                     MaterialSnapshot(
                         object_name=obj.name,
-                        material_names=[slot.material.name for slot in obj.material_slots if slot.material is not None],
+                        material_names=material_names,
                     )
                 )
 
@@ -101,6 +112,6 @@ class MaterialOverrideService:
                     LOG.debug(f"Restoring material slot {index} : {material.name if material is not None else 'EMPTY'}")
                     if material is None:
                         LOG.error(f"Material {snapshot.material_names[index]} not found, can't recover")
-                        return
+                        continue
 
                     obj.material_slots[index].material = material

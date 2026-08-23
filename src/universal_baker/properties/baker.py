@@ -3,6 +3,7 @@ import bpy
 from bpy.types import PropertyGroup
 from bpy.props import BoolProperty, EnumProperty, StringProperty, PointerProperty, CollectionProperty
 from .settings_bake import UBK_BakeSettings
+from .baker_parameter import UBK_BakerParameterValue
 
 
 def baker_items(self, context):
@@ -45,9 +46,6 @@ class UBK_Baker(PropertyGroup):
     accumulated_image: PointerProperty(type=bpy.types.Image)
     accumulated_uuid: StringProperty()
 
-    # ISSUE: accumulated_image get depopulated for a reason making the display impossible -> should it use artifact
-    # instead ? will it be slower
-
     override_settings: BoolProperty(
         name="Override Settings",
         default=False,
@@ -61,6 +59,9 @@ class UBK_Baker(PropertyGroup):
         name="Override Cage",
         default=False,
     )
+
+    parameters: bpy.props.CollectionProperty(type=UBK_BakerParameterValue)
+    active_parameter_index: bpy.props.IntProperty(default=0)
 
     @property
     def has_image(self) -> bool:

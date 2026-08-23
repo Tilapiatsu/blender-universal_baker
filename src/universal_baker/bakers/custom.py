@@ -1,9 +1,14 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
+from dataclasses import field
 from pathlib import Path
 from typing import Any, Generator
 import bpy
+
+from .parameter.binding import ParameterBinding
+from .parameter.parameter import BakerParameter
+from .parameter.parameter_context import ParameterContext
 
 from .base import BakerBase
 
@@ -12,6 +17,7 @@ from ..runtime.context_bake import BakeContext
 from ..core.registry_baker import registry_baker
 from ..resources.baker_asset import BakerAsset
 from ..services.custom_baker_setup import CustomBakerSetupService
+from ..services.parameter_service import ParameterService
 from ..constant import LOG, get_prefs
 
 
@@ -25,6 +31,9 @@ class CustomBaker(BakerBase):
     blender_bake_type = "EMIT"
     accumulator_id = "ALPHA_OVER"
     asset_path: Path
+
+    parameters: dict[str, BakerParameter] = field(default_factory=dict)
+    bindings: dict[str, list[ParameterBinding]] = field(default_factory=dict)
 
     @contextmanager
     def prepare_execution(self, target: bpy.types.Object) -> Generator[BakerExecution, Any, Any]:
@@ -46,6 +55,21 @@ class CustomBaker(BakerBase):
 
         finally:
             setup.cleanup()
+
+    # def apply_parameters(self, values: dict[str, object], context: ParameterContext):
+    #     for parameter_id, value in values.items():
+    #         bindings = self.bindings.get(parameter_id, [])
+    #
+    #         for binding in bindings:
+    #             binding.apply(value, context)
+
+    def apply_parameters(self, context: ParameterContext, values: dict[str, BakerParameter]):
+        ParameterService.apply(
+            parameters=self.parameters,
+            values=values,
+            bindings=self.bindings,
+            context=context,
+        )
 
     def execute(self, ctx: BakeContext) -> None:
         return super().execute(ctx)

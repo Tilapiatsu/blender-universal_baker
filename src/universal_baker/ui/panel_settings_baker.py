@@ -13,6 +13,7 @@ from .panel import (
     draw_baking_settings,
     UBK_PT_MainPanel,
 )
+from .custom_baker_ui import BakerParameterUI
 
 
 def draw_map_settings(self, context, draw: Callable):
@@ -74,6 +75,11 @@ class UBK_PT_BakerSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
             return
 
         box.prop(active_baker, "image_name")
+
+        # TODO: Need to find how to draw the parameters for custom bakers properly
+        if active_baker.baker.startswith("CUSTOM"):
+            BakerParameterUI.draw(box, active_baker.parameters, active_baker.values)
+
         layout.prop(active_baker, "override_settings", toggle=1)
         if active_baker.override_settings:
             box.label(text=f"{active_baker.image_name} settings")

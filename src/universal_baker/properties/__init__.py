@@ -1,4 +1,6 @@
 from . import (
+    baker_parameter,
+    custom_baker,
     settings_output,
     settings_bake,
     settings_cage,
@@ -13,6 +15,8 @@ from . import (
 )
 
 modules = (
+    baker_parameter,
+    custom_baker,
     settings_output,
     settings_bake,
     settings_cage,
