@@ -37,7 +37,7 @@ class BakeExecutorInternal(TaskExecutor):
                 category=EventCategory.MASK,
             )
             # TODO: Need to optimize : The visualization is suspended before each bakes and restored after each bake
-            # wich is happening for each objects of of the bake group. It would be more logical to do this suspend/Restore at the begining and at the end of the job only if a bake is present in the job
+            # wich is happening for each objects of the bake group. It would be more logical to do this suspend/Restore at the begining and at the end of the job only if a bake is present in the job
             # NOTE: Temporarly disable preview or display
             with session.runtime.visualization.suspend():
                 ctx = BakeContext(
