@@ -57,11 +57,13 @@ class MaterialService:
 
         resources = ctx.materials.resources
         if not obj.material_slots:
+            LOG.debug(f"{obj.name} have no Material Slots")
             resources.clear()
             resources[-1] = MaterialResource(material_index=-1)
         else:
             resources.clear()
             for idx, slot in enumerate(obj.material_slots):
+                LOG.debug(f"Store {slot.material.name if slot.material is not None else 'EMPTY'} for index {idx}")
                 resources[idx] = MaterialResource()
                 cls._store_material_info(resources[idx], obj, idx, slot.material)
 
@@ -135,7 +137,6 @@ class MaterialService:
             LOG.error("Image is None")
             return
 
-        LOG.debug(f"Set Image {ctx.image.image.name} to Image node")
         resource.image_node.image = ctx.image.image
 
     @classmethod
@@ -146,6 +147,7 @@ class MaterialService:
             return
 
         resource.previous_active_node = tree.nodes.active
+        LOG.debug("Set Image active")
 
         tree.nodes.active = resource.image_node
 

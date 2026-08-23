@@ -76,9 +76,6 @@ def update_visualization(self, context):
             viz.refreshing = False
 
 
-# TODO: Need to disable the preview or display before running any bake process
-
-
 @dataclass(slots=True, frozen=True)
 class PreviewData:
     producer: BakerBase | PackerBase
@@ -223,6 +220,7 @@ class BakeVisualizationService:
         if not cls.is_active():
             return
 
+        LOG.debug("Refresh Visualization")
         mode = cls.mode()
 
         if mode == VisualizationMode.PREVIEW:
@@ -290,7 +288,7 @@ class BakeVisualizationService:
             material = DisplayMaterialService.get_or_create()
             image = cls._get_image(data.bake_group_uuid, data.producer_uuid)
 
-            if image is None:
+            if image is None or image.image is None:
                 return
 
             DisplayMaterialService.set_image(

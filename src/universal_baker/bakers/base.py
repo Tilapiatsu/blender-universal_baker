@@ -117,7 +117,6 @@ class BakerBase(ABC):
         LOG.debug("Restoring ...")
         """Restore Blender."""
         ctx.image.reset()
-        # MaterialService.restore_target(ctx)
 
     @abstractmethod
     def update_baker(self, ctx: BakeContext) -> None:

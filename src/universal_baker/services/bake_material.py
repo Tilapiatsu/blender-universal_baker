@@ -164,7 +164,7 @@ class BakeMaterialService:
     ) -> None:
 
         try:
-            original_materials = [m.name for m in obj.data.materials]
+            original_materials = [m.name for m in obj.data.materials if m is not None]
         except (ReferenceError, AttributeError) as exc:
             raise BakeMaterialError(f"Object '{obj.name}' does not have material slots.") from exc
 

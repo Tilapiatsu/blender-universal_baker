@@ -32,7 +32,6 @@ class CustomBakerSetupService:
                 setup.temporary_objects.append(bake_object)
 
                 self._copy_material(prototype, bake_object, setup)
-
                 self._copy_modifiers(prototype, bake_object)
 
                 return setup
@@ -63,8 +62,6 @@ class CustomBakerSetupService:
         return bake_object
 
     def _copy_material(self, prototype: bpy.types.Object, target: bpy.types.Object, setup: BakerSetup) -> None:
-        LOG.debug("Copying Material")
-
         material = prototype.active_material
 
         if material is None:
@@ -74,14 +71,15 @@ class CustomBakerSetupService:
 
         material_copy.name = f"UBK_TMP_{material.name}"
 
+        LOG.debug(f"Assign {material_copy.name} to {target.name}")
         target.data.materials.clear()
         target.data.materials.append(material_copy)
 
         setup.temporary_materials.append(material_copy)
 
     def _copy_modifiers(self, prototype: bpy.types.Object, target: bpy.types.Object) -> None:
-        LOG.debug("Copying Modifiers")
         for source_modifier in prototype.modifiers:
+            LOG.debug(f"Copying modifier {source_modifier.name} to {target.name}")
             modifier = target.modifiers.new(
                 name=source_modifier.name,
                 type=source_modifier.type,
