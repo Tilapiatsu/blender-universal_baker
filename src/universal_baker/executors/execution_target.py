@@ -17,6 +17,4 @@ class ExecutionTarget(ABC):
         session: ExecutionSession,
         task,
         context: ExecutionContext,
-        scope_state: ScopeState,
-        event_category: EventCategory,
     ) -> None: ...

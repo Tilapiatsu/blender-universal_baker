@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 import bpy
-from ..constant import LOG
+from ..constant import LOG, BAKE_MATERIAL_NAME
 
 
 LOG_SCOPE = "Bake Material"
@@ -56,9 +56,7 @@ class BakeMaterialSetup:
     """
 
     assignments: list[MaterialAssignment] = field(default_factory=list)
-
     temporary_materials: list[bpy.types.Material] = field(default_factory=list)
-
     _restored: bool = False
 
     def restore(self) -> None:
@@ -119,6 +117,12 @@ class BakeMaterialSetup:
 
 class BakeMaterialService:
     @staticmethod
+    def bake_material_name(obj: bpy.types.Object, slot: int, material_name: str | None = None) -> str:
+        return (
+            f"UBK_TMP_{obj.name}_{BAKE_MATERIAL_NAME if material_name is None else material_name}_{str(slot).zfill(2)}"
+        )
+
+    @staticmethod
     def replace_materials(
         obj: bpy.types.Object,
         materials: list[bpy.types.Material | None],
@@ -138,21 +142,23 @@ class BakeMaterialService:
 
     @classmethod
     def prepare(cls, objects: list[bpy.types.Object]) -> BakeMaterialSetup:
+        with LOG.scope(LOG_SCOPE):
+            LOG.debug("Preparing bake materials")
+            setup = BakeMaterialSetup()
 
-        setup = BakeMaterialSetup()
+            try:
+                for obj in objects:
+                    cls._prepare_object(obj, setup)
 
-        try:
-            for obj in objects:
-                cls._prepare_object(obj, setup)
+                return setup
 
-            return setup
+            except Exception:
+                setup.cleanup()
+                raise
 
-        except Exception:
-            setup.cleanup()
-            raise
-
-    @staticmethod
+    @classmethod
     def _prepare_object(
+        cls,
         obj: bpy.types.Object,
         setup: BakeMaterialSetup,
     ) -> None:
@@ -169,15 +175,24 @@ class BakeMaterialService:
             )
         )
 
+        # NOTE: Add one virtual empty slot to make sure it get populated with one bake material right after
+        if len(original_materials) == 0:
+            original_materials.append(None)
+
         temporary_materials = []
 
-        for material in original_materials:
-            if material is None:
-                temporary_materials.append(None)
+        for slot, material_name in enumerate(original_materials):
+            if material_name is None:
+                material = cls._create_bake_material(obj, slot)
+                material_name = material.name
+
+            if material_name not in bpy.data.materials:
+                LOG.error(f"Material {material_name} not found")
                 continue
 
+            material = bpy.data.materials[material_name]
             temporary = material.copy()
-            temporary.name = f"UBK_TMP_{material.name}"
+            temporary.name = cls.bake_material_name(obj, slot, material_name)
             temporary_materials.append(temporary)
             setup.temporary_materials.append(temporary)
 
@@ -185,4 +200,18 @@ class BakeMaterialService:
         materials.clear()
 
         for material in temporary_materials:
+            LOG.debug(f"Assign Temporary Material {material.name} to {obj.name}")
             materials.append(material)
+
+    @classmethod
+    def _create_bake_material(cls, obj: bpy.types.Object, slot: int) -> bpy.types.Material:
+        name = cls.bake_material_name(obj, slot)
+
+        if name in bpy.data.materials:
+            LOG.debug(f"Reuse Existing Bake Material {name}")
+            material = bpy.data.materials[name]
+        else:
+            LOG.debug(f"Create Bake Material {name}")
+            material = bpy.data.materials.new(name=name)
+
+        return material

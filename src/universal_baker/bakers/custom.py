@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from contextlib import contextmanager, _GeneratorContextManager
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Generator
 import bpy

@@ -7,8 +7,6 @@ import traceback
 from .execution_target import ExecutionTarget
 
 from ..enum.execution import Execution
-from ..logger.event import ScopeState
-from ..logger_bake_middleware.bake_summary import EventCategory
 from ..constant import LOG
 from ..runtime.session import ExecutionSession
 from ..runtime.context import ExecutionContext
@@ -23,19 +21,12 @@ class ExecutorInternal(ExecutionTarget):
         session: ExecutionSession,
         task,
         context: ExecutionContext,
-        scope_state: ScopeState,
-        event_category: EventCategory,
     ) -> None:
         session.current_context = context
         ctx = session.current_context
         session.current_task = task
         session.job.notify_task_started(task)
         start = perf_counter()
-        LOG.info(
-            self.init_task_message(session),
-            scope_state=ScopeState.ENTER,
-            category=EventCategory.MASK,
-        )
 
         try:
             self.before_task(ctx)

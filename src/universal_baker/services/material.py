@@ -23,18 +23,13 @@ class MaterialService:
             cls.init_material_resources(ctx)
             resources = ctx.materials
 
-            material = cls.acquire(ctx)
-
             for resource in resources.resources.values():
-                cls._store_material_info(resource, ctx.target, resource.material_index, material)
                 cls.ensure_nodes(resource)
                 cls.ensure_image_node(resource)
                 cls.assign_image(resource, ctx)
                 cls.activate_image_node(resource)
 
                 resource.mark_prepared()
-
-            resources.material_overrides = MaterialOverrideService.apply([ctx.target], material)
 
     @classmethod
     def restore_target(cls, ctx: BakeContext) -> None:

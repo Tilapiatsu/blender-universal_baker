@@ -4,13 +4,13 @@ import bpy
 from enum import Enum, auto
 from abc import ABC
 from abc import abstractmethod
-from contextlib import nullcontext, _GeneratorContextManager
+from contextlib import contextmanager, nullcontext, _GeneratorContextManager
 
 from typing import TYPE_CHECKING, Any, Generator
 
 
 from ..constant import LOG
-from ..runtime.baker_setup import BakerExecution
+from ..runtime.baker_setup import BakerExecution, BakerSetup
 from ..enum.output_stage import OutputStage
 from ..services.renderer import RendererService
 from ..services.image_bake import ImageServiceBake
@@ -55,17 +55,16 @@ class BakerBase(ABC):
         return True
 
     @abstractmethod
-    def prepare_execution(
-        self, target: bpy.types.Object
-    ) -> nullcontext | _GeneratorContextManager[BakerExecution, Any, Any]:
+    @contextmanager
+    def prepare_execution(self, target: bpy.types.Object) -> Generator[BakerExecution, Any, Any]:
 
         material_setup = BakeMaterialService.prepare(objects=[target])
+        baker_setup = BakerSetup(material_setup=material_setup)
 
-        # TODO: need to properly handle bake material override:
         try:
             yield BakerExecution(
                 target=target,
-                material_setup=material_setup,
+                setup=baker_setup,
             )
 
         finally:
@@ -118,7 +117,7 @@ class BakerBase(ABC):
         LOG.debug("Restoring ...")
         """Restore Blender."""
         ctx.image.reset()
-        MaterialService.restore_target(ctx)
+        # MaterialService.restore_target(ctx)
 
     @abstractmethod
     def update_baker(self, ctx: BakeContext) -> None:

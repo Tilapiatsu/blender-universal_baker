@@ -11,6 +11,7 @@ class BakeStatus(Enum):
 
 
 class EventCategory(Enum):
+    OWNERSHIP = auto()
     BAKE = auto()
     PACK = auto()
     ACCUMULATE = auto()
