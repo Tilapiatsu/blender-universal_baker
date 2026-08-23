@@ -4,6 +4,8 @@ from dataclasses import dataclass, field
 
 from typing import Iterator
 
+from universal_baker.services.image_base import ImageServiceBase
+
 from .bake_group import BakeGroup
 
 

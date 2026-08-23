@@ -25,9 +25,9 @@ class ImageResource:
     Answers how to interact with Blender (bpy.types.Image), but only when baking or previewing.
     """
 
-    image: bpy.types.Image | None = None
     _width: int = 2048
     _height: int = 2048
+    _image: str | None = None
 
     _filepath: Path = field(default_factory=Path)
     name: str = ""
@@ -53,6 +53,17 @@ class ImageResource:
     temporary: bool = False
     packed: bool = False
     is_copy: bool = False
+
+    @property
+    def image(self) -> bpy.types.Image | None:
+        if self._image is None or self._image not in bpy.data.images:
+            return None
+
+        return bpy.data.images[self._image]
+
+    @image.setter
+    def image(self, image: bpy.types.Image) -> None:
+        self._image = image.name
 
     @classmethod
     def create(
@@ -88,7 +99,7 @@ class ImageResource:
             image.alpha_mode = "STRAIGHT" if alpha else "NONE"
 
         return cls(
-            image=image,
+            _image=name,
             _width=width,
             _height=height,
             name=name,
@@ -201,7 +212,7 @@ class ImageResource:
 
     def reset(self):
         self.filepath = Path("")
-        self.image = None
+        self._image = None
         self.created = False
         self.created = False
         self.loaded = False

@@ -32,8 +32,7 @@ class BakeRuntime:
         self._scene = scene
 
         self.artifacts = ArtifactRepository(
-            scene,
-            project=scene.ubk_project,
+            scene.name,
         )
 
         #
