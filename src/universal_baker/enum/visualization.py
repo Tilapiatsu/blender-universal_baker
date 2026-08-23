@@ -4,6 +4,6 @@ from enum import Enum
 
 
 class VisualizationMode(Enum):
-    NONE = "NONE"
+    # NONE = "NONE"
     PREVIEW = "PREVIEW"
     DISPLAY = "DISPLAY"

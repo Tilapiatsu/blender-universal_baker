@@ -64,7 +64,7 @@ def update_visualization(self, context):
             viz.enabled_display = False
             viz.mode = "PREVIEW"
             producer = registry_baker[baker.baker]
-            BakeVisualizationService.enable_preview(producer)
+            BakeVisualizationService.enable_preview(producer, bake_group.uuid)
             viz.refreshing = False
 
         elif viz.enabled_display and viz.mode != "DISPLAY":
@@ -82,6 +82,8 @@ def update_visualization(self, context):
 @dataclass(slots=True, frozen=True)
 class PreviewData:
     producer: BakerBase | PackerBase
+    bake_group_uuid: str
+    producer_uuid: str | None = None
     mode: VisualizationMode = VisualizationMode.PREVIEW
 
 
@@ -128,12 +130,13 @@ class BakeVisualizationService:
     def enable_preview(
         cls,
         producer: BakerBase | PackerBase,
+        bake_group_uuid: str,
     ):
         cls._ensure_runtime()
         if cls.is_active():
             cls.disable()
 
-        data = PreviewData(producer=producer)
+        data = PreviewData(producer=producer, bake_group_uuid=bake_group_uuid, producer_uuid=None)
 
         cls._begin(data)
 
@@ -195,6 +198,8 @@ class BakeVisualizationService:
         if not cls.is_active() or cls._runtime is None:
             return
 
+        LOG.debug("Disabling Visualization")
+
         try:
             MaterialOverrideService.restore(cls._runtime.material_snapshots)
 
@@ -221,12 +226,12 @@ class BakeVisualizationService:
         mode = cls.mode()
 
         if mode == VisualizationMode.PREVIEW:
-            if baker is None:
+            if baker is None or bake_group_uuid is None:
                 return
 
             cls.disable()
 
-            cls.enable_preview(baker)
+            cls.enable_preview(baker, bake_group_uuid)
 
         elif mode == VisualizationMode.DISPLAY:
             if bake_group_uuid is None or baker_uuid is None:
@@ -254,6 +259,8 @@ class BakeVisualizationService:
         cls._runtime.begin(
             mode=data.mode,
             producer=data.producer,
+            bake_group_uuid=data.bake_group_uuid,
+            producer_uuid=data.producer_uuid,
         )
 
         cls._capture_state(data)

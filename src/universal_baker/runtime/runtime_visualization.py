@@ -2,11 +2,13 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 
-from typing import TYPE_CHECKING
+from universal_baker.constant import LOG
+
 
 from ..enum.visualization import VisualizationMode
 from .image_handle import ImageHandle
 
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..services.material_override import MaterialSnapshot
@@ -32,6 +34,8 @@ class VisualizationRuntime:
         self._mode: VisualizationMode | None = None
         self._active_producer = None
         self._active_image_handle = None
+        self._baker_group_uuid: str | None = None
+        self._producer_uuid: str | None = None
         self._scenes: dict[
             str,
             SceneVisualizationState,
@@ -78,6 +82,14 @@ class VisualizationRuntime:
         return self._active_image_handle
 
     @property
+    def bake_group_uuid(self):
+        return self._baker_group_uuid
+
+    @property
+    def producer_uuid(self):
+        return self._producer_uuid
+
+    @property
     def scenes(
         self,
     ) -> dict[str, SceneVisualizationState]:
@@ -107,6 +119,8 @@ class VisualizationRuntime:
         mode: VisualizationMode,
         producer: BakerBase | PackerBase | None = None,
         image_handle: ImageHandle | None = None,
+        bake_group_uuid: str | None = None,
+        producer_uuid: str | None = None,
     ) -> None:
         """
         Start a new visualization session.
@@ -122,6 +136,8 @@ class VisualizationRuntime:
         self._mode = mode
         self._active_producer = producer
         self._active_image_handle = image_handle
+        self._baker_group_uuid = bake_group_uuid
+        self._producer_uuid = producer_uuid
 
     # ------------------------------------------------------------------
     # State registration
@@ -203,7 +219,9 @@ class VisualizationRuntime:
         self._mode = mode
 
     def disable(self) -> None:
-        self.set_mode(VisualizationMode.NONE)
+        from ..services.bake_visualization import BakeVisualizationService
+
+        BakeVisualizationService.disable()
 
     # ------------------------------------------------------------------
     # Reset
@@ -272,21 +290,30 @@ class VisualizationSuspension:
         self.runtime = runtime
         self.was_enabled = False
         self.mode = None
-        self.active_producer = None
-        self.active_image_handle = None
+        self.active_producer: BakerBase | PackerBase | None = None
+        self.bake_group_uuid: str | None = None
+        self.producer_uuid: str | None = None
 
     def capture(self):
         self.was_enabled = self.runtime._active
         self.mode = self.runtime.mode
         self.active_producer = self.runtime.active_producer
-        self.active_image_handle = self.runtime.active_image_handle
+        self.bake_group_uuid = self.runtime.bake_group_uuid
+        self.producer_uuid = self.runtime.producer_uuid
 
     def restore(self):
-        if not self.was_enabled or self.mode is None or self.mode == VisualizationMode.NONE:
+        if not self.was_enabled or self.mode is None:
             return
 
-        self.runtime.begin(
-            mode=self.mode,
-            producer=self.active_producer,
-            image_handle=self.active_image_handle,
-        )
+        LOG.debug("Restore Visualization")
+        from ..services.bake_visualization import BakeVisualizationService
+
+        match self.mode:
+            case VisualizationMode.DISPLAY:
+                if self.bake_group_uuid is None or self.producer_uuid is None:
+                    return
+                BakeVisualizationService.enable_display(self.bake_group_uuid, self.producer_uuid)
+            case VisualizationMode.PREVIEW:
+                if self.active_producer is None or self.bake_group_uuid is None:
+                    return
+                BakeVisualizationService.enable_preview(self.active_producer, self.bake_group_uuid)
