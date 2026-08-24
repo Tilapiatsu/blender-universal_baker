@@ -1,14 +1,12 @@
 from __future__ import annotations
 
-
-# custom_bakers/metadata_loader.py
-
-from __future__ import annotations
-
 import json
 from typing import Any
+from pathlib import Path
 
 import bpy
+from .definition import CustomBakerDefinition
+from ..constant import LOG
 
 from .metadata import (
     BindingMetadata,
@@ -24,41 +22,97 @@ from .metadata import (
 from ..parameter.parameter import BakerParameterOption
 
 
-class MetadataLoader:
-    def __init__(self, text_name: str = METADATA_TEXT_NAME):
-        self.text_name = text_name
+class MetadataLoaderError(RuntimeError):
+    """Base exception for metadata loading errors."""
 
+
+class MetadataLoader:
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
 
-    def load(self, text: bpy.types.Text | None = None) -> CustomBakerMetadata:
+    @classmethod
+    def load(cls, asset_path: Path) -> CustomBakerMetadata:
         """
         Load Custom Baker metadata from a Blender Text datablock.
 
         If `text` is omitted, the default UBK_BAKER_METADATA
         datablock is used.
         """
+        asset_path = Path(asset_path)
 
-        if text is None:
-            text = self._find_text()
+        cls._validate_path(asset_path)
 
-        assert text is not None
+        text = cls._load_text(METADATA_TEXT_NAME, asset_path)
 
-        raw = self._read_text(text)
-        data = self._parse_json(raw, text.name)
+        try:
+            raw_json = text.as_string()
+            data = cls._parse_json(raw_json, METADATA_TEXT_NAME)
+            return cls._parse_metadata(data, METADATA_TEXT_NAME)
 
-        return self._parse_metadata(data, text.name)
+        finally:
+            cls._remove_text(text)
+
+    @classmethod
+    def load_definition(cls, asset_path: Path) -> CustomBakerDefinition:
+        metadata = cls.load(asset_path)
+
+        return CustomBakerDefinition.from_metadata(metadata, asset_path)
+
+    @staticmethod
+    def _validate_path(
+        asset_path: Path,
+    ) -> None:
+
+        if not asset_path.exists():
+            raise MetadataLoaderError(f"Custom baker asset does not exist: {asset_path}")
+
+        if not asset_path.is_file():
+            raise MetadataLoaderError(f"Custom baker asset is not a file: {asset_path}")
+
+        if asset_path.suffix.lower() != ".blend":
+            raise MetadataLoaderError(f"Custom baker asset must be a .blend file: {asset_path}")
 
     # ------------------------------------------------------------------
     # Text
     # ------------------------------------------------------------------
+    @classmethod
+    def _load_text(
+        cls,
+        text_name: str,
+        asset_path: Path,
+    ) -> bpy.types.Text:
 
-    def _find_text(self) -> bpy.types.Text:
-        text = bpy.data.texts.get(self.text_name)
+        text = None
+
+        LOG.debug(f"Reading Metadata from asset {asset_path}")
+        with bpy.data.libraries.load(str(asset_path), link=False) as (data_from, data_to):
+            if text_name not in data_from.texts:
+                raise MetadataNotFoundError(f"Metadata Text datablock '{text_name}' was not found in '{asset_path}'.")
+
+            data_to.texts = [text_name]
+
+        # data_to.texts now contains the actual loaded Text datablock.
+        #
+        # We find it explicitly rather than relying on:
+        #
+        #     bpy.data.texts[self.text_name]
+        #
+        # because Blender can rename datablocks when a name collision
+        # already exists in the current file.
+
+        for text in data_to.texts:
+            if text is not None:
+                return text
+
+        raise MetadataNotFoundError(f"Metadata Text datablock '{text_name}' could not be loaded from '{asset_path}'.")
+
+    @classmethod
+    def _find_text(cls, text_name: str = METADATA_TEXT_NAME) -> bpy.types.Text:
+        text = bpy.data.texts.get(text_name)
 
         if text is None:
-            raise MetadataNotFoundError(f"Custom Baker metadata text '{self.text_name}' was not found.")
+            raise MetadataNotFoundError(f"Custom Baker metadata text '{text_name}' was not found.")
 
         return text
 
@@ -70,6 +124,22 @@ class MetadataLoader:
 
         except ReferenceError as exc:
             raise MetadataNotFoundError("The metadata Text datablock is no longer valid.") from exc
+
+    @staticmethod
+    def _remove_text(text: bpy.types.Text) -> None:
+
+        if text is None:
+            return
+
+        # The datablock may already have been removed by Blender
+        # or by another piece of code.
+        if text.name not in bpy.data.texts:
+            return
+
+        bpy.data.texts.remove(
+            text,
+            do_unlink=True,
+        )
 
     # ------------------------------------------------------------------
     # JSON
@@ -95,9 +165,10 @@ class MetadataLoader:
     # Metadata
     # ------------------------------------------------------------------
 
-    def _parse_metadata(self, data: dict[str, Any], source_name: str) -> CustomBakerMetadata:
+    @classmethod
+    def _parse_metadata(cls, data: dict[str, Any], source_name: str) -> CustomBakerMetadata:
 
-        version = self._required_int(data, "version", source_name)
+        version = cls._required_int(data, "version", source_name)
 
         if version > CURRENT_METADATA_VERSION:
             raise MetadataValidationError(
@@ -107,10 +178,10 @@ class MetadataLoader:
                 f"version {CURRENT_METADATA_VERSION}."
             )
 
-        name = self._required_string(data, "name", source_name)
-        id = self._required_string(data, "id", source_name)
-        prototype = self._required_string(data, "prototype", source_name)
-        description = self._optional_string(data, "description", "")
+        name = cls._required_string(data, "name", source_name)
+        id = cls._required_string(data, "id", source_name)
+        prototype = cls._required_string(data, "prototype", source_name)
+        description = cls._optional_string(data, "description", "")
 
         raw_parameters = data.get("parameters", [])
 
@@ -121,10 +192,10 @@ class MetadataLoader:
             raise MetadataValidationError(f"'parameters' in '{source_name}' must be an array.")
 
         parameters = tuple(
-            self._parse_parameter(parameter, source_name, index) for index, parameter in enumerate(raw_parameters)
+            cls._parse_parameter(parameter, source_name, index) for index, parameter in enumerate(raw_parameters)
         )
 
-        self._validate_unique_parameter_ids(parameters, source_name)
+        cls._validate_unique_parameter_ids(parameters, source_name)
 
         known_keys = {
             "version",
@@ -146,16 +217,17 @@ class MetadataLoader:
             extra=extra,
         )
 
-    def _parse_parameter(self, data: Any, source_name: str, index: int) -> ParameterMetadata:
+    @classmethod
+    def _parse_parameter(cls, data: Any, source_name: str, index: int) -> ParameterMetadata:
 
         location = f"{source_name}:parameters[{index}]"
 
         if not isinstance(data, dict):
             raise MetadataValidationError(f"{location} must be an object.")
 
-        identifier = self._required_string(data, "id", location)
-        name = self._required_string(data, "name", location)
-        parameter_type = self._required_string(data, "type", location).upper()
+        identifier = cls._required_string(data, "id", location)
+        name = cls._required_string(data, "name", location)
+        parameter_type = cls._required_string(data, "type", location).upper()
 
         allowed_types = {
             "FLOAT",
@@ -174,17 +246,17 @@ class MetadataLoader:
 
         default = data.get("default", None)
 
-        description = self._optional_string(data, "description", "")
-        unit = self._optional_string(data, "unit", None)
-        category = self._optional_string(data, "category", None)
-        order = self._optional_int(data, "order", 0)
-        visible = self._optional_bool(data, "visible", True)
-        min_value = self._optional_number(data, "min", None)
-        max_value = self._optional_number(data, "max", None)
-        soft_min = self._optional_number(data, "soft_min", None)
-        soft_max = self._optional_number(data, "soft_max", None)
-        options = self._parse_options(data.get("options", []), location)
-        bindings = self._parse_bindings(data.get("bindings", []), location)
+        description = cls._optional_string(data, "description", "")
+        unit = cls._optional_string(data, "unit", None)
+        category = cls._optional_string(data, "category", None)
+        order = cls._optional_int(data, "order", 0)
+        visible = cls._optional_bool(data, "visible", True)
+        min_value = cls._optional_number(data, "min", None)
+        max_value = cls._optional_number(data, "max", None)
+        soft_min = cls._optional_number(data, "soft_min", None)
+        soft_max = cls._optional_number(data, "soft_max", None)
+        options = cls._parse_options(data.get("options", []), location)
+        bindings = cls._parse_bindings(data.get("bindings", []), location)
 
         return ParameterMetadata(
             identifier=identifier,
@@ -204,7 +276,8 @@ class MetadataLoader:
             bindings=tuple(bindings),
         )
 
-    def _parse_options(self, raw_options: Any, location: str) -> list[BakerParameterOption]:
+    @classmethod
+    def _parse_options(cls, raw_options: Any, location: str) -> list[BakerParameterOption]:
 
         if not isinstance(raw_options, list):
             raise MetadataValidationError(f"{location}.options must be an array.")
@@ -217,9 +290,9 @@ class MetadataLoader:
             if not isinstance(raw_option, dict):
                 raise MetadataValidationError(f"{option_location} must be an object.")
 
-            identifier = self._required_string(raw_option, "id", option_location)
-            name = self._required_string(raw_option, "name", option_location)
-            description = self._optional_string(raw_option, "description", "")
+            identifier = cls._required_string(raw_option, "id", option_location)
+            name = cls._required_string(raw_option, "name", option_location)
+            description = cls._optional_string(raw_option, "description", "")
 
             options.append(
                 BakerParameterOption(
@@ -236,7 +309,8 @@ class MetadataLoader:
 
         return options
 
-    def _parse_bindings(self, raw_bindings: Any, location: str) -> list[BindingMetadata]:
+    @classmethod
+    def _parse_bindings(cls, raw_bindings: Any, location: str) -> list[BindingMetadata]:
 
         if not isinstance(raw_bindings, list):
             raise MetadataValidationError(f"{location}.bindings must be an array.")
@@ -252,7 +326,7 @@ class MetadataLoader:
             ):
                 raise MetadataValidationError(f"{binding_location} must be an object.")
 
-            binding_type = self._required_string(raw_binding, "type", binding_location).upper()
+            binding_type = cls._required_string(raw_binding, "type", binding_location).upper()
 
             known_keys = {
                 "type",
@@ -268,11 +342,11 @@ class MetadataLoader:
             bindings.append(
                 BindingMetadata(
                     binding_type=binding_type,
-                    material=self._optional_string(raw_binding, "material", None),
-                    node=self._optional_string(raw_binding, "node", None),
-                    socket=self._optional_string(raw_binding, "socket", None),
-                    modifier=self._optional_string(raw_binding, "modifier", None),
-                    property=self._optional_string(raw_binding, "property", None),
+                    material=cls._optional_string(raw_binding, "material", None),
+                    node=cls._optional_string(raw_binding, "node", None),
+                    socket=cls._optional_string(raw_binding, "socket", None),
+                    modifier=cls._optional_string(raw_binding, "modifier", None),
+                    property=cls._optional_string(raw_binding, "property", None),
                     extra=extra,
                 )
             )

@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, TypeAlias
 
-from ..bakers.custom_bakers.definition import CustomBakerDefinition
-from ..bakers.parameter.parameter import BakerParameter, BakerParameterType
+from ..custom_bakers.definition import CustomBakerDefinition
+from ..parameter.parameter import BakerParameter, BakerParameterType
 from ..properties.custom_baker import UBK_CustomBaker
 from ..properties.baker_parameter import UBK_BakerParameterValue
+
+ParameterValues: TypeAlias = dict[str, Any]
 
 
 class ParameterServiceError(RuntimeError):
@@ -13,11 +15,58 @@ class ParameterServiceError(RuntimeError):
 
 
 class ParameterService:
-    # --------------------------------------------------------------
-    # Synchronization
-    # --------------------------------------------------------------
+    @classmethod
+    def snapshot(cls, definition: CustomBakerDefinition, state: UBK_CustomBaker) -> ParameterValues:
+        """
+        Create an immutable-in-practice runtime snapshot of all
+        current parameter values.
 
-    def synchronize(self, definition: CustomBakerDefinition, state: UBK_CustomBaker) -> None:
+        The returned dictionary contains only plain Python values and
+        has no dependency on Blender RNA.
+
+        Example:
+
+            {
+                "radius": 0.5,
+                "strength": 2.0,
+                "samples": 16,
+                "mode": "ACCURATE",
+            }
+
+        Missing parameters are automatically initialized from the
+        definition defaults.
+        """
+
+        cls.synchronize(definition, state)
+
+        snapshot: dict[str, Any] = {}
+
+        for parameter in definition.parameters:
+            snapshot[parameter.identifier] = cls.snapshot_parameter(definition, state, parameter.identifier)
+
+        return snapshot
+
+    @classmethod
+    def snapshot_parameter(cls, definition: CustomBakerDefinition, state: UBK_CustomBaker, parameter_id: str) -> Any:
+        """
+        Return one validated parameter value as a plain Python value.
+        """
+
+        parameter = definition.require_parameter(parameter_id)
+        item = cls.find(state, parameter_id)
+
+        if item is None:
+            cls.synchronize(definition, state)
+            item = cls.find(state, parameter_id)
+
+        if item is None:
+            raise ParameterServiceError(f"Parameter '{parameter_id}' could not be initialized.")
+
+        value = cls._get_value(item, parameter)
+        return cls._validate_value(parameter, value)
+
+    @classmethod
+    def synchronize(cls, definition: CustomBakerDefinition, state: UBK_CustomBaker) -> None:
         """
         Synchronize persistent parameter storage with
         the current CustomBakerDefinition.
@@ -41,10 +90,8 @@ class ParameterService:
                 continue
 
             item = state.parameters.add()
-
             item.identifier = parameter.identifier
-
-            self._set_value(item, parameter, parameter.default)
+            cls._set_value(item, parameter, parameter.default)
 
         # Remove parameters no longer present.
 
@@ -57,51 +104,24 @@ class ParameterService:
         state.asset_id = definition.identifier
         state.asset_version = definition.version
 
-    # --------------------------------------------------------------
-    # Get
-    # --------------------------------------------------------------
+    @classmethod
+    def get(cls, definition: CustomBakerDefinition, state: UBK_CustomBaker, parameter_id: str) -> Any:
+        return cls.snapshot_parameter(definition, state, parameter_id)
 
-    def get(self, definition: CustomBakerDefinition, state: UBK_CustomBaker, parameter_id: str) -> Any:
-
+    @classmethod
+    def set(cls, definition: CustomBakerDefinition, state: UBK_CustomBaker, parameter_id: str, value: Any) -> None:
         parameter = definition.require_parameter(parameter_id)
-
-        item = self.find(state, parameter_id)
+        item = cls.find(state, parameter_id)
 
         if item is None:
-            self.synchronize(definition, state)
-
-            item = self.find(state, parameter_id)
+            cls.synchronize(definition, state)
+            item = cls.find(state, parameter_id)
 
         if item is None:
             raise ParameterServiceError(f"Parameter '{parameter_id}' could not be created.")
 
-        return self._get_value(item, parameter)
-
-    # --------------------------------------------------------------
-    # Set
-    # --------------------------------------------------------------
-
-    def set(self, definition: CustomBakerDefinition, state: UBK_CustomBaker, parameter_id: str, value: Any) -> None:
-
-        parameter = definition.require_parameter(parameter_id)
-
-        item = self.find(state, parameter_id)
-
-        if item is None:
-            self.synchronize(definition, state)
-
-            item = self.find(state, parameter_id)
-
-        if item is None:
-            raise ParameterServiceError(f"Parameter '{parameter_id}' could not be created.")
-
-        value = self._validate_value(parameter, value)
-
-        self._set_value(item, parameter, value)
-
-    # --------------------------------------------------------------
-    # Find
-    # --------------------------------------------------------------
+        value = cls._validate_value(parameter, value)
+        cls._set_value(item, parameter, value)
 
     @staticmethod
     def find(state: UBK_CustomBaker, parameter_id: str) -> UBK_BakerParameterValue | None:
@@ -111,10 +131,6 @@ class ParameterService:
                 return item
 
         return None
-
-    # --------------------------------------------------------------
-    # Value access
-    # --------------------------------------------------------------
 
     @staticmethod
     def _get_value(item: UBK_BakerParameterValue, parameter: BakerParameter):
@@ -158,11 +174,8 @@ class ParameterService:
 
         raise ParameterServiceError(f"Unsupported parameter type: {parameter_type}")
 
-    # --------------------------------------------------------------
-    # Validation
-    # --------------------------------------------------------------
-
-    def _validate_value(self, parameter: BakerParameter, value):
+    @classmethod
+    def _validate_value(cls, parameter: BakerParameter, value):
         """
         Validate a value against the definition.
 
@@ -209,5 +222,6 @@ class ParameterService:
 
         raise ParameterServiceError(f"Unsupported parameter type: {parameter_type}")
 
-    def ensure(self, definition: CustomBakerDefinition, state: UBK_CustomBaker):
-        self.synchronize(definition, state)
+    @classmethod
+    def ensure(cls, definition: CustomBakerDefinition, state: UBK_CustomBaker):
+        cls.synchronize(definition, state)

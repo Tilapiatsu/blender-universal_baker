@@ -3,7 +3,10 @@ from typing import Callable
 
 import bpy
 
+from ..core.registry_definition import registry_definition
+
 from ..core.controller import BakeController
+from ..properties.custom_baker import UBK_CustomBaker
 from .panel_settings_output import (
     draw_output_settings,
 )
@@ -76,15 +79,25 @@ class UBK_PT_BakerSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
 
         box.prop(active_baker, "image_name")
 
-        # TODO: Need to find how to draw the parameters for custom bakers properly
-        if active_baker.baker.startswith("CUSTOM"):
-            BakerParameterUI.draw(box, active_baker.parameters, active_baker.values)
+        if active_baker.is_custom:
+            self.draw_custom_baker(box, active_baker)
 
         layout.prop(active_baker, "override_settings", toggle=1)
         if active_baker.override_settings:
             box.label(text=f"{active_baker.image_name} settings")
         else:
             box.label(text="Inherited from Global Settings")
+
+    def draw_custom_baker(self, layout, baker: UBK_CustomBaker):
+
+        # TODO: Need to pass the proper infomation to the registry_definition
+        definition = registry_definition.get(baker.identifier)
+        if definition is None:
+            layout.label(text="Definition not found")
+            return
+
+        state = baker.custom_baker
+        BakerParameterUI.draw(layout, definition, state)
 
 
 # -------------------------------------------------------------------------

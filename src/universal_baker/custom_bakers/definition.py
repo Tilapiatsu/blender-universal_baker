@@ -1,7 +1,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Iterable
+
+from .binding_factory import BindingFactory
+from .parameter_factory import ParameterFactory
 
 from .metadata import CustomBakerMetadata
 
@@ -183,50 +187,56 @@ class CustomBakerDefinition:
                     f"Custom Baker '{self.name}' contains bindings for unknown parameter '{parameter_id}'."
                 )
 
+    @classmethod
+    def from_metadata(
+        cls,
+        metadata: CustomBakerMetadata,
+        asset_path: Path,
+    ) -> CustomBakerDefinition:
+        """
+        Build a CustomBakerDefinition from the results of
+        MetadataLoader, ParameterFactory and BindingFactory.
+        """
+        parameter_factory = ParameterFactory()
+        binding_factory = BindingFactory()
+        parameters: list[BakerParameter] = []
+        bindings: dict[str, list[ParameterBinding]] = {}
 
-def create_definition(
-    metadata: CustomBakerMetadata,
-    parameters: Iterable[BakerParameter],
-    bindings: dict[
-        str,
-        Iterable[ParameterBinding],
-    ],
-    *,
-    asset_path: str | None = None,
-) -> CustomBakerDefinition:
-    """
-    Build a CustomBakerDefinition from the results of
-    MetadataLoader, ParameterFactory and BindingFactory.
-    """
+        for m in metadata.parameters:
+            parameter = parameter_factory.create(m)
+            parameters.append(parameter)
+            for b in m.bindings:
+                binding = binding_factory.create(parameter.identifier, b)
+                if parameter.identifier not in bindings:
+                    bindings[parameter.identifier] = []
+                bindings[parameter.identifier].append(binding)
 
-    parameter_tuple = tuple(parameters)
+        parameter_tuple = tuple(parameters)
 
-    binding_map = {parameter_id: tuple(parameter_bindings) for parameter_id, parameter_bindings in bindings.items()}
+        binding_map = {parameter_id: tuple(parameter_bindings) for parameter_id, parameter_bindings in bindings.items()}
 
-    definition = CustomBakerDefinition(
-        identifier=_make_identifier(metadata.name),
-        name=metadata.name,
-        prototype=metadata.prototype,
-        parameters=parameter_tuple,
-        bindings=binding_map,
-        description=metadata.description,
-        version=metadata.version,
-        asset_path=asset_path,
-        metadata=metadata,
-    )
+        definition = cls(
+            identifier=cls._make_identifier(metadata.name),
+            name=metadata.name,
+            prototype=metadata.prototype,
+            parameters=parameter_tuple,
+            bindings=binding_map,
+            description=metadata.description,
+            version=metadata.version,
+            asset_path=str(asset_path),
+            metadata=metadata,
+        )
 
-    definition.validate()
+        definition.validate()
 
-    return definition
+        return definition
 
+    @staticmethod
+    def _make_identifier(name: str) -> str:
+        """
+        Convert the authored name into a stable identifier.
 
-def _make_identifier(
-    name: str,
-) -> str:
-    """
-    Convert the authored name into a stable identifier.
+        This is intentionally conservative for now.
+        """
 
-    This is intentionally conservative for now.
-    """
-
-    return name.strip().lower().replace(" ", "_").replace("-", "_")
+        return name.strip().lower().replace(" ", "_").replace("-", "_")

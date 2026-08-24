@@ -67,6 +67,10 @@ class UBK_Baker(PropertyGroup):
     def has_image(self) -> bool:
         return self.accumulated_image is not None
 
+    @property
+    def is_custom(self) -> bool:
+        return self.baker.startswith("CUSTOM")
+
     # @property
     # def accumulated_image(self) -> bpy.types.Image:
     #     pass

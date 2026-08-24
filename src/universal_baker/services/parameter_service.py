@@ -4,14 +4,14 @@ from typing import Any
 
 from ..properties.baker_parameter import UBK_BakerParameterValue
 
-from ..bakers.parameter.parameter import (
+from ..parameter.parameter import (
     BakerParameter,
     BakerParameterType,
 )
-from ..bakers.parameter.binding import (
+from ..parameter.binding import (
     ParameterBinding,
 )
-from ..bakers.parameter.parameter_context import (
+from ..parameter.parameter_context import (
     ParameterContext,
 )
 

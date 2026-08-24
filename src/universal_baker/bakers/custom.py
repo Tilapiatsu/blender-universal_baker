@@ -6,9 +6,12 @@ from pathlib import Path
 from typing import Any, Generator
 import bpy
 
-from .parameter.binding import ParameterBinding
-from .parameter.parameter import BakerParameter
-from .parameter.parameter_context import ParameterContext
+from ..custom_bakers.metadata_loader import MetadataLoader
+from ..core.registry_definition import registry_definition
+
+from ..parameter.binding import ParameterBinding
+from ..parameter.parameter import BakerParameter
+from ..parameter.parameter_context import ParameterContext
 
 from .base import BakerBase
 
@@ -17,7 +20,7 @@ from ..runtime.context_bake import BakeContext
 from ..core.registry_baker import registry_baker
 from ..resources.baker_asset import BakerAsset
 from ..services.custom_baker_setup import CustomBakerSetupService
-from ..services.parameter_service import ParameterService
+from ..services.parameter_service_02 import ParameterService
 from ..constant import LOG, get_prefs
 
 
@@ -64,12 +67,14 @@ class CustomBaker(BakerBase):
     #             binding.apply(value, context)
 
     def apply_parameters(self, context: ParameterContext, values: dict[str, BakerParameter]):
-        ParameterService.apply(
-            parameters=self.parameters,
-            values=values,
-            bindings=self.bindings,
-            context=context,
-        )
+        pass
+        # TODO: Need find how to apply parameters
+        # ParameterService.apply(
+        #     parameters=self.parameters,
+        #     values=values,
+        #     bindings=self.bindings,
+        #     context=context,
+        # )
 
     def execute(self, ctx: BakeContext) -> None:
         return super().execute(ctx)
@@ -123,6 +128,7 @@ def register():
             if len(blend_files) == 0:
                 LOG.warning(f"No blend file found in {library.name} library")
 
+            metadata_loader = MetadataLoader()
             for blend_file in blend_files:
                 custom_baker = c()
                 baker_name = blend_file.stem.upper().replace(" ", "_")
@@ -131,6 +137,12 @@ def register():
                 custom_baker.name = blend_file.stem.capitalize()
                 LOG.info(f"Registering Custom Baker : {baker_name}")
                 registry_baker.register(custom_baker)
+
+                registry_definition.register_lazy(
+                    identifier=baker_name,
+                    asset_path=blend_file,
+                    loader=metadata_loader.load_definition,
+                )
 
 
 def unregister():
