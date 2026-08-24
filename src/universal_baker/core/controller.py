@@ -20,10 +20,10 @@ from ..constant import LOG
 from .planner import ExecutionPlanner
 from ..runtime.job import Job
 from ..services.project import ProjectService
-from ..services.target_object import TargetObjectService
-from ..services.packer import PackerService
-from ..services.baker import BakerService
-from ..services.bake_group import BakeGroupService
+from ..services.collection_target_object import TargetObjectService
+from ..services.collection_packer import PackerService
+from ..services.collection_baker import BakerService
+from ..services.collection_bake_group import BakeGroupService
 from ..services.internal_data import InternalDataService
 from ..constant import get_prefs
 from .registry_baker import registry_baker

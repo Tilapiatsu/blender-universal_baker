@@ -139,7 +139,7 @@ def register():
                 registry_baker.register(custom_baker)
 
                 registry_definition.register_lazy(
-                    identifier=baker_name,
+                    identifier=custom_baker.id,
                     asset_path=blend_file,
                     loader=metadata_loader.load_definition,
                 )

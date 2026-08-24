@@ -6,6 +6,7 @@ import bpy
 from ..core.registry_definition import registry_definition
 
 from ..core.controller import BakeController
+from ..properties.baker import UBK_Baker
 from ..properties.custom_baker import UBK_CustomBaker
 from .panel_settings_output import (
     draw_output_settings,
@@ -80,7 +81,13 @@ class UBK_PT_BakerSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
         box.prop(active_baker, "image_name")
 
         if active_baker.is_custom:
-            self.draw_custom_baker(box, active_baker)
+            project = BakeController.project(context)
+            if project is not None:
+                custom_baker = active_baker.custom_baker
+                # TODO: At this stage Custom Baker is always None because nobody creates it. I need to use
+                # ParameterService.ensure() to make sure the custom baker gets created properly from the CustoimBakerDefinition
+                if custom_baker is not None:
+                    self.draw_custom_baker(box, active_baker, custom_baker)
 
         layout.prop(active_baker, "override_settings", toggle=1)
         if active_baker.override_settings:
@@ -88,16 +95,13 @@ class UBK_PT_BakerSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
         else:
             box.label(text="Inherited from Global Settings")
 
-    def draw_custom_baker(self, layout, baker: UBK_CustomBaker):
-
-        # TODO: Need to pass the proper infomation to the registry_definition
-        definition = registry_definition.get(baker.identifier)
+    def draw_custom_baker(self, layout, baker: UBK_Baker, custom_baker: UBK_CustomBaker):
+        definition = registry_definition.get(baker.baker)
         if definition is None:
             layout.label(text="Definition not found")
             return
 
-        state = baker.custom_baker
-        BakerParameterUI.draw(layout, definition, state)
+        BakerParameterUI.draw(layout, definition, custom_baker)
 
 
 # -------------------------------------------------------------------------

@@ -4,7 +4,7 @@ import bpy
 
 from uuid import uuid4
 
-from .bake_group import BakeGroupService
+from .collection_bake_group import BakeGroupService
 
 
 class ProjectService:

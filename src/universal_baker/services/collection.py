@@ -114,3 +114,7 @@ class PropertyCollectionService(ABC, Generic[T]):
                 return item
 
         return None
+
+    @classmethod
+    def get(cls, owner, name) -> T | None:
+        return cls.collection(owner).get(name)

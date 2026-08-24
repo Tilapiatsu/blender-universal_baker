@@ -2,7 +2,6 @@ from __future__ import annotations
 import bpy
 from bpy.types import PropertyGroup
 from bpy.props import CollectionProperty, PointerProperty
-from .custom_baker import UBK_CustomBaker
 from .visualization import UBK_Visualization
 from .bake_group import UBK_BakeGroup
 from .settings_bake import UBK_BakeSettings
@@ -29,7 +28,6 @@ class UBK_Project(PropertyGroup):
     visualization: PointerProperty(
         type=UBK_Visualization,
     )
-    custom_bakers: CollectionProperty(type=UBK_CustomBaker)
 
 
 classes = (UBK_Project,)

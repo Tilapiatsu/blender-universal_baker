@@ -2,8 +2,9 @@ from __future__ import annotations
 import bpy
 from bpy.types import PropertyGroup
 from bpy.props import BoolProperty, EnumProperty, StringProperty, PointerProperty, CollectionProperty
+
+from .custom_baker import UBK_CustomBaker
 from .settings_bake import UBK_BakeSettings
-from .baker_parameter import UBK_BakerParameterValue
 
 
 def baker_items(self, context):
@@ -60,8 +61,7 @@ class UBK_Baker(PropertyGroup):
         default=False,
     )
 
-    parameters: bpy.props.CollectionProperty(type=UBK_BakerParameterValue)
-    active_parameter_index: bpy.props.IntProperty(default=0)
+    custom_baker: PointerProperty(type=UBK_CustomBaker)
 
     @property
     def has_image(self) -> bool:
