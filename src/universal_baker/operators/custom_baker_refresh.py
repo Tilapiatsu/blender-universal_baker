@@ -10,7 +10,6 @@ class UBK_OT_refresh_custom_baker_parameters(UBK_OT_Base):
     bl_description = "Refresh parameters from external bakers if they have changed"
 
     def execute(self, context):
-
         ProjectSynchronizer.synchronize_blend_file()
 
         return {"FINISHED"}

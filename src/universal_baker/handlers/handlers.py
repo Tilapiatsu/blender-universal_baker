@@ -11,11 +11,6 @@ def ubk_load_post(_dummy):
     ProjectSynchronizer.synchronize_blend_file()
 
 
-# ---------------------------------------------------------
-# REGISTER
-# ---------------------------------------------------------
-
-
 def register():
     if ubk_load_post not in bpy.app.handlers.depsgraph_update_post:
         bpy.app.handlers.load_post.append(ubk_load_post)
