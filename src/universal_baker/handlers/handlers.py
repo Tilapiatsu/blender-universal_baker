@@ -3,14 +3,12 @@ from __future__ import annotations
 import bpy
 from bpy.app.handlers import persistent
 
-from ..core.controller import BakeController
 from ..services.project_synchronizer import ProjectSynchronizer
 
 
 @persistent
 def ubk_load_post(_dummy):
-    for scene in bpy.data.scenes:
-        ProjectSynchronizer.synchronize_project(BakeController.project(scene))
+    ProjectSynchronizer.synchronize_blend_file()
 
 
 # ---------------------------------------------------------

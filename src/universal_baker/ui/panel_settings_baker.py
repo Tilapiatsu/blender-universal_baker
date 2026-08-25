@@ -84,12 +84,17 @@ class UBK_PT_BakerSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
             project = BakeController.project(context)
             if project is not None:
                 custom_baker = active_baker.custom_baker
-                # TODO: At this stage Custom Baker is always None because nobody creates it. I need to use
-                # ParameterService.ensure() to make sure the custom baker gets created properly from the CustoimBakerDefinition
                 if custom_baker is not None:
                     self.draw_custom_baker(box, active_baker, custom_baker)
 
-        layout.prop(active_baker, "override_settings", toggle=1)
+        box = layout.box()
+        box.prop(
+            active_baker,
+            "override_settings",
+            toggle=1,
+            icon="DECORATE_UNLOCKED" if active_baker.override_settings else "DECORATE_LOCKED",
+        )
+
         if active_baker.override_settings:
             box.label(text=f"{active_baker.image_name} settings")
         else:

@@ -18,6 +18,7 @@ from . import (
     baker_library_add,
     baker_library_remove,
     baker_library_refresh,
+    custom_baker_refresh,
 )
 
 modules = (
@@ -40,6 +41,7 @@ modules = (
     baker_library_add,
     baker_library_remove,
     baker_library_refresh,
+    custom_baker_refresh,
 )
 
 
