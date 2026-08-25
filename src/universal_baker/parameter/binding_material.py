@@ -47,6 +47,7 @@ class MaterialSocketBinding(ParameterBinding):
             with LOG.scope(LOG_SCOPE):
                 LOG.debug(f"Binding {value} to {self.socket_name}")
             socket.default_value = value
+
         except (TypeError, ValueError) as exc:
             raise ParameterBindingError(
                 f"Unable to assign value {value!r} to '{self.node_name}.{self.socket_name}'."

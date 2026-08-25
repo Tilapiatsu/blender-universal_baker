@@ -93,7 +93,7 @@ class MaterialResource:
 @dataclass(slots=True)
 class MaterialResources:
     resources: dict[int, MaterialResource] = field(default_factory=dict[int, MaterialResource])
-    material_overrides: list[MaterialSnapshot] | None = None
+    material_overrides: dict[str, MaterialSnapshot] | None = None
 
     @property
     def materials(self) -> list[bpy.types.Material] | None:
@@ -102,3 +102,19 @@ class MaterialResources:
             return materials
 
         return None
+
+    @property
+    def overriden_materials(self) -> list[bpy.types.Material] | None:
+        if self.material_overrides is None:
+            return None
+
+        materials = [m.materials for m in self.material_overrides.values()]
+        all_materials = []
+
+        for mat_grp in materials:
+            for m in mat_grp:
+                if m is None:
+                    continue
+                all_materials.append(m)
+
+        return all_materials

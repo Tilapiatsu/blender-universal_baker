@@ -31,24 +31,24 @@ class MaterialService:
 
                 resource.mark_prepared()
 
-    @classmethod
-    def restore_target(cls, ctx: BakeContext) -> None:
-        """
-        Restore the material to its original state.
-        """
-        resources = ctx.materials
-
-        for resource in resources.resources.values():
-            if not resource.prepared:
-                return
-
-            cls.restore_active_node(resource)
-            cls.remove_temporary_nodes(resource)
-
-            resource.mark_restored()
-
-        if resources.material_overrides is not None:
-            MaterialOverrideService.restore(resources.material_overrides)
+    # @classmethod
+    # def restore_target(cls, ctx: BakeContext) -> None:
+    #     """
+    #     Restore the material to its original state.
+    #     """
+    #     resources = ctx.materials
+    #
+    #     for resource in resources.resources.values():
+    #         if not resource.prepared:
+    #             return
+    #
+    #         cls.restore_active_node(resource)
+    #         cls.remove_temporary_nodes(resource)
+    #
+    #         resource.mark_restored()
+    #
+    #     if resources.material_overrides is not None:
+    #         MaterialOverrideService.restore(resources.material_overrides)
 
     @classmethod
     def init_material_resources(cls, ctx: BakeContext) -> None:

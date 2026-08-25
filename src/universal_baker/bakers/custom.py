@@ -36,9 +36,6 @@ class CustomBaker(BakerBase):
     accumulator_id = "ALPHA_OVER"
     asset_path: Path
 
-    parameters: dict[str, BakerParameter] = field(default_factory=dict)
-    bindings: dict[str, list[ParameterBinding]] = field(default_factory=dict)
-
     @contextmanager
     def prepare_execution(self, target: bpy.types.Object) -> Generator[BakerExecution, Any, Any]:
         asset = BakerAsset(
@@ -60,13 +57,6 @@ class CustomBaker(BakerBase):
         finally:
             setup.cleanup()
 
-    # def apply_parameters(self, values: dict[str, object], context: ParameterContext):
-    #     for parameter_id, value in values.items():
-    #         bindings = self.bindings.get(parameter_id, [])
-    #
-    #         for binding in bindings:
-    #             binding.apply(value, context)
-
     def apply_parameters(self, ctx: BakeContext):
         definition = registry_definition.get(self.id)
         if definition is None:
@@ -84,25 +74,31 @@ class CustomBaker(BakerBase):
 
         materials = ctx.materials.materials
 
-        if isinstance(materials, list):
-            materials = materials[0]
+        if materials is None:
+            LOG.error(f"Material Overries not found for {ctx.target.name}")
+            return
 
-        parameter_context = ParameterContext(
-            object=ctx.target,
-            material=materials,
-        )
+        for m in materials:
+            LOG.debug(f"Apply parameters for {m.name}")
+            # TODO: Need to send a list of materials to the parameter context instead. Otherwise it will also proces the
+            # modifiers, and geometry nodes multiple times.
+            parameter_context = ParameterContext(
+                object=ctx.target,
+                material=m,
+            )
 
-        ParameterApplier.apply(
-            definition,
-            snapshot,
-            parameter_context,
-        )
+            ParameterApplier.apply(
+                definition,
+                snapshot,
+                parameter_context,
+            )
 
     def execute(self, ctx: BakeContext) -> None:
         return super().execute(ctx)
 
     def configure_preview_material(self, material):
-        # TODO: to be writen
+        # TODO: To be written: The issue is that for preview every materials of every objects has to be overriden ... it
+        # might certainly be dangerous or clancky ? is there any othet solutions
         super().configure_preview_material(material)
 
     def prepare(self, ctx: BakeContext):
