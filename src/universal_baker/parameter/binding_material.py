@@ -4,12 +4,15 @@ from dataclasses import dataclass
 from typing import Any
 
 import bpy
+from universal_baker.constant import LOG
 from .parameter_context import ParameterContext
 
 from .binding import (
     ParameterBinding,
     ParameterBindingError,
 )
+
+LOG_SCOPE = "Material Binding"
 
 
 @dataclass
@@ -41,13 +44,15 @@ class MaterialSocketBinding(ParameterBinding):
             raise ParameterBindingError(f"Input socket '{self.socket_name}' not found on node '{self.node_name}'.")
 
         try:
+            with LOG.scope(LOG_SCOPE):
+                LOG.debug(f"Binding {value} to {self.socket_name}")
             socket.default_value = value
         except (TypeError, ValueError) as exc:
             raise ParameterBindingError(
                 f"Unable to assign value {value!r} to '{self.node_name}.{self.socket_name}'."
             ) from exc
 
-    def _resolve_material(self, context: ParameterContext):
+    def _resolve_material(self, context: ParameterContext) -> bpy.types.Material:
         if self.material_name:
             return bpy.data.materials.get(self.material_name)
 

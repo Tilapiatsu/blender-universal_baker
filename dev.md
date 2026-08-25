@@ -8,6 +8,7 @@
   - [] Cherry pick the list of sources for each target object
   - [] option to match source and target by name ?
   - [] option to load collection instead of objects -> updating objects in the collection change the setup ?
+  - [] operator to match source and target by binding box
   - [] Bake from source with Cage
   - [] Cage Automatic Creation
   - [] Cage Shader

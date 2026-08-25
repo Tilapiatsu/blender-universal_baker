@@ -9,6 +9,11 @@ from bpy.props import (
 
 from .baker_parameter import UBK_BakerParameterValue
 
+"""
+Stores the user values of a specific custom baker. this values will be passed to the baker and to the visualization
+system to make sure they produce the desired result
+"""
+
 
 class UBK_CustomBaker(PropertyGroup):
     asset_id: StringProperty(name="Asset ID")

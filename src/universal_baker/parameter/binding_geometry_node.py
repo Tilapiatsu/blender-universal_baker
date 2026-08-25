@@ -4,12 +4,16 @@ from dataclasses import dataclass
 from typing import Any
 
 import bpy
+
+from ..constant import LOG
 from .parameter_context import ParameterContext
 
 from .binding import (
     ParameterBinding,
     ParameterBindingError,
 )
+
+LOG_SCOPE = "GeometryNode Binding"
 
 
 @dataclass
@@ -22,7 +26,12 @@ class GeometryNodeInputBinding(ParameterBinding):
     modifier_name: str | None = None
 
     def apply(self, value: Any, context: ParameterContext) -> None:
-        node_group = self._resolve_node_group(context)
+        modifier = context.object.modifiers.get(self.modifier_name)
+
+        if modifier is None:
+            raise ParameterBindingError(f"Modifier not found for parameter '{self.parameter_id}'.")
+
+        node_group = modifier.node_group
 
         if node_group is None:
             raise ParameterBindingError(f"Node Group not found for parameter '{self.parameter_id}'.")
@@ -40,15 +49,11 @@ class GeometryNodeInputBinding(ParameterBinding):
             )
 
         try:
+            with LOG.scope(LOG_SCOPE):
+                LOG.debug(f"Binding {value} to {self.socket_identifier}")
             socket.default_value = value
+
         except (TypeError, ValueError) as exc:
             raise ParameterBindingError(
                 f"Unable to assign value {value!r} to '{self.node_name}.{self.socket_identifier}'."
             ) from exc
-
-    def _resolve_node_group(self, context: ParameterContext):
-        if self.modifier_name:
-            modifier = context.object.modifiers.get(self.modifier_name)
-            return modifier.node_group
-
-        return context.node_group

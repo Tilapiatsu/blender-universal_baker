@@ -3,7 +3,7 @@ from __future__ import annotations
 import bpy
 
 from ..core.registry_definition import registry_definition
-from .parameter_service_02 import ParameterService
+from .parameter_service import ParameterService
 from ..properties.project import UBK_Project
 
 

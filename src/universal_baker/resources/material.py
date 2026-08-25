@@ -94,3 +94,11 @@ class MaterialResource:
 class MaterialResources:
     resources: dict[int, MaterialResource] = field(default_factory=dict[int, MaterialResource])
     material_overrides: list[MaterialSnapshot] | None = None
+
+    @property
+    def materials(self) -> list[bpy.types.Material] | None:
+        materials = [r.material for r in self.resources.values() if r is not None]
+        if len(materials):
+            return materials
+
+        return None

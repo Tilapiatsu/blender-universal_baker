@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from ..bakers.base import BakerBase
     from ..properties.bake_group import UBK_BakeGroup
     from ..properties.object import UBK_TargetObject
+    from ..properties.custom_baker import UBK_CustomBaker
 
 from ..constant import LOG
 from .task import Task
@@ -38,6 +39,17 @@ class BakeTask(Task):
         from ..core.controller import BakeController
 
         return BakeController.get_bake_group_from_uuid(self.bake_group_uuid)
+
+    @property
+    def baker_settings(self) -> UBK_CustomBaker | None:
+        from ..core.controller import BakeController
+
+        baker = BakeController.get_baker_from_uuid(self.uuid)
+
+        if baker is None:
+            return None
+
+        return baker.custom_baker
 
     @property
     def target(self) -> UBK_TargetObject:

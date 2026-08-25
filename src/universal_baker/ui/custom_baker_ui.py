@@ -5,7 +5,7 @@ import bpy
 from ..custom_bakers.definition import CustomBakerDefinition
 from ..properties.custom_baker import UBK_CustomBaker
 from ..properties.baker_parameter import UBK_BakerParameterValue
-from ..services.parameter_service_02 import ParameterService
+from ..services.parameter_service import ParameterService
 from ..parameter.parameter import BakerParameterType, BakerParameter
 
 

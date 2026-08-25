@@ -3,9 +3,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from ..constant import LOG
+
 from .parameter_context import ParameterContext
 
 from .binding import ParameterBinding, ParameterBindingError
+
+LOG_SCOPE = "Modifier Binding"
 
 
 @dataclass
@@ -43,6 +47,9 @@ class ModifierPropertyBinding(ParameterBinding):
             raise ParameterBindingError(f"Property '{path}' does not exist.")
 
         try:
+            with LOG.scope(LOG_SCOPE):
+                LOG.debug(f"Binding {value} to {final}")
+
             setattr(
                 current,
                 final,

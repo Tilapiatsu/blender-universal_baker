@@ -6,7 +6,6 @@ import bpy
 
 from typing import TYPE_CHECKING
 
-from universal_baker import resources
 
 if TYPE_CHECKING:
     from ..bakers.base import BakerBase

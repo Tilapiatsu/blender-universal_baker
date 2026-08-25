@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 import bpy
 
@@ -15,9 +16,11 @@ class ParameterContext:
 
     object: bpy.types.Object
     material: bpy.types.Material | None = None
-    node_group: bpy.types.NodeGroup | None = None
 
-    scene: bpy.types.Scene | None = None
+    # Gives bindings an escape hatch for more complex assets.
+    data: dict[str, Any] | None = None
 
-    # Optional reference to the current baker.
-    baker: object | None = None
+    def get_data(self, key: str, default: Any = None) -> Any:
+        if self.data is None:
+            return default
+        return self.data.get(key, default)

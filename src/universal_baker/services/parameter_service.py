@@ -3,11 +3,9 @@ from __future__ import annotations
 from typing import Any, TypeAlias
 
 from ..custom_bakers.definition import CustomBakerDefinition
-from ..parameter.parameter import BakerParameter, BakerParameterType
+from ..parameter.parameter import BakerParameter, BakerParameterType, ParameterSnapshot
 from ..properties.custom_baker import UBK_CustomBaker
 from ..properties.baker_parameter import UBK_BakerParameterValue
-
-ParameterValues: TypeAlias = dict[str, Any]
 
 
 class ParameterServiceError(RuntimeError):
@@ -16,7 +14,7 @@ class ParameterServiceError(RuntimeError):
 
 class ParameterService:
     @classmethod
-    def snapshot(cls, definition: CustomBakerDefinition, state: UBK_CustomBaker) -> ParameterValues:
+    def snapshot(cls, definition: CustomBakerDefinition, state: UBK_CustomBaker) -> ParameterSnapshot:
         """
         Create an immutable-in-practice runtime snapshot of all
         current parameter values.

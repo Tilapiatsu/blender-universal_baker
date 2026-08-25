@@ -6,12 +6,13 @@ from pathlib import Path
 from typing import Any, Generator
 import bpy
 
+from ..custom_bakers.parameter_applier import ParameterApplier
 from ..custom_bakers.metadata_loader import MetadataLoader
 from ..core.registry_definition import registry_definition
 
+from ..parameter.parameter_context import ParameterContext
 from ..parameter.binding import ParameterBinding
 from ..parameter.parameter import BakerParameter
-from ..parameter.parameter_context import ParameterContext
 
 from .base import BakerBase
 
@@ -20,7 +21,7 @@ from ..runtime.context_bake import BakeContext
 from ..core.registry_baker import registry_baker
 from ..resources.baker_asset import BakerAsset
 from ..services.custom_baker_setup import CustomBakerSetupService
-from ..services.parameter_service_02 import ParameterService
+from ..services.parameter_service import ParameterService
 from ..constant import LOG, get_prefs
 
 
@@ -66,15 +67,36 @@ class CustomBaker(BakerBase):
     #         for binding in bindings:
     #             binding.apply(value, context)
 
-    def apply_parameters(self, context: ParameterContext, values: dict[str, BakerParameter]):
-        pass
-        # TODO: Need find how to apply parameters
-        # ParameterService.apply(
-        #     parameters=self.parameters,
-        #     values=values,
-        #     bindings=self.bindings,
-        #     context=context,
-        # )
+    def apply_parameters(self, ctx: BakeContext):
+        definition = registry_definition.get(self.id)
+        if definition is None:
+            LOG.error("Parameter definition not found")
+            return
+
+        state = ctx.task.baker_settings
+        if state is None:
+            LOG.error("Bake Settings not found")
+            return
+
+        snapshot = ParameterService.snapshot(definition, state)
+
+        LOG.debug("Applying baker parameters")
+
+        materials = ctx.materials.materials
+
+        if isinstance(materials, list):
+            materials = materials[0]
+
+        parameter_context = ParameterContext(
+            object=ctx.target,
+            material=materials,
+        )
+
+        ParameterApplier.apply(
+            definition,
+            snapshot,
+            parameter_context,
+        )
 
     def execute(self, ctx: BakeContext) -> None:
         return super().execute(ctx)
@@ -88,6 +110,7 @@ class CustomBaker(BakerBase):
         Prepare everything required before Blender's bake.
         """
         super().prepare(ctx)
+        self.apply_parameters(ctx)
 
     def bake(self, ctx: BakeContext) -> None:
         """Execute the bake."""
