@@ -12,7 +12,6 @@ from ..parameter.parameter import BakerParameterType, BakerParameter
 class BakerParameterUI:
     @classmethod
     def draw(cls, layout, definition: CustomBakerDefinition, state: UBK_CustomBaker):
-        ParameterService.ensure(definition, state)
 
         for parameter in definition.parameters:
             item = ParameterService.find(state, parameter.identifier)
@@ -24,7 +23,7 @@ class BakerParameterUI:
 
     @classmethod
     def _draw_parameter(cls, layout, parameter, item):
-        parameter_type = parameter.type
+        parameter_type = parameter.parameter_type
 
         if parameter_type is BakerParameterType.FLOAT:
             layout.prop(item, "float_value", text=parameter.name)

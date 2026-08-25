@@ -5,19 +5,17 @@ from typing import List
 import bpy
 from uuid import uuid4
 
-from universal_baker.enum.execution import Execution
-from universal_baker.executors.executor import Executor
-from universal_baker.runtime.task_accumulate import AccumulateTask
-from universal_baker.runtime.task_bake import BakeTask
-from universal_baker.runtime.task_mask_buffer import MaskBufferTask
-from universal_baker.runtime.task_ownership_mask import UvOwnershipTask
-from universal_baker.runtime.task_pack import PackingTask
-
-
-from ..properties.packer import UBK_Packer
-
-from ..constant import LOG
 from .planner import ExecutionPlanner
+from ..enum.execution import Execution
+from ..executors.executor import Executor
+from ..runtime.task_accumulate import AccumulateTask
+from ..runtime.task_bake import BakeTask
+from ..runtime.task_mask_buffer import MaskBufferTask
+from ..runtime.task_ownership_mask import UvOwnershipTask
+from ..runtime.task_pack import PackingTask
+from ..services.project_synchronizer import ProjectSynchronizer
+from ..properties.packer import UBK_Packer
+from ..constant import LOG
 from ..runtime.job import Job
 from ..services.project import ProjectService
 from ..services.collection_target_object import TargetObjectService
@@ -117,6 +115,8 @@ class BakeController:
         baker.image_name = registry_baker[baker_id].name.title()
         baker.uuid = str(uuid4())
         bake_group.active_baker_index = len(bake_group.bakers) - 1
+
+        ProjectSynchronizer.synchronize_project(cls.project(context))
 
         return baker
 

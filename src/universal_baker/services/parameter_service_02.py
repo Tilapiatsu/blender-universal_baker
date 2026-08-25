@@ -221,7 +221,3 @@ class ParameterService:
             return value
 
         raise ParameterServiceError(f"Unsupported parameter type: {parameter_type}")
-
-    @classmethod
-    def ensure(cls, definition: CustomBakerDefinition, state: UBK_CustomBaker):
-        cls.synchronize(definition, state)
