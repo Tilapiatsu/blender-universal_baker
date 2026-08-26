@@ -15,24 +15,22 @@ class CustomBakerSetupError(RuntimeError):
 
 
 class CustomBakerSetupService:
-    def __init__(self):
-        self.baker_asset_service = BakerAssetService()
-
-    def prepare(self, asset: BakerAsset, target: bpy.types.Object) -> BakerSetup:
+    @classmethod
+    def prepare(cls, asset: BakerAsset, target: bpy.types.Object) -> BakerSetup:
         with LOG.scope(LOG_SCOPE):
             LOG.debug(f"Prepare setup for {target.name}")
-            prototype = self.baker_asset_service.load_prototype(asset)
+            prototype = BakerAssetService.load_prototype(asset)
 
             setup = BakerSetup()
 
             try:
-                bake_object = self._duplicate_target(target)
+                bake_object = cls._duplicate_target(target)
 
                 setup.target = bake_object
                 setup.temporary_objects.append(bake_object)
 
-                self._copy_material(prototype, bake_object, setup)
-                self._copy_modifiers(prototype, bake_object)
+                cls._copy_material(prototype, bake_object, setup)
+                cls._copy_modifiers(prototype, bake_object)
 
                 return setup
 
@@ -42,7 +40,7 @@ class CustomBakerSetupService:
 
                 # The prototype itself was appended from the
                 # external blend and must also be removed.
-                self._remove_object(prototype)
+                cls._remove_object(prototype)
 
                 raise
 
@@ -69,7 +67,8 @@ class CustomBakerSetupService:
 
         return bake_object
 
-    def _copy_material(self, prototype: bpy.types.Object, target: bpy.types.Object, setup: BakerSetup) -> None:
+    @staticmethod
+    def _copy_material(prototype: bpy.types.Object, target: bpy.types.Object, setup: BakerSetup) -> None:
         material = prototype.active_material
 
         if material is None:
@@ -85,7 +84,8 @@ class CustomBakerSetupService:
 
         setup.temporary_materials.append(material_copy)
 
-    def _copy_modifiers(self, prototype: bpy.types.Object, target: bpy.types.Object) -> None:
+    @classmethod
+    def _copy_modifiers(cls, prototype: bpy.types.Object, target: bpy.types.Object) -> None:
         for source_modifier in prototype.modifiers:
             LOG.debug(f"Copying modifier {source_modifier.name} to {target.name}")
             modifier = target.modifiers.new(
@@ -93,12 +93,13 @@ class CustomBakerSetupService:
                 type=source_modifier.type,
             )
 
-            self._copy_rna_properties(
+            cls._copy_rna_properties(
                 source_modifier,
                 modifier,
             )
 
-    def _copy_rna_properties(self, source, destination) -> None:
+    @staticmethod
+    def _copy_rna_properties(source, destination) -> None:
         for prop in source.bl_rna.properties:
             identifier = prop.identifier
 
@@ -123,7 +124,8 @@ class CustomBakerSetupService:
                 # generically. Ignore them for the MVP.
                 continue
 
-    def _remove_object(self, obj: bpy.types.Object | None) -> None:
+    @staticmethod
+    def _remove_object(obj: bpy.types.Object | None) -> None:
         if obj is None:
             return
 

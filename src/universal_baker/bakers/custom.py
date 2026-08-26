@@ -40,11 +40,7 @@ class CustomBaker(BakerBase):
     def prepare_execution(self, target: bpy.types.Object) -> Generator[BakerExecution, Any, Any]:
         asset = BakerAsset(filepath=self.asset_path)
 
-        setup_service = CustomBakerSetupService()
-        setup = setup_service.prepare(
-            asset=asset,
-            target=target,
-        )
+        setup = CustomBakerSetupService.prepare(asset=asset, target=target)
 
         try:
             yield BakerExecution(target=setup.target, setup=setup)
