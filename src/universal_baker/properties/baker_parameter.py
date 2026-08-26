@@ -1,59 +1,25 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from ..bakers.parameter.parameter import BakerParameterType
 
 import bpy
 
 
-def draw_baker_parameters(layout, baker, values):
-    for parameter in baker.parameters.values():
-        if not parameter.visible:
-            continue
+def parameter_updated(self, context):
+    from ..runtime.runtime_manager import RuntimeManager
 
-        value = values.get(parameter.identifier)
+    runtime = RuntimeManager.get(context.scene).visualization
 
-        if value is None:
-            continue
+    if runtime.preview_enabled:
+        runtime.request_preview_refresh()
 
-        row = layout.row()
-
-        row.label(text=parameter.name)
-
-        match parameter.type:
-            case BakerParameterType.FLOAT:
-                row.prop(
-                    value,
-                    "float_value",
-                    text="",
-                )
-            case BakerParameterType.INT:
-                row.prop(
-                    value,
-                    "int_value",
-                    text="",
-                )
-            case BakerParameterType.BOOL:
-                row.prop(
-                    value,
-                    "bool_value",
-                    text="",
-                )
-            case BakerParameterType.ENUM:
-                row.prop(
-                    value,
-                    "enum_value",
-                    text="",
-                )
+    runtime.refresh_preview_parameters()
 
 
 class UBK_BakerParameterValue(bpy.types.PropertyGroup):
-    identifier: bpy.props.StringProperty()
-    float_value: bpy.props.FloatProperty()
-    int_value: bpy.props.IntProperty()
-    bool_value: bpy.props.BoolProperty()
-    enum_value: bpy.props.StringProperty()
+    identifier: bpy.props.StringProperty(update=parameter_updated)
+    float_value: bpy.props.FloatProperty(update=parameter_updated)
+    int_value: bpy.props.IntProperty(update=parameter_updated)
+    bool_value: bpy.props.BoolProperty(update=parameter_updated)
+    enum_value: bpy.props.StringProperty(update=parameter_updated)
 
 
 classes = (UBK_BakerParameterValue,)

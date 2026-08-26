@@ -101,7 +101,7 @@ class CustomBaker(BakerBase):
                     try:
                         new_node.inputs[i].default_value = input_sock.default_value
                     except AttributeError:
-                        pass  # Certains sockets n'ont pas de default_value
+                        pass
 
             if hasattr(node, "image") and hasattr(new_node, "image"):
                 new_node.image = node.image

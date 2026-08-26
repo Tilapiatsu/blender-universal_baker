@@ -1,12 +1,15 @@
 from __future__ import annotations
 
+import bpy
+
 from contextlib import contextmanager
 
-from universal_baker.constant import LOG
-
-
+from ..constant import LOG
 from ..enum.visualization import VisualizationMode
 from .image_handle import ImageHandle
+from ..core.registry_definition import registry_definition
+from ..custom_bakers.parameter_applier import ParameterApplier
+from ..parameter.parameter_context import ParameterContext
 
 from typing import TYPE_CHECKING
 
@@ -36,6 +39,9 @@ class VisualizationRuntime:
         self._active_image_handle = None
         self._baker_group_uuid: str | None = None
         self._producer_uuid: str | None = None
+        self._preview_enabled: bool = False
+        self._preview_dirty: bool = False
+        self._updating_parameters: bool = False
         self._scenes: dict[
             str,
             SceneVisualizationState,
@@ -110,6 +116,10 @@ class VisualizationRuntime:
         """
         return self._material_snapshots
 
+    @property
+    def preview_enabled(self) -> bool:
+        return self._preview_enabled
+
     # ------------------------------------------------------------------
     # Activation
     # ------------------------------------------------------------------
@@ -138,6 +148,7 @@ class VisualizationRuntime:
         self._active_image_handle = image_handle
         self._baker_group_uuid = bake_group_uuid
         self._producer_uuid = producer_uuid
+        self._preview_enabled = mode == VisualizationMode.PREVIEW
 
     # ------------------------------------------------------------------
     # State registration
@@ -202,10 +213,7 @@ class VisualizationRuntime:
     # Mode
     # ------------------------------------------------------------------
 
-    def set_mode(
-        self,
-        mode: VisualizationMode,
-    ) -> None:
+    def set_mode(self, mode: VisualizationMode) -> None:
         """
         Change visualization mode.
 
@@ -218,10 +226,14 @@ class VisualizationRuntime:
 
         self._mode = mode
 
+        self._preview_enabled = mode == VisualizationMode.PREVIEW
+
     def disable(self) -> None:
         from ..services.bake_visualization import BakeVisualizationService
 
         BakeVisualizationService.disable()
+
+        self._preview_enabled = False
 
     # ------------------------------------------------------------------
     # Reset
@@ -262,6 +274,55 @@ class VisualizationRuntime:
 
         finally:
             suspension.restore()
+
+    def request_preview_refresh(self):
+        self._preview_dirty = True
+
+    def refresh_preview_parameters(self):
+        if not self.preview_enabled:
+            return
+
+        if not self._preview_dirty:
+            return
+
+        if self._updating_parameters:
+            return
+
+        try:
+            self._updating_parameters = True
+            LOG.debug("Refreshing preview parameters")
+            producer = self.active_producer
+
+            if producer is None:
+                LOG.error("Producer not defined")
+                return
+
+            definition = registry_definition.get(producer.id)
+
+            if definition is None or self.producer_uuid is None:
+                LOG.error(f"Definition not found for {producer.id}")
+                return
+
+            from ..core.controller import BakeController
+
+            custom_baker = BakeController.get_baker_from_uuid(self.producer_uuid)
+
+            if custom_baker is None:
+                LOG.error("Custom Baker not Found")
+                return
+
+            from ..services.parameter_service import ParameterService
+
+            snapshot = ParameterService.snapshot(definition, custom_baker)
+
+            for o in bpy.context.scene.objects:
+                materials = o.data.materials
+                context = ParameterContext(object=o, materials=materials)
+
+                ParameterApplier.apply(definition, snapshot, context)
+        finally:
+            self._updating_parameters = False
+            self._preview_dirty = False
 
     # ------------------------------------------------------------------
     # Debugging

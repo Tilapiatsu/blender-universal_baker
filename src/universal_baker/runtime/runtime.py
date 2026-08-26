@@ -26,6 +26,7 @@ class BakeRuntime:
 
     outputs: OutputRepository
     provider: OutputProvider
+    visualization: VisualizationRuntime
 
     def __init__(self, scene: Scene):
 
