@@ -45,17 +45,23 @@ class MaterialSocketBinding(ParameterBinding):
             socket = node.inputs.get(self.socket_name)
 
             if socket is None:
-                raise ParameterBindingError(f"Input socket '{self.socket_name}' not found on node '{self.node_name}'.")
+                socket = getattr(node, self.socket_name)
+                if socket is None:
+                    raise ParameterBindingError(
+                        f"Input socket '{self.socket_name}' not found on node '{self.node_name}'."
+                    )
+                else:
+                    setattr(node, self.socket_name, value)
+            else:
+                try:
+                    with LOG.scope(LOG_SCOPE):
+                        LOG.debug(f"Binding {value} to {self.socket_name}")
+                    socket.default_value = value
 
-            try:
-                with LOG.scope(LOG_SCOPE):
-                    LOG.debug(f"Binding {value} to {self.socket_name}")
-                socket.default_value = value
-
-            except (TypeError, ValueError) as exc:
-                raise ParameterBindingError(
-                    f"Unable to assign value {value!r} to '{self.node_name}.{self.socket_name}'."
-                ) from exc
+                except (TypeError, ValueError) as exc:
+                    raise ParameterBindingError(
+                        f"Unable to assign value {value!r} to '{self.node_name}.{self.socket_name}'."
+                    ) from exc
 
     def _resolve_material(self, context: ParameterContext) -> bpy.types.Material:
         if self.material_name:

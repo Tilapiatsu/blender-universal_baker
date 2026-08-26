@@ -2,7 +2,7 @@
 
 ## Features
 
-- [] Baker based on custom Shader
+- [X] Baker based on custom Shader
   - Node group is imported to, and all parameters are driven by the UI of the Baker
 - [] Bake from source ( selected to active )
   - [] Cherry pick the list of sources for each target object
@@ -13,6 +13,7 @@
   - [] Cage Automatic Creation
   - [] Cage Shader
   - [] Cage distance painting
+- [] add ability to load a scene as background before baker ( usefull for AO )
 - [] add bake from multires
 - [] Bake Skew Correction map
 - [] Bake Decal ?
@@ -25,7 +26,7 @@
 - [X] Diffuse
 - [X] Ambient Occlusion
 - [] Albedo
-- [] Curvatue
+- [X] Curvatue
 - [] Cavity
 - [] Edge
 - [] Normal
