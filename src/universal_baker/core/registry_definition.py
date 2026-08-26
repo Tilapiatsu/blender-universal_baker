@@ -106,6 +106,18 @@ class CustomBakerDefinitionRegistry:
     # Iteration
     # ------------------------------------------------------------------
 
+    def items(self):
+        return self._definitions.items()
+
+    def values(self):
+        return self._definitions.values()
+
+    def keys(self):
+        return self._definitions.keys()
+
+    def __getitem__(self, definition_id: str) -> CustomBakerDefinition:
+        return self._definitions[definition_id]
+
     def __contains__(self, identifier: str) -> bool:
 
         return self.is_registered(identifier)

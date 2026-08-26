@@ -51,7 +51,17 @@ def update_visualization(self, context):
         if viz.baker_idx != bake_group.active_baker_index:
             viz.baker_idx = bake_group.active_baker_index
             producer = registry_baker[baker.baker]
-            BakeVisualizationService.refresh(producer, bake_group.uuid, baker.accumulated_uuid)
+
+            data = None
+            match BakeVisualizationService.mode:
+                case VisualizationMode.PREVIEW:
+                    data = PreviewData(producer, bake_group.uuid, baker.uuid)
+                case VisualizationMode.DISPLAY:
+                    data = DisplayData(bake_group.uuid, baker.accumulated_uuid)
+                case _:
+                    return
+
+            BakeVisualizationService.refresh(data)
 
         elif not viz.enabled_preview and not viz.enabled_display:
             viz.mode = "NONE"
@@ -64,7 +74,9 @@ def update_visualization(self, context):
             viz.enabled_display = False
             viz.mode = "PREVIEW"
             producer = registry_baker[baker.baker]
-            BakeVisualizationService.enable_preview(producer, bake_group.uuid)
+
+            data = PreviewData(producer, bake_group.uuid, baker.uuid)
+            BakeVisualizationService.enable_preview(data)
             viz.refreshing = False
 
         elif viz.enabled_display and viz.mode != "DISPLAY":
@@ -72,7 +84,12 @@ def update_visualization(self, context):
             viz.refreshing = True
             viz.enabled_preview = False
             viz.mode = "DISPLAY"
-            BakeVisualizationService.enable_display(bake_group.uuid, baker.accumulated_uuid)
+            data = DisplayData(
+                bake_group_uuid=bake_group.uuid,
+                accumulated_uuid=baker.accumulated_uuid,
+            )
+
+            BakeVisualizationService.enable_display(data)
             viz.refreshing = False
 
 
@@ -80,16 +97,18 @@ def update_visualization(self, context):
 class PreviewData:
     producer: BakerBase | PackerBase
     bake_group_uuid: str
-    producer_uuid: str | None = None
+    producer_uuid: str
+    accumulated_uuid: str | None = None
     mode: VisualizationMode = VisualizationMode.PREVIEW
 
 
 @dataclass(slots=True, frozen=True)
 class DisplayData:
     bake_group_uuid: str
-    producer_uuid: str
-    mode: VisualizationMode = VisualizationMode.DISPLAY
+    accumulated_uuid: str
+    producer_uuid: str | None = None
     producer: None = None
+    mode: VisualizationMode = VisualizationMode.DISPLAY
 
 
 class BakeVisualizationService:
@@ -124,16 +143,10 @@ class BakeVisualizationService:
     # ---------------------------------------------------------
 
     @classmethod
-    def enable_preview(
-        cls,
-        producer: BakerBase | PackerBase,
-        bake_group_uuid: str,
-    ):
+    def enable_preview(cls, data: PreviewData):
         cls._ensure_runtime()
         if cls.is_active():
             cls.disable()
-
-        data = PreviewData(producer=producer, bake_group_uuid=bake_group_uuid, producer_uuid=None)
 
         cls._begin(data)
 
@@ -166,20 +179,11 @@ class BakeVisualizationService:
         return image
 
     @classmethod
-    def enable_display(
-        cls,
-        bake_group_uuid: str,
-        producer_uuid: str,
-    ):
+    def enable_display(cls, data: DisplayData):
         cls._ensure_runtime()
 
         if cls.is_active():
             cls.disable()
-
-        data = DisplayData(
-            bake_group_uuid=bake_group_uuid,
-            producer_uuid=producer_uuid,
-        )
 
         cls._begin(data)
 
@@ -210,12 +214,7 @@ class BakeVisualizationService:
     # ---------------------------------------------------------
 
     @classmethod
-    def refresh(
-        cls,
-        baker: BakerBase | None = None,
-        bake_group_uuid: str | None = None,
-        baker_uuid: str | None = None,
-    ):
+    def refresh(cls, data: DisplayData | PreviewData):
 
         if not cls.is_active():
             return
@@ -224,20 +223,18 @@ class BakeVisualizationService:
         mode = cls.mode()
 
         if mode == VisualizationMode.PREVIEW:
-            if baker is None or bake_group_uuid is None:
+            if not isinstance(data, PreviewData):
                 return
-
             cls.disable()
 
-            cls.enable_preview(baker, bake_group_uuid)
+            cls.enable_preview(data)
 
         elif mode == VisualizationMode.DISPLAY:
-            if bake_group_uuid is None or baker_uuid is None:
+            if not isinstance(data, DisplayData):
                 return
-
             cls.disable()
 
-            cls.enable_display(bake_group_uuid, baker_uuid)
+            cls.enable_display(data)
 
     # ------------------------------------------------------------------
     # Internal
@@ -259,6 +256,7 @@ class BakeVisualizationService:
             producer=data.producer,
             bake_group_uuid=data.bake_group_uuid,
             producer_uuid=data.producer_uuid,
+            accumulated_uuid=data.accumulated_uuid,
         )
 
         cls._capture_state(data)
@@ -286,7 +284,7 @@ class BakeVisualizationService:
 
         else:
             material = DisplayMaterialService.get_or_create()
-            image = cls._get_image(data.bake_group_uuid, data.producer_uuid)
+            image = cls._get_image(data.bake_group_uuid, data.accumulated_uuid)
 
             if image is None or image.image is None:
                 return

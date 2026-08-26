@@ -38,6 +38,7 @@ class VisualizationRuntime:
         self._active_producer = None
         self._active_image_handle = None
         self._baker_group_uuid: str | None = None
+        self._accumulated_uuid: str | None = None
         self._producer_uuid: str | None = None
         self._preview_enabled: bool = False
         self._preview_dirty: bool = False
@@ -88,12 +89,16 @@ class VisualizationRuntime:
         return self._active_image_handle
 
     @property
-    def bake_group_uuid(self):
+    def bake_group_uuid(self) -> str | None:
         return self._baker_group_uuid
 
     @property
-    def producer_uuid(self):
+    def producer_uuid(self) -> str | None:
         return self._producer_uuid
+
+    @property
+    def accumulated_uuid(self) -> str | None:
+        return self._accumulated_uuid
 
     @property
     def scenes(
@@ -131,6 +136,7 @@ class VisualizationRuntime:
         image_handle: ImageHandle | None = None,
         bake_group_uuid: str | None = None,
         producer_uuid: str | None = None,
+        accumulated_uuid: str | None = None,
     ) -> None:
         """
         Start a new visualization session.
@@ -148,6 +154,7 @@ class VisualizationRuntime:
         self._active_image_handle = image_handle
         self._baker_group_uuid = bake_group_uuid
         self._producer_uuid = producer_uuid
+        self._accumulated_uuid = accumulated_uuid
         self._preview_enabled = mode == VisualizationMode.PREVIEW
 
     # ------------------------------------------------------------------
@@ -290,14 +297,13 @@ class VisualizationRuntime:
 
         try:
             self._updating_parameters = True
-            LOG.debug("Refreshing preview parameters")
             producer = self.active_producer
 
             if producer is None:
                 LOG.error("Producer not defined")
                 return
 
-            definition = registry_definition.get(producer.id)
+            definition = registry_definition.require(producer.id)
 
             if definition is None or self.producer_uuid is None:
                 LOG.error(f"Definition not found for {producer.id}")
@@ -305,20 +311,24 @@ class VisualizationRuntime:
 
             from ..core.controller import BakeController
 
-            custom_baker = BakeController.get_baker_from_uuid(self.producer_uuid)
+            baker = BakeController.get_baker_from_uuid(self.producer_uuid)
 
-            if custom_baker is None:
+            if baker is None:
                 LOG.error("Custom Baker not Found")
                 return
 
             from ..services.parameter_service import ParameterService
 
-            snapshot = ParameterService.snapshot(definition, custom_baker)
+            snapshot = ParameterService.snapshot(definition, baker.custom_baker)
 
             for o in bpy.context.scene.objects:
+                if o.type != "MESH":
+                    continue
                 materials = o.data.materials
                 context = ParameterContext(object=o, materials=materials)
 
+                # TODO: Need to optimize. At this stage ALL parameters get refreshed but the user can only refresh one
+                # at the time. Need to modify ParameterApplier.apply() to be able to select only one parameter
                 ParameterApplier.apply(definition, snapshot, context)
         finally:
             self._updating_parameters = False
@@ -353,6 +363,7 @@ class VisualizationSuspension:
         self.mode = None
         self.active_producer: BakerBase | PackerBase | None = None
         self.bake_group_uuid: str | None = None
+        self.accumulated_uuid: str | None = None
         self.producer_uuid: str | None = None
 
     def capture(self):
@@ -361,20 +372,26 @@ class VisualizationSuspension:
         self.active_producer = self.runtime.active_producer
         self.bake_group_uuid = self.runtime.bake_group_uuid
         self.producer_uuid = self.runtime.producer_uuid
+        self.accumulated_uuid = self.runtime.accumulated_uuid
 
     def restore(self):
         if not self.was_enabled or self.mode is None:
             return
 
         LOG.debug("Restore Visualization")
-        from ..services.bake_visualization import BakeVisualizationService
+        from ..services.bake_visualization import BakeVisualizationService, DisplayData, PreviewData
 
         match self.mode:
             case VisualizationMode.DISPLAY:
-                if self.bake_group_uuid is None or self.producer_uuid is None:
+                if self.bake_group_uuid is None or self.accumulated_uuid is None:
                     return
-                BakeVisualizationService.enable_display(self.bake_group_uuid, self.producer_uuid)
+
+                data = DisplayData(self.bake_group_uuid, self.accumulated_uuid)
+                BakeVisualizationService.enable_display(data)
+
             case VisualizationMode.PREVIEW:
-                if self.active_producer is None or self.bake_group_uuid is None:
+                if self.active_producer is None or self.bake_group_uuid is None or self.producer_uuid is None:
                     return
-                BakeVisualizationService.enable_preview(self.active_producer, self.bake_group_uuid)
+
+                data = PreviewData(self.active_producer, self.bake_group_uuid, self.producer_uuid)
+                BakeVisualizationService.enable_preview(data)
