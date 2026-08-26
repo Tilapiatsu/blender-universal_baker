@@ -46,7 +46,15 @@ class CustomBakerSetupService:
 
                 raise
 
-    def _duplicate_target(self, target: bpy.types.Object) -> bpy.types.Object:
+    @staticmethod
+    def get_prototype_material(asset: BakerAsset) -> bpy.types.Material:
+        prototype = BakerAssetService.load_prototype(asset)
+        copy = prototype.active_material.copy()
+
+        return copy
+
+    @staticmethod
+    def _duplicate_target(target: bpy.types.Object) -> bpy.types.Object:
         LOG.debug("Duplicate Target")
         bake_object = target.copy()
 

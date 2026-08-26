@@ -38,9 +38,7 @@ class CustomBaker(BakerBase):
 
     @contextmanager
     def prepare_execution(self, target: bpy.types.Object) -> Generator[BakerExecution, Any, Any]:
-        asset = BakerAsset(
-            filepath=self.asset_path,
-        )
+        asset = BakerAsset(filepath=self.asset_path)
 
         setup_service = CustomBakerSetupService()
         setup = setup_service.prepare(
@@ -49,10 +47,7 @@ class CustomBaker(BakerBase):
         )
 
         try:
-            yield BakerExecution(
-                target=setup.target,
-                setup=setup,
-            )
+            yield BakerExecution(target=setup.target, setup=setup)
 
         finally:
             setup.cleanup()
@@ -78,8 +73,6 @@ class CustomBaker(BakerBase):
             LOG.error(f"Material Overries not found for {ctx.target.name}")
             return
 
-        # TODO: Need to send a list of materials to the parameter context instead. Otherwise it will also proces the
-        # modifiers, and geometry nodes multiple times.
         parameter_context = ParameterContext(
             object=ctx.target,
             materials=materials,
@@ -95,9 +88,12 @@ class CustomBaker(BakerBase):
         return super().execute(ctx)
 
     def configure_preview_material(self, material):
-        # TODO: To be written: The issue is that for preview every materials of every objects has to be overriden ... it
-        # might certainly be dangerous or clancky ? is there any othet solutions
-        super().configure_preview_material(material)
+        asset = BakerAsset(filepath=self.asset_path)
+        material.use_nodes = True
+        nodes = material.node_tree.nodes
+        nodes.clear()
+
+        nodes = CustomBakerSetupService.get_prototype_material(asset).node_tree.nodes
 
     def prepare(self, ctx: BakeContext):
         """

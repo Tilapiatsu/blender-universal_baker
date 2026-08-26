@@ -16,9 +16,7 @@ class BakerAssetError(RuntimeError):
 
 class BakerAssetService:
     @staticmethod
-    def load_prototype(
-        asset: BakerAsset,
-    ) -> bpy.types.Object:
+    def load_prototype(asset: BakerAsset) -> bpy.types.Object:
 
         with LOG.scope(LOG_SCOPE):
             LOG.debug(f"Loading Prototype : {asset.filepath}")
