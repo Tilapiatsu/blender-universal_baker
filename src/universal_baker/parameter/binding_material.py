@@ -25,36 +25,40 @@ class MaterialSocketBinding(ParameterBinding):
     material_name: str | None = None
 
     def apply(self, value: Any, context: ParameterContext) -> None:
-        material = context.material
+        materials = context.materials
 
-        if material is None:
+        if materials is None:
             raise ParameterBindingError(f"Material not found for parameter '{self.parameter_id}'.")
 
-        if not material.use_nodes:
-            raise ParameterBindingError(f"Material '{material.name}' does not use nodes.")
+        for material in materials:
+            if materials is None:
+                raise ParameterBindingError(f"Material not found for parameter '{self.parameter_id}'.")
 
-        node = material.node_tree.nodes.get(self.node_name)
+            if not material.use_nodes:
+                raise ParameterBindingError(f"Material '{material.name}' does not use nodes.")
 
-        if node is None:
-            raise ParameterBindingError(f"Node '{self.node_name}' not found in material '{material.name}'.")
+            node = material.node_tree.nodes.get(self.node_name)
 
-        socket = node.inputs.get(self.socket_name)
+            if node is None:
+                raise ParameterBindingError(f"Node '{self.node_name}' not found in material '{material.name}'.")
 
-        if socket is None:
-            raise ParameterBindingError(f"Input socket '{self.socket_name}' not found on node '{self.node_name}'.")
+            socket = node.inputs.get(self.socket_name)
 
-        try:
-            with LOG.scope(LOG_SCOPE):
-                LOG.debug(f"Binding {value} to {self.socket_name}")
-            socket.default_value = value
+            if socket is None:
+                raise ParameterBindingError(f"Input socket '{self.socket_name}' not found on node '{self.node_name}'.")
 
-        except (TypeError, ValueError) as exc:
-            raise ParameterBindingError(
-                f"Unable to assign value {value!r} to '{self.node_name}.{self.socket_name}'."
-            ) from exc
+            try:
+                with LOG.scope(LOG_SCOPE):
+                    LOG.debug(f"Binding {value} to {self.socket_name}")
+                socket.default_value = value
+
+            except (TypeError, ValueError) as exc:
+                raise ParameterBindingError(
+                    f"Unable to assign value {value!r} to '{self.node_name}.{self.socket_name}'."
+                ) from exc
 
     def _resolve_material(self, context: ParameterContext) -> bpy.types.Material:
         if self.material_name:
             return bpy.data.materials.get(self.material_name)
 
-        return context.material
+        return context.materials

@@ -78,20 +78,18 @@ class CustomBaker(BakerBase):
             LOG.error(f"Material Overries not found for {ctx.target.name}")
             return
 
-        for m in materials:
-            LOG.debug(f"Apply parameters for {m.name}")
-            # TODO: Need to send a list of materials to the parameter context instead. Otherwise it will also proces the
-            # modifiers, and geometry nodes multiple times.
-            parameter_context = ParameterContext(
-                object=ctx.target,
-                material=m,
-            )
+        # TODO: Need to send a list of materials to the parameter context instead. Otherwise it will also proces the
+        # modifiers, and geometry nodes multiple times.
+        parameter_context = ParameterContext(
+            object=ctx.target,
+            materials=materials,
+        )
 
-            ParameterApplier.apply(
-                definition,
-                snapshot,
-                parameter_context,
-            )
+        ParameterApplier.apply(
+            definition,
+            snapshot,
+            parameter_context,
+        )
 
     def execute(self, ctx: BakeContext) -> None:
         return super().execute(ctx)

@@ -15,7 +15,7 @@ class ParameterContext:
     """
 
     object: bpy.types.Object
-    material: bpy.types.Material | None = None
+    materials: list[bpy.types.Material] | None = None
 
     # Gives bindings an escape hatch for more complex assets.
     data: dict[str, Any] | None = None
