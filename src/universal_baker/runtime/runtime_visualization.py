@@ -285,15 +285,16 @@ class VisualizationRuntime:
     def request_preview_refresh(self):
         self._preview_dirty = True
 
-    def refresh_preview_parameters(self):
+    def refresh_preview_parameters(self, force: bool = False):
         if not self.preview_enabled:
             return
 
-        if not self._preview_dirty:
-            return
+        if not force:
+            if not self._preview_dirty:
+                return
 
-        if self._updating_parameters:
-            return
+            if self._updating_parameters:
+                return
 
         try:
             self._updating_parameters = True

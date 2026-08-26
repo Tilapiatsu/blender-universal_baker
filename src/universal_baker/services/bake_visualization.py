@@ -281,6 +281,7 @@ class BakeVisualizationService:
 
             cls._runtime.set_active_producer(data.producer)
             cls._runtime.set_material_snapshots(MaterialOverrideService.apply(bpy.context.scene.objects, material))
+            cls._runtime.refresh_preview_parameters(force=True)
 
         else:
             material = DisplayMaterialService.get_or_create()
