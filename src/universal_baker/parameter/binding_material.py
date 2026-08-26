@@ -25,7 +25,7 @@ class MaterialSocketBinding(ParameterBinding):
     material_name: str | None = None
 
     def apply(self, value: Any, context: ParameterContext) -> None:
-        material = self._resolve_material(context)
+        material = context.material
 
         if material is None:
             raise ParameterBindingError(f"Material not found for parameter '{self.parameter_id}'.")
