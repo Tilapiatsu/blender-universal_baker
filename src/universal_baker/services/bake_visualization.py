@@ -53,7 +53,7 @@ def update_visualization(self, context):
             producer = registry_baker[baker.baker]
 
             data = None
-            match BakeVisualizationService.mode:
+            match BakeVisualizationService.mode():
                 case VisualizationMode.PREVIEW:
                     data = PreviewData(producer, bake_group.uuid, baker.uuid)
                 case VisualizationMode.DISPLAY:
@@ -220,21 +220,23 @@ class BakeVisualizationService:
             return
 
         LOG.debug("Refresh Visualization")
-        mode = cls.mode()
 
-        if mode == VisualizationMode.PREVIEW:
-            if not isinstance(data, PreviewData):
-                return
-            cls.disable()
+        match cls.mode():
+            case VisualizationMode.PREVIEW:
+                if not isinstance(data, PreviewData):
+                    return
 
-            cls.enable_preview(data)
+                cls.disable()
 
-        elif mode == VisualizationMode.DISPLAY:
-            if not isinstance(data, DisplayData):
-                return
-            cls.disable()
+                cls.enable_preview(data)
 
-            cls.enable_display(data)
+            case VisualizationMode.DISPLAY:
+                if not isinstance(data, DisplayData):
+                    return
+
+                cls.disable()
+
+                cls.enable_display(data)
 
     # ------------------------------------------------------------------
     # Internal
@@ -281,7 +283,8 @@ class BakeVisualizationService:
 
             cls._runtime.set_active_producer(data.producer)
             cls._runtime.set_material_snapshots(MaterialOverrideService.apply(bpy.context.scene.objects, material))
-            cls._runtime.refresh_preview_parameters(force=True)
+            if data.producer.is_custom:
+                cls._runtime.refresh_preview_parameters(force=True)
 
         else:
             material = DisplayMaterialService.get_or_create()

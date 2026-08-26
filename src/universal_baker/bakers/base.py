@@ -49,6 +49,7 @@ class BakerBase(ABC):
     color_type: BakerColorType = BakerColorType.COLOR
     blender_bake_type = "DIFFUSE"
     accumulator_id = "ALPHA_OVER"
+    is_custom: bool = False
 
     def poll(self, task: Task) -> bool:
         """Whether this baker can execute this task."""

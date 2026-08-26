@@ -33,6 +33,7 @@ class CustomBaker(BakerBase):
     blender_bake_type = "EMIT"
     accumulator_id = "ALPHA_OVER"
     asset_path: Path
+    is_custom: bool = True
 
     @contextmanager
     def prepare_execution(self, target: bpy.types.Object) -> Generator[BakerExecution, Any, Any]:
