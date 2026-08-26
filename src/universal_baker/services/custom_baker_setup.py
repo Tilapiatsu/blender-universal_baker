@@ -49,6 +49,8 @@ class CustomBakerSetupService:
         prototype = BakerAssetService.load_prototype(asset)
         copy = prototype.active_material.copy()
 
+        copy.use_nodes = True
+
         return copy
 
     @staticmethod

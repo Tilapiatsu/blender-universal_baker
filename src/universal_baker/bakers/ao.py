@@ -3,6 +3,7 @@ from __future__ import annotations
 import bpy
 
 from .base import BakerBase
+from ..constant import LOG
 
 from ..runtime.context_bake import BakeContext
 from ..core.registry_baker import registry_baker
