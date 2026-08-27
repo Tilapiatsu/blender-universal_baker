@@ -48,7 +48,7 @@ def update_visualization(self, context):
             LOG.warning("Baker not found")
             return
 
-        if viz.baker_idx != bake_group.active_baker_index:
+        if (viz.enabled_preview or viz.enabled_display) and viz.baker_idx != bake_group.active_baker_index:
             viz.baker_idx = bake_group.active_baker_index
             producer = registry_baker[baker.baker]
 
