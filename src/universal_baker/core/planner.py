@@ -161,6 +161,9 @@ class ExecutionPlanner:
                         if obj.object is None:
                             continue
 
+                        if obj.object.name not in object_tiles:
+                            LOG.warning(f"{obj.object.name} uv tiles not registered properly.")
+
                         uv_layout = UVLayout(
                             image_layout=ImageLayout.UDIM if group.detect_udim else ImageLayout.SINGLE,
                             udim_tiles=object_tiles[obj.object.name],

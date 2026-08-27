@@ -330,8 +330,6 @@ class VisualizationRuntime:
                 materials = o.data.materials
                 context = ParameterContext(object=o, materials=materials, ui_prop=ui_prop)
 
-                # TODO: Need to optimize. At this stage ALL parameters get refreshed but the user can only refresh one
-                # at the time. Need to modify ParameterApplier.apply() to be able to select only one parameter
                 ParameterApplier.apply(definition, snapshot, context)
 
         finally:

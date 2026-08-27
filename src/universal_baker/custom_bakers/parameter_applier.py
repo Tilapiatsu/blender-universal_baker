@@ -62,6 +62,9 @@ class ParameterApplier:
         for parameter in definition.parameters:
             parameter_id = parameter.identifier
 
+            if context.ui_prop is not None and parameter_id != context.ui_prop.identifier:
+                continue
+
             if parameter_id not in snapshot:
                 continue
 
@@ -70,9 +73,6 @@ class ParameterApplier:
             # NOTE: Hard Clamp
             if value is not None and parameter.min_value is not None and parameter.max_value is not None:
                 value = cls.clamp_value(value, parameter.min_value, parameter.max_value)
-
-            # TODO: soft clamping uiprops doesn't work properly because it is not happening at the right spot. Need to make
-            # sure this apply() method is happening only for the modified parameter only firt, and to move the soft clamping from  refresh_preview_parameters() method in runtime_visualization.py
 
             # NOTE: Soft Clamp
             if context.ui_prop is not None and parameter.soft_min is not None and parameter.soft_max is not None:
