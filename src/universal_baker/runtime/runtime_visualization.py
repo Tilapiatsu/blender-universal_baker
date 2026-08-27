@@ -4,6 +4,8 @@ import bpy
 
 from contextlib import contextmanager
 
+from ..properties.baker_parameter import UBK_BakerParameterValue
+
 from ..constant import LOG
 from ..enum.visualization import VisualizationMode
 from .image_handle import ImageHandle
@@ -285,7 +287,7 @@ class VisualizationRuntime:
     def request_preview_refresh(self):
         self._preview_dirty = True
 
-    def refresh_preview_parameters(self, force: bool = False):
+    def refresh_preview_parameters(self, ui_prop: UBK_BakerParameterValue | None = None, force: bool = False):
         if not self.preview_enabled:
             return
 
@@ -326,7 +328,7 @@ class VisualizationRuntime:
                 if o.type != "MESH":
                     continue
                 materials = o.data.materials
-                context = ParameterContext(object=o, materials=materials)
+                context = ParameterContext(object=o, materials=materials, ui_prop=ui_prop)
 
                 # TODO: Need to optimize. At this stage ALL parameters get refreshed but the user can only refresh one
                 # at the time. Need to modify ParameterApplier.apply() to be able to select only one parameter

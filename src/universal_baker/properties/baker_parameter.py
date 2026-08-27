@@ -11,7 +11,7 @@ def parameter_updated(self, context):
     if runtime.preview_enabled:
         runtime.request_preview_refresh()
 
-    runtime.refresh_preview_parameters()
+    runtime.refresh_preview_parameters(ui_prop=self)
 
 
 class UBK_BakerParameterValue(bpy.types.PropertyGroup):

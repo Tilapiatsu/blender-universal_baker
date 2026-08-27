@@ -31,6 +31,17 @@ class ParameterApplier:
             -> tells us WHICH runtime Blender datablocks to modify
     """
 
+    @staticmethod
+    def clamp_value(
+        value: float | int,
+        minimum: float | int,
+        maximum: float | int,
+    ) -> float | int:
+        return max(
+            minimum,
+            min(value, maximum),
+        )
+
     @classmethod
     def apply(
         cls,
@@ -55,6 +66,11 @@ class ParameterApplier:
                 continue
 
             value = snapshot.get(parameter_id)
+
+            if value is not None and parameter.min_value is not None and parameter.max_value is not None:
+                value = cls.clamp_value(value, parameter.min_value, parameter.max_value)
+
+            # TODO: Need to clamp the ui_prop from the context too
 
             bindings = definition.get_bindings(parameter_id)
 

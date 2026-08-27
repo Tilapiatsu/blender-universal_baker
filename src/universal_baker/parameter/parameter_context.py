@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Any
 
 import bpy
+from ..properties.baker_parameter import UBK_BakerParameterValue
 
 
 @dataclass
@@ -16,6 +17,7 @@ class ParameterContext:
 
     object: bpy.types.Object
     materials: list[bpy.types.Material] | None = None
+    ui_prop: UBK_BakerParameterValue | None = None
 
     # Gives bindings an escape hatch for more complex assets.
     data: dict[str, Any] | None = None
