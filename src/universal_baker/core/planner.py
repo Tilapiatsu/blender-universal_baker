@@ -162,7 +162,11 @@ class ExecutionPlanner:
                             continue
 
                         if obj.object.name not in object_tiles:
-                            LOG.warning(f"{obj.object.name} uv tiles not registered properly.")
+                            LOG.error(f"{obj.object.name} have invalid UV.")
+                            # TODO: need to properly deal with the case of one object doesn't have UV -> Should skip the
+                            # obj, not the entire tasks
+                            # TODO: Need to deeper test non UDIM cases
+                            continue
 
                         uv_layout = UVLayout(
                             image_layout=ImageLayout.UDIM if group.detect_udim else ImageLayout.SINGLE,

@@ -265,6 +265,8 @@ class BakeVisualizationService:
 
     @classmethod
     def _capture_state(cls, data: PreviewData | DisplayData) -> None:
+        # TODO: need to make sure the display and preview mechanism does apply to the target_objects instead of all the
+        # objects of the scene
         LOG.debug("Capture State")
         if cls._runtime is None:
             return
