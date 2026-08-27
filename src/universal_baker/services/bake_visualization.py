@@ -48,7 +48,9 @@ def update_visualization(self, context):
             LOG.warning("Baker not found")
             return
 
-        if (viz.enabled_preview or viz.enabled_display) and viz.baker_idx != bake_group.active_baker_index:
+        # possibly need to refresh only when preview or display is ON:
+        # (viz.enabled_preview or viz.enabled_display) and
+        if viz.baker_idx != bake_group.active_baker_index:
             viz.baker_idx = bake_group.active_baker_index
             producer = registry_baker[baker.baker]
 
@@ -57,7 +59,9 @@ def update_visualization(self, context):
                 case VisualizationMode.PREVIEW:
                     data = PreviewData(producer, bake_group.uuid, baker.uuid)
                 case VisualizationMode.DISPLAY:
-                    data = DisplayData(bake_group.uuid, baker.accumulated_uuid)
+                    data = DisplayData(
+                        bake_group.uuid, baker.accumulated_uuid, [o.object for o in bake_group.target_objects]
+                    )
                 case _:
                     return
 
@@ -87,6 +91,7 @@ def update_visualization(self, context):
             data = DisplayData(
                 bake_group_uuid=bake_group.uuid,
                 accumulated_uuid=baker.accumulated_uuid,
+                objects=[o.object for o in bake_group.target_objects],
             )
 
             BakeVisualizationService.enable_display(data)
@@ -106,6 +111,7 @@ class PreviewData:
 class DisplayData:
     bake_group_uuid: str
     accumulated_uuid: str
+    objects: list[bpy.types.Object]
     producer_uuid: str | None = None
     producer: None = None
     mode: VisualizationMode = VisualizationMode.DISPLAY
@@ -265,8 +271,6 @@ class BakeVisualizationService:
 
     @classmethod
     def _capture_state(cls, data: PreviewData | DisplayData) -> None:
-        # TODO: need to make sure the display and preview mechanism does apply to the target_objects instead of all the
-        # objects of the scene
         LOG.debug("Capture State")
         if cls._runtime is None:
             return
@@ -289,6 +293,9 @@ class BakeVisualizationService:
                 cls._runtime.refresh_preview_parameters(force=True)
 
         else:
+            # TODO: Investigate slight contrast difference beetween the preview and display of baked images
+            # TODO: Invetigate why the baked image doesnt get refreshed after rebaking in display mode if there is a
+            # change in output colorspace
             material = DisplayMaterialService.get_or_create()
             image = cls._get_image(data.bake_group_uuid, data.accumulated_uuid)
 
@@ -301,4 +308,4 @@ class BakeVisualizationService:
             )
             cls._runtime.set_active_image_handle(image)
             cls._runtime.set_active_producer(data.producer)
-            cls._runtime.set_material_snapshots(MaterialOverrideService.apply(bpy.context.scene.objects, material))
+            cls._runtime.set_material_snapshots(MaterialOverrideService.apply(data.objects, material))

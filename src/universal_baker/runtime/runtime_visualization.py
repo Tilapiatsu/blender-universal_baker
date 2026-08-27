@@ -45,6 +45,7 @@ class VisualizationRuntime:
         self._preview_enabled: bool = False
         self._preview_dirty: bool = False
         self._updating_parameters: bool = False
+        self._objects: list[str] = []
         self._scenes: dict[
             str,
             SceneVisualizationState,
@@ -103,6 +104,10 @@ class VisualizationRuntime:
         return self._accumulated_uuid
 
     @property
+    def objects(self) -> list[bpy.types.Object]:
+        return [bpy.data.objects[o] for o in self._objects if bpy.data.objects[o] is not None]
+
+    @property
     def scenes(
         self,
     ) -> dict[str, SceneVisualizationState]:
@@ -139,6 +144,7 @@ class VisualizationRuntime:
         bake_group_uuid: str | None = None,
         producer_uuid: str | None = None,
         accumulated_uuid: str | None = None,
+        objects: list[str] = [],
     ) -> None:
         """
         Start a new visualization session.
@@ -158,6 +164,7 @@ class VisualizationRuntime:
         self._producer_uuid = producer_uuid
         self._accumulated_uuid = accumulated_uuid
         self._preview_enabled = mode == VisualizationMode.PREVIEW
+        self._objects = objects
 
     # ------------------------------------------------------------------
     # State registration
@@ -268,6 +275,7 @@ class VisualizationRuntime:
 
         self._scenes.clear()
         self._material_snapshots.clear()
+        self._objects = []
 
     @contextmanager
     def suspend(self):
@@ -288,6 +296,8 @@ class VisualizationRuntime:
         self._preview_dirty = True
 
     def refresh_preview_parameters(self, ui_prop: UBK_BakerParameterValue | None = None, force: bool = False):
+        """Make sure the UI property element binds propely to the material, modifier or geometry node element defined in
+        the custom baker definition asset"""
         if not self.preview_enabled:
             return
 
@@ -375,6 +385,7 @@ class VisualizationSuspension:
         self.bake_group_uuid = self.runtime.bake_group_uuid
         self.producer_uuid = self.runtime.producer_uuid
         self.accumulated_uuid = self.runtime.accumulated_uuid
+        self.objects = self.runtime.objects
 
     def restore(self):
         if not self.was_enabled or self.mode is None:
@@ -388,7 +399,7 @@ class VisualizationSuspension:
                 if self.bake_group_uuid is None or self.accumulated_uuid is None:
                     return
 
-                data = DisplayData(self.bake_group_uuid, self.accumulated_uuid)
+                data = DisplayData(self.bake_group_uuid, self.accumulated_uuid, self.objects)
                 BakeVisualizationService.enable_display(data)
 
             case VisualizationMode.PREVIEW:
