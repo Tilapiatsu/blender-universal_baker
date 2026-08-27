@@ -164,7 +164,6 @@ class ImageServiceBase:
     def copy(cls, resource: ImageResource) -> ImageResource:
         image_copy = resource.image.copy() if resource.image is not None else None
         resources_copy = ImageResource(
-            image=image_copy,
             name=image_copy.name if image_copy is not None else "",
             generated_type=resource.generated_type,
             object_name=resource.object_name,
@@ -184,7 +183,7 @@ class ImageServiceBase:
             or image.size[1] != resource.height
             or ((image.channels == 4) != resource.image_format_settings.alpha)
             or image.filepath_raw != str(resource.filepath)
-            # or image.colorspace_settings.name != resources.image_format_settings.colorspace
+            or image.colorspace_settings.name != resource.colorspace
         )
 
     @classmethod

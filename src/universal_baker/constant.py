@@ -1,5 +1,6 @@
 import bpy
 
+from dataclasses import dataclass
 from .logger import Logger
 
 from .logger.severity import Severity
@@ -19,6 +20,16 @@ INTERNAL_DATA_NAME = "UBK_INTERNAL_DO_NOT_TOUCH"
 PROTOTYPE_NAME = "UBK_PROTOTYPE"
 SAFE_CHR = "_"
 ADDON_PACKAGE = __package__
+
+
+@dataclass(slots=True, frozen=True)
+class SceneColorSpace:
+    view_transform: str = "Raw"
+    exposure: float = 0.0
+    gamma: float = 1.0
+
+
+SCENE_COLORSPACE = SceneColorSpace()
 
 
 def get_prefs():

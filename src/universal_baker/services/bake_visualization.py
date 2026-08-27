@@ -265,6 +265,7 @@ class BakeVisualizationService:
             bake_group_uuid=data.bake_group_uuid,
             producer_uuid=data.producer_uuid,
             accumulated_uuid=data.accumulated_uuid,
+            objects=[o.name for o in data.objects] if isinstance(data, DisplayData) else [],
         )
 
         cls._capture_state(data)
@@ -294,8 +295,7 @@ class BakeVisualizationService:
 
         else:
             # TODO: Investigate slight contrast difference beetween the preview and display of baked images
-            # TODO: Invetigate why the baked image doesnt get refreshed after rebaking in display mode if there is a
-            # change in output colorspace
+            # TODO: Investigate why the display doesn't work when the baked image change its colorspace
             material = DisplayMaterialService.get_or_create()
             image = cls._get_image(data.bake_group_uuid, data.accumulated_uuid)
 

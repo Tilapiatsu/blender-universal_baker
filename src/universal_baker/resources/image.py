@@ -40,7 +40,7 @@ class ImageResource:
     map_name: str = ""
 
     channels: int = 4
-    colorspace: str = "sRGB"
+    colorspace: str = "Non-Color"
     is_data: bool = False
     float_buffer: bool = False
 
@@ -59,7 +59,11 @@ class ImageResource:
         if self._image is None or self._image not in bpy.data.images:
             return None
 
-        return bpy.data.images[self._image]
+        image = bpy.data.images[self._image]
+
+        # ISSUE: colorspace of the blender image does not always match the one require in the resource
+        print(image.colorspace_settings.name, self.colorspace)
+        return image
 
     @image.setter
     def image(self, image: bpy.types.Image) -> None:
@@ -254,7 +258,10 @@ class ImageResource:
         LOG.debug("Create Resource from Artifact")
         if artifact.image.blender_image_name in bpy.data.images:
             image = bpy.data.images[artifact.image.blender_image_name]
-            return cls.from_blender_image(image, artifact.output_settings.image)
+            if artifact.output_settings.color.colorspace == image.colorspace_settings.name:
+                return cls.from_blender_image(image, artifact.output_settings.image)
+            else:
+                bpy.data.images.remove(image)
 
         image = artifact.load_image()
 

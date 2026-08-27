@@ -1,18 +1,56 @@
 from __future__ import annotations
 
 import bpy
+from ..constant import SCENE_COLORSPACE
 from ..runtime.context_bake import BakeContext
+from ..runtime.visualization_state import SceneVisualizationState
 
 
 class RendererService:
     """Wrapper around Blender's native baking system."""
 
+    @staticmethod
+    def capture_state() -> SceneVisualizationState:
+        scene = bpy.context.scene
+        scene_state = SceneVisualizationState(
+            scene_name=scene.name,
+            render_engine=scene.render.engine,
+            view_transform=scene.view_settings.view_transform,
+            exposure=scene.view_settings.exposure,
+            gamma=scene.view_settings.gamma,
+        )
+
+        return scene_state
+
+    @staticmethod
+    def set_view_settings():
+        view_settings = bpy.context.scene.view_settings
+        view_settings.view_transform = SCENE_COLORSPACE.view_transform
+        view_settings.exposure = SCENE_COLORSPACE.exposure
+        view_settings.gamma = SCENE_COLORSPACE.gamma
+
+    @staticmethod
+    def restore(scene_state: SceneVisualizationState):
+        scene_name = scene_state.scene_name
+        scene = bpy.data.scenes.get(scene_name)
+
+        if scene is not None and scene_state.render_engine:
+            scene.render.engine = scene_state.render_engine
+            scene.view_settings.view_transform = scene_state.view_transform
+            scene.view_settings.exposure = scene_state.exposure
+            scene.view_settings.gamma = scene_state.gamma
+
     @classmethod
     def execute(cls, ctx: BakeContext):
         """Execute a single bake task."""
-        cls.configure(ctx)
-        cls.prepare(ctx)
-        cls.bake(ctx)
+        scene_state = cls.capture_state()
+        try:
+            cls.set_view_settings()
+            cls.configure(ctx)
+            cls.prepare(ctx)
+            cls.bake(ctx)
+        finally:
+            cls.restore(scene_state)
 
     @classmethod
     def configure(cls, ctx: BakeContext):
