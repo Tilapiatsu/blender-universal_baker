@@ -17,6 +17,7 @@ from ..services.project_synchronizer import ProjectSynchronizer
 from ..properties.packer import UBK_Packer
 from ..constant import LOG
 from ..runtime.job import Job
+from ..runtime.runtime_manager import RuntimeManager
 from ..services.project import ProjectService
 from ..services.collection_target_object import TargetObjectService
 from ..services.collection_packer import PackerService
@@ -131,6 +132,16 @@ class BakeController:
             return
 
         BakerService.remove(bake_group, bake_group.active_baker_index)
+
+        if len(bake_group.bakers) == 0:
+            runtime = RuntimeManager.current(context).visualization
+            if runtime.active:
+                runtime.disable()
+                project = cls.project(context)
+                if project is None:
+                    return
+                project.visualization.enabled_preview = False
+                project.visualization.enabled_display = False
 
     @staticmethod
     def resolve_map_uuid(project, uuid: str):
