@@ -71,24 +71,12 @@ class ParameterApplier:
             value = snapshot.get(parameter_id)
 
             # NOTE: Hard Clamp
-            if value is not None and parameter.min_value is not None and parameter.max_value is not None:
-                value = cls.clamp_value(value, parameter.min_value, parameter.max_value)
+            if value is not None:
+                if context.is_dragging and parameter.soft_min is not None and parameter.soft_max is not None:
+                    value = cls.clamp_value(value, parameter.soft_min, parameter.soft_max)
+                elif parameter.min_value is not None and parameter.max_value is not None:
+                    value = cls.clamp_value(value, parameter.min_value, parameter.max_value)
 
-            # NOTE: Soft Clamp
-            if context.ui_prop is not None and parameter.soft_min is not None and parameter.soft_max is not None:
-                match parameter.parameter_type:
-                    case BakerParameterType.FLOAT:
-                        context.ui_prop.float_value = cls.clamp_value(
-                            context.ui_prop.float_value,
-                            parameter.soft_min,
-                            parameter.soft_max,
-                        )
-                    case BakerParameterType.INT:
-                        context.ui_prop.int_value = cls.clamp_value(
-                            context.ui_prop.int_value,
-                            parameter.soft_min,
-                            parameter.soft_max,
-                        )
             bindings = definition.get_bindings(parameter_id)
 
             if bindings is None:

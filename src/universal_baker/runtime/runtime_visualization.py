@@ -4,6 +4,7 @@ import bpy
 
 from contextlib import contextmanager
 
+
 from ..properties.baker_parameter import UBK_BakerParameterValue
 
 from ..constant import LOG
@@ -12,6 +13,7 @@ from .image_handle import ImageHandle
 from ..core.registry_definition import registry_definition
 from ..custom_bakers.parameter_applier import ParameterApplier
 from ..parameter.parameter_context import ParameterContext
+from ..parameter.parameter import BakerParameterType
 
 from typing import TYPE_CHECKING
 
@@ -295,11 +297,30 @@ class VisualizationRuntime:
     def request_preview_refresh(self):
         self._preview_dirty = True
 
+    def clamp_ui_prop(
+        self,
+        ui_prop: UBK_BakerParameterValue,
+        parameter_type: BakerParameterType,
+        min: float,
+        max: float,
+    ):
+        match parameter_type:
+            case BakerParameterType.FLOAT:
+                ui_prop.float_value = ParameterApplier.clamp_value(
+                    ui_prop.float_value,
+                    min,
+                    max,
+                )
+            case BakerParameterType.INT:
+                ui_prop.int_value = ParameterApplier.clamp_value(
+                    ui_prop.int_value,
+                    min,
+                    max,
+                )
+
     def refresh_preview_parameters(self, ui_prop: UBK_BakerParameterValue | None = None, force: bool = False):
         """Make sure the UI property element binds propely to the material, modifier or geometry node element defined in
         the custom baker definition asset"""
-        if not self.preview_enabled:
-            return
 
         if not force:
             if not self._preview_dirty:
@@ -322,6 +343,26 @@ class VisualizationRuntime:
                 LOG.error(f"Definition not found for {producer.id}")
                 return
 
+            # NOTE: UI Clamp
+            if ui_prop is not None:
+                parameter = definition.get_parameter(ui_prop.identifier)
+                if parameter is not None:
+                    if (
+                        bpy.context.scene.ubk_project.visualization.is_dragging
+                        and parameter.soft_min
+                        and parameter.soft_max
+                    ):
+                        self.clamp_ui_prop(ui_prop, parameter.parameter_type, parameter.soft_min, parameter.soft_max)
+                    elif (
+                        not bpy.context.scene.ubk_project.visualization.is_dragging
+                        and parameter.min_value
+                        and parameter.max_value
+                    ):
+                        self.clamp_ui_prop(ui_prop, parameter.parameter_type, parameter.min_value, parameter.max_value)
+
+            if not self.preview_enabled:
+                return
+
             from ..core.controller import BakeController
 
             baker = BakeController.get_baker_from_uuid(self.producer_uuid)
@@ -338,7 +379,12 @@ class VisualizationRuntime:
                 if o.type != "MESH":
                     continue
                 materials = o.data.materials
-                context = ParameterContext(object=o, materials=materials, ui_prop=ui_prop)
+                context = ParameterContext(
+                    object=o,
+                    materials=materials,
+                    ui_prop=ui_prop,
+                    is_dragging=bpy.context.scene.ubk_project.visualization.is_dragging,
+                )
 
                 ParameterApplier.apply(definition, snapshot, context)
 

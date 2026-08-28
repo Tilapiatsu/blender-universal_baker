@@ -11,7 +11,38 @@ def parameter_updated(self, context):
     if runtime.preview_enabled:
         runtime.request_preview_refresh()
 
+    if context.scene.ubk_project.visualization.is_dragging:
+        pass
+    else:
+        bpy.ops.draggableprop.subscribe("INVOKE_DEFAULT")
+
     runtime.refresh_preview_parameters(ui_prop=self)
+
+
+# https://blender.stackexchange.com/questions/245233/drag-events-of-a-panel-ui-slider
+class DRAGGABLEPROP_OT_subscribe(bpy.types.Operator):
+    bl_idname = "draggableprop.subscribe"
+    bl_label = ""
+    # This is used so we don't end up in an infinite loop because we blocked the release event
+    stop: bpy.props.BoolProperty()
+
+    def modal(self, context, event):
+        if self.stop:
+            context.scene.ubk_project.visualization.is_dragging = False
+            return {"FINISHED"}
+
+        # Stop the modal on next frame. Don't block the event since we want to exit the field dragging
+        if context.scene.ubk_project.visualization.is_dragging and event.value == "RELEASE":
+            self.stop = True
+        elif not context.scene.ubk_project.visualization.is_dragging and event.type == "MOUSEMOVE":
+            context.scene.ubk_project.visualization.is_dragging = True
+
+        return {"PASS_THROUGH"}
+
+    def invoke(self, context, event):
+        self.stop = False
+        context.window_manager.modal_handler_add(self)
+        return {"RUNNING_MODAL"}
 
 
 class UBK_BakerParameterValue(bpy.types.PropertyGroup):
@@ -22,7 +53,10 @@ class UBK_BakerParameterValue(bpy.types.PropertyGroup):
     enum_value: bpy.props.StringProperty(update=parameter_updated)
 
 
-classes = (UBK_BakerParameterValue,)
+classes = (
+    DRAGGABLEPROP_OT_subscribe,
+    UBK_BakerParameterValue,
+)
 
 
 def register():

@@ -18,6 +18,7 @@ class ParameterContext:
     object: bpy.types.Object
     materials: list[bpy.types.Material] | None = None
     ui_prop: UBK_BakerParameterValue | None = None
+    is_dragging: bool = False
 
     # Gives bindings an escape hatch for more complex assets.
     data: dict[str, Any] | None = None

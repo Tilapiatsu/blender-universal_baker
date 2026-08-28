@@ -27,6 +27,8 @@
 - [X] Ambient Occlusion
 - [] Albedo
 - [X] Curvatue
+  - [] add option to have curvature using two Channel : One for concave and one for convex
+  <https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSZwnsY3ePkCHIu-GvNyl-Kr7-27NMkMm-btlTj02CAiINIVGu0Ovo-lp5V&s=10>
 - [] Cavity
 - [] Edge
 - [] Normal

@@ -336,7 +336,7 @@ class UBK_PT_ProcessPanel(UBK_PT_MainPanel, bpy.types.Panel):
         layout = self.layout
         col = layout.column()
         col.scale_y = 1.6
-        col.operator("ubk.bake_all", icon="RENDER_STILL")
+        col.operator("ubk.bake_all", icon="RESTRICT_RENDER_OFF")
         col.operator("ubk.pack_all", icon="NODE_COMPOSITING")
         col.operator("ubk.bake_and_pack_all", icon="LONGDISPLAY")
 
