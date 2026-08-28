@@ -9,6 +9,7 @@ from contextlib import contextmanager, nullcontext, _GeneratorContextManager
 from typing import TYPE_CHECKING, Any, Generator
 
 
+from ..enum.bake_colorspace import BakeColorSpace
 from ..constant import LOG
 from ..runtime.baker_setup import BakerExecution, BakerSetup
 from ..enum.output_stage import OutputStage
@@ -50,6 +51,7 @@ class BakerBase(ABC):
     blender_bake_type = "DIFFUSE"
     accumulator_id = "ALPHA_OVER"
     is_custom: bool = False
+    colorspace: BakeColorSpace = BakeColorSpace.NON_COLOR
 
     def poll(self, task: Task) -> bool:
         """Whether this baker can execute this task."""

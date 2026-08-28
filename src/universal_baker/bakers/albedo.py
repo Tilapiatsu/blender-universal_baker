@@ -1,8 +1,13 @@
+from __future__ import annotations
+from ..enum.bake_colorspace import BakeColorSpace
+
 from .base import BakerBase
 from ..runtime.context_bake import BakeContext
 
 
 class Baker(BakerBase):
+    colorspace: BakeColorSpace = BakeColorSpace.COLOR
+
     def prepare_execution(self, target):
         return super().prepare_execution(target)
 

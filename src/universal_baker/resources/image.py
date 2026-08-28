@@ -96,6 +96,7 @@ class ImageResource:
                 is_data=colorspace == "Non-Color",
                 tiled=is_udim,
             )
+            image.colorspace_settings.name = colorspace
         else:
             image.name = name
             image.filepath_raw = str(filepath)

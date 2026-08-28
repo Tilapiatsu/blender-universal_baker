@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import bpy
-from ..constant import SCENE_COLORSPACE
+from ..constant import BAKE_COLORSPACE
 from ..runtime.context_bake import BakeContext
 from ..runtime.visualization_state import SceneVisualizationState
 
@@ -25,9 +25,10 @@ class RendererService:
     @staticmethod
     def set_view_settings():
         view_settings = bpy.context.scene.view_settings
-        view_settings.view_transform = SCENE_COLORSPACE.view_transform
-        view_settings.exposure = SCENE_COLORSPACE.exposure
-        view_settings.gamma = SCENE_COLORSPACE.gamma
+        view_settings.view_transform = BAKE_COLORSPACE.view_transform
+        view_settings.exposure = BAKE_COLORSPACE.exposure
+        view_settings.gamma = BAKE_COLORSPACE.gamma
+        print(view_settings.view_transform)
 
     @staticmethod
     def restore(scene_state: SceneVisualizationState):

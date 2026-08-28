@@ -25,16 +25,10 @@ class DisplayMaterialService:
         links = material.node_tree.links
         nodes.clear()
         output = nodes.new("ShaderNodeOutputMaterial")
-        shader = nodes.new("ShaderNodeBsdfPrincipled")
         texture = nodes.new("ShaderNodeTexImage")
         texture.image = image
 
         links.new(
             texture.outputs["Color"],
-            shader.inputs["Base Color"],
-        )
-
-        links.new(
-            shader.outputs["BSDF"],
             output.inputs["Surface"],
         )

@@ -126,6 +126,7 @@ class ImageServiceBase:
             resource.image_format_settings = image_settings
             resource.is_udim = task.uv_layout.image_layout == ImageLayout.UDIM
             LOG.debug(f"Configure Image to {task.uv_layout.image_layout.value}")
+            print(resource.colorspace)
 
             resource.filepath = task.absolute_filepath
 
@@ -145,6 +146,7 @@ class ImageServiceBase:
                     float_buffer=resource.image_format_settings.float_buffer,
                     tiled=resource.is_udim,
                 )
+                image.colorspace_settings.name = resource.colorspace
 
                 if resource.is_udim:
                     resource.image = image

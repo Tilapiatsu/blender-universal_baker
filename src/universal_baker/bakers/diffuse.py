@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from .base import BakerBase
 
+from ..enum.bake_colorspace import BakeColorSpace
 from ..runtime.context_bake import BakeContext
 from ..services.material import MaterialService
 from ..core.registry_baker import registry_baker
@@ -16,6 +17,7 @@ class DiffuseBaker(BakerBase):
     icon = "TEXTURE"
     blender_bake_type = "DIFFUSE"
     accumulator_id = "ALPHA_OVER"
+    colorspace: BakeColorSpace = BakeColorSpace.COLOR
 
     def execute(self, ctx: BakeContext) -> None:
         return super().execute(ctx)

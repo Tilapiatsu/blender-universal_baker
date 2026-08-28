@@ -29,7 +29,8 @@ class SceneColorSpace:
     gamma: float = 1.0
 
 
-SCENE_COLORSPACE = SceneColorSpace()
+DISPLAY_COLORSPACE = SceneColorSpace()
+BAKE_COLORSPACE = SceneColorSpace()
 
 
 def get_prefs():
