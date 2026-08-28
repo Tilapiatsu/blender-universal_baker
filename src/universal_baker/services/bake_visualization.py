@@ -285,6 +285,8 @@ class BakeVisualizationService:
             )
 
         if isinstance(data, PreviewData):
+            # TODO: To properly preview diffuse, no material override should happen : Otherwise the cooes goes away and
+            # it baked in white. Otherwise, i need to pass the source material to the data.producer.configure_preview_material() method
             material = PreviewMaterialService.get_or_create()
             data.producer.configure_preview_material(material)
 

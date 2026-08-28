@@ -4,6 +4,7 @@ from pathlib import Path
 
 import bpy
 from universal_baker.constant import LOG
+from universal_baker.runtime.settings_image import ColorManagementSettings
 
 from ..resources.image_buffer import ImageBuffer
 from ..runtime.settings_output import OutputSettings
@@ -49,10 +50,11 @@ class ImageCodec:
             bpy.data.images.remove(image)
 
     @classmethod
-    def load(cls, filepath: Path) -> ImageBuffer | None:
+    def load(cls, filepath: Path, colorspace: ColorManagementSettings) -> ImageBuffer | None:
         if filepath.exists():
             LOG.debug(f"Loading {filepath}")
             image = bpy.data.images.load(str(filepath), check_existing=False)
+            image.colorspace_settings.name = colorspace.colorspace
 
             try:
                 return ImageBuffer.from_blender_image(image)
@@ -90,7 +92,6 @@ class ImageCodec:
         image.file_format = output_settings.image.file_format
         settings = image
         settings.colorspace_settings.name = output_settings.color.colorspace
-        image.save_render
 
     @classmethod
     def export_tiles(cls, artifact: OutputArtifact, tiles: TileSet, output_settings: OutputSettings):
@@ -105,7 +106,7 @@ class ImageCodec:
 
         for t in artifact.image.files():
             with LOG.scope(LOG_SCOPE):
-                buffer = cls.load(t.path)
+                buffer = cls.load(t.path, artifact.output_settings.color)
             if buffer is not None:
                 tile_set.add_tile(t.tile, buffer)
             else:

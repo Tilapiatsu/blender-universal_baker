@@ -28,7 +28,6 @@ class RendererService:
         view_settings.view_transform = BAKE_COLORSPACE.view_transform
         view_settings.exposure = BAKE_COLORSPACE.exposure
         view_settings.gamma = BAKE_COLORSPACE.gamma
-        print(view_settings.view_transform)
 
     @staticmethod
     def restore(scene_state: SceneVisualizationState):

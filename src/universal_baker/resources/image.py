@@ -61,8 +61,6 @@ class ImageResource:
 
         image = bpy.data.images[self._image]
 
-        # ISSUE: colorspace of the blender image does not always match the one require in the resource
-        print(image.colorspace_settings.name, self.colorspace)
         return image
 
     @image.setter

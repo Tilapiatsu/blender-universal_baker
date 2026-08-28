@@ -91,7 +91,7 @@ class OutputArtifact:
 
         if image is None:
             LOG.debug(f"Loading Image {self.name}")
-            image = ImageIOService.load(self.path, self.image.is_udim)
+            image = ImageIOService.load(self.path, self.output_settings.color, self.image.is_udim)
 
         return ImageIOService.init_resource(image, self.output_settings)
 

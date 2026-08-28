@@ -39,4 +39,4 @@ class ImageSettings:
 
 @dataclass(slots=True)
 class ColorManagementSettings:
-    colorspace: str = "sRGB"
+    colorspace: str = "Non-Color"

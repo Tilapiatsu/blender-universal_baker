@@ -4,12 +4,12 @@ import bpy
 from enum import Enum, auto
 from abc import ABC
 from abc import abstractmethod
-from contextlib import contextmanager, nullcontext, _GeneratorContextManager
+from contextlib import contextmanager
 
 from typing import TYPE_CHECKING, Any, Generator
 
 
-from ..enum.bake_colorspace import BakeColorSpace
+from ..enum.image_colorspace import ImageColorSpace
 from ..constant import LOG
 from ..runtime.baker_setup import BakerExecution, BakerSetup
 from ..enum.output_stage import OutputStage
@@ -51,7 +51,7 @@ class BakerBase(ABC):
     blender_bake_type = "DIFFUSE"
     accumulator_id = "ALPHA_OVER"
     is_custom: bool = False
-    colorspace: BakeColorSpace = BakeColorSpace.NON_COLOR
+    colorspace: ImageColorSpace = ImageColorSpace.NON_COLOR
 
     def poll(self, task: Task) -> bool:
         """Whether this baker can execute this task."""
@@ -86,6 +86,8 @@ class BakerBase(ABC):
             shader.outputs["BSDF"],
             output.inputs["Surface"],
         )
+
+        output.location.x = shader.location.x + 200
 
     @abstractmethod
     def execute(self, ctx: BakeContext) -> None:

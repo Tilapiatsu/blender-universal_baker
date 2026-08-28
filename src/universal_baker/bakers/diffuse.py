@@ -4,7 +4,7 @@ from .base import BakerBase
 
 from ..enum.bake_colorspace import BakeColorSpace
 from ..runtime.context_bake import BakeContext
-from ..services.material import MaterialService
+from ..enum.image_colorspace import ImageColorSpace
 from ..core.registry_baker import registry_baker
 
 
@@ -17,7 +17,7 @@ class DiffuseBaker(BakerBase):
     icon = "TEXTURE"
     blender_bake_type = "DIFFUSE"
     accumulator_id = "ALPHA_OVER"
-    colorspace: BakeColorSpace = BakeColorSpace.COLOR
+    colorspace: ImageColorSpace = ImageColorSpace.SRGB
 
     def execute(self, ctx: BakeContext) -> None:
         return super().execute(ctx)
@@ -32,12 +32,13 @@ class DiffuseBaker(BakerBase):
         nodes.clear()
 
         output = nodes.new("ShaderNodeOutputMaterial")
-        shader = nodes.new("ShaderNodeBsdfPrincipled")
         diffuse = nodes.new("ShaderNodeBsdfDiffuse")
         links.new(
             diffuse.outputs["BSDF"],
             output.inputs["Surface"],
         )
+
+        output.location.x = diffuse.location.x + 200
 
     def prepare(self, ctx: BakeContext):
         """

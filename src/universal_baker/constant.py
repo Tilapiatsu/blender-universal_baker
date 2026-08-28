@@ -24,7 +24,7 @@ ADDON_PACKAGE = __package__
 
 @dataclass(slots=True, frozen=True)
 class SceneColorSpace:
-    view_transform: str = "Raw"
+    view_transform: str = "Standard"
     exposure: float = 0.0
     gamma: float = 1.0
 
