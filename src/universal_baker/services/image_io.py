@@ -77,7 +77,7 @@ class ImageIOService(ImageServiceBase):
     @classmethod
     def export_tiles(cls, artifact: OutputArtifact, tiles: TileSet) -> None:
         for tile in tiles.keys():
-            filepath = artifact.image.tile_path(tile)
+            artifact.image.tile_path(tile)
 
     @classmethod
     def import_tiles(cls, artifact: OutputArtifact) -> None: ...
@@ -91,6 +91,7 @@ class ImageIOService(ImageServiceBase):
             LOG.debug(f"Loading image : {str(path)}")
             image = bpy.data.images.load(str(path))
             image.colorspace_settings.name = colorspace_settings.colorspace
+            image.use_view_as_render = True
 
             if is_udim:
                 image.source = "TILED"

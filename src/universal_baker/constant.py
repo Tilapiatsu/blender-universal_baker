@@ -24,12 +24,13 @@ ADDON_PACKAGE = __package__
 
 @dataclass(slots=True, frozen=True)
 class SceneColorSpace:
-    view_transform: str = "Standard"
+    view_transform: str = "Raw"
     exposure: float = 0.0
     gamma: float = 1.0
 
 
 DISPLAY_COLORSPACE = SceneColorSpace()
+PREVIEW_COLORSPACE = SceneColorSpace()
 BAKE_COLORSPACE = SceneColorSpace()
 
 

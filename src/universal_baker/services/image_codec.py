@@ -45,6 +45,7 @@ class ImageCodec:
 
             LOG.debug(f"Saving {filepath}")
             image.save()
+            # image.save_render(image.filepath_raw, scene=bpy.context.scene)
 
         finally:
             bpy.data.images.remove(image)
@@ -92,6 +93,7 @@ class ImageCodec:
         image.file_format = output_settings.image.file_format
         settings = image
         settings.colorspace_settings.name = output_settings.color.colorspace
+        # settings.save_as_render = True
 
     @classmethod
     def export_tiles(cls, artifact: OutputArtifact, tiles: TileSet, output_settings: OutputSettings):

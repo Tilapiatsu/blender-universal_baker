@@ -78,7 +78,9 @@ class ImageServiceBase:
             image = resource.image
             image.filepath_raw = str(resource.filepath)
             image.file_format = resource.image_format_settings.file_format
+
             image.save()
+            # image.save_render(image.filepath_raw, scene=bpy.context.scene)
             image.pack()
 
             resource.mark_saved()

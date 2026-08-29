@@ -32,3 +32,5 @@ class DisplayMaterialService:
             texture.outputs["Color"],
             output.inputs["Surface"],
         )
+
+        output.location.x = texture.location.x + 200

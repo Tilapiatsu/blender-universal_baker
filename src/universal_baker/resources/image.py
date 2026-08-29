@@ -95,11 +95,13 @@ class ImageResource:
                 tiled=is_udim,
             )
             image.colorspace_settings.name = colorspace
+            image.use_view_as_render = True
         else:
             image.name = name
             image.filepath_raw = str(filepath)
             image.colorspace_settings.name = colorspace
             image.alpha_mode = "STRAIGHT" if alpha else "NONE"
+            image.use_view_as_render = True
 
         return cls(
             _image=name,

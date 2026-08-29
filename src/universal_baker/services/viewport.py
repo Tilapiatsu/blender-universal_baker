@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import bpy
 
-from ..constant import DISPLAY_COLORSPACE
+from ..constant import DISPLAY_COLORSPACE, PREVIEW_COLORSPACE
 from ..runtime.runtime_visualization import VisualizationRuntime
 
 from ..runtime.visualization_state import (
@@ -61,9 +61,9 @@ class ViewportService:
     @staticmethod
     def set_rendered():
         view_settings = bpy.context.scene.view_settings
-        view_settings.view_transform = DISPLAY_COLORSPACE.view_transform
-        view_settings.exposure = DISPLAY_COLORSPACE.exposure
-        view_settings.gamma = DISPLAY_COLORSPACE.gamma
+        view_settings.view_transform = PREVIEW_COLORSPACE.view_transform
+        view_settings.exposure = PREVIEW_COLORSPACE.exposure
+        view_settings.gamma = PREVIEW_COLORSPACE.gamma
         for window in bpy.context.window_manager.windows:
             for area in window.screen.areas:
                 if area.type != "VIEW_3D":
@@ -71,8 +71,19 @@ class ViewportService:
 
                 area.spaces.active.shading.type = "RENDERED"
 
-    @staticmethod
-    def set_texture():
+    @classmethod
+    def set_texture(cls):
+        # view_settings = bpy.context.scene.view_settings
+        # view_settings.view_transform = DISPLAY_COLORSPACE.view_transform
+        # view_settings.exposure = DISPLAY_COLORSPACE.exposure
+        # view_settings.gamma = DISPLAY_COLORSPACE.gamma
+        # for window in bpy.context.window_manager.windows:
+        #     for area in window.screen.areas:
+        #         if area.type != "VIEW_3D":
+        #             continue
+        #
+        #         area.spaces.active.shading.type = "RENDERED"
+
         for window in bpy.context.window_manager.windows:
             for area in window.screen.areas:
                 if area.type != "VIEW_3D":
