@@ -39,12 +39,14 @@ class CustomBaker(BakerBase):
     def prepare_execution(self, target: bpy.types.Object) -> Generator[BakerExecution, Any, Any]:
         asset = BakerAsset(filepath=self.asset_path)
 
+        hide_render = target.hide_render
         setup = CustomBakerSetupService.prepare(asset=asset, target=target)
 
         try:
             yield BakerExecution(target=setup.target, setup=setup)
 
         finally:
+            target.hide_render = hide_render
             setup.cleanup()
 
     def apply_parameters(self, ctx: BakeContext):

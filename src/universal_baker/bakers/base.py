@@ -64,6 +64,8 @@ class BakerBase(ABC):
         material_setup = BakeMaterialService.prepare(objects=[target])
         baker_setup = BakerSetup(material_setup=material_setup)
 
+        hide_render = target.hide_render
+        target.hide_render = False
         try:
             yield BakerExecution(
                 target=target,
@@ -71,6 +73,7 @@ class BakerBase(ABC):
             )
 
         finally:
+            target.hide_render = hide_render
             material_setup.cleanup()
 
     @abstractmethod

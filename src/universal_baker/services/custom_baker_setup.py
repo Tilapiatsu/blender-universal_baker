@@ -26,6 +26,10 @@ class CustomBakerSetupService:
             try:
                 bake_object = cls._duplicate_target(target)
 
+                # NOTE: Important to hide from rendering the base object. because it could pollute the baking for some
+                # bakers ( AO, Diffuse ...)
+                target.hide_render = True
+
                 setup.target = bake_object
                 setup.temporary_objects.append(bake_object)
 

@@ -45,6 +45,7 @@ class BakeExecutorInternal(TaskExecutor):
                     task=task,
                     baker=registry_baker[task.baker_id],
                 )
+
                 # NOTE: Prepare the target in case of CustomBaker
                 with task.producer.prepare_execution(ctx.target) as bake_target:
                     ctx.target = bake_target.target

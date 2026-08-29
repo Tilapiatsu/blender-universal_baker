@@ -45,7 +45,7 @@ class UBK_Baker(PropertyGroup):
     images: CollectionProperty(type=UBK_BakerOutput)
 
     accumulated_image: PointerProperty(type=bpy.types.Image)
-    accumulated_uuid: StringProperty()
+    accumulated_producer_uuid: StringProperty()
 
     override_settings: BoolProperty(
         name="Override Settings",
@@ -70,6 +70,16 @@ class UBK_Baker(PropertyGroup):
     @property
     def is_custom(self) -> bool:
         return self.baker.startswith("CUSTOM")
+
+    @property
+    def accumulated_uuid(self) -> str:
+        if len(self.accumulated_producer_uuid) > 0:
+            return self.accumulated_producer_uuid
+        return self.uuid
+
+    @accumulated_uuid.setter
+    def accumulated_uuid(self, uuid: str) -> None:
+        self.accumulated_producer_uuid = uuid
 
     # @property
     # def accumulated_image(self) -> bpy.types.Image:

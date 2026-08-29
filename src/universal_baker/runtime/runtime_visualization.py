@@ -4,7 +4,6 @@ import bpy
 
 from contextlib import contextmanager
 
-
 from ..properties.baker_parameter import UBK_BakerParameterValue
 
 from ..constant import LOG
@@ -349,14 +348,14 @@ class VisualizationRuntime:
                 if parameter is not None:
                     if (
                         bpy.context.scene.ubk_project.visualization.is_dragging
-                        and parameter.soft_min
-                        and parameter.soft_max
+                        and parameter.soft_min is not None
+                        and parameter.soft_max is not None
                     ):
                         self.clamp_ui_prop(ui_prop, parameter.parameter_type, parameter.soft_min, parameter.soft_max)
                     elif (
                         not bpy.context.scene.ubk_project.visualization.is_dragging
-                        and parameter.min_value
-                        and parameter.max_value
+                        and parameter.min_value is not None
+                        and parameter.max_value is not None
                     ):
                         self.clamp_ui_prop(ui_prop, parameter.parameter_type, parameter.min_value, parameter.max_value)
 

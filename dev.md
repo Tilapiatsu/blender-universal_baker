@@ -14,6 +14,7 @@
   - [] Cage Shader
   - [] Cage distance painting
 - [] add ability to load a scene as background before baker ( usefull for AO )
+- [] add featuure to apply background color per baker
 - [] add bake from multires
 - [] Bake Skew Correction map
 - [] Bake Decal ?

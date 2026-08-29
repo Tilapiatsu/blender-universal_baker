@@ -33,4 +33,5 @@ class DisplayMaterialService:
             output.inputs["Surface"],
         )
 
-        output.location.x = texture.location.x + 200
+        texture.image.colorspace_settings.name = "sRGB"
+        output.location.x = texture.location.x + 300

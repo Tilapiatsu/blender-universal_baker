@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import bpy
 
-from ..constant import DISPLAY_COLORSPACE, PREVIEW_COLORSPACE
+from ..constant import PREVIEW_COLORSPACE
 from ..runtime.runtime_visualization import VisualizationRuntime
 
 from ..runtime.visualization_state import (

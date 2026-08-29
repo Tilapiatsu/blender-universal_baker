@@ -299,15 +299,14 @@ class BakeVisualizationService:
             # TODO: Investigate slight contrast difference beetween the preview and display of baked images
             # TODO: Investigate why the display doesn't work when the baked image change its colorspace
             material = DisplayMaterialService.get_or_create()
+
             image = cls._get_image(data.bake_group_uuid, data.accumulated_uuid)
 
             if image is None or image.image is None:
                 return
 
-            DisplayMaterialService.set_image(
-                material,
-                image.image,
-            )
+            DisplayMaterialService.set_image(material, image.image)
+
             cls._runtime.set_active_image_handle(image)
             cls._runtime.set_active_producer(data.producer)
             cls._runtime.set_material_snapshots(MaterialOverrideService.apply(data.objects, material))
