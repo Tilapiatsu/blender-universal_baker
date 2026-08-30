@@ -52,6 +52,7 @@ class BakerBase(ABC):
     accumulator_id = "ALPHA_OVER"
     is_custom: bool = False
     colorspace: ImageColorSpace = ImageColorSpace.NON_COLOR
+    clear_preview_material: bool = True
 
     def poll(self, task: Task) -> bool:
         """Whether this baker can execute this task."""

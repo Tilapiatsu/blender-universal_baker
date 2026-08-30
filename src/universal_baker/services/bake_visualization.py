@@ -65,7 +65,13 @@ def update_visualization(self, context):
                 case _:
                     return
 
-            BakeVisualizationService.refresh(data)
+            if not BakeVisualizationService.refresh(data):
+                viz.enabled_display = False
+                viz.enabled_preview = False
+                viz.enabled_preview = False
+                viz.mode = "NONE"
+
+            return
 
         elif not viz.enabled_preview and not viz.enabled_display:
             viz.mode = "NONE"
@@ -246,17 +252,17 @@ class BakeVisualizationService:
     # ---------------------------------------------------------
 
     @classmethod
-    def refresh(cls, data: DisplayData | PreviewData):
+    def refresh(cls, data: DisplayData | PreviewData) -> bool:
 
         if not cls.is_active():
-            return
+            return False
 
         LOG.debug("Refresh Visualization")
 
         match cls.mode():
             case VisualizationMode.PREVIEW:
                 if not isinstance(data, PreviewData):
-                    return
+                    return False
 
                 cls.disable()
 
@@ -264,11 +270,16 @@ class BakeVisualizationService:
 
             case VisualizationMode.DISPLAY:
                 if not isinstance(data, DisplayData):
-                    return
+                    return False
 
                 cls.disable()
 
+                if cls._get_image_handle(data.bake_group_uuid, data.bake_group_uuid) is None:
+                    return False
+
                 cls.enable_display(data)
+
+        return True
 
     # ------------------------------------------------------------------
     # Internal
@@ -311,19 +322,18 @@ class BakeVisualizationService:
             )
 
         if isinstance(data, PreviewData):
-            # TODO: To properly preview diffuse, no material override should happen : Otherwise the cooes goes away and
-            # it baked in white. Otherwise, i need to pass the source material to the data.producer.configure_preview_material() method
-            material = PreviewMaterialService.get_or_create()
-            data.producer.configure_preview_material(material)
+            if data.producer.clear_preview_material:
+                material = PreviewMaterialService.get_or_create()
+                data.producer.configure_preview_material(material)
+                cls._runtime.set_material_snapshots(MaterialOverrideService.apply(bpy.context.scene.objects, material))
 
             cls._runtime.set_active_producer(data.producer)
-            cls._runtime.set_material_snapshots(MaterialOverrideService.apply(bpy.context.scene.objects, material))
+
             if data.producer.is_custom:
                 cls._runtime.refresh_preview_parameters(force=True)
 
         else:
             # TODO: Investigate slight contrast difference beetween the preview and display of baked images
-            # TODO: Investigate why the display doesn't work when the baked image change its colorspace
             material = DisplayMaterialService.get_or_create()
 
             handle = cls._get_image_handle(data.bake_group_uuid, data.accumulated_uuid)

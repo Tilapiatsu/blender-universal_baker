@@ -204,8 +204,13 @@ class BakeMaterialService:
             materials.append(material)
 
     @classmethod
-    def _create_bake_material(cls, obj: bpy.types.Object, slot: int) -> bpy.types.Material:
-        name = cls.bake_material_name(obj, slot)
+    def _create_bake_material(
+        cls,
+        obj: bpy.types.Object,
+        slot: int,
+        material_name: str | None = None,
+    ) -> bpy.types.Material:
+        name = cls.bake_material_name(obj, slot, material_name)
 
         if name in bpy.data.materials:
             LOG.debug(f"Reuse Existing Bake Material {name}")

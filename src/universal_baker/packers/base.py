@@ -29,6 +29,7 @@ class PackerBase(ABC):
     description: str = ""
     icon: str = "NODE_COMPOSITING"
     is_custom: bool = False
+    clear_preview_material: bool = True
 
     def poll(self, task: Task) -> bool:
         """Whether this packer can execute this task."""

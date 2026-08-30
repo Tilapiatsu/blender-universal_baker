@@ -18,6 +18,7 @@ class DiffuseBaker(BakerBase):
     blender_bake_type = "DIFFUSE"
     accumulator_id = "ALPHA_OVER"
     colorspace: ImageColorSpace = ImageColorSpace.SRGB
+    clear_preview_material: bool = False
 
     def execute(self, ctx: BakeContext) -> None:
         return super().execute(ctx)
@@ -25,20 +26,7 @@ class DiffuseBaker(BakerBase):
     def prepare_execution(self, target):
         return super().prepare_execution(target)
 
-    def configure_preview_material(self, material):
-        material.use_nodes = True
-        nodes = material.node_tree.nodes
-        links = material.node_tree.links
-        nodes.clear()
-
-        output = nodes.new("ShaderNodeOutputMaterial")
-        diffuse = nodes.new("ShaderNodeBsdfDiffuse")
-        links.new(
-            diffuse.outputs["BSDF"],
-            output.inputs["Surface"],
-        )
-
-        output.location.x = diffuse.location.x + 200
+    def configure_preview_material(self, material): ...
 
     def prepare(self, ctx: BakeContext):
         """

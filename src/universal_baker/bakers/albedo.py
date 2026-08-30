@@ -7,6 +7,7 @@ from ..runtime.context_bake import BakeContext
 
 class Baker(BakerBase):
     colorspace: ImageColorSpace = ImageColorSpace.SRGB
+    clear_preview_material: bool = False
 
     def prepare_execution(self, target):
         return super().prepare_execution(target)
@@ -17,9 +18,7 @@ class Baker(BakerBase):
         """
         return super().prepare(ctx)
 
-    def configure_preview_material(self, material):
-        # TODO: Need to implement the proper preview
-        super().configure_preview_material(material)
+    def configure_preview_material(self, material): ...
 
     def bake(self, ctx: BakeContext):
         """Execute the bake."""
