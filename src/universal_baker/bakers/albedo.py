@@ -4,10 +4,19 @@ from .base import BakerBase
 from ..enum.image_colorspace import ImageColorSpace
 from ..runtime.context_bake import BakeContext
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..parameter.metadata import ParameterMetadata
+
 
 class Baker(BakerBase):
     colorspace: ImageColorSpace = ImageColorSpace.SRGB
     clear_preview_material: bool = False
+
+    @property
+    def parameters(self) -> tuple[ParameterMetadata, ...]:
+        return super().parameters
 
     def prepare_execution(self, target):
         return super().prepare_execution(target)

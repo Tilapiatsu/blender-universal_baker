@@ -6,9 +6,9 @@ from pathlib import Path
 
 import bpy
 from .definition import CustomBakerDefinition
-from ..constant import LOG
+from ...constant import LOG
 
-from .metadata import (
+from ..metadata import (
     BindingMetadata,
     CustomBakerMetadata,
     MetadataNotFoundError,
@@ -19,7 +19,7 @@ from .metadata import (
     CURRENT_METADATA_VERSION,
 )
 
-from ..parameter.parameter import BakerParameterOption
+from ..parameter import BakerParameterOption
 
 
 class MetadataLoaderError(RuntimeError):

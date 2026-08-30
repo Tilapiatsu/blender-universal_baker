@@ -2,14 +2,16 @@ from __future__ import annotations
 
 from typing import Callable
 
+from universal_baker.parameter.binding_scene import ScenePropertyBinding
+
 from .metadata import (
     BindingMetadata,
 )
 
-from ..parameter.binding import ParameterBinding
-from ..parameter.binding_material import MaterialSocketBinding
-from ..parameter.binding_modifier import ModifierPropertyBinding
-from ..parameter.binding_geometry_node import GeometryNodeInputBinding
+from .binding import ParameterBinding
+from .binding_material import MaterialSocketBinding
+from .binding_modifier import ModifierPropertyBinding
+from .binding_geometry_node import GeometryNodeInputBinding
 
 
 class BindingFactoryError(RuntimeError):
@@ -25,6 +27,7 @@ class BindingFactory:
             "MATERIAL_SOCKET": self._create_material_socket,
             "MODIFIER_PROPERTY": self._create_modifier_property,
             "GEOMETRY_NODE_INPUT": self._create_geometry_node_input,
+            "SCENE_PROPERTY": self._create_scene_input,
         }
 
     # ------------------------------------------------------------------
@@ -127,24 +130,53 @@ class BindingFactory:
     # ------------------------------------------------------------------
 
     def _create_geometry_node_input(self, parameter_id: str, metadata: BindingMetadata) -> ParameterBinding:
-        self._require(
+        modifier = self._require(
             metadata.modifier,
             "modifier",
             parameter_id,
             "GEOMETRY_NODE_INPUT",
         )
 
-        self._require(
+        socket = self._require(
             metadata.socket,
             "socket",
             parameter_id,
             "GEOMETRY_NODE_INPUT",
         )
 
+        node = self._require(
+            metadata.node,
+            "node",
+            parameter_id,
+            "GEOMETRY_NODE_INPUT",
+        )
+
         return GeometryNodeInputBinding(
             parameter_id=parameter_id,
-            modifier_name=metadata.modifier,
-            socket_identifier=metadata.socket,
+            node_name=node,
+            modifier_name=modifier,
+            socket_identifier=socket,
+        )
+
+    def _create_scene_input(self, parameter_id: str, metadata: BindingMetadata) -> ParameterBinding:
+        scene = self._require(
+            metadata.scene,
+            "scene",
+            parameter_id,
+            "SCENE_PROPERTY",
+        )
+
+        property = self._require(
+            metadata.property,
+            "property",
+            parameter_id,
+            "SCENE_PROPERTY",
+        )
+
+        return ScenePropertyBinding(
+            parameter_id=parameter_id,
+            scene_name=scene,
+            property_path=property,
         )
 
     # ------------------------------------------------------------------

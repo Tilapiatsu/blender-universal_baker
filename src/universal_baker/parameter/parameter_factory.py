@@ -6,7 +6,7 @@ from .metadata import (
     ParameterMetadata,
 )
 
-from ..parameter.parameter import (
+from .parameter import (
     BakerParameter,
     BakerParameterType,
     BakerParameterOption,

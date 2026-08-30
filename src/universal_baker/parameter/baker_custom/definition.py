@@ -4,13 +4,13 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Iterable
 
-from .binding_factory import BindingFactory
-from .parameter_factory import ParameterFactory
+from ..binding_factory import BindingFactory
+from ..parameter_factory import ParameterFactory
 
-from .metadata import CustomBakerMetadata
+from ..metadata import CustomBakerMetadata
 
-from ..parameter.parameter import BakerParameter
-from ..parameter.binding import ParameterBinding
+from ..parameter import BakerParameter
+from ..binding import ParameterBinding
 
 
 class CustomBakerDefinitionError(RuntimeError):

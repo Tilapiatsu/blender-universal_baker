@@ -22,6 +22,7 @@ from ..services.bake_material import BakeMaterialService
 if TYPE_CHECKING:
     from ..runtime.context_bake import BakeContext
     from ..runtime.task import Task
+    from ..parameter.metadata import ParameterMetadata
 
 LOG_SCOPE = "Baking"
 
@@ -60,6 +61,11 @@ class BakerBase(ABC):
     def poll(self, task: Task) -> bool:
         """Whether this baker can execute this task."""
         return True
+
+    @property
+    def parameters(self) -> tuple[ParameterMetadata, ...]:
+        parameters: tuple[ParameterMetadata, ...] = ()
+        return parameters
 
     @abstractmethod
     @contextmanager

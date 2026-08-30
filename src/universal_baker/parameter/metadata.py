@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any
-from ..parameter.parameter import BakerParameterOption
+from .parameter import BakerParameterOption
 
 
 METADATA_TEXT_NAME = "UBK_BAKER_METADATA"
@@ -44,6 +44,9 @@ class BindingMetadata:
 
     # Modifier property binding
     modifier: str | None = None
+
+    # Scene property Binding
+    scene: str | None = None
     property: str | None = None
 
     # Additional binding-specific information can be kept
@@ -80,6 +83,21 @@ class ParameterMetadata:
     visible: bool = True
     options: tuple[BakerParameterOption, ...] = ()
     bindings: tuple[BindingMetadata, ...] = ()
+
+
+@dataclass(frozen=True)
+class LocalBakerMetadata:
+    """
+    Complete metadata description of a Local Baker asset.
+    """
+
+    id: str
+    name: str
+    description: str = ""
+    parameters: tuple[ParameterMetadata, ...] = ()
+
+    # Allows us to add non-breaking metadata later.
+    extra: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterator
 
-from ..custom_bakers.definition import CustomBakerDefinition
+from ..parameter.baker_custom.definition import CustomBakerDefinition
 
 from dataclasses import dataclass
 from pathlib import Path

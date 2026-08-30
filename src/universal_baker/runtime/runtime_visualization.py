@@ -10,7 +10,7 @@ from ..constant import LOG
 from ..enum.visualization import VisualizationMode
 from .image_handle import ImageHandle
 from ..core.registry_definition import registry_definition
-from ..custom_bakers.parameter_applier import ParameterApplier
+from ..parameter.parameter_applier import ParameterApplier
 from ..parameter.parameter_context import ParameterContext
 from ..parameter.parameter import BakerParameterType
 

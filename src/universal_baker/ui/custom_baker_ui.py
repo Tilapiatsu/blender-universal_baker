@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import bpy
 
-from ..custom_bakers.definition import CustomBakerDefinition
+from ..parameter.baker_custom.definition import CustomBakerDefinition
 from ..properties.custom_baker import UBK_CustomBaker
 from ..properties.baker_parameter import UBK_BakerParameterValue
 from ..services.parameter_service import ParameterService

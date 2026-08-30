@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+import bpy
+
 from .base import BakerBase
 
-from ..enum.bake_colorspace import BakeColorSpace
 from ..runtime.context_bake import BakeContext
 from ..enum.image_colorspace import ImageColorSpace
 from ..core.registry_baker import registry_baker
+
+from ..parameter.metadata import ParameterMetadata
+from ..parameter.metadata import BindingMetadata
 
 
 class DiffuseBaker(BakerBase):
@@ -19,6 +23,75 @@ class DiffuseBaker(BakerBase):
     accumulator_id = "ALPHA_OVER"
     colorspace: ImageColorSpace = ImageColorSpace.SRGB
     clear_preview_material: bool = False
+
+    @property
+    def parameters(self) -> tuple[ParameterMetadata, ...]:
+        parameters: tuple[ParameterMetadata, ...] = ()
+
+        b: tuple[BindingMetadata, ...] = (
+            BindingMetadata(
+                binding_type="SCENE_PROPERTY",
+                scene=bpy.context.scene.name,
+                property=".render.bake.use_pass_direct",
+            ),
+        )
+        p = ParameterMetadata(
+            identifier="contribution_direct",
+            name="Direct",
+            default=True,
+            description="Add Direct Lighting Contribution",
+            type="BOOL",
+            category="Contribution",
+            order=0,
+            visible=True,
+            bindings=b,
+        )
+
+        parameters += (p,)
+
+        b: tuple[BindingMetadata, ...] = (
+            BindingMetadata(
+                binding_type="SCENE_PROPERTY",
+                scene=bpy.context.scene.name,
+                property=".render.bake.use_pass_indirect",
+            ),
+        )
+        p = ParameterMetadata(
+            identifier="contribution_indirect",
+            name="Indirect",
+            default=True,
+            description="Add Indirect Lighting Contribution",
+            type="BOOL",
+            category="Contribution",
+            order=1,
+            visible=True,
+            bindings=b,
+        )
+
+        parameters += (p,)
+
+        b: tuple[BindingMetadata, ...] = (
+            BindingMetadata(
+                binding_type="SCENE_PROPERTY",
+                scene=bpy.context.scene.name,
+                property=".render.bake.use_pass_color",
+            ),
+        )
+        p = ParameterMetadata(
+            identifier="contribution_color",
+            name="Color",
+            default=True,
+            description="Color the pass",
+            type="BOOL",
+            category="Contribution",
+            order=2,
+            visible=True,
+            bindings=b,
+        )
+
+        parameters += (p,)
+
+        return parameters
 
     def execute(self, ctx: BakeContext) -> None:
         return super().execute(ctx)

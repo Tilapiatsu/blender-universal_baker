@@ -2,10 +2,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from ..parameter.parameter_context import ParameterContext
 
-from .definition import CustomBakerDefinition
-from ..parameter.parameter import BakerParameterType, ParameterSnapshot
+from .baker_custom.definition import CustomBakerDefinition
+from .baker_local.definition import LocalBakerDefinition
+from .parameter import ParameterSnapshot
+from .parameter_context import ParameterContext
 
 
 class ParameterApplyError(RuntimeError):
@@ -45,7 +46,7 @@ class ParameterApplier:
     @classmethod
     def apply(
         cls,
-        definition: CustomBakerDefinition,
+        definition: CustomBakerDefinition | LocalBakerDefinition,
         snapshot: ParameterSnapshot,
         context: ParameterContext,
     ) -> None:

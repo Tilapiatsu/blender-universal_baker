@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
-from dataclasses import field
 from pathlib import Path
 from typing import Any, Generator
 import bpy
 
-from ..custom_bakers.parameter_applier import ParameterApplier
-from ..custom_bakers.metadata_loader import MetadataLoader
+from ..parameter.parameter_applier import ParameterApplier
+from ..parameter.baker_custom.metadata_loader import MetadataLoader
 from ..core.registry_definition import registry_definition
 
 from ..parameter.parameter_context import ParameterContext
@@ -22,6 +21,11 @@ from ..services.custom_baker_setup import CustomBakerSetupService
 from ..services.parameter_service import ParameterService
 from ..constant import LOG, get_prefs
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..parameter.metadata import ParameterMetadata
+
 
 class CustomBaker(BakerBase):
     """Custom bake defined in an external blend file."""
@@ -34,6 +38,10 @@ class CustomBaker(BakerBase):
     accumulator_id = "ALPHA_OVER"
     asset_path: Path
     is_custom: bool = True
+
+    @property
+    def parameters(self) -> tuple[ParameterMetadata, ...]:
+        return super().parameters
 
     @contextmanager
     def prepare_execution(self, target: bpy.types.Object) -> Generator[BakerExecution, Any, Any]:

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, TypeAlias
 
-from ..custom_bakers.definition import CustomBakerDefinition
+from ..parameter.baker_custom.definition import CustomBakerDefinition
 from ..parameter.parameter import BakerParameter, BakerParameterType, ParameterSnapshot
 from ..properties.custom_baker import UBK_CustomBaker
 from ..properties.baker_parameter import UBK_BakerParameterValue
