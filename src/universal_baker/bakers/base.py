@@ -47,12 +47,15 @@ class BakerBase(ABC):
     name: str = ""
     description: str = ""
     icon: str = "RENDER_STILL"
-    color_type: BakerColorType = BakerColorType.COLOR
     blender_bake_type = "DIFFUSE"
     accumulator_id = "ALPHA_OVER"
     is_custom: bool = False
-    colorspace: ImageColorSpace = ImageColorSpace.NON_COLOR
     clear_preview_material: bool = True
+    # TODO: Need to use color_type and colorspace for baking and displaying baked images
+    # Need to expose view transform to bake to -> Diffuse need to use AGX or Aces for nicer result, whereas curvature,
+    # occlusion should maybe use Raw because it is just data, and shouldn't be transformed
+    color_type: BakerColorType = BakerColorType.COLOR
+    colorspace: ImageColorSpace = ImageColorSpace.NON_COLOR
 
     def poll(self, task: Task) -> bool:
         """Whether this baker can execute this task."""
