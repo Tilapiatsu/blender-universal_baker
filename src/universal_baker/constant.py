@@ -1,12 +1,12 @@
 import bpy
 
-from dataclasses import dataclass
 from .logger import Logger
 
 from .logger.severity import Severity
 from .logger.sinks.console import ConsoleSink
 from .logger.middleware.statistics import StatisticsMiddleware
 from .logger_bake_middleware.bake_summary import BakeSummaryMiddleware
+from .resources.scene_view_transform import SceneViewTransform
 
 LOG = Logger("Universal Baker")
 LOG.dispatcher.add_sink(ConsoleSink(level=Severity.DEBUG))
@@ -22,16 +22,9 @@ SAFE_CHR = "_"
 ADDON_PACKAGE = __package__
 
 
-@dataclass(slots=True, frozen=True)
-class SceneColorSpace:
-    view_transform: str = "Raw"
-    exposure: float = 0.0
-    gamma: float = 1.0
-
-
-DISPLAY_COLORSPACE = SceneColorSpace()
-PREVIEW_COLORSPACE = SceneColorSpace()
-BAKE_COLORSPACE = SceneColorSpace()
+DISPLAY_VIEW_TRANSFORM = SceneViewTransform()
+PREVIEW_VIEW_TRANSFORM = SceneViewTransform()
+BAKE_VIEW_TRANSFORM = SceneViewTransform()
 
 
 def get_prefs():

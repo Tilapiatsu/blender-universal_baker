@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import bpy
 
-from ..constant import PREVIEW_COLORSPACE
+from ..constant import PREVIEW_VIEW_TRANSFORM
 from ..runtime.runtime_visualization import VisualizationRuntime
 
 from ..runtime.visualization_state import (
@@ -61,9 +61,9 @@ class ViewportService:
     @staticmethod
     def set_rendered():
         view_settings = bpy.context.scene.view_settings
-        view_settings.view_transform = PREVIEW_COLORSPACE.view_transform
-        view_settings.exposure = PREVIEW_COLORSPACE.exposure
-        view_settings.gamma = PREVIEW_COLORSPACE.gamma
+        view_settings.view_transform = PREVIEW_VIEW_TRANSFORM.view_transform
+        view_settings.exposure = PREVIEW_VIEW_TRANSFORM.exposure
+        view_settings.gamma = PREVIEW_VIEW_TRANSFORM.gamma
         for window in bpy.context.window_manager.windows:
             for area in window.screen.areas:
                 if area.type != "VIEW_3D":

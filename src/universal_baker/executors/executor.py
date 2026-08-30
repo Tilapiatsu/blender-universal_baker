@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Callable
 
 import bpy
+from universal_baker.runtime.task_bake import BakeTask
 
 from ..constant import LOG
 from ..runtime.context import ExecutionContext
@@ -11,6 +12,7 @@ from ..enum.execution import Execution
 from ..runtime.job import Job
 from ..core.registry_executor import registry_executor
 from ..core.registry_execution import registry_execution
+from .execution_target import ExecutionTarget
 
 
 class Executor:
@@ -47,31 +49,38 @@ class Executor:
             execution = registry_execution[self.execution]
 
             try:
-                self.before_job(session)
-
-                for task in job.tasks:
-                    # Filtering tasks by types
-                    if type(task).__name__ not in self.task_type_names:
-                        continue
-
-                    if self._cancel_requested:
-                        session.cancel()
-                        break
-
-                    executor = registry_executor[task.id]
-
-                    executor.execute_task(
-                        session=session,
-                        execution=execution,
-                        task=task,
-                    )
-
-                self.after_job(session)
+                if BakeTask in self.task_types:
+                    with session.runtime.visualization.suspend():
+                        self.exectue_tasks(session, execution, job)
+                else:
+                    self.exectue_tasks(session, execution, job)
 
             finally:
                 self.finish(session, context, job)
 
             return session
+
+    def exectue_tasks(self, session: ExecutionSession, execution: ExecutionTarget, job: Job):
+        self.before_job(session)
+
+        for task in job.tasks:
+            # Filtering tasks by types
+            if type(task).__name__ not in self.task_type_names:
+                continue
+
+            if self._cancel_requested:
+                session.cancel()
+                break
+
+            executor = registry_executor[task.id]
+
+            executor.execute_task(
+                session=session,
+                execution=execution,
+                task=task,
+            )
+
+        self.after_job(session)
 
     def finish(self, session: ExecutionSession, context: bpy.types.Context, job: Job):
         session.cleanup()

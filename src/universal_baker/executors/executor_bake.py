@@ -36,24 +36,21 @@ class BakeExecutorInternal(TaskExecutor):
                 scope_state=ScopeState.ENTER,
                 category=EventCategory.MASK,
             )
-            # TODO: Need to optimize : The visualization is suspended before each bakes and restored after each bake
-            # wich is happening for each objects of the bake group. It would be more logical to do this suspend/Restore at the begining and at the end of the job only if a bake is present in the job
-            # NOTE: Temporarly disable preview or display
-            with session.runtime.visualization.suspend():
-                ctx = BakeContext(
+
+            ctx = BakeContext(
+                session=session,
+                task=task,
+                baker=registry_baker[task.baker_id],
+            )
+
+            # NOTE: Prepare the target in case of CustomBaker
+            with task.producer.prepare_execution(ctx.target) as bake_target:
+                ctx.target = bake_target.target
+                execution.execute(
                     session=session,
                     task=task,
-                    baker=registry_baker[task.baker_id],
+                    context=ctx,
                 )
-
-                # NOTE: Prepare the target in case of CustomBaker
-                with task.producer.prepare_execution(ctx.target) as bake_target:
-                    ctx.target = bake_target.target
-                    execution.execute(
-                        session=session,
-                        task=task,
-                        context=ctx,
-                    )
 
     def before_job(self, session: ExecutionSession) -> None:
         """

@@ -286,6 +286,7 @@ class VisualizationRuntime:
 
         try:
             if suspension.was_enabled:
+                LOG.debug("Suspend Visualization")
                 self.disable()
 
             yield
