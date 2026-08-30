@@ -82,7 +82,7 @@ class BakeTask(Task):
         file_output = OutputResolver.resolve(
             self.output_context,
             self.uv_layout.image_layout,
-            self.object_name,
+            self.object_name if self.has_multiple_targets else None,
             "object_buffers" if self.has_multiple_targets else None,
         )
 

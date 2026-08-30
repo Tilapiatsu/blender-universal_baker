@@ -80,6 +80,7 @@ def update_visualization(self, context):
             producer = registry_baker[baker.baker]
 
             data = PreviewData(producer, bake_group.uuid, baker.uuid)
+
             BakeVisualizationService.enable_preview(data)
 
         elif viz.enabled_display and viz.mode != "DISPLAY":
