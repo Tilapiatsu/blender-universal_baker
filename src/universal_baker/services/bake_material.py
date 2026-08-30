@@ -77,11 +77,12 @@ class BakeMaterialSetup:
             except (ReferenceError, AttributeError):
                 continue
 
-            materials.clear()
-
-            for material in assignment.materials:
+            for index, material in enumerate(assignment.materials):
                 LOG.debug(f"Restoring Material: {material.name if material is not None else 'EMPTY'}")
-                materials.append(material)
+                if material == None:
+                    obj.data.materials.clear()
+                    continue
+                obj.material_slots[index].material = material
 
         self._restored = True
 
@@ -196,12 +197,12 @@ class BakeMaterialService:
             temporary_materials.append(temporary)
             setup.temporary_materials.append(temporary)
 
-        materials = obj.data.materials
-        materials.clear()
+        if len(obj.material_slots) == 0:
+            obj.data.materials.append(None)
 
-        for material in temporary_materials:
+        for index, material in enumerate(temporary_materials):
             LOG.debug(f"Assign Temporary Material {material.name} to {obj.name}")
-            materials.append(material)
+            obj.material_slots[index].material = material
 
     @classmethod
     def _create_bake_material(
