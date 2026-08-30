@@ -7,7 +7,7 @@ import bpy
 from ..constant import LOG
 
 from ..runtime.runtime_visualization import VisualizationRuntime
-
+from ..runtime.image_handle import ImageHandle
 from ..enum.visualization import VisualizationMode
 from .viewport import ViewportService
 from .preview_material import PreviewMaterialService
@@ -81,7 +81,6 @@ def update_visualization(self, context):
 
             data = PreviewData(producer, bake_group.uuid, baker.uuid)
             BakeVisualizationService.enable_preview(data)
-            viz.refreshing = False
 
         elif viz.enabled_display and viz.mode != "DISPLAY":
             LOG.debug("Enabling Display")
@@ -95,7 +94,8 @@ def update_visualization(self, context):
             )
 
             BakeVisualizationService.enable_display(data)
-            viz.refreshing = False
+
+        viz.refreshing = False
 
 
 @dataclass(slots=True, frozen=True)
@@ -166,8 +166,19 @@ class BakeVisualizationService:
     # Display
     # ---------------------------------------------------------
 
+    @classmethod
+    def _get_image(cls, bake_group_uuid: str, baker_uuid: str) -> bpy.types.Image | None:
+        handle = cls._get_image_handle(bake_group_uuid, baker_uuid)
+
+        if handle is None:
+            return None
+
+        image = handle.image()
+
+        return image
+
     @staticmethod
-    def _get_image(bake_group_uuid: str, baker_uuid: str) -> bpy.types.Image | None:
+    def _get_image_handle(bake_group_uuid: str, baker_uuid: str) -> ImageHandle | None:
         from ..runtime.runtime_manager import RuntimeManager
 
         runtime = RuntimeManager.current(bpy.context)
@@ -180,9 +191,7 @@ class BakeVisualizationService:
         if len(handles) > 1:
             LOG.warning(f"{len(handles)} handles found.")
 
-        image = handles[0].image()
-
-        return image
+        return handles[0]
 
     @classmethod
     def enable_display(cls, data: DisplayData):
@@ -208,12 +217,28 @@ class BakeVisualizationService:
         LOG.debug("Disabling Visualization")
 
         try:
+            cls._revert_image_colorspace()
+
             MaterialOverrideService.restore(cls._runtime.material_snapshots)
 
             ViewportService.restore(cls._runtime)
 
         finally:
             cls._runtime.clear()
+
+    @classmethod
+    def _revert_image_colorspace(cls):
+        if not cls.is_active() or cls._runtime is None:
+            return
+
+        if cls._runtime.active_image_handle is not None:
+            colorspace = cls._runtime.active_image_handle._output_settings.color.colorspace
+            bake_group_uuid = cls._runtime.bake_group_uuid
+            accumulated_uuid = cls._runtime.accumulated_uuid
+            if bake_group_uuid is not None and accumulated_uuid is not None:
+                image = cls._get_image(bake_group_uuid, accumulated_uuid)
+                if image is not None and image.image is not None:
+                    image.image.colorspace_settings.name = colorspace
 
     # ---------------------------------------------------------
     # Refresh
@@ -300,13 +325,14 @@ class BakeVisualizationService:
             # TODO: Investigate why the display doesn't work when the baked image change its colorspace
             material = DisplayMaterialService.get_or_create()
 
+            handle = cls._get_image_handle(data.bake_group_uuid, data.accumulated_uuid)
             image = cls._get_image(data.bake_group_uuid, data.accumulated_uuid)
 
-            if image is None or image.image is None:
+            if handle is None or image is None or image.image is None:
                 return
 
             DisplayMaterialService.set_image(material, image.image)
 
-            cls._runtime.set_active_image_handle(image)
+            cls._runtime.set_active_image_handle(handle)
             cls._runtime.set_active_producer(data.producer)
             cls._runtime.set_material_snapshots(MaterialOverrideService.apply(data.objects, material))

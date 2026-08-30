@@ -145,7 +145,7 @@ class VisualizationRuntime:
         bake_group_uuid: str | None = None,
         producer_uuid: str | None = None,
         accumulated_uuid: str | None = None,
-        objects: list[str] = [],
+        objects: list[str] | None = None,
     ) -> None:
         """
         Start a new visualization session.
@@ -165,7 +165,7 @@ class VisualizationRuntime:
         self._producer_uuid = producer_uuid
         self._accumulated_uuid = accumulated_uuid
         self._preview_enabled = mode == VisualizationMode.PREVIEW
-        self._objects = objects
+        self._objects = objects if objects is not None else []
 
     # ------------------------------------------------------------------
     # State registration
