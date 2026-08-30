@@ -274,7 +274,7 @@ class BakeVisualizationService:
 
                 cls.disable()
 
-                if cls._get_image_handle(data.bake_group_uuid, data.bake_group_uuid) is None:
+                if cls._get_image_handle(data.bake_group_uuid, data.accumulated_uuid) is None:
                     return False
 
                 cls.enable_display(data)
