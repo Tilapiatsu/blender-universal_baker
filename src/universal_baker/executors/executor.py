@@ -3,9 +3,9 @@ from __future__ import annotations
 from typing import Callable
 
 import bpy
-from universal_baker.runtime.task_bake import BakeTask
 
 from ..constant import LOG
+from ..runtime.task_bake import BakeTask
 from ..runtime.context import ExecutionContext
 from ..runtime.session import ExecutionSession
 from ..enum.execution import Execution
