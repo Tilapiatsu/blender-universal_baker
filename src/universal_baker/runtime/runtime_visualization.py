@@ -442,10 +442,10 @@ class VisualizationSuspension:
 
         match self.mode:
             case VisualizationMode.DISPLAY:
-                if self.bake_group_uuid is None or self.accumulated_uuid is None:
+                if self.active_producer is None or self.bake_group_uuid is None or self.accumulated_uuid is None:
                     return
 
-                data = DisplayData(self.bake_group_uuid, self.accumulated_uuid, self.objects)
+                data = DisplayData(self.bake_group_uuid, self.accumulated_uuid, self.objects, self.active_producer)
                 BakeVisualizationService.enable_display(data)
 
             case VisualizationMode.PREVIEW:

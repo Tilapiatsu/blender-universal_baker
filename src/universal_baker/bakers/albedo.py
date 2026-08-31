@@ -4,7 +4,9 @@ import bpy
 
 from ..core.registry_baker import registry_baker
 from ..enum.image_colorspace import ImageColorSpace
+from ..enum.view_transform import ViewTransform
 from ..parameter.metadata import BindingMetadata, ParameterMetadata
+from ..resources.scene_view_transform import SceneViewTransform
 from ..runtime.context_bake import BakeContext
 from .base import BakerBase
 
@@ -21,6 +23,8 @@ class AlbedoBaker(BakerBase):
     colorspace: ImageColorSpace = ImageColorSpace.SRGB
     clear_preview_material: bool = False
     viewport_render_pass: str = "DENOISING_ALBEDO"
+    image_colorspace: ImageColorSpace = ImageColorSpace.NON_COLOR
+    view_transform = SceneViewTransform(view_transform=ViewTransform.STANDARD)
 
     @property
     def parameters(self) -> tuple[ParameterMetadata, ...]:

@@ -19,7 +19,7 @@ class DisplayMaterialService:
         return material
 
     @staticmethod
-    def set_image(material: bpy.types.Material, image: bpy.types.Image):
+    def set_image(material: bpy.types.Material, image: bpy.types.Image, colorspace: str):
         material.use_nodes = True
         nodes = material.node_tree.nodes
         links = material.node_tree.links
@@ -33,5 +33,5 @@ class DisplayMaterialService:
             output.inputs["Surface"],
         )
 
-        texture.image.colorspace_settings.name = "sRGB"
+        texture.image.colorspace_settings.name = colorspace
         output.location.x = texture.location.x + 300

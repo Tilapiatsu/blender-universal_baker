@@ -4,6 +4,6 @@ from enum import Enum
 
 
 class ImageColorSpace(Enum):
-    AUTO = "AUTO"
-    SRGB = "SRGB"
-    NON_COLOR = "NON_COLOR"
+    SRGB = "sRGB"
+    NON_COLOR = "Non-Color"
+    ACES_2_0 = "ACES 2.0 sRGB"

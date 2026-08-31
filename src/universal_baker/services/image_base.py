@@ -53,11 +53,7 @@ class ImageServiceBase:
 
             image = bpy.data.images.get(resource.name)
 
-            if image is None:
-                image = cls.create(resource, task.uv_layout.udim_tiles)
-                resource.created = True
-
-            elif cls.is_image_settings_changed(image, resource):
+            if image is None or cls.is_image_settings_changed(image, resource):
                 image = cls.create(resource, task.uv_layout.udim_tiles)
                 resource.created = True
 

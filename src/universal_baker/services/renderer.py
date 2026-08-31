@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import bpy
-from ..constant import BAKE_VIEW_TRANSFORM
+
+from ..resources.scene_view_transform import SceneViewTransform
 from ..runtime.context_bake import BakeContext
 from ..runtime.visualization_state import SceneVisualizationState
 
@@ -23,11 +24,11 @@ class RendererService:
         return scene_state
 
     @staticmethod
-    def set_view_settings():
+    def set_view_settings(view_transform: SceneViewTransform):
         view_settings = bpy.context.scene.view_settings
-        view_settings.view_transform = BAKE_VIEW_TRANSFORM.view_transform
-        view_settings.exposure = BAKE_VIEW_TRANSFORM.exposure
-        view_settings.gamma = BAKE_VIEW_TRANSFORM.gamma
+        view_settings.view_transform = view_transform.view_transform.value
+        view_settings.exposure = view_transform.exposure
+        view_settings.gamma = view_transform.gamma
 
     @staticmethod
     def restore(scene_state: SceneVisualizationState):
@@ -45,7 +46,7 @@ class RendererService:
         """Execute a single bake task."""
         scene_state = cls.capture_state()
         try:
-            cls.set_view_settings()
+            cls.set_view_settings(ctx.task.producer.view_transform)
             cls.configure(ctx)
             cls.prepare(ctx)
             cls.bake(ctx)

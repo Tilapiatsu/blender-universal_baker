@@ -3,7 +3,6 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Generator
 from contextlib import contextmanager
-from enum import Enum, auto
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -12,12 +11,15 @@ import bpy
 from ..constant import LOG, get_prefs
 from ..core.registry_baker import registry_baker
 from ..core.registry_definition import registry_definition
+from ..enum.bake_colorspace import BakerColorType
 from ..enum.image_colorspace import ImageColorSpace
 from ..enum.output_stage import OutputStage
+from ..enum.view_transform import ViewTransform
 from ..parameter.baker_custom.metadata_loader import MetadataLoader as metadata_loader_custom
 from ..parameter.baker_local.metadata_loader import MetadataLoader as metadata_loader_local
 from ..parameter.parameter_applier import ParameterApplier
 from ..parameter.parameter_context import ParameterContext
+from ..resources.scene_view_transform import SceneViewTransform
 from ..runtime.baker_setup import BakerExecution, BakerSetup
 from ..services.artifact_service import ArtifactService
 from ..services.bake_material import BakeMaterialService
@@ -25,6 +27,7 @@ from ..services.image_bake import ImageServiceBake
 from ..services.material import MaterialService
 from ..services.parameter_service import ParameterService
 from ..services.renderer import RendererService
+from universal_baker.enum import view_transform
 
 if TYPE_CHECKING:
     from ..parameter.metadata import ParameterMetadata
@@ -32,13 +35,6 @@ if TYPE_CHECKING:
     from ..runtime.task import Task
 
 LOG_SCOPE = "Baking"
-
-
-class BakerColorType(Enum):
-    COLOR = auto()
-    DATA = auto()
-    MASK = auto()
-    VECTOR = auto()
 
 
 class BakerBase(ABC):
@@ -67,7 +63,8 @@ class BakerBase(ABC):
     # occlusion should maybe use Raw because it is just data, and shouldn't be transformed
 
     color_type: BakerColorType = BakerColorType.COLOR
-    colorspace: ImageColorSpace = ImageColorSpace.NON_COLOR
+    image_colorspace: ImageColorSpace = ImageColorSpace.SRGB
+    view_transform = SceneViewTransform(view_transform=ViewTransform.RAW)
 
     def poll(self, task: Task) -> bool:
         """Whether this baker can execute this task."""

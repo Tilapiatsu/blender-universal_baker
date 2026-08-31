@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import bpy
 
-from ..constant import PREVIEW_VIEW_TRANSFORM
+from ..resources.scene_view_transform import SceneViewTransform
 from ..runtime.runtime_visualization import VisualizationRuntime
 from ..runtime.visualization_state import (
     SceneVisualizationState,
@@ -59,11 +59,11 @@ class ViewportService:
         return state
 
     @staticmethod
-    def set_rendered(render_pass: str):
+    def set_rendered(render_pass: str, view_transform: SceneViewTransform):
         view_settings = bpy.context.scene.view_settings
-        view_settings.view_transform = PREVIEW_VIEW_TRANSFORM.view_transform
-        view_settings.exposure = PREVIEW_VIEW_TRANSFORM.exposure
-        view_settings.gamma = PREVIEW_VIEW_TRANSFORM.gamma
+        view_settings.view_transform = view_transform.view_transform.value
+        view_settings.exposure = view_transform.exposure
+        view_settings.gamma = view_transform.gamma
         for window in bpy.context.window_manager.windows:
             for area in window.screen.areas:
                 if area.type != "VIEW_3D":

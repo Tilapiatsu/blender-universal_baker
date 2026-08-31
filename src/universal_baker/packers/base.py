@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-from abc import ABC
-from abc import abstractmethod
+from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
 
 from ..constant import LOG
+from ..enum.image_colorspace import ImageColorSpace
 from ..enum.output_stage import OutputStage
-from ..services.image_pack import ImagePackService
+from ..enum.view_transform import ViewTransform
+from ..resources.scene_view_transform import SceneViewTransform
 from ..services.artifact_service import ArtifactService
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..runtime.context_pack import PackContext
@@ -31,6 +31,8 @@ class PackerBase(ABC):
     is_custom: bool = False
     clear_preview_material: bool = True
     viewport_render_pass: str = "COMBINED"
+    image_colorspace: ImageColorSpace = ImageColorSpace.SRGB
+    view_transform = SceneViewTransform(view_transform=ViewTransform.STANDARD)
 
     def poll(self, task: Task) -> bool:
         """Whether this packer can execute this task."""

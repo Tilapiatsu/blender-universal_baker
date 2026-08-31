@@ -60,7 +60,10 @@ def update_visualization(self, context):
                     data = PreviewData(producer, bake_group.uuid, baker.uuid)
                 case VisualizationMode.DISPLAY:
                     data = DisplayData(
-                        bake_group.uuid, baker.accumulated_uuid, [o.object for o in bake_group.target_objects]
+                        bake_group.uuid,
+                        baker.accumulated_uuid,
+                        [o.object for o in bake_group.target_objects],
+                        producer,
                     )
                 case _:
                     return
@@ -78,12 +81,13 @@ def update_visualization(self, context):
             BakeVisualizationService.disable()
             return
 
+        producer = registry_baker[baker.baker]
+
         if viz.enabled_preview and viz.mode != "PREVIEW":
             LOG.debug("Enabling Preview")
             viz.refreshing = True
             viz.enabled_display = False
             viz.mode = "PREVIEW"
-            producer = registry_baker[baker.baker]
 
             data = PreviewData(producer, bake_group.uuid, baker.uuid)
 
@@ -98,6 +102,7 @@ def update_visualization(self, context):
                 bake_group_uuid=bake_group.uuid,
                 accumulated_uuid=baker.accumulated_uuid,
                 objects=[o.object for o in bake_group.target_objects],
+                producer=producer,
             )
 
             BakeVisualizationService.enable_display(data)
@@ -119,8 +124,8 @@ class DisplayData:
     bake_group_uuid: str
     accumulated_uuid: str
     objects: list[bpy.types.Object]
+    producer: BakerBase | PackerBase
     producer_uuid: str | None = None
-    producer: None = None
     mode: VisualizationMode = VisualizationMode.DISPLAY
 
 
@@ -166,7 +171,7 @@ class BakeVisualizationService:
         # Cycles
         bpy.context.scene.render.engine = "CYCLES"
 
-        ViewportService.set_rendered(data.producer.viewport_render_pass)
+        ViewportService.set_rendered(data.producer.viewport_render_pass, data.producer.view_transform)
 
     # ---------------------------------------------------------
     # Display
@@ -340,7 +345,7 @@ class BakeVisualizationService:
             if handle is None or image is None or image.image is None:
                 return
 
-            DisplayMaterialService.set_image(material, image.image)
+            DisplayMaterialService.set_image(material, image.image, data.producer.image_colorspace.value)
 
             cls._runtime.set_active_image_handle(handle)
             cls._runtime.set_active_producer(data.producer)
