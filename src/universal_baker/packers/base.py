@@ -30,6 +30,7 @@ class PackerBase(ABC):
     icon: str = "NODE_COMPOSITING"
     is_custom: bool = False
     clear_preview_material: bool = True
+    viewport_render_pass: str = "COMBINED"
 
     def poll(self, task: Task) -> bool:
         """Whether this packer can execute this task."""

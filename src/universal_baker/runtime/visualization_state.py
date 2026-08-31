@@ -9,7 +9,7 @@ from ..services.material_override import (
 )
 
 
-@dataclass
+@dataclass(slots=True)
 class ViewportState:
     """
     Runtime state of one 3D viewport.
@@ -24,6 +24,7 @@ class ViewportState:
     show_xray: bool
     show_shadows: bool
     show_cavity: bool
+    render_pass: str
 
 
 @dataclass

@@ -60,6 +60,7 @@ class BakerBase(ABC):
     is_custom: bool = False
     clear_preview_material: bool = True
     asset_path: Path = Path()
+    viewport_render_pass: str = "COMBINED"
 
     # TODO: Need to use color_type and colorspace for baking and displaying baked images
     # Need to expose view transform to bake to -> Diffuse need to use AGX or Aces for nicer result, whereas curvature,
@@ -245,6 +246,7 @@ class BakerBase(ABC):
         )
 
     def register_local(self):
+        LOG.info(f"Registering Building Baker : {self.id}")
         registry_baker.register(self)
 
         registry_definition.register_local_lazy(
@@ -258,7 +260,6 @@ class BakerBase(ABC):
         prefs = get_prefs()
 
         for library in prefs.baker_libraries:
-            LOG.info(f"Registering Library : {library.name}")
             library_root = Path(library.path)
             if not library_root.exists() or not library_root.is_dir():
                 LOG.warning(f"Library path is not valid : {library_root}")
@@ -269,6 +270,7 @@ class BakerBase(ABC):
             if len(blend_files) == 0:
                 LOG.warning(f"No blend file found in {library.name} library")
 
+            LOG.info(f"Registering Library : {library.name}")
             for blend_file in blend_files:
                 custom_baker = cls()
                 baker_name = blend_file.stem.upper().replace(" ", "_")

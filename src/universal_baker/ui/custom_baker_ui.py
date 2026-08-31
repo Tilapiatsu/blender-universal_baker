@@ -18,6 +18,9 @@ class BakerParameterUI:
             layout.operator("ubk.refresh_custom_baker_parameters", icon="FILE_REFRESH")
 
         for parameter in definition.parameters:
+            if not parameter.visible:
+                continue
+
             item = ParameterService.find(state, parameter.identifier)
 
             if item is None:

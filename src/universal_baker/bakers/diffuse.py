@@ -3,9 +3,7 @@ from __future__ import annotations
 import bpy
 
 from ..core.registry_baker import registry_baker
-from ..core.registry_definition import registry_definition
 from ..enum.image_colorspace import ImageColorSpace
-from ..parameter.baker_local.metadata_loader import MetadataLoader
 from ..parameter.metadata import BindingMetadata, ParameterMetadata
 from ..runtime.context_bake import BakeContext
 from .base import BakerBase
@@ -100,7 +98,7 @@ class DiffuseBaker(BakerBase):
 
     def configure_preview_material(self, material):
         ...
-        # TODO: need to write a previw_material for diffuse
+        # TODO: need to write a preview_material for diffuse
 
     def prepare(self, ctx: BakeContext):
         """

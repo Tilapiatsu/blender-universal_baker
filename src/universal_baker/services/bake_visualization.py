@@ -164,10 +164,9 @@ class BakeVisualizationService:
         cls._begin(data)
 
         # Cycles
-        for scene in bpy.data.scenes:
-            scene.render.engine = "CYCLES"
+        bpy.context.scene.render.engine = "CYCLES"
 
-        ViewportService.set_rendered()
+        ViewportService.set_rendered(data.producer.viewport_render_pass)
 
     # ---------------------------------------------------------
     # Display
@@ -227,7 +226,6 @@ class BakeVisualizationService:
             cls._revert_image_colorspace()
 
             MaterialOverrideService.restore(cls._runtime.material_snapshots)
-
             ViewportService.restore(cls._runtime)
 
         finally:

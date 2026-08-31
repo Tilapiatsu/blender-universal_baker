@@ -4,11 +4,10 @@ import bpy
 
 from ..constant import PREVIEW_VIEW_TRANSFORM
 from ..runtime.runtime_visualization import VisualizationRuntime
-
 from ..runtime.visualization_state import (
-    VisualizationState,
     SceneVisualizationState,
     ViewportState,
+    VisualizationState,
 )
 
 
@@ -53,13 +52,14 @@ class ViewportService:
                         show_xray=shading.show_xray,
                         show_shadows=shading.show_shadows,
                         show_cavity=shading.show_cavity,
+                        render_pass=shading.render_pass,
                     )
                 )
 
         return state
 
     @staticmethod
-    def set_rendered():
+    def set_rendered(render_pass: str):
         view_settings = bpy.context.scene.view_settings
         view_settings.view_transform = PREVIEW_VIEW_TRANSFORM.view_transform
         view_settings.exposure = PREVIEW_VIEW_TRANSFORM.exposure
@@ -70,20 +70,10 @@ class ViewportService:
                     continue
 
                 area.spaces.active.shading.type = "RENDERED"
+                area.spaces.active.shading.cycles.render_pass = render_pass
 
-    @classmethod
-    def set_texture(cls):
-        # view_settings = bpy.context.scene.view_settings
-        # view_settings.view_transform = DISPLAY_COLORSPACE.view_transform
-        # view_settings.exposure = DISPLAY_COLORSPACE.exposure
-        # view_settings.gamma = DISPLAY_COLORSPACE.gamma
-        # for window in bpy.context.window_manager.windows:
-        #     for area in window.screen.areas:
-        #         if area.type != "VIEW_3D":
-        #             continue
-        #
-        #         area.spaces.active.shading.type = "RENDERED"
-
+    @staticmethod
+    def set_texture():
         for window in bpy.context.window_manager.windows:
             for area in window.screen.areas:
                 if area.type != "VIEW_3D":
@@ -129,3 +119,4 @@ class ViewportService:
                         shading.show_xray = viewport.show_xray
                         shading.show_shadows = viewport.show_shadows
                         shading.show_cavity = viewport.show_cavity
+                        shading.render_pass = viewport.render_pass
