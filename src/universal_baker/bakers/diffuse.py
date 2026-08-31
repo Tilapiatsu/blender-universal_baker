@@ -31,7 +31,7 @@ class DiffuseBaker(BakerBase):
             BindingMetadata(
                 binding_type="SCENE_PROPERTY",
                 scene=bpy.context.scene.name,
-                property=".render.bake.use_pass_direct",
+                property="render.bake.use_pass_direct",
             ),
         )
         p = ParameterMetadata(
@@ -52,7 +52,7 @@ class DiffuseBaker(BakerBase):
             BindingMetadata(
                 binding_type="SCENE_PROPERTY",
                 scene=bpy.context.scene.name,
-                property=".render.bake.use_pass_indirect",
+                property="render.bake.use_pass_indirect",
             ),
         )
         p = ParameterMetadata(
@@ -73,7 +73,7 @@ class DiffuseBaker(BakerBase):
             BindingMetadata(
                 binding_type="SCENE_PROPERTY",
                 scene=bpy.context.scene.name,
-                property=".render.bake.use_pass_color",
+                property="render.bake.use_pass_color",
             ),
         )
         p = ParameterMetadata(
@@ -98,7 +98,9 @@ class DiffuseBaker(BakerBase):
     def prepare_execution(self, target):
         return super().prepare_execution(target)
 
-    def configure_preview_material(self, material): ...
+    def configure_preview_material(self, material):
+        ...
+        # TODO: need to write a previw_material for diffuse
 
     def prepare(self, ctx: BakeContext):
         """

@@ -80,12 +80,11 @@ class UBK_PT_BakerSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
 
         box.prop(active_baker, "image_name")
 
-        if active_baker.is_custom:
-            project = BakeController.project(context)
-            if project is not None:
-                custom_baker = active_baker.custom_baker
-                if custom_baker is not None:
-                    self.draw_baker_settings(box, active_baker, custom_baker)
+        project = BakeController.project(context)
+        if project is not None:
+            custom_baker = active_baker.custom_baker
+            if custom_baker is not None:
+                self.draw_baker_settings(box, active_baker, custom_baker)
 
         box = layout.box()
         box.prop(

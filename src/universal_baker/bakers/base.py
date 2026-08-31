@@ -134,6 +134,8 @@ class BakerBase(ABC):
 
         MaterialService.prepare_target(ctx)
 
+        self.apply_parameters(ctx)
+
     @abstractmethod
     def bake(self, ctx: BakeContext) -> None:
         """Execute the bake."""
@@ -233,6 +235,7 @@ class BakerBase(ABC):
         parameter_context = ParameterContext(
             object=ctx.target,
             materials=materials,
+            scene=ctx.scene,
         )
 
         ParameterApplier.apply(

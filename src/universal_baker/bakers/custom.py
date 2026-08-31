@@ -99,7 +99,6 @@ class CustomBaker(BakerBase):
         Prepare everything required before Blender's bake.
         """
         super().prepare(ctx)
-        self.apply_parameters(ctx)
 
     def bake(self, ctx: BakeContext) -> None:
         """Execute the bake."""

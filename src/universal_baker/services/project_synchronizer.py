@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import bpy
 
+from ..constant import LOG
 from ..core.registry_definition import registry_definition
-from .parameter_service import ParameterService
 from ..properties.project import UBK_Project
+from .parameter_service import ParameterService
 
 
 class ProjectSynchronizer:
@@ -13,12 +14,11 @@ class ProjectSynchronizer:
 
         for bake_group in project.bake_groups:
             for baker in bake_group.bakers:
-                if not baker.is_custom:
-                    continue
-
-                definition = registry_definition.get_custom(baker.baker)
+                LOG.debug(f"Synchronize parameter for baker : {baker.baker}")
+                definition = registry_definition.get(baker.baker)
 
                 if definition is None:
+                    LOG.debug("Definition not Found")
                     continue
 
                 ParameterService.synchronize(definition, baker.custom_baker)

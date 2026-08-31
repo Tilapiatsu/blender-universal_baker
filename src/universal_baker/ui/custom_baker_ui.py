@@ -14,7 +14,9 @@ class BakerParameterUI:
     @classmethod
     def draw(cls, layout, definition: CustomBakerDefinition | LocalBakerDefinition, state: UBK_CustomBaker):
 
-        layout.operator("ubk.refresh_custom_baker_parameters", icon="FILE_REFRESH")
+        if isinstance(definition, CustomBakerDefinition):
+            layout.operator("ubk.refresh_custom_baker_parameters", icon="FILE_REFRESH")
+
         for parameter in definition.parameters:
             item = ParameterService.find(state, parameter.identifier)
 
