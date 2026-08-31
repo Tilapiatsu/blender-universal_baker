@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from bpy.types import PropertyGroup
 from bpy.props import (
     CollectionProperty,
     IntProperty,
     StringProperty,
 )
+from bpy.types import PropertyGroup
 
 from .baker_parameter import UBK_BakerParameterValue
 

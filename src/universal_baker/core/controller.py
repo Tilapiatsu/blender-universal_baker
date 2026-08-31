@@ -1,33 +1,30 @@
 from __future__ import annotations
 
-from typing import List
-
-import bpy
+from typing import TYPE_CHECKING, List
 from uuid import uuid4
 
-from .planner import ExecutionPlanner
+import bpy
+
+from ..constant import LOG, get_prefs
 from ..enum.execution import Execution
 from ..executors.executor import Executor
+from ..properties.packer import UBK_Packer
+from ..runtime.job import Job
+from ..runtime.runtime_manager import RuntimeManager
 from ..runtime.task_accumulate import AccumulateTask
 from ..runtime.task_bake import BakeTask
 from ..runtime.task_mask_buffer import MaskBufferTask
 from ..runtime.task_ownership_mask import UvOwnershipTask
 from ..runtime.task_pack import PackingTask
-from ..services.project_synchronizer import ProjectSynchronizer
-from ..properties.packer import UBK_Packer
-from ..constant import LOG
-from ..runtime.job import Job
-from ..runtime.runtime_manager import RuntimeManager
-from ..services.project import ProjectService
-from ..services.collection_target_object import TargetObjectService
-from ..services.collection_packer import PackerService
-from ..services.collection_baker import BakerService
 from ..services.collection_bake_group import BakeGroupService
+from ..services.collection_baker import BakerService
+from ..services.collection_packer import PackerService
+from ..services.collection_target_object import TargetObjectService
 from ..services.internal_data import InternalDataService
-from ..constant import get_prefs
+from ..services.project import ProjectService
+from ..services.project_synchronizer import ProjectSynchronizer
+from .planner import ExecutionPlanner
 from .registry_baker import registry_baker
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..properties.bake_group import UBK_BakeGroup
@@ -126,7 +123,7 @@ class BakeController:
         bake_group = cls.active_bake_group(context)
 
         if not bake_group:
-            return None
+            return
 
         if not bake_group.bakers:
             return
@@ -275,7 +272,7 @@ class BakeController:
     # ---------------------------------------------------------
 
     @classmethod
-    def validate(cls, context: bpy.types.Context) -> List[str]:
+    def validate(cls, context: bpy.types.Context) -> list[str]:
         errors = []
 
         project = cls.project(context)

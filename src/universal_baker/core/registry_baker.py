@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from typing import Dict
-
+from collections.abc import Iterator
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -10,7 +9,7 @@ if TYPE_CHECKING:
 
 class BakerRegistry:
     def __init__(self):
-        self._bakers: Dict[str, BakerBase] = {}
+        self._bakers: dict[str, BakerBase] = {}
 
     def register(self, baker: BakerBase) -> None:
         if baker.id in self._bakers:
@@ -60,6 +59,9 @@ class BakerRegistry:
             )
 
         return items
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(self._bakers)
 
 
 registry_baker = BakerRegistry()

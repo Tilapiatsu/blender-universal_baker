@@ -1,15 +1,13 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass, field
-from typing import Iterable
 
-
-from ..binding_factory import BindingFactory
-from ..parameter_factory import ParameterFactory
-from ..metadata import LocalBakerMetadata
-
-from ..parameter import BakerParameter
 from ..binding import ParameterBinding
+from ..binding_factory import BindingFactory
+from ..metadata import LocalBakerMetadata
+from ..parameter import BakerParameter
+from ..parameter_factory import ParameterFactory
 
 
 class LocalBakerDefinitionError(RuntimeError):
@@ -39,6 +37,7 @@ class LocalBakerDefinition:
     parameters: tuple[BakerParameter, ...] = ()
     bindings: dict[str, tuple[ParameterBinding, ...]] = field(default_factory=dict)
     description: str = ""
+    version: int = 1
     metadata: LocalBakerMetadata | None = None
 
     # ------------------------------------------------------------------

@@ -1,25 +1,24 @@
 from __future__ import annotations
 
 import json
-from typing import Any
 from pathlib import Path
+from typing import Any
 
 import bpy
-from .definition import CustomBakerDefinition
-from ...constant import LOG
 
+from ...constant import LOG
 from ..metadata import (
+    CURRENT_METADATA_VERSION,
+    METADATA_TEXT_NAME,
     BindingMetadata,
     CustomBakerMetadata,
     MetadataNotFoundError,
     MetadataParseError,
     MetadataValidationError,
     ParameterMetadata,
-    METADATA_TEXT_NAME,
-    CURRENT_METADATA_VERSION,
 )
-
 from ..parameter import BakerParameterOption
+from .definition import CustomBakerDefinition
 
 
 class MetadataLoaderError(RuntimeError):

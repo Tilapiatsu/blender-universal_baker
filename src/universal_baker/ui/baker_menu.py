@@ -12,7 +12,7 @@ class UBK_MT_BakerAddMenu(bpy.types.Menu):
     def draw(self, context):
         layout = self.layout
 
-        for b in registry_baker.keys():
+        for b in registry_baker:
             layout.operator("ubk.add_baker", text=registry_baker[b].name).baker_id = registry_baker[b].id
 
 

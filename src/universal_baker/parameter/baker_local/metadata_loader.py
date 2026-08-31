@@ -1,18 +1,15 @@
 from __future__ import annotations
 
-from ..metadata import LocalBakerMetadata
-
 from typing import TYPE_CHECKING
+
+from ..baker_local.definition import LocalBakerDefinition
+from ..metadata import LocalBakerMetadata
 
 if TYPE_CHECKING:
     from ...bakers.base import BakerBase
 
 
 class MetadataLoader:
-    # ------------------------------------------------------------------
-    # Public API
-    # ------------------------------------------------------------------
-
     @classmethod
     def load(cls, baker: BakerBase) -> LocalBakerMetadata:
 
@@ -22,3 +19,9 @@ class MetadataLoader:
             description=baker.description,
             parameters=baker.parameters,
         )
+
+    @classmethod
+    def load_definition(cls, baker: BakerBase) -> LocalBakerDefinition:
+        metadata = cls.load(baker)
+
+        return LocalBakerDefinition.from_metadata(metadata)

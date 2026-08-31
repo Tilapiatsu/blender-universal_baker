@@ -1,16 +1,14 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Iterable
 
-from ..binding_factory import BindingFactory
-from ..parameter_factory import ParameterFactory
-
-from ..metadata import CustomBakerMetadata
-
-from ..parameter import BakerParameter
 from ..binding import ParameterBinding
+from ..binding_factory import BindingFactory
+from ..metadata import CustomBakerMetadata
+from ..parameter import BakerParameter
+from ..parameter_factory import ParameterFactory
 
 
 class CustomBakerDefinitionError(RuntimeError):

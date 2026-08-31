@@ -3,15 +3,16 @@ from __future__ import annotations
 import bpy
 
 from ..parameter.baker_custom.definition import CustomBakerDefinition
-from ..properties.custom_baker import UBK_CustomBaker
+from ..parameter.baker_local.definition import LocalBakerDefinition
+from ..parameter.parameter import BakerParameter, BakerParameterType
 from ..properties.baker_parameter import UBK_BakerParameterValue
+from ..properties.custom_baker import UBK_CustomBaker
 from ..services.parameter_service import ParameterService
-from ..parameter.parameter import BakerParameterType, BakerParameter
 
 
 class BakerParameterUI:
     @classmethod
-    def draw(cls, layout, definition: CustomBakerDefinition, state: UBK_CustomBaker):
+    def draw(cls, layout, definition: CustomBakerDefinition | LocalBakerDefinition, state: UBK_CustomBaker):
 
         layout.operator("ubk.refresh_custom_baker_parameters", icon="FILE_REFRESH")
         for parameter in definition.parameters:

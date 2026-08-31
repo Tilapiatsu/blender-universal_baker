@@ -337,7 +337,7 @@ class VisualizationRuntime:
                 LOG.error("Producer not defined")
                 return
 
-            definition = registry_definition.require(producer.id)
+            definition = registry_definition.require_custom(producer.id)
 
             if definition is None or self.producer_uuid is None:
                 LOG.error(f"Definition not found for {producer.id}")

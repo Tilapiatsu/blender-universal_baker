@@ -1,27 +1,18 @@
 from __future__ import annotations
 
+from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Generator
+from typing import TYPE_CHECKING, Any
+
 import bpy
 
-from ..parameter.parameter_applier import ParameterApplier
-from ..parameter.baker_custom.metadata_loader import MetadataLoader
-from ..core.registry_definition import registry_definition
-
-from ..parameter.parameter_context import ParameterContext
-
-from .base import BakerBase
-
-from ..runtime.baker_setup import BakerExecution
-from ..runtime.context_bake import BakeContext
 from ..core.registry_baker import registry_baker
 from ..resources.baker_asset import BakerAsset
+from ..runtime.baker_setup import BakerExecution
+from ..runtime.context_bake import BakeContext
 from ..services.custom_baker_setup import CustomBakerSetupService
-from ..services.parameter_service import ParameterService
-from ..constant import LOG, get_prefs
-
-from typing import TYPE_CHECKING
+from .base import BakerBase
 
 if TYPE_CHECKING:
     from ..parameter.metadata import ParameterMetadata
@@ -56,38 +47,6 @@ class CustomBaker(BakerBase):
         finally:
             target.hide_render = hide_render
             setup.cleanup()
-
-    def apply_parameters(self, ctx: BakeContext):
-        definition = registry_definition.get(self.id)
-        if definition is None:
-            LOG.error("Parameter definition not found")
-            return
-
-        state = ctx.task.baker_settings
-        if state is None:
-            LOG.error("Bake Settings not found")
-            return
-
-        snapshot = ParameterService.snapshot(definition, state)
-
-        LOG.debug("Applying baker parameters")
-
-        materials = ctx.materials.materials
-
-        if materials is None:
-            LOG.error(f"Material Overries not found for {ctx.target.name}")
-            return
-
-        parameter_context = ParameterContext(
-            object=ctx.target,
-            materials=materials,
-        )
-
-        ParameterApplier.apply(
-            definition,
-            snapshot,
-            parameter_context,
-        )
 
     def execute(self, ctx: BakeContext) -> None:
         return super().execute(ctx)
@@ -167,35 +126,9 @@ classes = (CustomBaker,)
 
 
 def register():
-    prefs = get_prefs()
     for c in classes:
-        for library in prefs.baker_libraries:
-            LOG.info(f"Registering Library : {library.name}")
-            library_root = Path(library.path)
-            if not library_root.exists() or not library_root.is_dir():
-                LOG.warning(f"Library path is not valid : {library_root}")
-                continue
-
-            blend_files = [f for f in library_root.iterdir() if f.is_file() and f.suffix.lower() == ".blend"]
-
-            if len(blend_files) == 0:
-                LOG.warning(f"No blend file found in {library.name} library")
-
-            metadata_loader = MetadataLoader()
-            for blend_file in blend_files:
-                custom_baker = c()
-                baker_name = blend_file.stem.upper().replace(" ", "_")
-                custom_baker.id += f"_{baker_name}"
-                custom_baker.asset_path = blend_file
-                custom_baker.name = blend_file.stem.capitalize()
-                LOG.info(f"Registering Custom Baker : {baker_name}")
-                registry_baker.register(custom_baker)
-
-                registry_definition.register_lazy(
-                    identifier=custom_baker.id,
-                    asset_path=blend_file,
-                    loader=metadata_loader.load_definition,
-                )
+        baker = c()
+        baker.register_custom()
 
 
 def unregister():

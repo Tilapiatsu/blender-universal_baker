@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from typing import Any, TypeAlias
+from typing import Any
 
 from ..parameter.baker_custom.definition import CustomBakerDefinition
+from ..parameter.baker_local.definition import LocalBakerDefinition
 from ..parameter.parameter import BakerParameter, BakerParameterType, ParameterSnapshot
-from ..properties.custom_baker import UBK_CustomBaker
 from ..properties.baker_parameter import UBK_BakerParameterValue
+from ..properties.custom_baker import UBK_CustomBaker
 
 
 class ParameterServiceError(RuntimeError):
@@ -14,7 +15,9 @@ class ParameterServiceError(RuntimeError):
 
 class ParameterService:
     @classmethod
-    def snapshot(cls, definition: CustomBakerDefinition, state: UBK_CustomBaker) -> ParameterSnapshot:
+    def snapshot(
+        cls, definition: LocalBakerDefinition | CustomBakerDefinition, state: UBK_CustomBaker
+    ) -> ParameterSnapshot:
         """
         Create an immutable-in-practice runtime snapshot of all
         current parameter values.
@@ -45,7 +48,9 @@ class ParameterService:
         return snapshot
 
     @classmethod
-    def snapshot_parameter(cls, definition: CustomBakerDefinition, state: UBK_CustomBaker, parameter_id: str) -> Any:
+    def snapshot_parameter(
+        cls, definition: LocalBakerDefinition | CustomBakerDefinition, state: UBK_CustomBaker, parameter_id: str
+    ) -> Any:
         """
         Return one validated parameter value as a plain Python value.
         """
@@ -64,7 +69,7 @@ class ParameterService:
         return cls._validate_value(parameter, value)
 
     @classmethod
-    def synchronize(cls, definition: CustomBakerDefinition, state: UBK_CustomBaker) -> None:
+    def synchronize(cls, definition: LocalBakerDefinition | CustomBakerDefinition, state: UBK_CustomBaker) -> None:
         """
         Synchronize persistent parameter storage with
         the current CustomBakerDefinition.
@@ -103,11 +108,19 @@ class ParameterService:
         state.asset_version = definition.version
 
     @classmethod
-    def get(cls, definition: CustomBakerDefinition, state: UBK_CustomBaker, parameter_id: str) -> Any:
+    def get(
+        cls, definition: LocalBakerDefinition | CustomBakerDefinition, state: UBK_CustomBaker, parameter_id: str
+    ) -> Any:
         return cls.snapshot_parameter(definition, state, parameter_id)
 
     @classmethod
-    def set(cls, definition: CustomBakerDefinition, state: UBK_CustomBaker, parameter_id: str, value: Any) -> None:
+    def set(
+        cls,
+        definition: LocalBakerDefinition | CustomBakerDefinition,
+        state: UBK_CustomBaker,
+        parameter_id: str,
+        value: Any,
+    ) -> None:
         parameter = definition.require_parameter(parameter_id)
         item = cls.find(state, parameter_id)
 

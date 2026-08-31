@@ -16,7 +16,7 @@ class ProjectSynchronizer:
                 if not baker.is_custom:
                     continue
 
-                definition = registry_definition.get(baker.baker)
+                definition = registry_definition.get_custom(baker.baker)
 
                 if definition is None:
                     continue

@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from .base import BakerBase
+from typing import TYPE_CHECKING
+
 from ..enum.image_colorspace import ImageColorSpace
 from ..runtime.context_bake import BakeContext
-
-from typing import TYPE_CHECKING
+from .base import BakerBase
 
 if TYPE_CHECKING:
     from ..parameter.metadata import ParameterMetadata

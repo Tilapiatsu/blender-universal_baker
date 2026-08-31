@@ -2,14 +2,13 @@ from __future__ import annotations
 
 import bpy
 
-from .base import BakerBase
-
-from ..runtime.context_bake import BakeContext
-from ..enum.image_colorspace import ImageColorSpace
 from ..core.registry_baker import registry_baker
-
-from ..parameter.metadata import ParameterMetadata
-from ..parameter.metadata import BindingMetadata
+from ..core.registry_definition import registry_definition
+from ..enum.image_colorspace import ImageColorSpace
+from ..parameter.baker_local.metadata_loader import MetadataLoader
+from ..parameter.metadata import BindingMetadata, ParameterMetadata
+from ..runtime.context_bake import BakeContext
+from .base import BakerBase
 
 
 class DiffuseBaker(BakerBase):
@@ -133,7 +132,8 @@ classes = (DiffuseBaker,)
 
 def register():
     for c in classes:
-        registry_baker.register(c())
+        baker = c()
+        baker.register_local()
 
 
 def unregister():

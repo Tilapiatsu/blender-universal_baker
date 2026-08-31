@@ -1,55 +1,85 @@
 from __future__ import annotations
 
-from collections.abc import Callable, Iterator
-
-from ..parameter.baker_custom.definition import CustomBakerDefinition
-
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from ..parameter.baker_custom.definition import CustomBakerDefinition
+from ..parameter.baker_local.definition import LocalBakerDefinition
+
+if TYPE_CHECKING:
+    from ..bakers.base import BakerBase
+
 
 @dataclass(frozen=True)
-class LazyDefinition:
+class LazyCustomDefinition:
     identifier: str
     asset_path: Path
     loader: Callable[[Path], CustomBakerDefinition]
 
 
-class CustomBakerDefinitionError(RuntimeError):
+@dataclass(frozen=True)
+class LazyLocalDefinition:
+    identifier: str
+    baker: BakerBase
+    loader: Callable[[BakerBase], LocalBakerDefinition]
+
+
+class BakerDefinitionError(RuntimeError):
     pass
 
 
-class CustomBakerDefinitionNotFoundError(CustomBakerDefinitionError):
+class BakerDefinitionNotFoundError(BakerDefinitionError):
     pass
 
 
-DefinitionLoader = Callable[[str], CustomBakerDefinition]
+LocalDefinitionLoader = Callable[[str], LocalBakerDefinition]
+CustomDefinitionLoader = Callable[[str], CustomBakerDefinition]
 
 
-class CustomBakerDefinitionRegistry:
-    def __init__(self, loader: DefinitionLoader | None = None) -> None:
-
-        self._definitions: dict[str, CustomBakerDefinition] = {}
-        self._loaders: dict[str, DefinitionLoader] = {}
-        self._loader = loader
-        self._lazy: dict[str, LazyDefinition] = {}
+class BakerDefinitionRegistry:
+    def __init__(self) -> None:
+        self._local_definitions: dict[str, LocalBakerDefinition] = {}
+        self._custom_definitions: dict[str, CustomBakerDefinition] = {}
+        self._loaders_local: dict[str, LocalDefinitionLoader] = {}
+        self._loaders_custom: dict[str, CustomDefinitionLoader] = {}
+        self._lazy_local: dict[str, LazyLocalDefinition] = {}
+        self._lazy_custom: dict[str, LazyCustomDefinition] = {}
 
     # ------------------------------------------------------------------
     # Registration
     # ------------------------------------------------------------------
 
-    def register(self, definition: CustomBakerDefinition) -> None:
+    def register_local(self, definition: LocalBakerDefinition) -> None:
+        identifier = definition.identifier
+        if identifier in self._local_definitions:
+            raise BakerDefinitionError(f"Definition '{identifier}' is already registered.")
+
+        self._local_definitions[identifier] = definition
+
+    def register_local_lazy(
+        self, identifier: str, baker: BakerBase, loader: Callable[[BakerBase], LocalBakerDefinition]
+    ) -> None:
+        self._lazy_local[identifier] = LazyLocalDefinition(
+            identifier=identifier,
+            baker=baker,
+            loader=loader,
+        )
+
+    def register_custom(self, definition: CustomBakerDefinition) -> None:
 
         identifier = definition.identifier
 
-        if identifier in self._definitions:
-            raise CustomBakerDefinitionError(f"Definition '{identifier}' is already registered.")
+        if identifier in self._custom_definitions:
+            raise BakerDefinitionError(f"Definition '{identifier}' is already registered.")
 
-        self._definitions[identifier] = definition
+        self._custom_definitions[identifier] = definition
 
-    def register_lazy(self, identifier: str, asset_path: Path, loader: Callable[[Path], CustomBakerDefinition]) -> None:
-        self._lazy[identifier] = LazyDefinition(
+    def register_custom_lazy(
+        self, identifier: str, asset_path: Path, loader: Callable[[Path], CustomBakerDefinition]
+    ) -> None:
+        self._lazy_custom[identifier] = LazyCustomDefinition(
             identifier=identifier,
             asset_path=asset_path,
             loader=loader,
@@ -59,29 +89,64 @@ class CustomBakerDefinitionRegistry:
     # Lookup
     # ------------------------------------------------------------------
 
-    def get(self, identifier: str) -> CustomBakerDefinition | None:
-        definition = self._definitions.get(identifier)
+    def get(self, identifier: str) -> LocalBakerDefinition | CustomBakerDefinition | None:
+
+        local = self.get_local(identifier)
+
+        if local is not None:
+            return local
+
+        return self.get_custom(identifier)
+
+    def get_local(self, identifier: str) -> LocalBakerDefinition | None:
+        definition = self._local_definitions.get(identifier)
 
         if definition is not None:
             return definition
 
-        lazy = self._lazy.get(identifier)
+        lazy = self._lazy_local.get(identifier)
+
+        if lazy is None:
+            return None
+
+        definition = lazy.loader(lazy.baker)
+
+        self._local_definitions[identifier] = definition
+
+        del self._lazy_local[identifier]
+
+        return definition
+
+    def require_local(self, identifier: str) -> LocalBakerDefinition:
+        definition = self.get_local(identifier)
+        if definition is None:
+            raise BakerDefinitionNotFoundError(f"No definition registered for '{identifier}'.")
+
+        return definition
+
+    def get_custom(self, identifier: str) -> CustomBakerDefinition | None:
+        definition = self._custom_definitions.get(identifier)
+
+        if definition is not None:
+            return definition
+
+        lazy = self._lazy_custom.get(identifier)
 
         if lazy is None:
             return None
 
         definition = lazy.loader(lazy.asset_path)
 
-        self._definitions[identifier] = definition
+        self._custom_definitions[identifier] = definition
 
-        del self._lazy[identifier]
+        del self._lazy_custom[identifier]
 
         return definition
 
-    def require(self, identifier: str) -> CustomBakerDefinition:
-        definition = self.get(identifier)
+    def require_custom(self, identifier: str) -> CustomBakerDefinition:
+        definition = self.get_custom(identifier)
         if definition is None:
-            raise CustomBakerDefinitionNotFoundError(f"No definition registered for '{identifier}'.")
+            raise BakerDefinitionNotFoundError(f"No definition registered for '{identifier}'.")
 
         return definition
 
@@ -90,47 +155,43 @@ class CustomBakerDefinitionRegistry:
     # ------------------------------------------------------------------
 
     def is_loaded(self, identifier: str) -> bool:
-
-        return identifier in self._definitions
+        return identifier in self._custom_definitions or identifier in self._local_definitions
 
     def is_registered(self, identifier: str) -> bool:
-
-        return identifier in self._definitions or identifier in self._loaders
+        return (
+            identifier in self._custom_definitions
+            or identifier in self._loaders_custom
+            or identifier in self._local_definitions
+        )
 
     def clear(self) -> None:
-        self._definitions.clear()
-        self._loaders.clear()
-        self._lazy.clear()
+        self._custom_definitions.clear()
+        self._local_definitions.clear()
+        self._loaders_local.clear()
+        self._loaders_custom.clear()
+        self._lazy_custom.clear()
 
     # ------------------------------------------------------------------
     # Iteration
     # ------------------------------------------------------------------
 
-    def items(self):
-        return self._definitions.items()
+    def custom_items(self):
+        return self._custom_definitions.items()
 
-    def values(self):
-        return self._definitions.values()
+    def custom_values(self):
+        return self._custom_definitions.values()
 
-    def keys(self):
-        return self._definitions.keys()
+    def custom_keys(self):
+        return self._custom_definitions.keys()
 
-    def __getitem__(self, definition_id: str) -> CustomBakerDefinition:
-        return self._definitions[definition_id]
+    def local_items(self):
+        return self._local_definitions.items()
 
-    def __contains__(self, identifier: str) -> bool:
+    def local_values(self):
+        return self._local_definitions.values()
 
-        return self.is_registered(identifier)
-
-    def __len__(self) -> int:
-
-        return len(self._definitions) + len(self._loaders)
-
-    def __iter__(
-        self,
-    ) -> Iterator[CustomBakerDefinition]:
-
-        return iter(self._definitions.values())
+    def local_keys(self):
+        return self._local_definitions.keys()
 
 
-registry_definition = CustomBakerDefinitionRegistry()
+registry_definition = BakerDefinitionRegistry()

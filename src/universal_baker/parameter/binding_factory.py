@@ -1,17 +1,16 @@
 from __future__ import annotations
 
-from typing import Callable
+from collections.abc import Callable
 
 from universal_baker.parameter.binding_scene import ScenePropertyBinding
 
+from .binding import ParameterBinding
+from .binding_geometry_node import GeometryNodeInputBinding
+from .binding_material import MaterialSocketBinding
+from .binding_modifier import ModifierPropertyBinding
 from .metadata import (
     BindingMetadata,
 )
-
-from .binding import ParameterBinding
-from .binding_material import MaterialSocketBinding
-from .binding_modifier import ModifierPropertyBinding
-from .binding_geometry_node import GeometryNodeInputBinding
 
 
 class BindingFactoryError(RuntimeError):
