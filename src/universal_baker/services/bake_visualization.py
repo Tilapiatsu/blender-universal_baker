@@ -171,7 +171,7 @@ class BakeVisualizationService:
         # Cycles
         bpy.context.scene.render.engine = "CYCLES"
 
-        ViewportService.set_rendered(data.producer.viewport_render_pass, data.producer.view_transform)
+        ViewportService.set_rendered(data.producer.viewport_render_pass, data.producer.color_management_info)
 
     # ---------------------------------------------------------
     # Display

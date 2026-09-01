@@ -1,16 +1,15 @@
 from __future__ import annotations
 
-from abc import ABC
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
-
 from ..constant import LOG
-from ..enum.output_stage import OutputStage
-from ..services.artifact_service import ArtifactService
 from ..core.maskers import ImageMasker
 from ..core.registry_compositor import registry_compositor
+from ..enum.output_stage import OutputStage
 from ..logger_bake_middleware.bake_summary import BakeStatus, EventCategory
+from ..runtime.color_management_info import ColorManagementInfo
+from ..services.artifact_service import ArtifactService
 
 if TYPE_CHECKING:
     from ..runtime.context_mask import MaskContext
@@ -30,6 +29,7 @@ class MaskerBase(ABC):
     name: str = ""
     description: str = ""
     icon: str = "MOD_MASK"
+    color_management_info = ColorManagementInfo()
 
     def poll(self, task: Task) -> bool:
         """Whether this baker can execute this task."""
@@ -119,6 +119,7 @@ class MaskerBase(ABC):
             uv_layout=ctx.task.uv_layout,
             absolute_path=ctx.task.absolute_filepath,
             output_settings=ctx.output_settings,
+            color_management_info=ctx.task.color_management_info,
         )
 
         if artifact is None:

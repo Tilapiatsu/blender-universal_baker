@@ -1,21 +1,18 @@
 from __future__ import annotations
 
+import bpy
+
 from dataclasses import dataclass, field
-
-from typing import Iterator
-
-from universal_baker.services.image_base import ImageServiceBase
-
-from .bake_group import BakeGroup
-
+from collections.abc import Iterator
 
 from ..constant import LOG
-from .tile_set import TileSet
-from .settings_output import OutputSettings
 from ..resources.image import ImageResource
 from ..resources.image_buffer import ImageBuffer
 from ..services.image_codec import ImageCodec
+from .bake_group import BakeGroup
 from .output_artifact import OutputArtifact
+from .settings_output import OutputSettings
+from .tile_set import TileSet
 
 LOG_SCOPE = "Image Handle"
 
@@ -206,9 +203,16 @@ class ImageHandle:
             LOG.warning("TileSet is already loaded")
             return
 
-        self._tiles = ImageCodec.import_tiles(
-            self._artifact,
-        )
+        if self._artifact.image.blender_image_name in bpy.data.images:
+            self._tiles.from_blender_image(bpy.data.images[self._artifact.image.blender_image_name])
+        elif self._resource.is_valid:
+            tiles = self._resource.get_tileset()
+            if tiles is not None:
+                self._tiles.set_tileset(tiles)
+        else:
+            self._tiles = ImageCodec.import_tiles(
+                self._artifact,
+            )
 
     def __iter__(self):
         self._ensure_loaded()

@@ -1,23 +1,22 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
 from datetime import datetime
-from typing import Iterable
 from pathlib import Path
-
-from universal_baker.resources.uv import UVLayout
-
-from ..constant import LOG
-from ..enum.output_stage import OutputStage
-from ..runtime.output_artifact import OutputArtifact
-from ..enum.image_layout import ImageLayout
-
 from typing import TYPE_CHECKING
 
+from ..constant import LOG
+from ..enum.image_layout import ImageLayout
+from ..enum.output_stage import OutputStage
+from ..resources.uv import UVLayout
+from ..runtime.color_management_info import ColorManagementInfo
+from ..runtime.output_artifact import OutputArtifact
+
 if TYPE_CHECKING:
-    from ..runtime.settings_output import OutputSettings
     from ..properties.artifact import UBK_Artifact
     from ..properties.project import UBK_Project
     from ..runtime.runtime import BakeRuntime
+    from ..runtime.settings_output import OutputSettings
 
 LOG_SCOPE = "Artifact Service"
 
@@ -49,6 +48,7 @@ class ArtifactService:
         uv_layout: UVLayout,
         absolute_path: Path,
         output_settings: OutputSettings,
+        color_management_info: ColorManagementInfo,
         checksum="",
         dependencies: Iterable[str] = (),
     ) -> OutputArtifact | None:
@@ -88,7 +88,7 @@ class ArtifactService:
             artifact_pg.channels = output_settings.image.alpha
             artifact_pg.feed_from_output_settings(output_settings)
             artifact_pg.absolute_path = str(absolute_path)
-
+            artifact_pg.feed_from_color_management_info(color_management_info)
             tiles = uv_layout.tiles
 
             artifact_pg.udim_tiles.clear()

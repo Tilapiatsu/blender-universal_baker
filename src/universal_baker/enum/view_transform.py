@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 
 import bpy
 
@@ -25,7 +25,7 @@ def get_available_view_transforms() -> dict:
 # ViewTransform = Enum("ViewTransform", get_available_view_transforms())
 
 
-class ViewTransform(Enum):
+class ViewTransform(StrEnum):
     STANDARD = "Standard"
     ACES_1_3 = "ACES 1.3"
     ACES_2_0 = "ACES 2.0"
@@ -35,3 +35,12 @@ class ViewTransform(Enum):
     FILMIC_LOG = "Filmic Log"
     FALSE_COLOR = "False Color"
     RAW = "Raw"
+
+
+class DisplayDevice(StrEnum):
+    SRGB = "sRGB"
+    DISPLAY_P3 = "Display P3"
+    REC_1886 = "Rec.1886"
+    REC_2020 = "Rec.2020"
+    REC_2100_PQ = "Rec.2100-PQ"
+    REC_2100_HLG = "Rec.2100-HLG"

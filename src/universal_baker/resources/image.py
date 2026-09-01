@@ -2,11 +2,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import bpy
+
 from ..constant import LOG
 from ..runtime.settings_image import ImageSettings
-from typing import TYPE_CHECKING
+from ..runtime.tile_set import TileSet
 
 if TYPE_CHECKING:
     from ..runtime.output_artifact import OutputArtifact
@@ -53,6 +55,10 @@ class ImageResource:
     temporary: bool = False
     packed: bool = False
     is_copy: bool = False
+
+    @property
+    def is_valid(self):
+        return self.created and self.image is not None
 
     @property
     def image(self) -> bpy.types.Image | None:
@@ -237,6 +243,12 @@ class ImageResource:
         self.filepath = self.image.filepath_raw
         self.is_udim = self.image.tiles is not None
         self.colorspace = self.image.colorspace_settings.name
+
+    def get_tileset(self) -> TileSet | None:
+        if not self.is_valid:
+            return None
+
+        return TileSet.from_blender_image(self.image)
 
     @classmethod
     def from_blender_image(cls, image: bpy.types.Image, image_format_settings: ImageSettings) -> ImageResource:

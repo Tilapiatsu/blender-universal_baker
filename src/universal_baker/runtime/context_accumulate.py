@@ -1,24 +1,23 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 import bpy
 
-from typing import TYPE_CHECKING
-
-
 if TYPE_CHECKING:
+    from ..runtime.image_handle import ImageHandle
     from .output_repository import OutputRepository
     from .settings_output import OutputSettings
-    from ..runtime.image_handle import ImageHandle
 
 from ..constant import LOG
-from .context import ExecutionContext
+from ..logger_bake_middleware.bake_summary import BakeStatus, EventCategory
 from ..properties.project import UBK_Project
 from ..resources.image import ImageResource
+from ..runtime.color_management_info import ColorManagementInfo
 from ..runtime.settings_accumulate import AccumulateSettings
 from ..runtime.task_accumulate import AccumulateTask
-from ..logger_bake_middleware.bake_summary import BakeStatus, EventCategory
+from .context import ExecutionContext
 
 
 @dataclass(slots=True)
@@ -33,6 +32,8 @@ class AccumulateContext(ExecutionContext):
 
     node_tree: bpy.types.NodeTree | None = None
     image_node: bpy.types.ShaderNodeTexImage | None = None
+
+    color_management_info: ColorManagementInfo | None = None
 
     finished: bool = False
     success: bool = False

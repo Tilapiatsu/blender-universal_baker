@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import bpy
 
+from ..constant import LOG
+from ..resources.baker_asset import BakerAsset
 from ..runtime.baker_setup import BakerSetup
 from .baker_asset import BakerAssetService
-from ..resources.baker_asset import BakerAsset
-from ..constant import LOG
 
 LOG_SCOPE = "Custom Baker Setup Service"
 

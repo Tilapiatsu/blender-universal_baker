@@ -21,13 +21,13 @@ from ..parameter.parameter_applier import ParameterApplier
 from ..parameter.parameter_context import ParameterContext
 from ..resources.scene_view_transform import SceneViewTransform
 from ..runtime.baker_setup import BakerExecution, BakerSetup
+from ..runtime.color_management_info import ColorManagementInfo
 from ..services.artifact_service import ArtifactService
 from ..services.bake_material import BakeMaterialService
 from ..services.image_bake import ImageServiceBake
 from ..services.material import MaterialService
 from ..services.parameter_service import ParameterService
 from ..services.renderer import RendererService
-from universal_baker.enum import view_transform
 
 if TYPE_CHECKING:
     from ..parameter.metadata import ParameterMetadata
@@ -65,6 +65,7 @@ class BakerBase(ABC):
     color_type: BakerColorType = BakerColorType.COLOR
     image_colorspace: ImageColorSpace = ImageColorSpace.SRGB
     view_transform = SceneViewTransform(view_transform=ViewTransform.RAW)
+    color_management_info = ColorManagementInfo()
 
     def poll(self, task: Task) -> bool:
         """Whether this baker can execute this task."""
@@ -144,7 +145,7 @@ class BakerBase(ABC):
     def cleanup(self, ctx: BakeContext) -> None:
         LOG.debug("Restoring ...")
         """Restore Blender."""
-        ctx.image.reset()
+        # ctx.image.reset()
 
     @abstractmethod
     def update_baker(self, ctx: BakeContext) -> None:
@@ -190,6 +191,7 @@ class BakerBase(ABC):
             uv_layout=ctx.task.uv_layout,
             absolute_path=ctx.task.absolute_filepath,
             output_settings=ctx.output_settings,
+            color_management_info=ctx.task.color_management_info,
         )
 
         if artifact is None:
@@ -206,8 +208,7 @@ class BakerBase(ABC):
     def export_file(self, ctx: BakeContext) -> None:
         """Save Bake to disk."""
         LOG.debug("Saving File to Disk ...")
-        if ctx.task.output_context.output_settings.path.export_file:
-            ImageServiceBake.save(ctx.image)
+        ImageServiceBake.save(ctx.image, ctx.task.color_management_info)
 
     def apply_parameters(self, ctx: BakeContext):
         definition = registry_definition.get(self.id)

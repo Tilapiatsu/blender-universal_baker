@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import bpy
+from universal_baker.runtime.color_management_info import ColorManagementInfo
 
-from ..resources.scene_view_transform import SceneViewTransform
 from ..runtime.runtime_visualization import VisualizationRuntime
 from ..runtime.visualization_state import (
     SceneVisualizationState,
@@ -20,6 +20,7 @@ class ViewportService:
             scene_state = SceneVisualizationState(
                 scene_name=scene.name,
                 render_engine=scene.render.engine,
+                display_device=scene.display_settings.display_device,
                 view_transform=scene.view_settings.view_transform,
                 exposure=scene.view_settings.exposure,
                 gamma=scene.view_settings.gamma,
@@ -35,9 +36,7 @@ class ViewportService:
                     continue
 
                 space = area.spaces.active
-
                 shading = space.shading
-
                 scene_state = state.scenes.get(window.scene.name)
 
                 if scene_state is None:
@@ -59,11 +58,12 @@ class ViewportService:
         return state
 
     @staticmethod
-    def set_rendered(render_pass: str, view_transform: SceneViewTransform):
+    def set_rendered(render_pass: str, color_management_info: ColorManagementInfo):
+        bpy.context.scene.display_settings.display_device = color_management_info.display_device
         view_settings = bpy.context.scene.view_settings
-        view_settings.view_transform = view_transform.view_transform.value
-        view_settings.exposure = view_transform.exposure
-        view_settings.gamma = view_transform.gamma
+        view_settings.view_transform = color_management_info.view_transform
+        view_settings.exposure = color_management_info.exposure
+        view_settings.gamma = color_management_info.gamma
         for window in bpy.context.window_manager.windows:
             for area in window.screen.areas:
                 if area.type != "VIEW_3D":
@@ -96,6 +96,7 @@ class ViewportService:
 
             if scene is not None and scene_state.render_engine:
                 scene.render.engine = scene_state.render_engine
+                scene.display_settings.display_device = scene_state.display_device
                 scene.view_settings.view_transform = scene_state.view_transform
                 scene.view_settings.exposure = scene_state.exposure
                 scene.view_settings.gamma = scene_state.gamma

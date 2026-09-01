@@ -5,9 +5,8 @@ import numpy as np
 from ..constant import LOG
 from ..resources.image_buffer import ImageBuffer
 from ..resources.label_buffer import LabelBuffer
-from .tile_set import TileSet
-from .image_mask import ImageMask
 from .label_set import LabelSet
+from .tile_set import TileSet
 
 
 class UvOwnershipMask:

@@ -4,18 +4,17 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-
 if TYPE_CHECKING:
     from ..packers.base import PackerBase
     from ..properties.bake_group import UBK_BakeGroup
 
 from ..constant import LOG
-from .task import Task
-from .settings_pack import PackSettings
+from ..core.output_resolver import OutputResolver
 from ..enum.channels import Channel
 from ..logger.event import ScopeState
 from ..logger_bake_middleware.bake_summary import BakeStatus, EventCategory
-from ..core.output_resolver import OutputResolver
+from .settings_pack import PackSettings
+from .task import Task
 
 
 @dataclass(slots=True)

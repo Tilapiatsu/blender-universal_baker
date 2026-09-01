@@ -2,24 +2,22 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-
-import bpy
-
 from typing import TYPE_CHECKING
 
+import bpy
 
 if TYPE_CHECKING:
     from ..bakers.base import BakerBase
     from ..properties.bake_group import UBK_BakeGroup
-    from ..properties.object import UBK_TargetObject
     from ..properties.custom_baker import UBK_CustomBaker
+    from ..properties.object import UBK_TargetObject
 
 from ..constant import LOG
-from .task import Task
-from ..runtime.settings_bake import BakeSettings
+from ..core.output_resolver import OutputResolver
 from ..logger.event import ScopeState
 from ..logger_bake_middleware.bake_summary import BakeStatus, EventCategory
-from ..core.output_resolver import OutputResolver
+from ..runtime.settings_bake import BakeSettings
+from .task import Task
 
 
 @dataclass(slots=True, frozen=True)

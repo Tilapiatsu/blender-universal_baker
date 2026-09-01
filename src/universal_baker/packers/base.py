@@ -8,6 +8,7 @@ from ..enum.image_colorspace import ImageColorSpace
 from ..enum.output_stage import OutputStage
 from ..enum.view_transform import ViewTransform
 from ..resources.scene_view_transform import SceneViewTransform
+from ..runtime.color_management_info import ColorManagementInfo
 from ..services.artifact_service import ArtifactService
 
 if TYPE_CHECKING:
@@ -33,6 +34,7 @@ class PackerBase(ABC):
     viewport_render_pass: str = "COMBINED"
     image_colorspace: ImageColorSpace = ImageColorSpace.SRGB
     view_transform = SceneViewTransform(view_transform=ViewTransform.STANDARD)
+    color_management_info = ColorManagementInfo()
 
     def poll(self, task: Task) -> bool:
         """Whether this packer can execute this task."""
@@ -111,6 +113,7 @@ class PackerBase(ABC):
             uv_layout=ctx.task.uv_layout,
             absolute_path=ctx.task.absolute_filepath,
             output_settings=ctx.output_settings,
+            color_management_info=ctx.task.color_management_info,
         )
         if artifact is None:
             LOG.error("Artifact creation Failed")

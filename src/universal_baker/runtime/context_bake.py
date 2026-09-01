@@ -1,23 +1,21 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 import bpy
 
-from typing import TYPE_CHECKING
-
-
 if TYPE_CHECKING:
     from ..bakers.base import BakerBase
-    from .task_bake import BakeTask
-    from .settings_output import OutputSettings
     from .image_handle import ImageHandle
+    from .settings_output import OutputSettings
+    from .task_bake import BakeTask
 
+from ..properties.project import UBK_Project
 from ..resources.image import ImageResource
 from ..resources.material import MaterialResources
-from .settings_bake import BakeSettings
 from .context import ExecutionContext
-from ..properties.project import UBK_Project
+from .settings_bake import BakeSettings
 
 
 @dataclass(slots=True)

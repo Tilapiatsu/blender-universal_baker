@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import bpy
 
+from ..constant import LOG
 from ..resources.scene_view_transform import SceneViewTransform
 from ..runtime.context_bake import BakeContext
 from ..runtime.visualization_state import SceneVisualizationState
@@ -15,6 +16,7 @@ class RendererService:
         scene = bpy.context.scene
         scene_state = SceneVisualizationState(
             scene_name=scene.name,
+            display_device=scene.display_settings.display_device,
             render_engine=scene.render.engine,
             view_transform=scene.view_settings.view_transform,
             exposure=scene.view_settings.exposure,
@@ -29,6 +31,7 @@ class RendererService:
         view_settings.view_transform = view_transform.view_transform.value
         view_settings.exposure = view_transform.exposure
         view_settings.gamma = view_transform.gamma
+        LOG.debug(f"Set Viewtransform to {view_transform.view_transform.value}")
 
     @staticmethod
     def restore(scene_state: SceneVisualizationState):
@@ -36,7 +39,10 @@ class RendererService:
         scene = bpy.data.scenes.get(scene_name)
 
         if scene is not None and scene_state.render_engine:
+            LOG.debug(f"Restore Viewtransform to {scene_state.view_transform}")
+
             scene.render.engine = scene_state.render_engine
+            scene.display_settings.display_device = scene_state.display_device
             scene.view_settings.view_transform = scene_state.view_transform
             scene.view_settings.exposure = scene_state.exposure
             scene.view_settings.gamma = scene_state.gamma

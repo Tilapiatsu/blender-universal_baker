@@ -4,9 +4,10 @@ import bpy
 
 from ..core.registry_baker import registry_baker
 from ..enum.image_colorspace import ImageColorSpace
-from ..enum.view_transform import ViewTransform
+from ..enum.view_transform import DisplayDevice, ViewTransform
 from ..parameter.metadata import BindingMetadata, ParameterMetadata
 from ..resources.scene_view_transform import SceneViewTransform
+from ..runtime.color_management_info import ColorManagementInfo
 from ..runtime.context_bake import BakeContext
 from .base import BakerBase
 
@@ -23,6 +24,14 @@ class DiffuseBaker(BakerBase):
     clear_preview_material: bool = False
     image_colorspace: ImageColorSpace = ImageColorSpace.NON_COLOR
     view_transform = SceneViewTransform(view_transform=ViewTransform.ACES_2_0)
+    color_management_info = ColorManagementInfo(
+        apply_view_transform=True,
+        display_device=DisplayDevice.REC_2020,
+        view_transform=ViewTransform.ACES_2_0,
+        look="None",
+        exposure=1.0,
+        gamma=1.0,
+    )
 
     @property
     def parameters(self) -> tuple[ParameterMetadata, ...]:

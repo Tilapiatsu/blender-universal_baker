@@ -35,6 +35,7 @@ class SceneVisualizationState:
 
     scene_name: str
     view_transform: str
+    display_device: str
     exposure: float
     gamma: float
     render_engine: str | None = None

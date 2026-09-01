@@ -3,13 +3,15 @@ from __future__ import annotations
 from pathlib import Path
 
 import bpy
-from universal_baker.constant import LOG
-from universal_baker.runtime.settings_image import ColorManagementSettings
 
+from ..constant import LOG
 from ..resources.image_buffer import ImageBuffer
-from ..runtime.settings_output import OutputSettings
+from ..runtime.color_management_info import ColorManagementInfo
 from ..runtime.output_artifact import OutputArtifact
+from ..runtime.settings_image import ColorManagementSettings
+from ..runtime.settings_output import OutputSettings
 from ..runtime.tile_set import TileSet
+from .view_transform_override import ViewTransformOverride
 
 LOG_SCOPE = "Image Codec"
 
@@ -31,9 +33,10 @@ class ImageCodec:
     @classmethod
     def save(
         cls,
-        filepath: str | Path,
+        filepath: Path,
         buffer: ImageBuffer,
         output_settings: OutputSettings,
+        color_management_info: ColorManagementInfo | None = None,
     ) -> None:
         image = cls._create_image(buffer, output_settings)
         try:
@@ -43,9 +46,13 @@ class ImageCodec:
                 output_settings=output_settings,
             )
 
-            LOG.debug(f"Saving {filepath}")
-            image.save()
-            # image.save_render(image.filepath_raw, scene=bpy.context.scene)
+            if color_management_info is not None and color_management_info.apply_view_transform:
+                with ViewTransformOverride.override(bpy.context.scene, color_management_info):
+                    LOG.debug(f"Saving file as render : {filepath}")
+                    image.save_render(str(filepath), scene=bpy.context.scene)
+            else:
+                image.save()
+                LOG.debug(f"Saving file : {filepath}")
 
         finally:
             bpy.data.images.remove(image)
@@ -99,7 +106,12 @@ class ImageCodec:
     def export_tiles(cls, artifact: OutputArtifact, tiles: TileSet, output_settings: OutputSettings):
         with LOG.scope(LOG_SCOPE):
             for tile, buffer in tiles.tile_buffers:
-                cls.save(artifact.image.tile_path(tile), buffer, output_settings)
+                cls.save(
+                    artifact.image.tile_path(tile),
+                    buffer,
+                    output_settings,
+                    artifact.color_management_info,
+                )
                 tiles.set_dirty(tile, False)
 
     @classmethod
@@ -121,6 +133,11 @@ class ImageCodec:
                             artifact.output_settings.path.height,
                         ),
                     )
-                    cls.save(artifact.image.tile_path(t.tile), tile_set[t.tile], artifact.output_settings)
+                    cls.save(
+                        artifact.image.tile_path(t.tile),
+                        tile_set[t.tile],
+                        artifact.output_settings,
+                        artifact.color_management_info,
+                    )
 
         return tile_set

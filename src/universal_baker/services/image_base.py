@@ -1,15 +1,16 @@
 from __future__ import annotations
 
-from pathlib import Path
-
 import bpy
+import sys
 
 from ..constant import LOG
-from ..resources.image import ImageResource
-from ..runtime.task import Task
 from ..enum.image_layout import ImageLayout
-from ..services.uv import UVService
+from ..resources.image import ImageResource
+from ..runtime.color_management_info import ColorManagementInfo
 from ..runtime.settings_output import OutputSettings
+from ..runtime.task import Task
+from ..services.uv import UVService
+from .view_transform_override import ViewTransformOverride
 
 LOG_SCOPE = "Image Service"
 
@@ -64,9 +65,13 @@ class ImageServiceBase:
             return resource
 
     @classmethod
-    def save(cls, resource: ImageResource) -> None:
+    def save(
+        cls,
+        resource: ImageResource,
+        color_management_info: ColorManagementInfo | None = None,
+    ) -> None:
         with LOG.scope("Save"):
-            LOG.debug(f'Save Image Resource "{resource.name}" : {resource.filepath}')
+            LOG.debug(f'Save Image Resource "{resource.name}"')
 
             if resource.image is None:
                 return
@@ -75,8 +80,14 @@ class ImageServiceBase:
             image.filepath_raw = str(resource.filepath)
             image.file_format = resource.image_format_settings.file_format
 
-            image.save()
-            # image.save_render(image.filepath_raw, scene=bpy.context.scene)
+            if color_management_info is not None and color_management_info.apply_view_transform:
+                with ViewTransformOverride.override(bpy.context.scene, color_management_info):
+                    LOG.debug(f"Saving file as render : {resource.filepath}")
+                    image.save_render(str(resource.filepath), scene=bpy.context.scene)
+            else:
+                image.save()
+                LOG.debug(f"Saving file : {resource.filepath}")
+
             image.pack()
 
             resource.mark_saved()
@@ -287,6 +298,8 @@ class ImageServiceBase:
             if image_region is None:
                 image_region = context.area.regions[0]
             image_screen = context.screen
+
+        assert image_area is not None
 
         # set image_editor active image
         old_active_image = image_area.spaces.active.image

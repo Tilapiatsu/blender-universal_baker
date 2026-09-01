@@ -4,17 +4,16 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-
 if TYPE_CHECKING:
     from ..accumulators.base import AccumulatorBase
     from ..properties.bake_group import UBK_BakeGroup
 
 from ..constant import LOG
-from .task import Task
-from ..runtime.settings_accumulate import AccumulateSettings
+from ..core.output_resolver import OutputResolver
 from ..logger.event import ScopeState
 from ..logger_bake_middleware.bake_summary import BakeStatus, EventCategory
-from ..core.output_resolver import OutputResolver
+from ..runtime.settings_accumulate import AccumulateSettings
+from .task import Task
 
 
 @dataclass(slots=True, frozen=True)
