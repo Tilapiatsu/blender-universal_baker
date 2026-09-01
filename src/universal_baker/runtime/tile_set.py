@@ -1,12 +1,12 @@
 from __future__ import annotations
+
+from collections.abc import Iterable
 from dataclasses import dataclass
 
 import bpy
 
-from typing import Iterable
+from universal_baker.runtime.settings_image import ColorManagementSettings
 
-
-from .settings_output import OutputSettings
 from ..resources.image_buffer import ImageBuffer
 
 
@@ -36,7 +36,10 @@ class TileSet:
             return ts
 
         for t in image.tiles.values():
-            tile_image = ImageIOService.load(image.filepath_raw.replace("<UDIM>", str(t.number)))
+            # ISSUE: creating from blender image doesn't pass color management settings which may loose the color settings
+            tile_image = ImageIOService.load(
+                image.filepath_raw.replace("<UDIM>", str(t.number)), ColorManagementSettings()
+            )
             ts[t.number] = ImageBuffer.from_blender_image(tile_image)
 
             bpy.data.images.remove(tile_image)
