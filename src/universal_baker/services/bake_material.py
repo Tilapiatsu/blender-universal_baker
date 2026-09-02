@@ -3,8 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 import bpy
-from ..constant import LOG, BAKE_MATERIAL_NAME
 
+from ..constant import BAKE_MATERIAL_NAME, LOG
 
 LOG_SCOPE = "Bake Material"
 

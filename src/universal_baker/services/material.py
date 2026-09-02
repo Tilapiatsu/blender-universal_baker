@@ -2,11 +2,9 @@ from __future__ import annotations
 
 import bpy
 
-from ..constant import LOG
-from ..runtime.context_bake import BakeContext
+from ..constant import BAKE_IMAGE_NODE_LABEL, BAKE_IMAGE_NODE_NAME, BAKE_MATERIAL_NAME, LOG
 from ..resources.material import MaterialResource
-from ..constant import BAKE_IMAGE_NODE_LABEL, BAKE_IMAGE_NODE_NAME, BAKE_MATERIAL_NAME
-from .material_override import MaterialOverrideService
+from ..runtime.context_bake import BakeContext
 
 LOG_SCOPE = "Material Service"
 

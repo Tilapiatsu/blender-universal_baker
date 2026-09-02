@@ -62,8 +62,8 @@ class BakerBase(ABC):
     # Need to expose view transform to bake to -> Diffuse need to use AGX or Aces for nicer result, whereas curvature,
     # occlusion should maybe use Raw because it is just data, and shouldn't be transformed
 
-    color_type: BakerColorType = BakerColorType.COLOR
-    image_colorspace: ImageColorSpace = ImageColorSpace.SRGB
+    bake_colorspace: ImageColorSpace = ImageColorSpace.NON_COLOR
+    image_colorspace: ImageColorSpace = ImageColorSpace.NON_COLOR
     view_transform = SceneViewTransform(view_transform=ViewTransform.RAW)
     color_management_info = ColorManagementInfo()
 

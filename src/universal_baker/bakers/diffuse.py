@@ -22,14 +22,15 @@ class DiffuseBaker(BakerBase):
     blender_bake_type = "DIFFUSE"
     accumulator_id = "ALPHA_OVER"
     clear_preview_material: bool = False
-    image_colorspace: ImageColorSpace = ImageColorSpace.REC_2020
+    bake_colorspace: ImageColorSpace = ImageColorSpace.ACES_2_0
+    image_colorspace: ImageColorSpace = ImageColorSpace.SRGB
     view_transform = SceneViewTransform(view_transform=ViewTransform.ACES_2_0)
     color_management_info = ColorManagementInfo(
         apply_view_transform=True,
-        display_device=DisplayDevice.REC_2020,
+        display_device=DisplayDevice.SRGB,
         view_transform=ViewTransform.ACES_2_0,
         look="None",
-        exposure=1.0,
+        exposure=0.0,
         gamma=1.0,
     )
 

@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 import bpy
-import sys
 
 from ..constant import LOG
 from ..enum.image_layout import ImageLayout
 from ..resources.image import ImageResource
 from ..runtime.color_management_info import ColorManagementInfo
 from ..runtime.settings_output import OutputSettings
-from ..runtime.task import Task
+from ..runtime.task_bake import BakeTask
 from ..services.uv import UVService
 from .view_transform_override import ViewTransformOverride
 
@@ -38,7 +37,7 @@ class ImageServiceBase:
             return resource
 
     @classmethod
-    def acquire(cls, resource: ImageResource, task: Task) -> ImageResource:
+    def acquire(cls, resource: ImageResource, task: BakeTask) -> ImageResource:
         """
         Acquire the destination image for this task.
         """
@@ -136,7 +135,7 @@ class ImageServiceBase:
     def configure(
         cls,
         resource: ImageResource,
-        task: Task,
+        task: BakeTask,
     ) -> None:
         """
         Populate the resource from the Task.
@@ -145,13 +144,16 @@ class ImageServiceBase:
             LOG.debug(f"Setting up ressource from task {task.output_name}")
 
             image_settings = task.output_context.output_settings.image
+            # TODO: Now the bake colorspace is applied depending on the producer : May need to allow the user to
+            # override the default one if necessary
             color_settings = task.output_context.output_settings.color
             path_settings = task.output_context.output_settings.path
 
             resource.name = task.output_name
             resource.width = path_settings.width
             resource.height = path_settings.height
-            resource.colorspace = color_settings.colorspace
+            # resource.colorspace = color_settings.colorspace
+            resource.colorspace = task.producer.bake_colorspace.value
             resource.image_format_settings = image_settings
             resource.is_udim = task.uv_layout.image_layout == ImageLayout.UDIM
             LOG.debug(f"Configure Image to {task.uv_layout.image_layout.value}")
