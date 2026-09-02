@@ -145,7 +145,7 @@ class BakerBase(ABC):
     def cleanup(self, ctx: BakeContext) -> None:
         LOG.debug("Restoring ...")
         """Restore Blender."""
-        # ctx.image.reset()
+        ctx.image.reset()
 
     @abstractmethod
     def update_baker(self, ctx: BakeContext) -> None:

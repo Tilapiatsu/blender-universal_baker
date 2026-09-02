@@ -83,6 +83,26 @@ class ImageServiceBase:
             if color_management_info is not None and color_management_info.apply_view_transform:
                 with ViewTransformOverride.override(bpy.context.scene, color_management_info):
                     LOG.debug(f"Saving file as render : {resource.filepath}")
+                    print("IMAGE")
+                    print("  colorspace:", image.colorspace_settings.name)
+                    print("  filepath:", image.filepath)
+                    print("  source:", image.source)
+
+                    print("SCENE COLOR MANAGEMENT")
+                    print("  display:", bpy.context.scene.display_settings.display_device)
+                    print("  view:", bpy.context.scene.view_settings.view_transform)
+                    print("  look:", bpy.context.scene.view_settings.look)
+                    print("  exposure:", bpy.context.scene.view_settings.exposure)
+                    print("  gamma:", bpy.context.scene.view_settings.gamma)
+
+                    print("OUTPUT")
+                    print("  filepath:", image.filepath_raw)
+
+                    print("SCENE RENDER SETTINGS")
+                    print("  file_format:", bpy.context.scene.render.image_settings.file_format)
+                    print("  color_mode:", bpy.context.scene.render.image_settings.color_mode)
+                    print("  color_depth:", bpy.context.scene.render.image_settings.color_depth)
+
                     image.save_render(str(resource.filepath), scene=bpy.context.scene)
             else:
                 image.save()

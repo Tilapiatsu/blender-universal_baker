@@ -203,9 +203,7 @@ class ImageHandle:
             LOG.warning("TileSet is already loaded")
             return
 
-        if self._artifact.image.blender_image_name in bpy.data.images:
-            self._tiles.from_blender_image(bpy.data.images[self._artifact.image.blender_image_name])
-        elif self._resource.is_valid:
+        if self._resource.is_valid:
             tiles = self._resource.get_tileset()
             if tiles is not None:
                 self._tiles.set_tileset(tiles)

@@ -1,4 +1,5 @@
 from __future__ import annotations
+import sys
 
 import bpy
 
@@ -16,9 +17,10 @@ class RendererService:
         scene = bpy.context.scene
         scene_state = SceneVisualizationState(
             scene_name=scene.name,
-            display_device=scene.display_settings.display_device,
             render_engine=scene.render.engine,
+            display_device=scene.display_settings.display_device,
             view_transform=scene.view_settings.view_transform,
+            look=scene.view_settings.look,
             exposure=scene.view_settings.exposure,
             gamma=scene.view_settings.gamma,
         )
@@ -44,6 +46,7 @@ class RendererService:
             scene.render.engine = scene_state.render_engine
             scene.display_settings.display_device = scene_state.display_device
             scene.view_settings.view_transform = scene_state.view_transform
+            scene.view_settings.look = scene_state.look
             scene.view_settings.exposure = scene_state.exposure
             scene.view_settings.gamma = scene_state.gamma
 

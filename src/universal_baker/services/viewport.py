@@ -22,6 +22,7 @@ class ViewportService:
                 render_engine=scene.render.engine,
                 display_device=scene.display_settings.display_device,
                 view_transform=scene.view_settings.view_transform,
+                look=scene.view_settings.look,
                 exposure=scene.view_settings.exposure,
                 gamma=scene.view_settings.gamma,
             )
