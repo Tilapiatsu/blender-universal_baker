@@ -34,6 +34,9 @@ class ExecutorInternal(ExecutionTarget):
             ctx.succeed(f"{task.producer.name} succeeded")
             session.job.notify_task_finished(task, True, perf_counter() - start)
 
+        except KeyboardInterrupt:
+            LOG.warning("Job interrupted")
+
         except Exception as exc:
             traceback.print_exc()
             ctx.fail(f"{task.producer.name} failed" + str(exc))

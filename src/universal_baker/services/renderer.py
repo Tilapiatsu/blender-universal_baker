@@ -59,6 +59,7 @@ class RendererService:
             cls.configure(ctx)
             cls.prepare(ctx)
             cls.bake(ctx)
+            raise KeyboardInterrupt
         finally:
             cls.restore(scene_state)
 
