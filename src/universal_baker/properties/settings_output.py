@@ -29,6 +29,11 @@ class UBK_Output(PropertyGroup):
     # Color
     # -------------------------------------------------------------------------
 
+    override_colorspace: BoolProperty(
+        name="Override Colorspace",
+        default=False,
+    )
+
     colorspace: EnumProperty(
         name="Colorspace",
         items=get_colorspace_items,

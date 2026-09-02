@@ -80,6 +80,7 @@ class UBK_Artifact(PropertyGroup):
         default=4,
     )
     export_file: BoolProperty()
+    override_colorspace: BoolProperty()
     colorspace: StringProperty()
     checksum: StringProperty()
     created: StringProperty()
@@ -162,11 +163,14 @@ class UBK_Artifact(PropertyGroup):
         self.use_preview = output_settings.image.use_preview
         self.views_format = output_settings.image.views_format
 
+        self.override_colorspace = output_settings.color.override_colorspace
+        self.colorspace = output_settings.color.colorspace
+
     def get_output_settings(self) -> OutputSettings:
         from ..runtime.settings_image import ColorManagementSettings, ImageSettings
         from ..runtime.settings_output import OutputSettings, PathSettings
 
-        color = ColorManagementSettings(self.colorspace)
+        color = ColorManagementSettings(self.override_colorspace, self.colorspace)
         path = PathSettings(
             width=self.width,
             height=self.height,

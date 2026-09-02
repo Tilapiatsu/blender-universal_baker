@@ -36,9 +36,9 @@ class TileSet:
             return ts
 
         for t in image.tiles.values():
-            # ISSUE: creating from blender image doesn't pass color management settings which may loose the color settings
             tile_image = ImageIOService.load(
-                image.filepath_raw.replace("<UDIM>", str(t.number)), ColorManagementSettings()
+                image.filepath_raw.replace("<UDIM>", str(t.number)),
+                ColorManagementSettings(colorspace=image.colorspace_settings.name),
             )
             ts[t.number] = ImageBuffer.from_blender_image(tile_image)
 

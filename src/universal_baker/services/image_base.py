@@ -82,26 +82,6 @@ class ImageServiceBase:
             if color_management_info is not None and color_management_info.apply_view_transform:
                 with ViewTransformOverride.override(bpy.context.scene, color_management_info):
                     LOG.debug(f"Saving file as render : {resource.filepath}")
-                    print("IMAGE")
-                    print("  colorspace:", image.colorspace_settings.name)
-                    print("  filepath:", image.filepath)
-                    print("  source:", image.source)
-
-                    print("SCENE COLOR MANAGEMENT")
-                    print("  display:", bpy.context.scene.display_settings.display_device)
-                    print("  view:", bpy.context.scene.view_settings.view_transform)
-                    print("  look:", bpy.context.scene.view_settings.look)
-                    print("  exposure:", bpy.context.scene.view_settings.exposure)
-                    print("  gamma:", bpy.context.scene.view_settings.gamma)
-
-                    print("OUTPUT")
-                    print("  filepath:", image.filepath_raw)
-
-                    print("SCENE RENDER SETTINGS")
-                    print("  file_format:", bpy.context.scene.render.image_settings.file_format)
-                    print("  color_mode:", bpy.context.scene.render.image_settings.color_mode)
-                    print("  color_depth:", bpy.context.scene.render.image_settings.color_depth)
-
                     image.save_render(str(resource.filepath), scene=bpy.context.scene)
             else:
                 image.save()
@@ -144,16 +124,15 @@ class ImageServiceBase:
             LOG.debug(f"Setting up ressource from task {task.output_name}")
 
             image_settings = task.output_context.output_settings.image
-            # TODO: Now the bake colorspace is applied depending on the producer : May need to allow the user to
-            # override the default one if necessary
             color_settings = task.output_context.output_settings.color
             path_settings = task.output_context.output_settings.path
 
             resource.name = task.output_name
             resource.width = path_settings.width
             resource.height = path_settings.height
-            # resource.colorspace = color_settings.colorspace
-            resource.colorspace = task.producer.bake_colorspace.value
+            resource.colorspace = (
+                color_settings.colorspace if color_settings.override_colorspace else task.producer.bake_colorspace.value
+            )
             resource.image_format_settings = image_settings
             resource.is_udim = task.uv_layout.image_layout == ImageLayout.UDIM
             LOG.debug(f"Configure Image to {task.uv_layout.image_layout.value}")

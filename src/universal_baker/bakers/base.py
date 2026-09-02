@@ -57,11 +57,6 @@ class BakerBase(ABC):
     clear_preview_material: bool = True
     asset_path: Path = Path()
     viewport_render_pass: str = "COMBINED"
-
-    # TODO: Need to use color_type and colorspace for baking and displaying baked images
-    # Need to expose view transform to bake to -> Diffuse need to use AGX or Aces for nicer result, whereas curvature,
-    # occlusion should maybe use Raw because it is just data, and shouldn't be transformed
-
     bake_colorspace: ImageColorSpace = ImageColorSpace.NON_COLOR
     image_colorspace: ImageColorSpace = ImageColorSpace.NON_COLOR
     view_transform = SceneViewTransform(view_transform=ViewTransform.RAW)
