@@ -94,8 +94,12 @@ class AlbedoBaker(BakerBase):
     def execute(self, ctx: BakeContext) -> None:
         return super().execute(ctx)
 
-    def prepare_execution(self, target):
-        return super().prepare_execution(target)
+    def prepare_execution(
+        self,
+        target: bpy.types.Object,
+        sources: list[bpy.types.Object],
+    ):
+        return super().prepare_execution(target, sources)
 
     def prepare(self, ctx: BakeContext):
         """

@@ -33,6 +33,7 @@ class BakeContext(ExecutionContext):
     image_node: bpy.types.ShaderNodeTexImage | None = None
 
     _target: bpy.types.Object | None = None
+    _sources: list[bpy.types.Object] | None = None
 
     finished: bool = False
     success: bool = False
@@ -62,9 +63,15 @@ class BakeContext(ExecutionContext):
         self._target = value
 
     @property
-    def sources(self) -> tuple[bpy.types.Object]:
-        # TODO : Need to fix
-        return [o.object for o in self.task.sources]
+    def sources(self) -> list[bpy.types.Object]:
+        if self._sources is None:
+            self._sources = self.task.sources
+
+        return self._sources
+
+    @sources.setter
+    def sources(self, sources) -> None:
+        self._sources = sources
 
     @property
     def selected_to_active(self) -> bool:

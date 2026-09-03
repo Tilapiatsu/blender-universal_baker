@@ -13,12 +13,10 @@ from ..core.registry_baker import registry_baker
 from ..core.registry_definition import registry_definition
 from ..enum.image_colorspace import ImageColorSpace
 from ..enum.output_stage import OutputStage
-from ..enum.view_transform import ViewTransform
 from ..parameter.baker_custom.metadata_loader import MetadataLoader as metadata_loader_custom
 from ..parameter.baker_local.metadata_loader import MetadataLoader as metadata_loader_local
 from ..parameter.parameter_applier import ParameterApplier
 from ..parameter.parameter_context import ParameterContext
-from ..resources.scene_view_transform import SceneViewTransform
 from ..runtime.baker_setup import BakerExecution, BakerSetup
 from ..runtime.color_management_info import ColorManagementInfo
 from ..services.artifact_service import ArtifactService
@@ -71,21 +69,40 @@ class BakerBase(ABC):
 
     @abstractmethod
     @contextmanager
-    def prepare_execution(self, target: bpy.types.Object) -> Generator[BakerExecution, Any, Any]:
+    def prepare_execution(
+        self,
+        target: bpy.types.Object,
+        sources: list[bpy.types.Object],
+    ) -> Generator[BakerExecution, Any, Any]:
 
+        selected_to_active = len(sources) > 0
         material_setup = BakeMaterialService.prepare(objects=[target])
         baker_setup = BakerSetup(material_setup=material_setup)
 
-        hide_render = target.hide_render
-        target.hide_render = False
+        # ISSUE: Need to make sure the target and sources can be unhidden even if they are in a hidden collection
+        # Otherwise the selection is not working properly and the bake is not hapening either
+
+        if selected_to_active:
+            hide_render = {}
+            for s in sources:
+                hide_render[s] = s.hide_render
+                s.hide_render = False
+
+        else:
+            hide_render = {}
+            hide_render[target] = target.hide_render
+            target.hide_render = False
         try:
             yield BakerExecution(
                 target=target,
+                sources=sources,
                 setup=baker_setup,
             )
 
         finally:
-            target.hide_render = hide_render
+            for obj, render in hide_render.items():
+                obj.hide_render = render
+
             material_setup.cleanup()
 
     @abstractmethod
@@ -224,17 +241,23 @@ class BakerBase(ABC):
             LOG.error(f"Material Overries not found for {ctx.target.name}")
             return
 
-        parameter_context = ParameterContext(
-            object=ctx.target,
-            materials=materials,
-            scene=ctx.scene,
-        )
+        if ctx.selected_to_active:
+            objects = ctx.sources
+        else:
+            objects = [ctx.target]
 
-        ParameterApplier.apply(
-            definition,
-            snapshot,
-            parameter_context,
-        )
+        for o in objects:
+            parameter_context = ParameterContext(
+                object=o,
+                materials=materials,
+                scene=ctx.scene,
+            )
+
+            ParameterApplier.apply(
+                definition,
+                snapshot,
+                parameter_context,
+            )
 
     def register_local(self):
         LOG.info(f"Registering Building Baker : {self.id}")

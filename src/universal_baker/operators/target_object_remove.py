@@ -16,9 +16,7 @@ class UBK_OT_TargetObjectRemove(UBK_OT_Base):
     def poll(cls, context):
         """Only enable the button when an object exists."""
         target_object = BakeController.active_target_object(context)
-        if target_object is None:
-            return False
-        return bool(target_object.source_objects)
+        return target_object is not None
 
     def execute(self, context):
         bake_group = BakeController.active_bake_group(context)

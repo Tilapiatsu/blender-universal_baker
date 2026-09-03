@@ -39,6 +39,7 @@ class ExecutionPlanner:
         project,
         register_bakers: bool = False,
         register_packers: bool = False,
+        # Indexes == -1 means to create task for all. If indexes >= 0, only processed the inputed index
         group_index: int = -1,
         baker_index: int = -1,
         packer_index: int = -1,
@@ -184,7 +185,7 @@ class ExecutionPlanner:
                             output_context=output_context,
                             color_management_info=baker_producer.color_management_info,
                             target_object_uuid=obj.uuid,
-                            sources=obj.source_objects,
+                            sources=obj.source_object_list,
                             producer=baker_producer,
                             settings=settings,
                             image_name=baker.image_name,

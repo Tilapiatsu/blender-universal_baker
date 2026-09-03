@@ -23,7 +23,7 @@ from .task import Task
 @dataclass(slots=True, frozen=True)
 class BakeTask(Task):
     target_object_uuid: str
-    sources: tuple[bpy.types.Object]
+    sources: list[bpy.types.Object]
     producer: BakerBase
     settings: BakeSettings
     image_name: str

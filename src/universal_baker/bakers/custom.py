@@ -35,14 +35,22 @@ class CustomBaker(BakerBase):
         return super().parameters
 
     @contextmanager
-    def prepare_execution(self, target: bpy.types.Object) -> Generator[BakerExecution, Any, Any]:
+    def prepare_execution(
+        self,
+        target: bpy.types.Object,
+        sources: list[bpy.types.Object],
+    ) -> Generator[BakerExecution, Any, Any]:
         asset = BakerAsset(filepath=self.asset_path)
 
         hide_render = target.hide_render
-        setup = CustomBakerSetupService.prepare(asset=asset, target=target)
+        setup = CustomBakerSetupService.prepare(asset=asset, target=target, sources=sources)
 
         try:
-            yield BakerExecution(target=setup.target, setup=setup)
+            yield BakerExecution(
+                target=setup.target,
+                sources=setup.sources,
+                setup=setup,
+            )
 
         finally:
             target.hide_render = hide_render

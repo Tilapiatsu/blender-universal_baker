@@ -13,6 +13,7 @@
   - [ ] Export automatic cage ?
   - [ ] Cage Shader
   - [ ] Cage distance painting
+  - [ ] Investigate live preview of bake with Ray Portal shader : It could help display the projection error or missed rays
 - [ ] add ability to load a scene as background before baker ( usefull for AO )
 - [ ] add feature to apply background color per baker
 - [ ] add bake from multires ? For Normal only

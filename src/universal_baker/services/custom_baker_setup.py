@@ -16,25 +16,28 @@ class CustomBakerSetupError(RuntimeError):
 
 class CustomBakerSetupService:
     @classmethod
-    def prepare(cls, asset: BakerAsset, target: bpy.types.Object) -> BakerSetup:
+    def prepare(
+        cls,
+        asset: BakerAsset,
+        target: bpy.types.Object,
+        sources: list[bpy.types.Object],
+    ) -> BakerSetup:
         with LOG.scope(LOG_SCOPE):
-            LOG.debug(f"Prepare setup for {target.name}")
             prototype = BakerAssetService.load_prototype(asset)
 
             setup = BakerSetup()
 
             try:
-                bake_object = cls._duplicate_target(target)
+                if len(sources) > 0:
+                    duplicated_sources = []
+                    for o in sources:
+                        duplicated_source = cls._prepare_object(o, prototype, setup)
+                        duplicated_sources.append(duplicated_source)
 
-                # NOTE: Important to hide from rendering the base object. because it could pollute the baking for some
-                # bakers ( AO, Diffuse ...)
-                target.hide_render = True
-
-                setup.target = bake_object
-                setup.temporary_objects.append(bake_object)
-
-                cls._copy_material(prototype, bake_object, setup)
-                cls._copy_modifiers(prototype, bake_object)
+                    setup.sources = duplicated_sources
+                    setup.target = target
+                else:
+                    setup.target = cls._prepare_object(target, prototype, setup)
 
                 return setup
 
@@ -47,6 +50,27 @@ class CustomBakerSetupService:
                 cls._remove_object(prototype)
 
                 raise
+
+    @classmethod
+    def _prepare_object(
+        cls,
+        obj: bpy.types.Object,
+        prototype: bpy.types.Object,
+        setup: BakerSetup,
+    ) -> bpy.types.Object:
+        LOG.debug(f"Prepare setup for {obj.name}")
+        duplicate = cls._duplicate_target(obj)
+
+        # NOTE: Important to hide from rendering the base object. because it could pollute the baking for some
+        # bakers ( AO, Diffuse ...)
+        obj.hide_render = True
+
+        setup.temporary_objects.append(duplicate)
+
+        cls._copy_material(prototype, duplicate, setup)
+        cls._copy_modifiers(prototype, duplicate)
+
+        return duplicate
 
     @staticmethod
     def get_prototype_material(asset: BakerAsset) -> bpy.types.Material:

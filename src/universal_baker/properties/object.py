@@ -55,6 +55,12 @@ class UBK_TargetObject(PropertyGroup):
     def use_cage(self) -> bool:
         return self.cage_mode != "NONE"
 
+    @property
+    def source_object_list(self) -> list[bpy.types.Object]:
+        object_list: list[bpy.types.Object] = [o.object for o in self.source_objects if o.enabled and o is not None]
+
+        return object_list
+
 
 classes = (
     UBK_SourceObject,

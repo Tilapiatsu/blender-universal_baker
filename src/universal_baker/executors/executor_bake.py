@@ -44,8 +44,9 @@ class BakeExecutorInternal(TaskExecutor):
             )
 
             # NOTE: Prepare the target in case of CustomBaker
-            with task.producer.prepare_execution(ctx.target) as bake_target:
+            with task.producer.prepare_execution(ctx.target, task.sources) as bake_target:
                 ctx.target = bake_target.target
+                ctx.sources = bake_target.sources
                 execution.execute(
                     session=session,
                     task=task,

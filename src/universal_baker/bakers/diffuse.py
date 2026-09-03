@@ -104,8 +104,12 @@ class DiffuseBaker(BakerBase):
     def execute(self, ctx: BakeContext) -> None:
         return super().execute(ctx)
 
-    def prepare_execution(self, target):
-        return super().prepare_execution(target)
+    def prepare_execution(
+        self,
+        target: bpy.types.Object,
+        sources: list[bpy.types.Object],
+    ):
+        return super().prepare_execution(target, sources)
 
     def configure_preview_material(self, material): ...
 
