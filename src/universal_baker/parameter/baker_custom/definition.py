@@ -4,6 +4,8 @@ from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from universal_baker.enum import image_colorspace, view_transform
+
 from ..binding import ParameterBinding
 from ..binding_factory import BindingFactory
 from ..metadata import CustomBakerMetadata
@@ -36,6 +38,16 @@ class CustomBakerDefinition:
     identifier: str
     name: str
     prototype: str
+    bake_colorspace: str
+    image_colorspace: str
+
+    display_device: str
+    view_transform: str
+    look: str
+
+    exposure: float
+    gamma: float
+
     parameters: tuple[BakerParameter, ...] = ()
     bindings: dict[str, tuple[ParameterBinding, ...]] = field(default_factory=dict)
     description: str = ""
@@ -217,6 +229,13 @@ class CustomBakerDefinition:
             identifier=cls._make_identifier(metadata.name),
             name=metadata.name,
             prototype=metadata.prototype,
+            bake_colorspace=metadata.bake_colorspace,
+            image_colorspace=metadata.image_colorspace,
+            display_device=metadata.display_device,
+            view_transform=metadata.view_transform,
+            look=metadata.look,
+            exposure=metadata.exposure,
+            gamma=metadata.gamma,
             parameters=parameter_tuple,
             bindings=binding_map,
             description=metadata.description,

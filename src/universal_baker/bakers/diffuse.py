@@ -6,7 +6,6 @@ from ..core.registry_baker import registry_baker
 from ..enum.image_colorspace import ImageColorSpace
 from ..enum.view_transform import DisplayDevice, ViewTransform
 from ..parameter.metadata import BindingMetadata, ParameterMetadata
-from ..resources.scene_view_transform import SceneViewTransform
 from ..runtime.color_management_info import ColorManagementInfo
 from ..runtime.context_bake import BakeContext
 from .base import BakerBase
@@ -24,7 +23,6 @@ class DiffuseBaker(BakerBase):
     clear_preview_material: bool = False
     bake_colorspace: ImageColorSpace = ImageColorSpace.ACES_2_0
     image_colorspace: ImageColorSpace = ImageColorSpace.SRGB
-    view_transform = SceneViewTransform(view_transform=ViewTransform.ACES_2_0)
     color_management_info = ColorManagementInfo(
         apply_view_transform=True,
         display_device=DisplayDevice.SRGB,

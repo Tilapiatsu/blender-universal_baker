@@ -11,7 +11,6 @@ import bpy
 from ..constant import LOG, get_prefs
 from ..core.registry_baker import registry_baker
 from ..core.registry_definition import registry_definition
-from ..enum.bake_colorspace import BakerColorType
 from ..enum.image_colorspace import ImageColorSpace
 from ..enum.output_stage import OutputStage
 from ..enum.view_transform import ViewTransform
@@ -59,7 +58,6 @@ class BakerBase(ABC):
     viewport_render_pass: str = "COMBINED"
     bake_colorspace: ImageColorSpace = ImageColorSpace.NON_COLOR
     image_colorspace: ImageColorSpace = ImageColorSpace.NON_COLOR
-    view_transform = SceneViewTransform(view_transform=ViewTransform.RAW)
     color_management_info = ColorManagementInfo()
 
     def poll(self, task: Task) -> bool:
@@ -270,6 +268,7 @@ class BakerBase(ABC):
                 custom_baker.id += f"_{baker_name}"
                 custom_baker.asset_path = blend_file
                 custom_baker.name = blend_file.stem.capitalize()
+
                 LOG.info(f"Registering Custom Baker : {baker_name}")
                 registry_baker.register(custom_baker)
 

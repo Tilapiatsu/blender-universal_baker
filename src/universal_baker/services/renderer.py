@@ -55,7 +55,7 @@ class RendererService:
         """Execute a single bake task."""
         scene_state = cls.capture_state()
         try:
-            cls.set_view_settings(ctx.task.producer.view_transform)
+            # cls.set_view_settings(ctx.task.producer.bake_view_transform)
             cls.configure(ctx)
             cls.prepare(ctx)
             cls.bake(ctx)

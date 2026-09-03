@@ -13,7 +13,6 @@ from bpy.props import (
     StringProperty,
 )
 from bpy.types import PropertyGroup
-from universal_baker.enum.view_transform import DisplayDevice
 
 from ..runtime.color_management_info import ColorManagementInfo
 
@@ -213,8 +212,8 @@ class UBK_Artifact(PropertyGroup):
 
     def feed_from_color_management_info(self, color_management_info: ColorManagementInfo):
         self.apply_view_transform = color_management_info.apply_view_transform
-        self.display_device = color_management_info.display_device.value
-        self.view_transform = color_management_info.view_transform.value
+        self.display_device = color_management_info.display_device
+        self.view_transform = color_management_info.view_transform
         self.look = color_management_info.look
         self.exposure = color_management_info.exposure
         self.gamma = color_management_info.gamma

@@ -131,7 +131,7 @@ class ImageServiceBase:
             resource.width = path_settings.width
             resource.height = path_settings.height
             resource.colorspace = (
-                color_settings.colorspace if color_settings.override_colorspace else task.producer.bake_colorspace.value
+                color_settings.colorspace if color_settings.override_colorspace else task.producer.bake_colorspace
             )
             resource.image_format_settings = image_settings
             resource.is_udim = task.uv_layout.image_layout == ImageLayout.UDIM

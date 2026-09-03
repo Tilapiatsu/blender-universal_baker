@@ -110,6 +110,16 @@ class CustomBakerMetadata:
     version: int
     name: str
     prototype: str
+    bake_colorspace: str
+    image_colorspace: str
+
+    display_device: str
+    view_transform: str
+    look: str
+
+    exposure: float
+    gamma: float
+
     description: str = ""
     parameters: tuple[ParameterMetadata, ...] = ()
 

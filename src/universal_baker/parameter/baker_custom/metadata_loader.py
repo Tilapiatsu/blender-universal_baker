@@ -180,6 +180,13 @@ class MetadataLoader:
         name = cls._required_string(data, "name", source_name)
         id = cls._required_string(data, "id", source_name)
         prototype = cls._required_string(data, "prototype", source_name)
+        bake_colorspace = cls._required_string(data, "bake_colorspace", source_name)
+        image_colorspace = cls._required_string(data, "image_colorspace", source_name)
+        display_device = cls._required_string(data, "display_device", source_name)
+        view_transform = cls._required_string(data, "view_transform", source_name)
+        look = cls._required_string(data, "look", source_name)
+        exposure = cls._required_float(data, "exposure", source_name)
+        gamma = cls._required_float(data, "gamma", source_name)
         description = cls._optional_string(data, "description", "")
 
         raw_parameters = data.get("parameters", [])
@@ -201,6 +208,13 @@ class MetadataLoader:
             "name",
             "description",
             "prototype",
+            "bake_colorspace",
+            "image_colorspace",
+            "display_device",
+            "view_transform",
+            "look",
+            "exposure",
+            "gamma",
             "parameters",
         }
 
@@ -211,7 +225,14 @@ class MetadataLoader:
             version=version,
             name=name,
             prototype=prototype,
+            bake_colorspace=bake_colorspace,
             description=description,
+            image_colorspace=image_colorspace,
+            display_device=display_device,
+            view_transform=view_transform,
+            look=look,
+            exposure=exposure,
+            gamma=gamma,
             parameters=parameters,
             extra=extra,
         )
@@ -377,6 +398,15 @@ class MetadataLoader:
 
         if not isinstance(value, str):
             raise MetadataValidationError(f"'{key}' must be a string.")
+
+        return value
+
+    @staticmethod
+    def _required_float(data: dict[str, Any], key: str, location: str) -> float:
+        value = data.get(key)
+
+        if isinstance(value, bool) or not isinstance(value, float):
+            raise MetadataValidationError(f"{location}.{key} must be an integer.")
 
         return value
 

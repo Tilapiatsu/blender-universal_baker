@@ -345,7 +345,7 @@ class BakeVisualizationService:
             if handle is None or image is None or image.image is None:
                 return
 
-            DisplayMaterialService.set_image(material, image.image, data.producer.image_colorspace.value)
+            DisplayMaterialService.set_image(material, image.image, data.producer.image_colorspace)
 
             cls._runtime.set_active_image_handle(handle)
             cls._runtime.set_active_producer(data.producer)
