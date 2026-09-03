@@ -2,23 +2,22 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-
-import bpy
-
 from typing import TYPE_CHECKING
 
+import bpy
 
 if TYPE_CHECKING:
     from ..bakers.base import BakerBase
     from ..properties.bake_group import UBK_BakeGroup
+    from ..properties.custom_baker import UBK_CustomBaker
     from ..properties.object import UBK_TargetObject
 
 from ..constant import LOG
-from .task import Task
-from ..runtime.settings_bake import BakeSettings
+from ..core.output_resolver import OutputResolver
 from ..logger.event import ScopeState
 from ..logger_bake_middleware.bake_summary import BakeStatus, EventCategory
-from ..core.output_resolver import OutputResolver
+from ..runtime.settings_bake import BakeSettings
+from .task import Task
 
 
 @dataclass(slots=True, frozen=True)
@@ -40,6 +39,17 @@ class BakeTask(Task):
         return BakeController.get_bake_group_from_uuid(self.bake_group_uuid)
 
     @property
+    def baker_settings(self) -> UBK_CustomBaker | None:
+        from ..core.controller import BakeController
+
+        baker = BakeController.get_baker_from_uuid(self.uuid)
+
+        if baker is None:
+            return None
+
+        return baker.custom_baker
+
+    @property
     def target(self) -> UBK_TargetObject:
         from ..core.controller import BakeController
 
@@ -55,7 +65,7 @@ class BakeTask(Task):
 
     @property
     def output_name(self) -> str:
-        return f"{self.object_name}_{self.baker_id.lower()}"
+        return f"{self.object_name}_{self.image_name.replace(' ', '_')}"
 
     @property
     def baker_name(self) -> str:
@@ -70,7 +80,7 @@ class BakeTask(Task):
         file_output = OutputResolver.resolve(
             self.output_context,
             self.uv_layout.image_layout,
-            self.object_name,
+            self.object_name if self.has_multiple_targets else None,
             "object_buffers" if self.has_multiple_targets else None,
         )
 

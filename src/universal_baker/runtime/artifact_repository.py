@@ -18,17 +18,31 @@ class ArtifactRepository:
     Answers where the logical image lives and how it's named (including UDIM expansion)
     """
 
-    def __init__(self, scene: bpy.types.Scene, project: UBK_Project) -> None:
-        self.scene = scene
-        self.project = project
-
+    def __init__(self, scene_name: str) -> None:
+        self._scene_name = scene_name
         self.rebuild()
+
+    @property
+    def scene(self) -> bpy.types.Scene | None:
+        if self._scene_name not in bpy.data.scenes:
+            return None
+        return bpy.data.scenes[self._scene_name]
+
+    @property
+    def project(self) -> UBK_Project | None:
+        if self.scene is None:
+            return None
+        return self.scene.ubk_project
 
     def rebuild(self) -> None:
         self._artifacts: dict[str, OutputArtifact] = {}
         self._bake_group_index = defaultdict(list)
         self._producer_index = defaultdict(list)
         self._target_object_index = defaultdict(list)
+
+        if self.project is None:
+            LOG.error("Invalid Scene or Project")
+            return
 
         for pg in self.project.artifacts:
             artifact = OutputArtifact(self.scene, pg)

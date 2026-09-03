@@ -1,24 +1,21 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 import bpy
 
-from typing import TYPE_CHECKING
-
-from universal_baker import resources
-
 if TYPE_CHECKING:
     from ..bakers.base import BakerBase
-    from .task_bake import BakeTask
-    from .settings_output import OutputSettings
     from .image_handle import ImageHandle
+    from .settings_output import OutputSettings
+    from .task_bake import BakeTask
 
+from ..properties.project import UBK_Project
 from ..resources.image import ImageResource
 from ..resources.material import MaterialResources
-from .settings_bake import BakeSettings
 from .context import ExecutionContext
-from ..properties.project import UBK_Project
+from .settings_bake import BakeSettings
 
 
 @dataclass(slots=True)
@@ -34,6 +31,8 @@ class BakeContext(ExecutionContext):
     materials: MaterialResources = field(default_factory=MaterialResources)
     node_tree: bpy.types.NodeTree | None = None
     image_node: bpy.types.ShaderNodeTexImage | None = None
+
+    _target: bpy.types.Object | None = None
 
     finished: bool = False
     success: bool = False
@@ -53,7 +52,14 @@ class BakeContext(ExecutionContext):
 
     @property
     def target(self) -> bpy.types.Object:
-        return self.task.target.object
+        if self._target is None:
+            self._target = self.task.target.object
+
+        return self._target
+
+    @target.setter
+    def target(self, value: bpy.types.Object) -> None:
+        self._target = value
 
     @property
     def sources(self) -> tuple[bpy.types.Object]:

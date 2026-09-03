@@ -28,6 +28,11 @@ class OwnershipMaskExecutorInternal(TaskExecutor):
             width=task.output_context.output_settings.path.width,
             height=task.output_context.output_settings.path.height,
         ):
+            LOG.info(
+                self.init_task_message(session),
+                scope_state=ScopeState.ENTER,
+                category=EventCategory.OWNERSHIP,
+            )
             ctx = OwnershipMaskContext(
                 session=session,
                 task=task,
@@ -36,8 +41,6 @@ class OwnershipMaskExecutorInternal(TaskExecutor):
                 session=session,
                 task=task,
                 context=ctx,
-                scope_state=ScopeState.ENTER,
-                event_category=EventCategory.MASK,
             )
 
     def before_job(self, session: ExecutionSession) -> None:
@@ -80,4 +83,5 @@ def register():
 
 
 def unregister():
-    pass
+    for c in classes:
+        registry_executor.unregister(c.id)

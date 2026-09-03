@@ -37,7 +37,7 @@ class UBK_OT_BakerAdd(UBK_OT_Base):
         baker.settings.internal_name = f"{self.baker_id}"
         BakeController.ensure_output_node(baker.settings.internal_name)
 
-        self.info(f"Added bake map '{self.baker_id}'.")
+        self.info(f"Bake map '{self.baker_id}' added.")
 
         return {"FINISHED"}
 

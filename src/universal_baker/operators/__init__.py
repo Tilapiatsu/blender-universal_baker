@@ -1,6 +1,8 @@
 from . import (
-    object_add,
-    object_remove,
+    source_object_add,
+    source_object_remove,
+    target_object_add,
+    target_object_remove,
     group_add,
     group_remove,
     baker_add,
@@ -14,12 +16,17 @@ from . import (
     pack_all,
     pack_selected,
     pack_mapping_fix,
-    visualization,
+    baker_library_add,
+    baker_library_remove,
+    baker_library_refresh,
+    custom_baker_refresh,
 )
 
 modules = (
-    object_add,
-    object_remove,
+    source_object_add,
+    source_object_remove,
+    target_object_add,
+    target_object_remove,
     group_add,
     group_remove,
     baker_add,
@@ -33,7 +40,10 @@ modules = (
     pack_all,
     pack_selected,
     pack_mapping_fix,
-    visualization,
+    baker_library_add,
+    baker_library_remove,
+    baker_library_refresh,
+    custom_baker_refresh,
 )
 
 

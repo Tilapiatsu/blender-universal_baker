@@ -29,12 +29,15 @@ class AccumulateExecutorInternal(TaskExecutor):
                 session=session,
                 task=task,
             )
+            LOG.info(
+                self.init_task_message(session),
+                scope_state=ScopeState.ENTER,
+                category=EventCategory.ACCUMULATE,
+            )
             execution.execute(
                 session=session,
                 task=task,
                 context=ctx,
-                scope_state=ScopeState.ENTER,
-                event_category=EventCategory.MASK,
             )
 
     def before_job(self, session: ExecutionSession) -> None:
@@ -78,4 +81,5 @@ def register():
 
 
 def unregister():
-    pass
+    for c in classes:
+        registry_executor.unregister(c.id)

@@ -23,6 +23,7 @@ from . import (
     packers,
     accumulators,
     maskers,
+    handlers,
 )
 
 modules = (
@@ -37,6 +38,7 @@ modules = (
     packers,
     accumulators,
     maskers,
+    handlers,
 )
 
 

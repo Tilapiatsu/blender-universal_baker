@@ -7,8 +7,6 @@ import traceback
 from .execution_target import ExecutionTarget
 
 from ..enum.execution import Execution
-from ..logger.event import ScopeState
-from ..logger_bake_middleware.bake_summary import EventCategory
 from ..constant import LOG
 from ..runtime.session import ExecutionSession
 from ..runtime.context import ExecutionContext
@@ -23,25 +21,21 @@ class ExecutorInternal(ExecutionTarget):
         session: ExecutionSession,
         task,
         context: ExecutionContext,
-        scope_state: ScopeState,
-        event_category: EventCategory,
     ) -> None:
         session.current_context = context
         ctx = session.current_context
         session.current_task = task
         session.job.notify_task_started(task)
         start = perf_counter()
-        LOG.info(
-            self.init_task_message(session),
-            scope_state=ScopeState.ENTER,
-            category=EventCategory.MASK,
-        )
 
         try:
             self.before_task(ctx)
             task.producer.execute(ctx)
             ctx.succeed(f"{task.producer.name} succeeded")
             session.job.notify_task_finished(task, True, perf_counter() - start)
+
+        except KeyboardInterrupt:
+            LOG.warning("Job interrupted")
 
         except Exception as exc:
             traceback.print_exc()
@@ -54,9 +48,6 @@ class ExecutorInternal(ExecutionTarget):
 
         finally:
             self.after_task(ctx)
-
-    def init_task_message(self, session) -> str:
-        return f"{'=' * 100} Task {session.job.current_task} / {session.job.total_tasks} {'=' * 100}"
 
     def before_job(self, session: ExecutionSession) -> None:
         """
@@ -99,4 +90,5 @@ def register():
 
 
 def unregister():
-    pass
+    for c in classes:
+        registry_execution.unregister(c.execution)

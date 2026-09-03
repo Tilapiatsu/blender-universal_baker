@@ -3,11 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-
-from ..maskers.base import MaskerBase
 from ..core.output_resolver import OutputResolver
+from ..maskers.base import MaskerBase
 from ..runtime.task_ownership_mask import UvOwnershipTask
-
 from .task import Task
 
 

@@ -22,7 +22,7 @@ def get_source_bakers_items(self, context):
         return items
 
     for b in active_bake_group.bakers:
-        items.append((b.uuid, f"{b.baker}_{b.image_name}", ""))
+        items.append((b.uuid, f"{b.image_name}", ""))
 
     return items
 

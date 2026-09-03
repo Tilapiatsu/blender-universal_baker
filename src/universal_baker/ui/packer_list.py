@@ -47,18 +47,6 @@ class UBK_UL_PackList(bpy.types.UIList):
         else:
             info.label(text="Global", icon="SETTINGS")
 
-        # --------------------------------------------------------------
-        # TODO : add preview operator ?
-        # --------------------------------------------------------------
-        # preview = row.operator(
-        #     "ubk.preview_map",
-        #     text="",
-        #     icon='HIDE_OFF',
-        # )
-        #
-        # preview.index = index
-        #
-
         pack = row.operator(
             "ubk.pack_selected",
             text="",

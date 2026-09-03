@@ -1,10 +1,12 @@
 from __future__ import annotations
 
-import bpy
-
 from uuid import uuid4
 
-from .bake_group import BakeGroupService
+import bpy
+
+from ..constant import LOG
+from .collection_bake_group import BakeGroupService
+from .collection_target_object import TargetObjectService
 
 
 class ProjectService:
@@ -61,7 +63,7 @@ class ProjectService:
         return item
 
     @staticmethod
-    def add_selected_objects(context):
+    def add_selected_target_objects(context):
         created = []
 
         for obj in context.selected_objects:
@@ -78,7 +80,7 @@ class ProjectService:
         return created
 
     @staticmethod
-    def remove_object(context, index: int):
+    def remove_target_object(context, index: int):
         project = ProjectService.get(context)
 
         if not project.bake_groups:
@@ -94,6 +96,90 @@ class ProjectService:
         bake_group.active_target_object_index = min(
             bake_group.active_target_object_index,
             len(bake_group.target_objects) - 1,
+        )
+
+    @staticmethod
+    def add_selected_source_objects(context):
+        created = []
+
+        project = ProjectService.get(context)
+
+        if not project.bake_groups:
+            return
+
+        bake_group = BakeGroupService.active(project)
+
+        if not bake_group:
+            return
+
+        targets = [t.object for t in bake_group.target_objects]
+
+        for obj in context.selected_objects:
+            if obj.type != "MESH":
+                continue
+
+            if obj in targets:
+                LOG.warning(f"{obj.name} is already a target object. It can't be added as source")
+                continue
+
+            created.append(
+                ProjectService.add_source_object(
+                    context,
+                    obj,
+                )
+            )
+
+        return created
+
+    @staticmethod
+    def add_source_object(context, obj: bpy.types.Object):
+        project = ProjectService.get(context)
+
+        if not project.bake_groups:
+            return
+
+        bake_group = BakeGroupService.active(project)
+
+        if not bake_group:
+            return
+
+        target_object = TargetObjectService.active(bake_group)
+
+        if not target_object:
+            return
+
+        for item in target_object.source_objects:
+            if item.object == obj:
+                return item
+
+        item = target_object.source_objects.add()
+        item.object = obj
+
+        target_object.active_source_object_index = len(target_object.source_objects) - 1
+        return item
+
+    @staticmethod
+    def remove_source_object(context, index: int):
+        project = ProjectService.get(context)
+
+        if not project.bake_groups:
+            return
+
+        bake_group = BakeGroupService.active(project)
+
+        if not bake_group:
+            return
+
+        target_object = TargetObjectService.active(bake_group)
+
+        if not target_object:
+            return
+
+        target_object.source_objects.remove(index)
+
+        target_object.active_source_object_index = min(
+            target_object.active_source_object_index,
+            len(target_object.source_objects) - 1,
         )
 
     @staticmethod

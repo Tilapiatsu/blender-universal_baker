@@ -1,25 +1,20 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..runtime.image_handle import ImageHandle
+    from .output_repository import OutputRepository
+    from .settings_output import OutputSettings
+    from .task_mask_buffer import MaskBufferTask
 
 import bpy
 
-from typing import TYPE_CHECKING
-
-from universal_baker.runtime.uv_ownership_mask import UvOwnershipMask
-
-
-if TYPE_CHECKING:
-    from .output_repository import OutputRepository
-    from .settings_output import OutputSettings
-    from ..runtime.image_handle import ImageHandle
-    from .task_mask_buffer import MaskBufferTask
-    from .tile_set import TileSet
-
-from ..constant import LOG
-from .context import ExecutionContext
 from ..properties.project import UBK_Project
 from ..resources.image import ImageResource
+from ..runtime.uv_ownership_mask import UvOwnershipMask
+from .context import ExecutionContext
 
 
 @dataclass(slots=True)

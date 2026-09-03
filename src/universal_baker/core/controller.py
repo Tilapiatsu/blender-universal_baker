@@ -1,35 +1,31 @@
 from __future__ import annotations
 
-from typing import List
-
-import bpy
+from typing import TYPE_CHECKING, List
 from uuid import uuid4
 
-from universal_baker.enum.execution import Execution
-from universal_baker.executors.executor import Executor
-from universal_baker.runtime.task_accumulate import AccumulateTask
-from universal_baker.runtime.task_bake import BakeTask
-from universal_baker.runtime.task_mask_buffer import MaskBufferTask
-from universal_baker.runtime.task_ownership_mask import UvOwnershipTask
-from universal_baker.runtime.task_pack import PackingTask
+import bpy
 
-
+from ..constant import LOG, get_prefs
+from ..enum.execution import Execution
+from ..executors.executor import Executor
 from ..properties.packer import UBK_Packer
-
-from ..constant import LOG
-from .planner import ExecutionPlanner
 from ..runtime.job import Job
-from ..services.project import ProjectService
-from ..services.target_object import TargetObjectService
-from ..services.packer import PackerService
-from ..services.baker import BakerService
-from ..services.bake_group import BakeGroupService
+from ..runtime.runtime_manager import RuntimeManager
+from ..runtime.task_accumulate import AccumulateTask
+from ..runtime.task_bake import BakeTask
+from ..runtime.task_mask_buffer import MaskBufferTask
+from ..runtime.task_ownership_mask import UvOwnershipTask
+from ..runtime.task_pack import PackingTask
+from ..services.collection_bake_group import BakeGroupService
+from ..services.collection_baker import BakerService
+from ..services.collection_packer import PackerService
+from ..services.collection_source_object import SourceObjectService
+from ..services.collection_target_object import TargetObjectService
 from ..services.internal_data import InternalDataService
-from ..constant import get_prefs
-from .registry_executor import registry_executor
-from ..executors.executor_base import TaskExecutor
-
-from typing import TYPE_CHECKING
+from ..services.project import ProjectService
+from ..services.project_synchronizer import ProjectSynchronizer
+from .planner import ExecutionPlanner
+from .registry_baker import registry_baker
 
 if TYPE_CHECKING:
     from ..properties.bake_group import UBK_BakeGroup
@@ -55,12 +51,20 @@ class BakeController:
         return BakeGroupService.active(cls.project(context))
 
     @classmethod
-    def active_object(cls, context: bpy.types.Context):
+    def active_target_object(cls, context: bpy.types.Context):
         bake_group = cls.active_bake_group(context)
         if bake_group is None:
             return
 
         return TargetObjectService.active(bake_group)
+
+    @classmethod
+    def active_source_object(cls, context: bpy.types.Context):
+        target_object = cls.active_target_object(context)
+        if target_object is None:
+            return
+
+        return SourceObjectService.active(target_object)
 
     @classmethod
     def active_baker(cls, context: bpy.types.Context):
@@ -95,12 +99,20 @@ class BakeController:
     # ---------------------------------------------------------
 
     @classmethod
-    def add_selected_objects(cls, context: bpy.types.Context):
-        return ProjectService.add_selected_objects(context)
+    def add_selected_target_objects(cls, context: bpy.types.Context):
+        return ProjectService.add_selected_target_objects(context)
 
     @classmethod
-    def remove_object(cls, context: bpy.types.Context, index: int):
-        ProjectService.remove_object(context, index)
+    def remove_target_object(cls, context: bpy.types.Context, index: int):
+        ProjectService.remove_target_object(context, index)
+
+    @classmethod
+    def add_selected_source_objects(cls, context: bpy.types.Context):
+        return ProjectService.add_selected_source_objects(context)
+
+    @classmethod
+    def remove_source_object(cls, context: bpy.types.Context, index: int):
+        ProjectService.remove_source_object(context, index)
 
     # ---------------------------------------------------------
     # Baker Operations
@@ -115,9 +127,11 @@ class BakeController:
 
         baker = bake_group.bakers.add()
         baker.baker = baker_id
-        baker.image_name = baker_id.title()
+        baker.image_name = registry_baker[baker_id].name.title()
         baker.uuid = str(uuid4())
         bake_group.active_baker_index = len(bake_group.bakers) - 1
+
+        ProjectSynchronizer.synchronize_project(cls.project(context))
 
         return baker
 
@@ -126,12 +140,22 @@ class BakeController:
         bake_group = cls.active_bake_group(context)
 
         if not bake_group:
-            return None
+            return
 
         if not bake_group.bakers:
             return
 
         BakerService.remove(bake_group, bake_group.active_baker_index)
+
+        if len(bake_group.bakers) == 0:
+            runtime = RuntimeManager.current(context).visualization
+            if runtime.active:
+                runtime.disable()
+                project = cls.project(context)
+                if project is None:
+                    return
+                project.visualization.enabled_preview = False
+                project.visualization.enabled_display = False
 
     @staticmethod
     def resolve_map_uuid(project, uuid: str):
@@ -265,7 +289,7 @@ class BakeController:
     # ---------------------------------------------------------
 
     @classmethod
-    def validate(cls, context: bpy.types.Context) -> List[str]:
+    def validate(cls, context: bpy.types.Context) -> list[str]:
         errors = []
 
         project = cls.project(context)

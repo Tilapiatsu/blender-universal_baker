@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from ..properties.baker import UBK_Baker
 from .collection import PropertyCollectionService
-from .bake_group import BakeGroupService
 
 
 class BakerService(PropertyCollectionService[UBK_Baker]):

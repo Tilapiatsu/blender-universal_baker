@@ -2,11 +2,9 @@ from __future__ import annotations
 
 import bpy
 
-from ..constant import LOG
-from ..runtime.context_bake import BakeContext
+from ..constant import BAKE_IMAGE_NODE_LABEL, BAKE_IMAGE_NODE_NAME, BAKE_MATERIAL_NAME, LOG
 from ..resources.material import MaterialResource
-from ..constant import BAKE_IMAGE_NODE_LABEL, BAKE_IMAGE_NODE_NAME, BAKE_MATERIAL_NAME
-from .material_override import MaterialOverrideService
+from ..runtime.context_bake import BakeContext
 
 LOG_SCOPE = "Material Service"
 
@@ -19,52 +17,51 @@ class MaterialService:
         """
         Prepare the target object's active material for baking.
         """
-        cls.init_material_resources(ctx)
-        resources = ctx.materials
+        with LOG.scope(LOG_SCOPE):
+            cls.init_material_resources(ctx)
+            resources = ctx.materials
 
-        material = cls.acquire(ctx)
+            for resource in resources.resources.values():
+                cls.ensure_nodes(resource)
+                cls.ensure_image_node(resource)
+                cls.assign_image(resource, ctx)
+                cls.activate_image_node(resource)
 
-        for resource in resources.resources.values():
-            cls._store_material_info(resource, ctx.target, resource.material_index, material)
-            cls.ensure_nodes(resource)
-            cls.ensure_image_node(resource)
-            cls.assign_image(resource, ctx)
-            cls.activate_image_node(resource)
+                resource.mark_prepared()
 
-            resource.mark_prepared()
-
-        resources.material_overrides = MaterialOverrideService.apply([ctx.target], material)
-
-    @classmethod
-    def restore_target(cls, ctx: BakeContext) -> None:
-        """
-        Restore the material to its original state.
-        """
-        resources = ctx.materials
-
-        for resource in resources.resources.values():
-            if not resource.prepared:
-                return
-
-            cls.restore_active_node(resource)
-            cls.remove_temporary_nodes(resource)
-
-            resource.mark_restored()
-
-        if resources.material_overrides is not None:
-            MaterialOverrideService.restore(resources.material_overrides)
+    # @classmethod
+    # def restore_target(cls, ctx: BakeContext) -> None:
+    #     """
+    #     Restore the material to its original state.
+    #     """
+    #     resources = ctx.materials
+    #
+    #     for resource in resources.resources.values():
+    #         if not resource.prepared:
+    #             return
+    #
+    #         cls.restore_active_node(resource)
+    #         cls.remove_temporary_nodes(resource)
+    #
+    #         resource.mark_restored()
+    #
+    #     if resources.material_overrides is not None:
+    #         MaterialOverrideService.restore(resources.material_overrides)
 
     @classmethod
     def init_material_resources(cls, ctx: BakeContext) -> None:
+        """Create all material ressources for each material slots"""
         obj = ctx.target
 
         resources = ctx.materials.resources
         if not obj.material_slots:
+            LOG.debug(f"{obj.name} have no Material Slots")
             resources.clear()
             resources[-1] = MaterialResource(material_index=-1)
         else:
             resources.clear()
             for idx, slot in enumerate(obj.material_slots):
+                LOG.debug(f"Store {slot.material.name if slot.material is not None else 'EMPTY'} for index {idx}")
                 resources[idx] = MaterialResource()
                 cls._store_material_info(resources[idx], obj, idx, slot.material)
 
@@ -73,12 +70,11 @@ class MaterialService:
         """
         Acquire the material used for baking and assign it to the proper object.
         """
-        with LOG.scope(LOG_SCOPE):
-            obj = ctx.target
+        obj = ctx.target
 
-            material = cls._create_bake_material(obj)
+        material = cls._create_bake_material(obj)
 
-            return material
+        return material
 
     @classmethod
     def ensure_nodes(cls, resource: MaterialResource) -> None:
@@ -105,7 +101,7 @@ class MaterialService:
         tree = resource.node_tree
 
         if tree is None:
-            LOG.warning("Tree is None")
+            LOG.error("Tree is None")
             return
 
         for node in tree.nodes:
@@ -113,9 +109,15 @@ class MaterialService:
                 continue
 
             if node.label == BAKE_IMAGE_NODE_LABEL:
+                LOG.debug(f"Reuse Existig Image Node : {node.label}")
                 resource.image_node = node
                 return
 
+        if resource.material is None:
+            LOG.error("Ressource has invalid material")
+            return
+
+        LOG.debug(f"Add Image node to bake material : {resource.material.name}")
         node = tree.nodes.new("ShaderNodeTexImage")
 
         node.label = BAKE_IMAGE_NODE_LABEL
@@ -129,6 +131,10 @@ class MaterialService:
         if resource.image_node is None:
             return
 
+        if ctx.image.image is None:
+            LOG.error("Image is None")
+            return
+
         resource.image_node.image = ctx.image.image
 
     @classmethod
@@ -139,6 +145,7 @@ class MaterialService:
             return
 
         resource.previous_active_node = tree.nodes.active
+        LOG.debug("Set Image active")
 
         tree.nodes.active = resource.image_node
 
@@ -164,6 +171,7 @@ class MaterialService:
         if resource.image_node is None:
             return
 
+        LOG.debug("Remove Temporary Image Node")
         tree.nodes.remove(resource.image_node)
 
         resource.image_node = None

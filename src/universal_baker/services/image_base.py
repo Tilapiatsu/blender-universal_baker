@@ -1,15 +1,15 @@
 from __future__ import annotations
 
-from pathlib import Path
-
 import bpy
 
 from ..constant import LOG
-from ..resources.image import ImageResource
-from ..runtime.task import Task
 from ..enum.image_layout import ImageLayout
-from ..services.uv import UVService
+from ..resources.image import ImageResource
+from ..runtime.color_management_info import ColorManagementInfo
 from ..runtime.settings_output import OutputSettings
+from ..runtime.task_bake import BakeTask
+from ..services.uv import UVService
+from .view_transform_override import ViewTransformOverride
 
 LOG_SCOPE = "Image Service"
 
@@ -37,7 +37,7 @@ class ImageServiceBase:
             return resource
 
     @classmethod
-    def acquire(cls, resource: ImageResource, task: Task) -> ImageResource:
+    def acquire(cls, resource: ImageResource, task: BakeTask) -> ImageResource:
         """
         Acquire the destination image for this task.
         """
@@ -53,11 +53,7 @@ class ImageServiceBase:
 
             image = bpy.data.images.get(resource.name)
 
-            if image is None:
-                image = cls.create(resource, task.uv_layout.udim_tiles)
-                resource.created = True
-
-            elif cls.is_image_settings_changed(image, resource):
+            if image is None or cls.is_image_settings_changed(image, resource):
                 image = cls.create(resource, task.uv_layout.udim_tiles)
                 resource.created = True
 
@@ -68,9 +64,13 @@ class ImageServiceBase:
             return resource
 
     @classmethod
-    def save(cls, resource: ImageResource) -> None:
+    def save(
+        cls,
+        resource: ImageResource,
+        color_management_info: ColorManagementInfo | None = None,
+    ) -> None:
         with LOG.scope("Save"):
-            LOG.debug(f'Save Image Resource "{resource.name}" : {resource.filepath}')
+            LOG.debug(f'Save Image Resource "{resource.name}"')
 
             if resource.image is None:
                 return
@@ -78,7 +78,15 @@ class ImageServiceBase:
             image = resource.image
             image.filepath_raw = str(resource.filepath)
             image.file_format = resource.image_format_settings.file_format
-            image.save()
+
+            if color_management_info is not None and color_management_info.apply_view_transform:
+                with ViewTransformOverride.override(bpy.context.scene, color_management_info):
+                    LOG.debug(f"Saving file as render : {resource.filepath}")
+                    image.save_render(str(resource.filepath), scene=bpy.context.scene)
+            else:
+                image.save()
+                LOG.debug(f"Saving file : {resource.filepath}")
+
             image.pack()
 
             resource.mark_saved()
@@ -107,7 +115,7 @@ class ImageServiceBase:
     def configure(
         cls,
         resource: ImageResource,
-        task: Task,
+        task: BakeTask,
     ) -> None:
         """
         Populate the resource from the Task.
@@ -122,7 +130,9 @@ class ImageServiceBase:
             resource.name = task.output_name
             resource.width = path_settings.width
             resource.height = path_settings.height
-            resource.colorspace = color_settings.colorspace
+            resource.colorspace = (
+                color_settings.colorspace if color_settings.override_colorspace else task.producer.bake_colorspace
+            )
             resource.image_format_settings = image_settings
             resource.is_udim = task.uv_layout.image_layout == ImageLayout.UDIM
             LOG.debug(f"Configure Image to {task.uv_layout.image_layout.value}")
@@ -145,6 +155,7 @@ class ImageServiceBase:
                     float_buffer=resource.image_format_settings.float_buffer,
                     tiled=resource.is_udim,
                 )
+                image.colorspace_settings.name = resource.colorspace
 
                 if resource.is_udim:
                     resource.image = image
@@ -164,7 +175,6 @@ class ImageServiceBase:
     def copy(cls, resource: ImageResource) -> ImageResource:
         image_copy = resource.image.copy() if resource.image is not None else None
         resources_copy = ImageResource(
-            image=image_copy,
             name=image_copy.name if image_copy is not None else "",
             generated_type=resource.generated_type,
             object_name=resource.object_name,
@@ -184,7 +194,7 @@ class ImageServiceBase:
             or image.size[1] != resource.height
             or ((image.channels == 4) != resource.image_format_settings.alpha)
             or image.filepath_raw != str(resource.filepath)
-            # or image.colorspace_settings.name != resources.image_format_settings.colorspace
+            or image.colorspace_settings.name != resource.colorspace
         )
 
     @classmethod
@@ -289,6 +299,8 @@ class ImageServiceBase:
             if image_region is None:
                 image_region = context.area.regions[0]
             image_screen = context.screen
+
+        assert image_area is not None
 
         # set image_editor active image
         old_active_image = image_area.spaces.active.image

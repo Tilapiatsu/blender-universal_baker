@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import bpy
+from universal_baker.runtime.color_management_info import ColorManagementInfo
 
 from ..runtime.runtime_visualization import VisualizationRuntime
-
 from ..runtime.visualization_state import (
-    VisualizationState,
     SceneVisualizationState,
     ViewportState,
+    VisualizationState,
 )
 
 
@@ -20,7 +20,9 @@ class ViewportService:
             scene_state = SceneVisualizationState(
                 scene_name=scene.name,
                 render_engine=scene.render.engine,
+                display_device=scene.display_settings.display_device,
                 view_transform=scene.view_settings.view_transform,
+                look=scene.view_settings.look,
                 exposure=scene.view_settings.exposure,
                 gamma=scene.view_settings.gamma,
             )
@@ -35,9 +37,7 @@ class ViewportService:
                     continue
 
                 space = area.spaces.active
-
                 shading = space.shading
-
                 scene_state = state.scenes.get(window.scene.name)
 
                 if scene_state is None:
@@ -52,23 +52,26 @@ class ViewportService:
                         show_xray=shading.show_xray,
                         show_shadows=shading.show_shadows,
                         show_cavity=shading.show_cavity,
+                        render_pass=shading.render_pass,
                     )
                 )
 
         return state
 
     @staticmethod
-    def set_rendered():
+    def set_rendered(render_pass: str, color_management_info: ColorManagementInfo):
+        bpy.context.scene.display_settings.display_device = color_management_info.display_device
         view_settings = bpy.context.scene.view_settings
-        view_settings.view_transform = "Standard"
-        view_settings.exposure = 0.0
-        view_settings.gamma = 1.0
+        view_settings.view_transform = color_management_info.view_transform
+        view_settings.exposure = color_management_info.exposure
+        view_settings.gamma = color_management_info.gamma
         for window in bpy.context.window_manager.windows:
             for area in window.screen.areas:
                 if area.type != "VIEW_3D":
                     continue
 
                 area.spaces.active.shading.type = "RENDERED"
+                area.spaces.active.shading.cycles.render_pass = render_pass
 
     @staticmethod
     def set_texture():
@@ -94,6 +97,7 @@ class ViewportService:
 
             if scene is not None and scene_state.render_engine:
                 scene.render.engine = scene_state.render_engine
+                scene.display_settings.display_device = scene_state.display_device
                 scene.view_settings.view_transform = scene_state.view_transform
                 scene.view_settings.exposure = scene_state.exposure
                 scene.view_settings.gamma = scene_state.gamma
@@ -117,3 +121,4 @@ class ViewportService:
                         shading.show_xray = viewport.show_xray
                         shading.show_shadows = viewport.show_shadows
                         shading.show_cavity = viewport.show_cavity
+                        shading.render_pass = viewport.render_pass

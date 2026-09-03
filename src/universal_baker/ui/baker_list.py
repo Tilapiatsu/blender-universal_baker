@@ -38,7 +38,7 @@ class UBK_UL_BakerList(bpy.types.UIList):
             baker = registry_baker[item.baker]
 
         if baker:
-            row.label(text=baker.name, icon=baker.icon)
+            row.label(text=f"{baker.name}", icon=baker.icon)
 
         else:
             row.label(text=item.baker, icon="QUESTION")
@@ -55,24 +55,10 @@ class UBK_UL_BakerList(bpy.types.UIList):
         else:
             info.label(text="Global", icon="SETTINGS")
 
-        # --------------------------------------------------------------
-        # Future Preview
-        # --------------------------------------------------------------
-
-        #
-        # preview = row.operator(
-        #     "ubk.preview_map",
-        #     text="",
-        #     icon='HIDE_OFF',
-        # )
-        #
-        # preview.index = index
-        #
-
         bake = row.operator(
             "ubk.bake_map",
             text="",
-            icon="RENDER_STILL",
+            icon="RESTRICT_RENDER_OFF",
         )
 
         bake.index = index

@@ -45,7 +45,7 @@ def object_needed(func):
 
             return
 
-        active_object = BakeController.active_object(context)
+        active_object = BakeController.active_target_object(context)
 
         if active_object is None:
             layout = self.layout
@@ -124,7 +124,7 @@ def draw_baker_settings(self, layout, context):
     box.use_property_split = True
     box.use_property_decorate = False
 
-    active_object = BakeController.active_object(context)
+    active_object = BakeController.active_target_object(context)
     assert active_object is not None
 
     active_baker = BakeController.active_baker(context)
@@ -228,8 +228,8 @@ class UBK_PT_BakeGroupPanel(UBK_PT_MainPanel, bpy.types.Panel):
         row.operator("ubk.remove_bake_group", text="", icon="REMOVE")
 
 
-class UBK_PT_ObjectPanel(UBK_PT_MainPanel, bpy.types.Panel):
-    bl_idname = "UBK_PT_ObjectPanel"
+class UBK_PT_TargetObjectPanel(UBK_PT_MainPanel, bpy.types.Panel):
+    bl_idname = "UBK_PT_TargetObjectPanel"
     bl_label = ""
     bl_parent_id = "UBK_PT_UniversalBakerPanel"
 
@@ -252,7 +252,7 @@ class UBK_PT_ObjectPanel(UBK_PT_MainPanel, bpy.types.Panel):
             return
 
         box.template_list(
-            "UBK_UL_ObjectList",
+            "UBK_UL_TargetObjectList",
             "",
             active_bake_group,
             "target_objects",
@@ -261,8 +261,8 @@ class UBK_PT_ObjectPanel(UBK_PT_MainPanel, bpy.types.Panel):
             rows=5,
         )
         row = box.row(align=True)
-        row.operator("ubk.add_object", text="Add Selected", icon="ADD")
-        row.operator("ubk.remove_object", text="", icon="REMOVE")
+        row.operator("ubk.add_target_object", text="Add Selected", icon="ADD")
+        row.operator("ubk.remove_target_object", text="", icon="REMOVE")
 
 
 class UBK_PT_BakerPanel(UBK_PT_MainPanel, bpy.types.Panel):
@@ -336,7 +336,7 @@ class UBK_PT_ProcessPanel(UBK_PT_MainPanel, bpy.types.Panel):
         layout = self.layout
         col = layout.column()
         col.scale_y = 1.6
-        col.operator("ubk.bake_all", icon="RENDER_STILL")
+        col.operator("ubk.bake_all", icon="RESTRICT_RENDER_OFF")
         col.operator("ubk.pack_all", icon="NODE_COMPOSITING")
         col.operator("ubk.bake_and_pack_all", icon="LONGDISPLAY")
 
@@ -344,7 +344,7 @@ class UBK_PT_ProcessPanel(UBK_PT_MainPanel, bpy.types.Panel):
 classes = (
     UBK_PT_UniversalBakerPanel,
     UBK_PT_BakeGroupPanel,
-    UBK_PT_ObjectPanel,
+    UBK_PT_TargetObjectPanel,
     UBK_PT_BakerPanel,
     UBK_PT_ProcessPanel,
 )

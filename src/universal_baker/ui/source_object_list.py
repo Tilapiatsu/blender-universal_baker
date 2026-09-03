@@ -3,10 +3,10 @@ from __future__ import annotations
 import bpy
 
 
-class UBK_UL_ObjectList(bpy.types.UIList):
-    """UIList displaying the bake target objects."""
+class UBK_UL_SourceObjectList(bpy.types.UIList):
+    """UIList displaying the bake source objects."""
 
-    bl_idname = "UBK_UL_ObjectList"
+    bl_idname = "UBK_UL_SourceObjectList"
 
     def filter_items(self, context, data, propname):
         items = getattr(data, propname)
@@ -36,30 +36,18 @@ class UBK_UL_ObjectList(bpy.types.UIList):
 
         obj = obj_settings.object
 
-        if obj:
-            row.prop(obj, "name", text="", emboss=False, icon="MESH_DATA")
+        if obj is not None:
+            row.prop(obj, "name", text="", emboss=False, icon="MESH_UVSPHERE")
 
         else:
             row.label(text="<Missing Object>", icon="ERROR")
-
-        source_objects = len(obj_settings.sources)
-
-        stats = row.row()
-        stats.alignment = "RIGHT"
-
-        stats.enabled = False
-
-        if source_objects:
-            stats.label(text=f"{source_objects}", icon="SPHERE")
-        else:
-            stats.label(text="no source")
 
     def draw_filter(self, context, layout):
         """Reserved for future filtering options."""
         pass
 
 
-classes = (UBK_UL_ObjectList,)
+classes = (UBK_UL_SourceObjectList,)
 
 
 def register():

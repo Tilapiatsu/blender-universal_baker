@@ -24,6 +24,11 @@ class PackExecutorInternal(TaskExecutor):
 
     def execute_task(self, session: ExecutionSession, execution: ExecutionTarget, task: PackingTask) -> None:
         with LOG.scope(task.producer.name):
+            LOG.info(
+                self.init_task_message(session),
+                scope_state=ScopeState.ENTER,
+                category=EventCategory.PACK,
+            )
             ctx = PackContext(
                 session=session,
                 task=task,
@@ -32,8 +37,6 @@ class PackExecutorInternal(TaskExecutor):
                 session=session,
                 task=task,
                 context=ctx,
-                scope_state=ScopeState.ENTER,
-                event_category=EventCategory.PACK,
             )
 
     def before_job(self, session: ExecutionSession) -> None:
@@ -77,4 +80,5 @@ def register():
 
 
 def unregister():
-    pass
+    for c in classes:
+        registry_executor.unregister(c.id)

@@ -5,8 +5,9 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .output_context import OutputContext
     from ..resources.uv import UVLayout
+    from ..runtime.color_management_info import ColorManagementInfo
+    from .output_context import OutputContext
     from .tile_set import TileSet
 
 
@@ -18,6 +19,7 @@ class Task:
     name: str
     enabled: bool
     output_context: OutputContext
+    color_management_info: ColorManagementInfo
     bake_group_uuid: str
     uv_layout: UVLayout
     result: TileSet

@@ -2,11 +2,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import bpy
+
 from ..constant import LOG
 from ..runtime.settings_image import ImageSettings
-from typing import TYPE_CHECKING
+from ..runtime.tile_set import TileSet
 
 if TYPE_CHECKING:
     from ..runtime.output_artifact import OutputArtifact
@@ -25,9 +27,9 @@ class ImageResource:
     Answers how to interact with Blender (bpy.types.Image), but only when baking or previewing.
     """
 
-    image: bpy.types.Image | None = None
     _width: int = 2048
     _height: int = 2048
+    _image: str | None = None
 
     _filepath: Path = field(default_factory=Path)
     name: str = ""
@@ -40,7 +42,7 @@ class ImageResource:
     map_name: str = ""
 
     channels: int = 4
-    colorspace: str = "sRGB"
+    colorspace: str = "Non-Color"
     is_data: bool = False
     float_buffer: bool = False
 
@@ -53,6 +55,23 @@ class ImageResource:
     temporary: bool = False
     packed: bool = False
     is_copy: bool = False
+
+    @property
+    def is_valid(self):
+        return self.created and self.image is not None
+
+    @property
+    def image(self) -> bpy.types.Image | None:
+        if self._image is None or self._image not in bpy.data.images:
+            return None
+
+        image = bpy.data.images[self._image]
+
+        return image
+
+    @image.setter
+    def image(self, image: bpy.types.Image) -> None:
+        self._image = image.name
 
     @classmethod
     def create(
@@ -81,14 +100,17 @@ class ImageResource:
                 is_data=colorspace == "Non-Color",
                 tiled=is_udim,
             )
+            image.colorspace_settings.name = colorspace
+            image.use_view_as_render = True
         else:
             image.name = name
             image.filepath_raw = str(filepath)
             image.colorspace_settings.name = colorspace
             image.alpha_mode = "STRAIGHT" if alpha else "NONE"
+            image.use_view_as_render = True
 
         return cls(
-            image=image,
+            _image=name,
             _width=width,
             _height=height,
             name=name,
@@ -201,7 +223,7 @@ class ImageResource:
 
     def reset(self):
         self.filepath = Path("")
-        self.image = None
+        self._image = None
         self.created = False
         self.created = False
         self.loaded = False
@@ -221,6 +243,12 @@ class ImageResource:
         self.filepath = self.image.filepath_raw
         self.is_udim = self.image.tiles is not None
         self.colorspace = self.image.colorspace_settings.name
+
+    def get_tileset(self) -> TileSet | None:
+        if not self.is_valid:
+            return None
+
+        return TileSet.from_blender_image(self.image)
 
     @classmethod
     def from_blender_image(cls, image: bpy.types.Image, image_format_settings: ImageSettings) -> ImageResource:
@@ -243,7 +271,10 @@ class ImageResource:
         LOG.debug("Create Resource from Artifact")
         if artifact.image.blender_image_name in bpy.data.images:
             image = bpy.data.images[artifact.image.blender_image_name]
-            return cls.from_blender_image(image, artifact.output_settings.image)
+            if artifact.output_settings.color.colorspace == image.colorspace_settings.name:
+                return cls.from_blender_image(image, artifact.output_settings.image)
+            else:
+                bpy.data.images.remove(image)
 
         image = artifact.load_image()
 

@@ -1,19 +1,20 @@
 from __future__ import annotations
 
-import bpy
-
-from bpy.types import PropertyGroup
-from bpy.props import (
-    StringProperty,
-    EnumProperty,
-    IntProperty,
-    CollectionProperty,
-    BoolProperty,
-    FloatProperty,
-)
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import bpy
+from bpy.props import (
+    BoolProperty,
+    CollectionProperty,
+    EnumProperty,
+    FloatProperty,
+    IntProperty,
+    StringProperty,
+)
+from bpy.types import PropertyGroup
+
+from ..runtime.color_management_info import ColorManagementInfo
 
 if TYPE_CHECKING:
     from ..runtime.settings_output import OutputSettings
@@ -78,6 +79,7 @@ class UBK_Artifact(PropertyGroup):
         default=4,
     )
     export_file: BoolProperty()
+    override_colorspace: BoolProperty()
     colorspace: StringProperty()
     checksum: StringProperty()
     created: StringProperty()
@@ -111,6 +113,14 @@ class UBK_Artifact(PropertyGroup):
     use_preview: BoolProperty()
     views_format: StringProperty()
 
+    # Color Management Info
+    apply_view_transform: BoolProperty()
+    display_device: StringProperty()
+    view_transform: StringProperty()
+    look: StringProperty()
+    exposure: FloatProperty()
+    gamma: FloatProperty()
+
     def get_udim_tiles(self) -> tuple[int, ...]:
         tiles = []
         for tile in self.udim_tiles:
@@ -119,6 +129,7 @@ class UBK_Artifact(PropertyGroup):
         return tuple(tiles)
 
     def feed_from_output_settings(self, output_settings: OutputSettings):
+        # Path
         self.width = output_settings.path.width
         self.height = output_settings.path.height
         self.colorspace = output_settings.path.colorspace
@@ -151,11 +162,14 @@ class UBK_Artifact(PropertyGroup):
         self.use_preview = output_settings.image.use_preview
         self.views_format = output_settings.image.views_format
 
+        self.override_colorspace = output_settings.color.override_colorspace
+        self.colorspace = output_settings.color.colorspace
+
     def get_output_settings(self) -> OutputSettings:
-        from ..runtime.settings_image import ImageSettings, ColorManagementSettings
+        from ..runtime.settings_image import ColorManagementSettings, ImageSettings
         from ..runtime.settings_output import OutputSettings, PathSettings
 
-        color = ColorManagementSettings(self.colorspace)
+        color = ColorManagementSettings(self.override_colorspace, self.colorspace)
         path = PathSettings(
             width=self.width,
             height=self.height,
@@ -195,6 +209,26 @@ class UBK_Artifact(PropertyGroup):
         )
 
         return output
+
+    def feed_from_color_management_info(self, color_management_info: ColorManagementInfo):
+        self.apply_view_transform = color_management_info.apply_view_transform
+        self.display_device = color_management_info.display_device
+        self.view_transform = color_management_info.view_transform
+        self.look = color_management_info.look
+        self.exposure = color_management_info.exposure
+        self.gamma = color_management_info.gamma
+
+    def get_color_management_info(self) -> ColorManagementInfo:
+        cmi = ColorManagementInfo(
+            apply_view_transform=self.apply_view_transform,
+            display_device=self.display_device,
+            view_transform=self.view_transform,
+            look=self.look,
+            exposure=self.exposure,
+            gamma=self.gamma,
+        )
+
+        return cmi
 
 
 classes = (

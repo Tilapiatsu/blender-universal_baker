@@ -39,4 +39,5 @@ class ImageSettings:
 
 @dataclass(slots=True)
 class ColorManagementSettings:
-    colorspace: str = "sRGB"
+    override_colorspace: bool = False
+    colorspace: str = "Non-Color"

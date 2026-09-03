@@ -33,4 +33,5 @@ def register():
 
 
 def unregister():
-    pass
+    for c in classes:
+        registry_compositor.unregister(c.id)

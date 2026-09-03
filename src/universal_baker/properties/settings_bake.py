@@ -36,7 +36,7 @@ class UBK_BakeSettings(UBK_Settings):
     target: bpy.props.EnumProperty(
         name="Target",
         items=[
-            ("IMAGE_TEXTURES", "Image Testures", ""),
+            ("IMAGE_TEXTURES", "Image Textures", ""),
             ("VERTEX_COLORS", "Active Color Attribute", ""),
         ],
     )

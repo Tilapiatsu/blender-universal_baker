@@ -38,11 +38,27 @@ def draw_output_settings(layout, settings):
     if internal_data is None:
         layout.label(text="Add a Target object and a Map first.", icon="INFO")
     else:
+        layout.label(text="Output")
         layout.prop(settings.output_settings, "width")
         layout.prop(settings.output_settings, "height")
         layout.template_image_settings(internal_data.format, color_management=False)
-        layout.prop(settings.output_settings, "colorspace")
         layout.separator()
+
+        col = layout.row(align=True)
+        row = col.row(align=True)
+        row.prop(settings.output_settings, "colorspace")
+        if not settings.output_settings.override_colorspace:
+            row.enabled = False
+        col.prop(
+            settings.output_settings,
+            "override_colorspace",
+            toggle=1,
+            text="",
+            icon="DECORATE_UNLOCKED" if settings.output_settings.override_colorspace else "DECORATE_LOCKED",
+        )
+
+        layout.separator()
+        layout.label(text="Export")
         layout.prop(settings.output_settings, "export_file", toggle=1)
         col = layout.column(align=True)
         if not settings.output_settings.export_file:

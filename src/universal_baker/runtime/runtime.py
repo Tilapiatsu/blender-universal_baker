@@ -26,14 +26,14 @@ class BakeRuntime:
 
     outputs: OutputRepository
     provider: OutputProvider
+    visualization: VisualizationRuntime
 
     def __init__(self, scene: Scene):
 
         self._scene = scene
 
         self.artifacts = ArtifactRepository(
-            scene,
-            project=scene.ubk_project,
+            scene.name,
         )
 
         #

@@ -2,6 +2,8 @@ from __future__ import annotations
 import bpy
 from bpy.types import PropertyGroup
 from bpy.props import BoolProperty, EnumProperty, StringProperty, PointerProperty, CollectionProperty
+
+from .custom_baker import UBK_CustomBaker
 from .settings_bake import UBK_BakeSettings
 
 
@@ -43,10 +45,7 @@ class UBK_Baker(PropertyGroup):
     images: CollectionProperty(type=UBK_BakerOutput)
 
     accumulated_image: PointerProperty(type=bpy.types.Image)
-    accumulated_uuid: StringProperty()
-
-    # ISSUE: accumulated_image get depopulated for a reason making the display impossible -> should it use artifact
-    # instead ? will it be slower
+    accumulated_producer_uuid: StringProperty()
 
     override_settings: BoolProperty(
         name="Override Settings",
@@ -62,9 +61,25 @@ class UBK_Baker(PropertyGroup):
         default=False,
     )
 
+    custom_baker: PointerProperty(type=UBK_CustomBaker)
+
     @property
     def has_image(self) -> bool:
         return self.accumulated_image is not None
+
+    @property
+    def is_custom(self) -> bool:
+        return self.baker.startswith("CUSTOM")
+
+    @property
+    def accumulated_uuid(self) -> str:
+        if len(self.accumulated_producer_uuid) > 0:
+            return self.accumulated_producer_uuid
+        return self.uuid
+
+    @accumulated_uuid.setter
+    def accumulated_uuid(self, uuid: str) -> None:
+        self.accumulated_producer_uuid = uuid
 
     # @property
     # def accumulated_image(self) -> bpy.types.Image:

@@ -1,17 +1,22 @@
 from __future__ import annotations
-from typing import Callable
+
+from collections.abc import Callable
 
 import bpy
 
 from ..core.controller import BakeController
+from ..core.registry_definition import registry_definition
+from ..properties.baker import UBK_Baker
+from ..properties.custom_baker import UBK_CustomBaker
+from .custom_baker_ui import BakerParameterUI
+from .panel import (
+    UBK_PT_MainPanel,
+    baker_needed,
+    draw_baking_settings,
+    draw_sampling_settings,
+)
 from .panel_settings_output import (
     draw_output_settings,
-)
-from .panel import (
-    baker_needed,
-    draw_sampling_settings,
-    draw_baking_settings,
-    UBK_PT_MainPanel,
 )
 
 
@@ -56,7 +61,7 @@ class UBK_PT_BakerSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
             layout.label(text="Baker Settings", icon="TEXTURE")
             return
 
-        layout.label(text=f"{active_baker.baker.capitalize()} Settings", icon="TEXTURE")
+        layout.label(text=f"{active_baker.image_name} Settings", icon="TEXTURE")
 
     @baker_needed
     def draw(self, context):
@@ -74,11 +79,33 @@ class UBK_PT_BakerSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
             return
 
         box.prop(active_baker, "image_name")
-        layout.prop(active_baker, "override_settings", toggle=1)
+
+        project = BakeController.project(context)
+        if project is not None:
+            custom_baker = active_baker.custom_baker
+            if custom_baker is not None:
+                self.draw_baker_settings(box, active_baker, custom_baker)
+
+        box = layout.box()
+        box.prop(
+            active_baker,
+            "override_settings",
+            toggle=1,
+            icon="DECORATE_UNLOCKED" if active_baker.override_settings else "DECORATE_LOCKED",
+        )
+
         if active_baker.override_settings:
             box.label(text=f"{active_baker.image_name} settings")
         else:
             box.label(text="Inherited from Global Settings")
+
+    def draw_baker_settings(self, layout, baker: UBK_Baker, custom_baker: UBK_CustomBaker):
+        definition = registry_definition.get(baker.baker)
+        if definition is None:
+            layout.label(text=f"Definition for {baker.baker} not found")
+            return
+
+        BakerParameterUI.draw(layout, definition, custom_baker)
 
 
 # -------------------------------------------------------------------------

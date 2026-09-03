@@ -2,6 +2,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import bpy
+from universal_baker.runtime.settings_image import ColorManagementSettings
 
 from ..constant import LOG
 from ..runtime.output_artifact import OutputArtifact
@@ -76,7 +77,7 @@ class ImageIOService(ImageServiceBase):
     @classmethod
     def export_tiles(cls, artifact: OutputArtifact, tiles: TileSet) -> None:
         for tile in tiles.keys():
-            filepath = artifact.image.tile_path(tile)
+            artifact.image.tile_path(tile)
 
     @classmethod
     def import_tiles(cls, artifact: OutputArtifact) -> None: ...
@@ -85,10 +86,13 @@ class ImageIOService(ImageServiceBase):
     def validate_channels(): ...
 
     @staticmethod
-    def load(path: Path, is_udim: bool = False) -> bpy.types.Image:
+    def load(path: Path, colorspace_settings: ColorManagementSettings, is_udim: bool = False) -> bpy.types.Image:
         with LOG.scope(LOG_SCOPE):
             LOG.debug(f"Loading image : {str(path)}")
             image = bpy.data.images.load(str(path))
+            image.colorspace_settings.name = colorspace_settings.colorspace
+            image.use_view_as_render = True
+
             if is_udim:
                 image.source = "TILED"
             return image

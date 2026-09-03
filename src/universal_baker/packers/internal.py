@@ -276,4 +276,5 @@ def register():
 
 
 def unregister():
-    pass
+    for c in classes:
+        registry_packer.unregister(c.id)

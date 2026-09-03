@@ -1,10 +1,14 @@
 from __future__ import annotations
 
-from .base import BakerBase
+import bpy
 
-from ..runtime.context_bake import BakeContext
-from ..services.material import MaterialService
 from ..core.registry_baker import registry_baker
+from ..enum.image_colorspace import ImageColorSpace
+from ..enum.view_transform import DisplayDevice, ViewTransform
+from ..parameter.metadata import BindingMetadata, ParameterMetadata
+from ..runtime.color_management_info import ColorManagementInfo
+from ..runtime.context_bake import BakeContext
+from .base import BakerBase
 
 
 class DiffuseBaker(BakerBase):
@@ -16,23 +20,94 @@ class DiffuseBaker(BakerBase):
     icon = "TEXTURE"
     blender_bake_type = "DIFFUSE"
     accumulator_id = "ALPHA_OVER"
+    clear_preview_material: bool = False
+    bake_colorspace: ImageColorSpace = ImageColorSpace.ACES_2_0
+    image_colorspace: ImageColorSpace = ImageColorSpace.SRGB
+    color_management_info = ColorManagementInfo(
+        apply_view_transform=True,
+        display_device=DisplayDevice.SRGB,
+        view_transform=ViewTransform.ACES_2_0,
+        look="None",
+        exposure=0.0,
+        gamma=1.0,
+    )
+
+    @property
+    def parameters(self) -> tuple[ParameterMetadata, ...]:
+        parameters: tuple[ParameterMetadata, ...] = ()
+
+        b: tuple[BindingMetadata, ...] = (
+            BindingMetadata(
+                binding_type="SCENE_PROPERTY",
+                scene=bpy.context.scene.name,
+                property="render.bake.use_pass_direct",
+            ),
+        )
+        p = ParameterMetadata(
+            identifier="contribution_direct",
+            name="Direct",
+            default=True,
+            description="Add Direct Lighting Contribution",
+            type="BOOL",
+            category="Contribution",
+            order=0,
+            visible=True,
+            bindings=b,
+        )
+
+        parameters += (p,)
+
+        b: tuple[BindingMetadata, ...] = (
+            BindingMetadata(
+                binding_type="SCENE_PROPERTY",
+                scene=bpy.context.scene.name,
+                property="render.bake.use_pass_indirect",
+            ),
+        )
+        p = ParameterMetadata(
+            identifier="contribution_indirect",
+            name="Indirect",
+            default=True,
+            description="Add Indirect Lighting Contribution",
+            type="BOOL",
+            category="Contribution",
+            order=1,
+            visible=True,
+            bindings=b,
+        )
+
+        parameters += (p,)
+
+        b: tuple[BindingMetadata, ...] = (
+            BindingMetadata(
+                binding_type="SCENE_PROPERTY",
+                scene=bpy.context.scene.name,
+                property="render.bake.use_pass_color",
+            ),
+        )
+        p = ParameterMetadata(
+            identifier="contribution_color",
+            name="Color",
+            default=True,
+            description="Color the pass",
+            type="BOOL",
+            category="Contribution",
+            order=2,
+            visible=True,
+            bindings=b,
+        )
+
+        parameters += (p,)
+
+        return parameters
 
     def execute(self, ctx: BakeContext) -> None:
         return super().execute(ctx)
 
-    def configure_preview_material(self, material):
-        material.use_nodes = True
-        nodes = material.node_tree.nodes
-        links = material.node_tree.links
-        nodes.clear()
+    def prepare_execution(self, target):
+        return super().prepare_execution(target)
 
-        output = nodes.new("ShaderNodeOutputMaterial")
-        shader = nodes.new("ShaderNodeBsdfPrincipled")
-        diffuse = nodes.new("ShaderNodeBsdfDiffuse")
-        links.new(
-            diffuse.outputs["BSDF"],
-            output.inputs["Surface"],
-        )
+    def configure_preview_material(self, material): ...
 
     def prepare(self, ctx: BakeContext):
         """
@@ -66,8 +141,10 @@ classes = (DiffuseBaker,)
 
 def register():
     for c in classes:
-        registry_baker.register(c())
+        baker = c()
+        baker.register_local()
 
 
 def unregister():
-    pass
+    for c in classes:
+        registry_baker.unregister(c.id)

@@ -53,6 +53,7 @@ class OutputSettingsResolver:
                 views_format=settings.file_format_settings.views_format,
             ),
             color=ColorManagementSettings(
+                override_colorspace=settings.output_settings.override_colorspace,
                 colorspace=settings.output_settings.colorspace,
             ),
             path=PathSettings(

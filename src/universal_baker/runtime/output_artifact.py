@@ -1,22 +1,23 @@
 from __future__ import annotations
 
-import bpy
-
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from .tile_set import TileSet
+import bpy
 
 from ..constant import LOG
-from ..resources.image import ImageResource
 from ..enum.channels import Channel
+from ..resources.image import ImageResource
 from ..runtime.bake_group import BakeGroup
+from .color_management_info import ColorManagementInfo
 from .logical_image import LogicalImage
+from .tile_set import TileSet
 
 if TYPE_CHECKING:
-    from .settings_output import OutputSettings
     from bpy.types import Scene
+
     from ..properties.artifact import UBK_Artifact
+    from .settings_output import OutputSettings
 
 
 class OutputArtifact:
@@ -25,6 +26,7 @@ class OutputArtifact:
     dependency_mapping: list[Channel]
     image: LogicalImage
     output_settings: OutputSettings
+    color_management_info: ColorManagementInfo
 
     def __init__(self, scene: Scene, property_group: UBK_Artifact):
         udim_tiles = property_group.get_udim_tiles()
@@ -39,6 +41,7 @@ class OutputArtifact:
         self.name = self.data.name
         self.bake_group = BakeGroup(self.data.bake_group_uuid)
         self.uuid = property_group.uuid
+        self.color_management_info: ColorManagementInfo = property_group.get_color_management_info()
         self.dependencies = []
         self.dependency_mapping = []
 
@@ -91,7 +94,7 @@ class OutputArtifact:
 
         if image is None:
             LOG.debug(f"Loading Image {self.name}")
-            image = ImageIOService.load(self.path, self.image.is_udim)
+            image = ImageIOService.load(self.path, self.output_settings.color, self.image.is_udim)
 
         return ImageIOService.init_resource(image, self.output_settings)
 

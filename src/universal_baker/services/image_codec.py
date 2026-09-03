@@ -3,12 +3,15 @@ from __future__ import annotations
 from pathlib import Path
 
 import bpy
-from universal_baker.constant import LOG
 
+from ..constant import LOG
 from ..resources.image_buffer import ImageBuffer
-from ..runtime.settings_output import OutputSettings
+from ..runtime.color_management_info import ColorManagementInfo
 from ..runtime.output_artifact import OutputArtifact
+from ..runtime.settings_image import ColorManagementSettings
+from ..runtime.settings_output import OutputSettings
 from ..runtime.tile_set import TileSet
+from .view_transform_override import ViewTransformOverride
 
 LOG_SCOPE = "Image Codec"
 
@@ -30,9 +33,10 @@ class ImageCodec:
     @classmethod
     def save(
         cls,
-        filepath: str | Path,
+        filepath: Path,
         buffer: ImageBuffer,
         output_settings: OutputSettings,
+        color_management_info: ColorManagementInfo | None = None,
     ) -> None:
         image = cls._create_image(buffer, output_settings)
         try:
@@ -42,17 +46,23 @@ class ImageCodec:
                 output_settings=output_settings,
             )
 
-            LOG.debug(f"Saving {filepath}")
-            image.save()
+            if color_management_info is not None and color_management_info.apply_view_transform:
+                with ViewTransformOverride.override(bpy.context.scene, color_management_info):
+                    LOG.debug(f"Saving file as render : {filepath}")
+                    image.save_render(str(filepath), scene=bpy.context.scene)
+            else:
+                image.save()
+                LOG.debug(f"Saving file : {filepath}")
 
         finally:
             bpy.data.images.remove(image)
 
     @classmethod
-    def load(cls, filepath: Path) -> ImageBuffer | None:
+    def load(cls, filepath: Path, colorspace: ColorManagementSettings) -> ImageBuffer | None:
         if filepath.exists():
             LOG.debug(f"Loading {filepath}")
             image = bpy.data.images.load(str(filepath), check_existing=False)
+            image.colorspace_settings.name = colorspace.colorspace
 
             try:
                 return ImageBuffer.from_blender_image(image)
@@ -90,13 +100,18 @@ class ImageCodec:
         image.file_format = output_settings.image.file_format
         settings = image
         settings.colorspace_settings.name = output_settings.color.colorspace
-        image.save_render
+        # settings.save_as_render = True
 
     @classmethod
     def export_tiles(cls, artifact: OutputArtifact, tiles: TileSet, output_settings: OutputSettings):
         with LOG.scope(LOG_SCOPE):
             for tile, buffer in tiles.tile_buffers:
-                cls.save(artifact.image.tile_path(tile), buffer, output_settings)
+                cls.save(
+                    artifact.image.tile_path(tile),
+                    buffer,
+                    output_settings,
+                    artifact.color_management_info,
+                )
                 tiles.set_dirty(tile, False)
 
     @classmethod
@@ -105,7 +120,7 @@ class ImageCodec:
 
         for t in artifact.image.files():
             with LOG.scope(LOG_SCOPE):
-                buffer = cls.load(t.path)
+                buffer = cls.load(t.path, artifact.output_settings.color)
             if buffer is not None:
                 tile_set.add_tile(t.tile, buffer)
             else:
@@ -118,6 +133,11 @@ class ImageCodec:
                             artifact.output_settings.path.height,
                         ),
                     )
-                    cls.save(artifact.image.tile_path(t.tile), tile_set[t.tile], artifact.output_settings)
+                    cls.save(
+                        artifact.image.tile_path(t.tile),
+                        tile_set[t.tile],
+                        artifact.output_settings,
+                        artifact.color_management_info,
+                    )
 
         return tile_set
