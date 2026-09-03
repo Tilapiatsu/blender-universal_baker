@@ -19,6 +19,7 @@ from ..runtime.task_pack import PackingTask
 from ..services.collection_bake_group import BakeGroupService
 from ..services.collection_baker import BakerService
 from ..services.collection_packer import PackerService
+from ..services.collection_source_object import SourceObjectService
 from ..services.collection_target_object import TargetObjectService
 from ..services.internal_data import InternalDataService
 from ..services.project import ProjectService
@@ -50,12 +51,20 @@ class BakeController:
         return BakeGroupService.active(cls.project(context))
 
     @classmethod
-    def active_object(cls, context: bpy.types.Context):
+    def active_target_object(cls, context: bpy.types.Context):
         bake_group = cls.active_bake_group(context)
         if bake_group is None:
             return
 
         return TargetObjectService.active(bake_group)
+
+    @classmethod
+    def active_source_object(cls, context: bpy.types.Context):
+        target_object = cls.active_target_object(context)
+        if target_object is None:
+            return
+
+        return SourceObjectService.active(target_object)
 
     @classmethod
     def active_baker(cls, context: bpy.types.Context):
@@ -90,12 +99,20 @@ class BakeController:
     # ---------------------------------------------------------
 
     @classmethod
-    def add_selected_objects(cls, context: bpy.types.Context):
-        return ProjectService.add_selected_objects(context)
+    def add_selected_target_objects(cls, context: bpy.types.Context):
+        return ProjectService.add_selected_target_objects(context)
 
     @classmethod
-    def remove_object(cls, context: bpy.types.Context, index: int):
-        ProjectService.remove_object(context, index)
+    def remove_target_object(cls, context: bpy.types.Context, index: int):
+        ProjectService.remove_target_object(context, index)
+
+    @classmethod
+    def add_selected_source_objects(cls, context: bpy.types.Context):
+        return ProjectService.add_selected_source_objects(context)
+
+    @classmethod
+    def remove_source_object(cls, context: bpy.types.Context, index: int):
+        ProjectService.remove_source_object(context, index)
 
     # ---------------------------------------------------------
     # Baker Operations

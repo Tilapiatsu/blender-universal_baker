@@ -1,7 +1,8 @@
 from . import (
     bake_group_list,
     baker_list,
-    object_list,
+    target_object_list,
+    source_object_list,
     packer_list,
     baker_library_list,
     baker_menu,
@@ -17,7 +18,8 @@ from . import (
 modules = (
     bake_group_list,
     baker_list,
-    object_list,
+    target_object_list,
+    source_object_list,
     packer_list,
     baker_library_list,
     baker_menu,

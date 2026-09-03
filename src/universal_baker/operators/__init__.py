@@ -1,6 +1,8 @@
 from . import (
-    object_add,
-    object_remove,
+    source_object_add,
+    source_object_remove,
+    target_object_add,
+    target_object_remove,
     group_add,
     group_remove,
     baker_add,
@@ -21,8 +23,10 @@ from . import (
 )
 
 modules = (
-    object_add,
-    object_remove,
+    source_object_add,
+    source_object_remove,
+    target_object_add,
+    target_object_remove,
     group_add,
     group_remove,
     baker_add,
