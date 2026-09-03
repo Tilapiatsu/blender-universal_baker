@@ -184,7 +184,7 @@ class ExecutionPlanner:
                             output_context=output_context,
                             color_management_info=baker_producer.color_management_info,
                             target_object_uuid=obj.uuid,
-                            sources=obj.sources,
+                            sources=obj.source_objects,
                             producer=baker_producer,
                             settings=settings,
                             image_name=baker.image_name,

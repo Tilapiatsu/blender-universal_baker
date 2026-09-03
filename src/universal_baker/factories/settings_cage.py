@@ -20,6 +20,8 @@ class CageSettingsResolver:
 
         return CageSettings(
             mode=settings.mode,
-            extrusion=settings.extrusion,
+            cage_extrusion=settings.cage_extrusion,
             max_ray_distance=settings.max_ray_distance,
+            extrusion_group=settings.extrusion_group,
+            skew_map=settings.skew_map.name,
         )

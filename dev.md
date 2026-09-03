@@ -10,6 +10,7 @@
   - [ ] operator to match source and target by binding box
   - [ ] Bake from source with Cage
   - [ ] Cage Automatic Creation
+  - [ ] Export automatic cage ?
   - [ ] Cage Shader
   - [ ] Cage distance painting
 - [ ] add ability to load a scene as background before baker ( usefull for AO )
