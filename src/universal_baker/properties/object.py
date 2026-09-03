@@ -4,13 +4,13 @@ import bpy
 from bpy.props import (
     BoolProperty,
     CollectionProperty,
-    EnumProperty,
-    FloatProperty,
     IntProperty,
     PointerProperty,
     StringProperty,
 )
 from bpy.types import PropertyGroup
+
+from .settings_cage import UBK_CageSettings
 
 
 def get_uv_layer(self, context, edit_text):
@@ -45,25 +45,11 @@ class UBK_TargetObject(PropertyGroup):
 
     source_objects: CollectionProperty(type=UBK_SourceObject)
     active_source_object_index: IntProperty(default=0)
-
-    cage_mode: EnumProperty(
-        name="Mode",
-        items=[
-            ("NONE", "None", "Without Cage."),
-            ("OBJECT", "Object", "Specify an object as the cage"),
-            ("AUTO", "Auto", "Automatically generate Cage by offsetting vertices along normal"),
-        ],
-        default="NONE",
-    )
-    cage_object: PointerProperty(name="Cage Object", type=bpy.types.Object)
-    cage_extrusion: FloatProperty(name="Cage Extrusion", default=0.0, min=0.0, subtype="DISTANCE")
-    max_ray_distance: FloatProperty(name="Max Ray Distance", default=0.0, min=0.0, subtype="DISTANCE")
-    extrusion_group: StringProperty(name="Extrusion Group", default="UBK_EXTRUSION_GROUP")
-    skew_map: PointerProperty(name="Skew Map", type=bpy.types.Image)
-
     uv_layer: StringProperty(
         name="UV Map", description="UV layer used for baking", default="UVMap", search=get_uv_layer
     )
+
+    settings_cage: PointerProperty(type=UBK_CageSettings)
 
     @property
     def use_cage(self) -> bool:

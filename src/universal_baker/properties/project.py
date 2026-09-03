@@ -5,7 +5,6 @@ from bpy.props import CollectionProperty, PointerProperty
 from .visualization import UBK_Visualization
 from .bake_group import UBK_BakeGroup
 from .settings_bake import UBK_BakeSettings
-from .settings_cage import UBK_CageSettings
 from .artifact import UBK_Artifact
 
 
@@ -21,7 +20,6 @@ class UBK_Project(PropertyGroup):
         default=0,
     )
     settings_bake: PointerProperty(type=UBK_BakeSettings)
-    settings_cage: PointerProperty(type=UBK_CageSettings)
     artifacts: CollectionProperty(
         type=UBK_Artifact,
     )
