@@ -107,9 +107,7 @@ class DiffuseBaker(BakerBase):
     def prepare_execution(self, target):
         return super().prepare_execution(target)
 
-    def configure_preview_material(self, material):
-        ...
-        # TODO: need to write a preview_material for diffuse
+    def configure_preview_material(self, material): ...
 
     def prepare(self, ctx: BakeContext):
         """

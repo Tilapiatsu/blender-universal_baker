@@ -3,7 +3,6 @@
 ## Features
 
 - [X] Baker based on custom Shader
-  - Node group is imported to, and all parameters are driven by the UI of the Baker
 - [ ] Bake from source ( selected to active )
   - [ ] Cherry pick the list of sources for each target object
   - [ ] option to match source and target by name ?
@@ -14,22 +13,38 @@
   - [ ] Cage Shader
   - [ ] Cage distance painting
 - [ ] add ability to load a scene as background before baker ( usefull for AO )
-- [ ] add featuure to apply background color per baker
-- [ ] add bake from multires
+- [ ] add feature to apply background color per baker
+- [ ] add bake from multires ? For Normal only
 - [ ] Bake Skew Correction map
 - [ ] Bake Decal ?
 - [ ] Map Denoising ?
-- [ ] Bake from and to Vertex Color
+- [ ] Improve user control, feedback and reports
+  - [ ] Add LOG in 3D viewport
+  - [ ] Add LOG into a panel
+  - [ ] Add LOG into text datablock ?
+  - [ ] Add Operator to open .log file in text editor
+  - [ ] Add Cancel, Pause, Resume Process -> does the executor need to be executed through a modal operators ?
+  - [ ] Add progress bar : In 3D Viewport ? In the UI ? Both ?
+- [ ] Every Adder ( Bake Group, Baker, Packer ) need to have a name collision prevention mechanism
+- [ ] add check for target objects without UV -> Skip the mesh and raise a warning or block the execution of the bake ?
+- [ ] add dynamic description to get and explain the registered tokens and transforms for filename
+- [ ] Bake to Vertex Color
+  - [ ] Being able to bake to vertex color -> add a "bake target" enum [["Image", "Color Attribute"]]
+  - [ ] Adapt the planner to prevent creation of ownership task, accumulation map
+  - [ ] may need specific accumulation or packer based on bmesh color manipulation
+  - [ ] Adapt the display visualization to work in both cases
+  - [ ] investigate how colorspace can be applied
 - [ ] Preset System
+- [ ] Bake external : Run another blender instance -> perform the bake -> import the result in current blender instance
+- [ ] Bake network : Investigate the use of [Flamenco](https://flamenco.blender.org/) ?
 
 ## Baker
 
 - [X] Diffuse
 - [X] Ambient Occlusion
 - [X] Albedo
-- [X] Curvatue
-  - [ ] add option to have curvature using two Channel : One for concave and one for convex
-  <https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSZwnsY3ePkCHIu-GvNyl-Kr7-27NMkMm-btlTj02CAiINIVGu0Ovo-lp5V&s=10>
+- [X] Curvature
+  - [ ] add option to have curvature using two Channel : [One for concave and one for convex](https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSZwnsY3ePkCHIu-GvNyl-Kr7-27NMkMm-btlTj02CAiINIVGu0Ovo-lp5V&s=10)
 - [ ] Cavity
 - [ ] Edge
 - [ ] Normal
