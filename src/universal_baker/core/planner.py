@@ -143,10 +143,6 @@ class ExecutionPlanner:
                         project.settings_bake,
                         baker.settings if baker.override_settings else None,
                     )
-                    # settings_cage = CageSettingsResolver.resolve(
-                    #     project.settings_cage,
-                    #     baker.settings_cage if baker.override_settings_cage else None,
-                    # )
 
                     output_context = OutputContextResolver.resolve(
                         group_name=group.name,

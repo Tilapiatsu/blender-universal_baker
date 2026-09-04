@@ -85,7 +85,7 @@ class BakeContext(ExecutionContext):
         return self._sources
 
     @sources.setter
-    def sources(self, sources) -> None:
+    def sources(self, sources: list[bpy.types.Object] | None) -> None:
         self._sources = sources
 
     @property

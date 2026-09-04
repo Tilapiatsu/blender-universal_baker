@@ -26,6 +26,9 @@ class UvOwnership:
     def execute(self, ctx: OwnershipMaskContext) -> UvOwnershipMask:
         with LOG.scope(LOG_SCOPE):
             from ..services.uv_ownership import UvOwnershipService
+            # ISSUE:
+            # - Baking with Multiple Targets and multiple sources and Cages, and only the first target of the list get baked
+            # properly -> Its an issue with the ownership mapsk
 
             LOG.info("Generting UV Ownership mask")
             result = UvOwnershipService.create_uv_ownership_mask(
@@ -41,21 +44,22 @@ class UvOwnership:
             ctx.task.ownership_mask.set(result)
 
             # NOTE: Saving Map to disk : This is for debug purpose only. Need to be removed !!!
-            # from ..services.image_codec import ImageCodec
-            # from ..core.output_resolver import OutputResolver
-            #
-            # for o in ctx.task.ownership_datas.values():
-            #     LOG.debug(f"Writing mask for {o.object_name}")
-            #     mask = ctx.task.ownership_mask.mask_for_object(o.object_uuid)
-            #     for tile, buffer in mask.tile_buffers:
-            #         LOG.debug(f"{tile}")
-            #         output = OutputResolver.resolve(
-            #             ctx.task.output_context,
-            #             ImageLayout.SINGLE,
-            #             suffix=f"{o.object_name}." + str(tile),
-            #             sub_folder="Mask",
-            #         )
-            #         ImageCodec.save(output.absolute_path, buffer, ctx.task.output_context.output_settings)
+            if True:
+                from ..core.output_resolver import OutputResolver
+                from ..services.image_codec import ImageCodec
+
+                for o in ctx.task.ownership_datas.values():
+                    LOG.debug(f"Writing mask for {o.object_name}")
+                    mask = ctx.task.ownership_mask.mask_for_object(o.object_uuid)
+                    for tile, buffer in mask.tile_buffers:
+                        LOG.debug(f"{tile}")
+                        output = OutputResolver.resolve(
+                            ctx.task.output_context,
+                            ImageLayout.SINGLE,
+                            suffix=f"{o.object_name}." + str(tile),
+                            sub_folder="Mask",
+                        )
+                        ImageCodec.save(output.absolute_path, buffer, ctx.task.output_context.output_settings)
 
             return result
 

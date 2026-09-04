@@ -14,10 +14,11 @@ class MaterialService:
 
     @classmethod
     def prepare(cls, ctx: BakeContext) -> None:
-        cls.prepare_target(ctx)
+        with LOG.scope(LOG_SCOPE):
+            cls.prepare_target(ctx)
 
-        if ctx.selected_to_active:
-            cls.prepare_sources(ctx)
+            if ctx.selected_to_active:
+                cls.prepare_sources(ctx)
 
     @classmethod
     def prepare_sources(cls, ctx: BakeContext) -> None:
@@ -35,18 +36,17 @@ class MaterialService:
         """
         Prepare the target object's active material for baking.
         """
-        with LOG.scope(LOG_SCOPE):
-            resources = MaterialResources()
-            ctx.target_materials[ctx.target.name] = resources
-            cls.init_material_resources(ctx.target, resources.resources)
+        resources = MaterialResources()
+        ctx.target_materials[ctx.target.name] = resources
+        cls.init_material_resources(ctx.target, resources.resources)
 
-            for resource in resources.resources.values():
-                cls.ensure_nodes(resource)
-                cls.ensure_image_node(resource)
-                cls.assign_image(resource, ctx)
-                cls.activate_image_node(resource)
+        for resource in resources.resources.values():
+            cls.ensure_nodes(resource)
+            cls.ensure_image_node(resource)
+            cls.assign_image(resource, ctx)
+            cls.activate_image_node(resource)
 
-                resource.mark_prepared()
+            resource.mark_prepared()
 
     @classmethod
     def init_material_resources(cls, obj: bpy.types.Object, resources: dict[int, MaterialResource]) -> None:
