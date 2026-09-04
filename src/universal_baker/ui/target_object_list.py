@@ -37,7 +37,7 @@ class UBK_UL_TargetObjectList(bpy.types.UIList):
         obj = obj_settings.object
 
         if obj is not None:
-            row.prop(obj, "name", text="", emboss=False, icon="CUBE")
+            row.prop(obj, "name", text="", emboss=False, icon="MESH_CUBE")
 
         else:
             row.label(text="<Missing Object>", icon="ERROR")

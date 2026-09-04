@@ -4,7 +4,7 @@
 
 - [X] Baker based on custom Shader
 - [ ] Bake from source ( selected to active )
-  - [ ] Cherry pick the list of sources for each target object
+  - [X] Cherry pick the list of sources for each target object
   - [ ] option to match source and target by name ?
   - [ ] option to load collection instead of objects -> updating objects in the collection change the setup ?
   - [ ] operator to match source and target by binding box

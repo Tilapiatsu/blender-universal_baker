@@ -175,6 +175,7 @@ class ExecutionPlanner:
                             udim_tiles=object_tiles[obj.object.name],
                         )
 
+                        settings_cage = CageSettingsResolver.resolve(obj.settings_cage)
                         baker_producer = registry_baker[baker.baker]
 
                         task = BakeTask(
@@ -193,8 +194,7 @@ class ExecutionPlanner:
                             uv_layer=obj.uv_layer,
                             uv_layout=uv_layout,
                             result=TileSet(),
-                            # cage_object=None,
-                            # settings_cage=settings_cage,
+                            settings_cage=settings_cage,
                         )
 
                         job.add_task(task)

@@ -241,7 +241,7 @@ class UBK_PT_TargetObjectPanel(UBK_PT_MainPanel, bpy.types.Panel):
 
     def draw_header(self, context):
         layout = self.layout
-        layout.label(text="Target Objects", icon="OUTLINER_OB_MESH")
+        layout.label(text="Target Objects", icon="MESH_CUBE")
 
     @bake_group_needed
     def draw_objects(self, context):

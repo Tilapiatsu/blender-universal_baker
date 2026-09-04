@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import bpy
+from universal_baker.runtime.settings_cage import CageSettings
 
 if TYPE_CHECKING:
     from ..bakers.base import BakerBase
@@ -26,6 +27,7 @@ class BakeTask(Task):
     sources: list[bpy.types.Object]
     producer: BakerBase
     settings: BakeSettings
+    settings_cage: CageSettings
     image_name: str
     uv_layer: str
     id: str = "BAKE"

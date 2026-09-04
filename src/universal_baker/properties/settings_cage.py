@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from bpy.props import EnumProperty, FloatProperty, StringProperty, PointerProperty
-from bpy.types import Object, Image, PropertyGroup
+from bpy.props import EnumProperty, FloatProperty, PointerProperty, StringProperty
+from bpy.types import Image, Object, PropertyGroup
 
 
 class UBK_CageSettings(PropertyGroup):
@@ -10,7 +10,7 @@ class UBK_CageSettings(PropertyGroup):
         items=[
             ("NONE", "None", "Without Cage."),
             ("OBJECT", "Object", "Specify an object as the cage"),
-            ("AUTO", "Auto", "Automatically generate Cage by offsetting vertices along normal"),
+            ("GENERATED", "Generated", "Automatically generate Cage by offsetting vertices along normal"),
         ],
         default="NONE",
     )
