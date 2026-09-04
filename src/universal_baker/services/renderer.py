@@ -30,10 +30,11 @@ class RendererService:
         return scene_state
 
     @staticmethod
-    def capture_render_settings() -> RenderSettings:
+    def capture_render_settings(ctx: BakeContext) -> RenderSettings:
         scene = bpy.context.scene
         cycles = scene.cycles
         bake = scene.render.bake
+        cage_object = ctx.task.settings_cage.cage_object
 
         render_settings = RenderSettings(
             use_adaptive_sampling=cycles.use_adaptive_sampling,
@@ -47,9 +48,9 @@ class RendererService:
             bake_use_selected_to_active=bake.use_selected_to_active,
             bake_use_cage=bake.use_cage,
             bake_cage_object=bake.cage_object,
-            bake_cage_object_hide_render=bake.cage_object.hide_render if bake.cage_object is not None else False,
-            bake_cage_object_hide_viewport=bake.cage_object.hide_viewport if bake.cage_object is not None else False,
-            bake_cage_object_hide_select=bake.cage_object.hide_select if bake.cage_object is not None else False,
+            bake_cage_object_hide_render=cage_object.hide_render if cage_object is not None else False,
+            bake_cage_object_hide_viewport=cage_object.hide_viewport if cage_object is not None else False,
+            bake_cage_object_hide_select=cage_object.hide_select if cage_object is not None else False,
             bake_cage_extrusion=bake.cage_extrusion,
             bake_max_ray_distance=bake.max_ray_distance,
         )
@@ -65,7 +66,7 @@ class RendererService:
         LOG.debug(f"Set Viewtransform to {view_transform.view_transform.value}")
 
     @staticmethod
-    def restore(scene_state: SceneVisualizationState, render_settings: RenderSettings):
+    def restore(ctx: BakeContext, scene_state: SceneVisualizationState, render_settings: RenderSettings):
         scene_name = scene_state.scene_name
         scene = bpy.data.scenes.get(scene_name)
 
@@ -96,16 +97,18 @@ class RendererService:
             bake.cage_object = render_settings.bake_cage_object
             bake.cage_extrusion = render_settings.bake_cage_extrusion
             bake.max_ray_distance = render_settings.bake_max_ray_distance
-            if render_settings.bake_cage_object is not None:
-                render_settings.bake_cage_object.hide_render = render_settings.bake_cage_object_hide_render
-                render_settings.bake_cage_object.hide_viewport = render_settings.bake_cage_object_hide_viewport
-                render_settings.bake_cage_object.hide_select = render_settings.bake_cage_object_hide_select
+
+            cage_object = ctx.task.settings_cage.cage_object
+            if cage_object is not None:
+                cage_object.hide_render = render_settings.bake_cage_object_hide_render
+                cage_object.hide_viewport = render_settings.bake_cage_object_hide_viewport
+                cage_object.hide_select = render_settings.bake_cage_object_hide_select
 
     @classmethod
     def execute(cls, ctx: BakeContext):
         """Execute a single bake task."""
         scene_state = cls.capture_state()
-        render_settings = cls.capture_render_settings()
+        render_settings = cls.capture_render_settings(ctx)
         bake_collection = cls.create_bake_collection(ctx)
 
         try:
@@ -114,7 +117,7 @@ class RendererService:
             cls.prepare(ctx)
             cls.bake(ctx)
         finally:
-            cls.restore(scene_state, render_settings)
+            cls.restore(ctx, scene_state, render_settings)
             cls.clear_bake_collection(bake_collection, remove_col=True)
 
     @classmethod
