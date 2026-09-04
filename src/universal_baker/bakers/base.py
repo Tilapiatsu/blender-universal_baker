@@ -76,9 +76,6 @@ class BakerBase(ABC):
         material_setup = BakeMaterialService.prepare(objects=[baker_objects.target])
         baker_setup = BakerSetup(material_setup=material_setup)
 
-        # ISSUE: Need to make sure the target and sources can be unhidden even if they are in a hidden collection
-        # Otherwise the selection is not working properly and the bake is not hapening either
-
         hide_render = {}
 
         for s in baker_objects.baker_material_objects:

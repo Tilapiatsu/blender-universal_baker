@@ -8,6 +8,8 @@ from ..runtime.context_bake import BakeContext
 from ..runtime.render_settings import RenderSettings
 from ..runtime.visualization_state import SceneVisualizationState
 
+BAKE_COLLECTION_NAME = "UBK_BAKE_COLLECTION"
+
 
 class RendererService:
     """Wrapper around Blender's native baking system."""
@@ -45,6 +47,9 @@ class RendererService:
             bake_use_selected_to_active=bake.use_selected_to_active,
             bake_use_cage=bake.use_cage,
             bake_cage_object=bake.cage_object,
+            bake_cage_object_hide_render=bake.cage_object.hide_render if bake.cage_object is not None else False,
+            bake_cage_object_hide_viewport=bake.cage_object.hide_viewport if bake.cage_object is not None else False,
+            bake_cage_object_hide_select=bake.cage_object.hide_select if bake.cage_object is not None else False,
             bake_cage_extrusion=bake.cage_extrusion,
             bake_max_ray_distance=bake.max_ray_distance,
         )
@@ -91,12 +96,18 @@ class RendererService:
             bake.cage_object = render_settings.bake_cage_object
             bake.cage_extrusion = render_settings.bake_cage_extrusion
             bake.max_ray_distance = render_settings.bake_max_ray_distance
+            if render_settings.bake_cage_object is not None:
+                render_settings.bake_cage_object.hide_render = render_settings.bake_cage_object_hide_render
+                render_settings.bake_cage_object.hide_viewport = render_settings.bake_cage_object_hide_viewport
+                render_settings.bake_cage_object.hide_select = render_settings.bake_cage_object_hide_select
 
     @classmethod
     def execute(cls, ctx: BakeContext):
         """Execute a single bake task."""
         scene_state = cls.capture_state()
         render_settings = cls.capture_render_settings()
+        bake_collection = cls.create_bake_collection(ctx)
+
         try:
             # cls.set_view_settings(ctx.task.producer.bake_view_transform)
             cls.configure(ctx)
@@ -104,6 +115,7 @@ class RendererService:
             cls.bake(ctx)
         finally:
             cls.restore(scene_state, render_settings)
+            cls.clear_bake_collection(bake_collection, remove_col=True)
 
     @classmethod
     def configure(cls, ctx: BakeContext):
@@ -136,6 +148,65 @@ class RendererService:
         bake.cage_extrusion = ctx.task.settings_cage.cage_extrusion
         bake.max_ray_distance = ctx.task.settings_cage.max_ray_distance
 
+    @classmethod
+    def create_bake_collection(cls, ctx: BakeContext) -> bpy.types.Collection:
+        bake_collection = bpy.data.collections.get(BAKE_COLLECTION_NAME)
+
+        if bake_collection is None:
+            bake_collection = bpy.data.collections.new(BAKE_COLLECTION_NAME)
+
+        # Remove all object if necessary
+        cls.clear_bake_collection(bake_collection)
+
+        # Link Objets
+        bake_collection.objects.link(ctx.target)
+        cage_object = ctx.task.settings_cage.cage_object
+        if cage_object is not None and ctx.task.settings_cage.mode != None:
+            bake_collection.objects.link(cage_object)
+            cage_object.hide_viewport = False
+            cage_object.hide_render = False
+
+        for o in ctx.sources:
+            bake_collection.objects.link(o)
+
+        # Link to current scene
+        bpy.context.scene.collection.children.link(bake_collection)
+
+        # Ensure visibility
+        bake_collection.hide_render = False
+        bake_collection.hide_select = False
+        bake_collection.hide_viewport = False
+
+        layer_col = cls._get_layer_collection(bake_collection.name)
+
+        if layer_col is None:
+            return
+
+        layer_col.hide_viewport = False
+
+        return bake_collection
+
+    @classmethod
+    def clear_bake_collection(cls, bake_collection: bpy.types.Collection, remove_col: bool = False):
+        coll_objects = [o for o in bake_collection.objects]
+        for o in coll_objects:
+            bake_collection.objects.unlink(o)
+
+        if remove_col:
+            bpy.data.collections.remove(bake_collection)
+
+    @classmethod
+    def _get_layer_collection(cls, collection_name, layer_collection=None):
+        if layer_collection is None:
+            layer_collection = bpy.context.view_layer.layer_collection
+        if layer_collection.collection.name == collection_name:
+            return layer_collection
+        for child in layer_collection.children:
+            result = cls._get_layer_collection(collection_name, child)
+            if result:
+                return result
+        return None
+
     # -------------------------------------------------------------------------
     # Prepare
     # -------------------------------------------------------------------------
@@ -143,6 +214,7 @@ class RendererService:
     @classmethod
     def prepare(cls, ctx: BakeContext):
         """Prepare Blender selection."""
+
         bpy.ops.object.select_all(action="DESELECT")
 
         for obj in ctx.sources:
