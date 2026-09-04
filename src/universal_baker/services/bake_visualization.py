@@ -318,6 +318,9 @@ class BakeVisualizationService:
 
         scenes = ViewportService.capture_state()
 
+        # ISSUE: need to disable visualization on exit blender ? or maybe before blender save ? Or maybe the state
+        # should be saved inside a blender property to be able to be restored even after blender restart
+
         for scene_name, scene_state in scenes.scenes.items():
             cls._runtime.set_scene_state(
                 scene_name,
