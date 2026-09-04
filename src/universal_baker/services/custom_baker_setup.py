@@ -4,6 +4,7 @@ import bpy
 
 from ..constant import LOG
 from ..resources.baker_asset import BakerAsset
+from ..runtime.baker_objects import BakerObjects
 from ..runtime.baker_setup import BakerSetup
 from .baker_asset import BakerAssetService
 
@@ -16,28 +17,23 @@ class CustomBakerSetupError(RuntimeError):
 
 class CustomBakerSetupService:
     @classmethod
-    def prepare(
-        cls,
-        asset: BakerAsset,
-        target: bpy.types.Object,
-        sources: list[bpy.types.Object],
-    ) -> BakerSetup:
+    def prepare(cls, asset: BakerAsset, baker_objects: BakerObjects) -> BakerSetup:
         with LOG.scope(LOG_SCOPE):
             prototype = BakerAssetService.load_prototype(asset)
 
             setup = BakerSetup()
 
             try:
-                if len(sources) > 0:
+                if baker_objects.selected_to_active:
                     duplicated_sources = []
-                    for o in sources:
+                    for o in baker_objects.sources:
                         duplicated_source = cls._prepare_object(o, prototype, setup)
                         duplicated_sources.append(duplicated_source)
 
                     setup.sources = duplicated_sources
-                    setup.target = target
+                    setup.target = baker_objects.target
                 else:
-                    setup.target = cls._prepare_object(target, prototype, setup)
+                    setup.target = cls._prepare_object(baker_objects.target, prototype, setup)
 
                 return setup
 

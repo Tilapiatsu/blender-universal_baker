@@ -5,10 +5,9 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-import bpy
-
 from ..core.registry_baker import registry_baker
 from ..resources.baker_asset import BakerAsset
+from ..runtime.baker_objects import BakerObjects
 from ..runtime.baker_setup import BakerExecution
 from ..runtime.context_bake import BakeContext
 from ..services.custom_baker_setup import CustomBakerSetupService
@@ -37,13 +36,19 @@ class CustomBaker(BakerBase):
     @contextmanager
     def prepare_execution(
         self,
-        target: bpy.types.Object,
-        sources: list[bpy.types.Object],
+        baker_objects: BakerObjects,
     ) -> Generator[BakerExecution, Any, Any]:
         asset = BakerAsset(filepath=self.asset_path)
 
-        hide_render = target.hide_render
-        setup = CustomBakerSetupService.prepare(asset=asset, target=target, sources=sources)
+        hide_render = {}
+
+        for s in baker_objects.baker_material_objects:
+            hide_render[s] = s.hide_render
+
+        setup = CustomBakerSetupService.prepare(
+            asset=asset,
+            baker_objects=baker_objects,
+        )
 
         try:
             yield BakerExecution(
@@ -53,7 +58,8 @@ class CustomBaker(BakerBase):
             )
 
         finally:
-            target.hide_render = hide_render
+            for obj, render in hide_render.items():
+                obj.hide_render = render
             setup.cleanup()
 
     def execute(self, ctx: BakeContext) -> None:

@@ -28,7 +28,8 @@ class BakeContext(ExecutionContext):
     image: ImageResource = field(default_factory=ImageResource)
     output: ImageHandle | None = None
 
-    materials: MaterialResources = field(default_factory=MaterialResources)
+    target_materials: dict[str, MaterialResources] = field(default_factory=dict)
+    sources_materials: dict[str, MaterialResources] = field(default_factory=dict)
     node_tree: bpy.types.NodeTree | None = None
     image_node: bpy.types.ShaderNodeTexImage | None = None
 
@@ -50,6 +51,20 @@ class BakeContext(ExecutionContext):
     @property
     def scene(self) -> bpy.types.Scene:
         return self.session.context.scene
+
+    @property
+    def baker_material_objects(self) -> list[bpy.types.Object]:
+        if self.selected_to_active:
+            return self.sources
+        else:
+            return [self.target]
+
+    @property
+    def baker_materials(self):
+        if self.selected_to_active:
+            return self.sources_materials
+        else:
+            return self.target_materials
 
     @property
     def target(self) -> bpy.types.Object:

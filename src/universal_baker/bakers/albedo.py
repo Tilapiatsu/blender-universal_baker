@@ -5,6 +5,7 @@ import bpy
 from ..core.registry_baker import registry_baker
 from ..enum.image_colorspace import ImageColorSpace
 from ..parameter.metadata import BindingMetadata, ParameterMetadata
+from ..runtime.baker_objects import BakerObjects
 from ..runtime.context_bake import BakeContext
 from .base import BakerBase
 
@@ -96,10 +97,9 @@ class AlbedoBaker(BakerBase):
 
     def prepare_execution(
         self,
-        target: bpy.types.Object,
-        sources: list[bpy.types.Object],
+        baker_objects: BakerObjects,
     ):
-        return super().prepare_execution(target, sources)
+        return super().prepare_execution(baker_objects)
 
     def prepare(self, ctx: BakeContext):
         """

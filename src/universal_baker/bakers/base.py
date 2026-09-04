@@ -6,8 +6,6 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-import bpy
-
 from ..constant import LOG, get_prefs
 from ..core.registry_baker import registry_baker
 from ..core.registry_definition import registry_definition
@@ -17,6 +15,7 @@ from ..parameter.baker_custom.metadata_loader import MetadataLoader as metadata_
 from ..parameter.baker_local.metadata_loader import MetadataLoader as metadata_loader_local
 from ..parameter.parameter_applier import ParameterApplier
 from ..parameter.parameter_context import ParameterContext
+from ..runtime.baker_objects import BakerObjects
 from ..runtime.baker_setup import BakerExecution, BakerSetup
 from ..runtime.color_management_info import ColorManagementInfo
 from ..services.artifact_service import ArtifactService
@@ -71,31 +70,24 @@ class BakerBase(ABC):
     @contextmanager
     def prepare_execution(
         self,
-        target: bpy.types.Object,
-        sources: list[bpy.types.Object],
+        baker_objects: BakerObjects,
     ) -> Generator[BakerExecution, Any, Any]:
 
-        selected_to_active = len(sources) > 0
-        material_setup = BakeMaterialService.prepare(objects=[target])
+        material_setup = BakeMaterialService.prepare(objects=[baker_objects.target])
         baker_setup = BakerSetup(material_setup=material_setup)
 
         # ISSUE: Need to make sure the target and sources can be unhidden even if they are in a hidden collection
         # Otherwise the selection is not working properly and the bake is not hapening either
 
-        if selected_to_active:
-            hide_render = {}
-            for s in sources:
-                hide_render[s] = s.hide_render
-                s.hide_render = False
+        hide_render = {}
 
-        else:
-            hide_render = {}
-            hide_render[target] = target.hide_render
-            target.hide_render = False
+        for s in baker_objects.baker_material_objects:
+            hide_render[s] = s.hide_render
+
         try:
             yield BakerExecution(
-                target=target,
-                sources=sources,
+                target=baker_objects.target,
+                sources=baker_objects.sources,
                 setup=baker_setup,
             )
 
@@ -141,7 +133,7 @@ class BakerBase(ABC):
 
         ctx.image = ImageServiceBake.acquire(ctx.image, ctx.task)
 
-        MaterialService.prepare_target(ctx)
+        MaterialService.prepare(ctx)
 
         self.apply_parameters(ctx)
 
@@ -235,21 +227,24 @@ class BakerBase(ABC):
 
         LOG.debug("Applying baker parameters")
 
-        materials = ctx.materials.materials
+        materials = ctx.baker_materials
 
         if materials is None:
-            LOG.error(f"Material Overries not found for {ctx.target.name}")
+            LOG.error("Material Overrides not found")
             return
 
-        if ctx.selected_to_active:
-            objects = ctx.sources
-        else:
-            objects = [ctx.target]
+        objects = ctx.baker_material_objects
 
         for o in objects:
+            object_materials = materials.get(o.name)
+
+            if object_materials is None:
+                LOG.error(f"Material Overrides not found for {o.name}")
+                continue
+
             parameter_context = ParameterContext(
                 object=o,
-                materials=materials,
+                materials=object_materials.materials,
                 scene=ctx.scene,
             )
 

@@ -1,5 +1,4 @@
 from __future__ import annotations
-import sys
 
 import bpy
 
@@ -98,7 +97,7 @@ class RendererService:
         """Prepare Blender selection."""
         bpy.ops.object.select_all(action="DESELECT")
 
-        for obj in ctx.task.sources:
+        for obj in ctx.sources:
             obj.select_set(True)
 
         ctx.target.select_set(True)

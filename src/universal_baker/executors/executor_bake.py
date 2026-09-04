@@ -1,16 +1,17 @@
 from __future__ import annotations
 
 from ..constant import LOG
+from ..core.registry_baker import registry_baker
+from ..core.registry_executor import registry_executor
+from ..logger.event import ScopeState
+from ..logger_bake_middleware.bake_summary import EventCategory
+from ..runtime.baker_objects import BakerObjects
 from ..runtime.context import ExecutionContext
 from ..runtime.context_bake import BakeContext
 from ..runtime.session import ExecutionSession
 from ..runtime.task_bake import BakeTask
-from ..core.registry_baker import registry_baker
-from ..core.registry_executor import registry_executor
-from .executor_base import TaskExecutor
-from ..logger.event import ScopeState
-from ..logger_bake_middleware.bake_summary import EventCategory
 from .execution_target import ExecutionTarget
+from .executor_base import TaskExecutor
 
 
 class BakeExecutorInternal(TaskExecutor):
@@ -43,8 +44,10 @@ class BakeExecutorInternal(TaskExecutor):
                 baker=registry_baker[task.baker_id],
             )
 
+            baker_objects = BakerObjects(target=ctx.target, sources=task.sources)
+
             # NOTE: Prepare the target in case of CustomBaker
-            with task.producer.prepare_execution(ctx.target, task.sources) as bake_target:
+            with task.producer.prepare_execution(baker_objects) as bake_target:
                 ctx.target = bake_target.target
                 ctx.sources = bake_target.sources
                 execution.execute(
