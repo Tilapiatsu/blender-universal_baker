@@ -46,7 +46,7 @@ class UBK_UL_BakeGroupList(bpy.types.UIList):
 
         stats.enabled = False
 
-        stats.label(text=f"{enabled_targets}/{total_targets}", icon="OBJECT_DATA")
+        stats.label(text=f"{enabled_targets}/{total_targets}", icon="MESH_CUBE")
         stats.label(text=f"{enabled_bakers}/{total_bakers}", icon="RENDERLAYERS")
 
         op = row.operator(

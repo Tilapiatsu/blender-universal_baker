@@ -1,11 +1,13 @@
 from __future__ import annotations
+
 import bpy
+from bpy.props import BoolProperty, CollectionProperty, PointerProperty
 from bpy.types import PropertyGroup
-from bpy.props import CollectionProperty, PointerProperty
-from .visualization import UBK_Visualization
+
+from .artifact import UBK_Artifact
 from .bake_group import UBK_BakeGroup
 from .settings_bake import UBK_BakeSettings
-from .artifact import UBK_Artifact
+from .visualization import UBK_Visualization
 
 
 class UBK_Project(PropertyGroup):
@@ -25,6 +27,11 @@ class UBK_Project(PropertyGroup):
     )
     visualization: PointerProperty(
         type=UBK_Visualization,
+    )
+    use_maskers: BoolProperty(
+        name="Use Maskers",
+        default=True,
+        description="A bit slower, but ensure that the bake results does NOT overlap with a large margin and with multiple target objects",
     )
 
 

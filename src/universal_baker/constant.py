@@ -1,15 +1,16 @@
 import bpy
 
 from .logger import Logger
-
+from .logger.middleware.statistics import StatisticsMiddleware
 from .logger.severity import Severity
 from .logger.sinks.console import ConsoleSink
-from .logger.middleware.statistics import StatisticsMiddleware
+from .logger.sinks.file import FileSink
 from .logger_bake_middleware.bake_summary import BakeSummaryMiddleware
 from .resources.scene_view_transform import SceneViewTransform
 
 LOG = Logger("Universal Baker")
 LOG.dispatcher.add_sink(ConsoleSink(level=Severity.DEBUG))
+LOG.dispatcher.add_sink(FileSink(filename="UniversalBaker.log", level=Severity.DEBUG))
 LOG.middleware.add(BakeSummaryMiddleware())
 LOG.middleware.add(StatisticsMiddleware())
 

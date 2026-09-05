@@ -359,6 +359,18 @@ class BakeController:
 
         job = cls.create_job(context, register_bakers=True)
 
+        project = cls.project(context)
+
+        if project is None:
+            return (False, ["Project is None"])
+
+        use_maskers = project.use_maskers
+
+        task_types = [BakeTask, AccumulateTask]
+
+        if use_maskers:
+            task_types += [UvOwnershipTask, MaskBufferTask]
+
         preferences = get_prefs()
 
         if preferences.use_background_blender:
@@ -368,12 +380,7 @@ class BakeController:
 
         executor = Executor(
             execution=execution,
-            task_types=[
-                BakeTask,
-                AccumulateTask,
-                UvOwnershipTask,
-                MaskBufferTask,
-            ],
+            task_types=task_types,
         )
         executor.execute(context, job)
 
@@ -394,6 +401,18 @@ class BakeController:
 
         job = cls.create_job(context, register_bakers=True, register_packers=True, group_index=group_index)
 
+        project = cls.project(context)
+
+        if project is None:
+            return (False, ["Project is None"])
+
+        use_maskers = project.use_maskers
+
+        task_types = [BakeTask, AccumulateTask, PackingTask]
+
+        if use_maskers:
+            task_types += [UvOwnershipTask, MaskBufferTask]
+
         preferences = get_prefs()
 
         if preferences.use_background_blender:
@@ -403,13 +422,7 @@ class BakeController:
 
         executor = Executor(
             execution=execution,
-            task_types=[
-                BakeTask,
-                AccumulateTask,
-                UvOwnershipTask,
-                MaskBufferTask,
-                PackingTask,
-            ],
+            task_types=task_types,
         )
         executor.execute(context, job)
 
@@ -430,6 +443,18 @@ class BakeController:
 
         job = cls.create_job(context, register_bakers=True, baker_index=baker_index)
 
+        project = cls.project(context)
+
+        if project is None:
+            return (False, ["Project is None"])
+
+        use_maskers = project.use_maskers
+
+        task_types = [BakeTask, AccumulateTask]
+
+        if use_maskers:
+            task_types += [UvOwnershipTask, MaskBufferTask]
+
         preferences = get_prefs()
 
         if preferences.use_background_blender:
@@ -439,12 +464,7 @@ class BakeController:
 
         executor = Executor(
             execution=execution,
-            task_types=[
-                BakeTask,
-                AccumulateTask,
-                UvOwnershipTask,
-                MaskBufferTask,
-            ],
+            task_types=task_types,
         )
         executor.execute(context, job)
 
@@ -501,6 +521,18 @@ class BakeController:
 
         job = cls.create_job(context, register_bakers=True, register_packers=True)
 
+        project = cls.project(context)
+
+        if project is None:
+            return (False, ["Project is None"])
+
+        use_maskers = project.use_maskers
+
+        task_types = [BakeTask, AccumulateTask, PackingTask]
+
+        if use_maskers:
+            task_types += [UvOwnershipTask, MaskBufferTask]
+
         preferences = get_prefs()
 
         if preferences.use_background_blender:
@@ -510,13 +542,7 @@ class BakeController:
 
         executor = Executor(
             execution=execution,
-            task_types=[
-                BakeTask,
-                AccumulateTask,
-                UvOwnershipTask,
-                PackingTask,
-                MaskBufferTask,
-            ],
+            task_types=task_types,
         )
         executor.execute(context, job)
         return (

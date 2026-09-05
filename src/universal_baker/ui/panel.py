@@ -371,6 +371,13 @@ class UBK_PT_ProcessPanel(UBK_PT_MainPanel, bpy.types.Panel):
     @bake_group_needed
     def draw(self, context):
         layout = self.layout
+        project = BakeController.project(context)
+        if project is None:
+            return
+
+        col = layout.column()
+        col.prop(project, "use_maskers", toggle=True)
+
         col = layout.column()
         col.scale_y = 1.6
         col.operator("ubk.bake_all", icon="RESTRICT_RENDER_OFF")

@@ -176,7 +176,7 @@ class ImageResource:
 
     @property
     def tile_numbers(self) -> set[int]:
-        tile_number = set([t.number for t in self.tiles])
+        tile_number = {t.number for t in self.tiles}
         return tile_number
 
     def reload(self) -> None:

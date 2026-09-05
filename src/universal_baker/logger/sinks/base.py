@@ -14,3 +14,6 @@ class BaseSink(ABC):
     @abstractmethod
     def write(self, event: LogEvent):
         pass
+
+    def close(self):
+        pass

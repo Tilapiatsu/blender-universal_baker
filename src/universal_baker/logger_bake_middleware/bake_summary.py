@@ -1,8 +1,9 @@
 from __future__ import annotations
+
 from enum import Enum, auto
 
-from ..logger.middleware.base import BaseMiddleware
 from ..logger.event import LogEvent
+from ..logger.middleware.base import BaseMiddleware
 
 
 class BakeStatus(Enum):

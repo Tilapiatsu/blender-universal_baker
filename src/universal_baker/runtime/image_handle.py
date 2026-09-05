@@ -200,9 +200,9 @@ class ImageHandle:
 
     def _ensure_loaded(self):
         if not self._tiles.is_empty:
-            LOG.warning("TileSet is already loaded")
             return
 
+        LOG.warning("Reloading TileSet")
         if self._resource.is_valid:
             tiles = self._resource.get_tileset()
             if tiles is not None:

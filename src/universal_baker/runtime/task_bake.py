@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import bpy
-from universal_baker.runtime.settings_cage import CageSettings
 
 if TYPE_CHECKING:
     from ..bakers.base import BakerBase
@@ -18,6 +17,7 @@ from ..core.output_resolver import OutputResolver
 from ..logger.event import ScopeState
 from ..logger_bake_middleware.bake_summary import BakeStatus, EventCategory
 from ..runtime.settings_bake import BakeSettings
+from ..runtime.settings_cage import CageSettings
 from .task import Task
 
 
