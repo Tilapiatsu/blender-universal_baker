@@ -27,8 +27,10 @@ class UvOwnership:
         with LOG.scope(LOG_SCOPE):
             from ..services.uv_ownership import UvOwnershipService
             # ISSUE:
-            # - Baking with Multiple Targets and multiple sources and Cages, and only the first target of the list get baked
+            # Baking with Multiple Targets and multiple sources and Cages, and only the first target of the list get baked
             # properly -> Its an issue with the ownership mapsk
+            # NOTE: Baking with multiple Targets, No Source Objects, without UDIM -> OK
+            # NOTE: Baking With multiple Targets, No Source Objects, With UDIM -> Only the first one have the proper mask
 
             LOG.info("Generting UV Ownership mask")
             result = UvOwnershipService.create_uv_ownership_mask(
@@ -43,7 +45,8 @@ class UvOwnership:
 
             ctx.task.ownership_mask.set(result)
 
-            # NOTE: Saving Map to disk : This is for debug purpose only. Need to be removed !!!
+            # NOTE: Saving Map to disk : This is for debug purpose only
+            # Need to link to a global debug parameter
             if True:
                 from ..core.output_resolver import OutputResolver
                 from ..services.image_codec import ImageCodec

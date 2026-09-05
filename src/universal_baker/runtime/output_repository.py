@@ -4,9 +4,6 @@ from collections import defaultdict
 from typing import Iterable, Generator
 from typing import TYPE_CHECKING
 
-from universal_baker.resources import image
-
-
 from ..constant import LOG
 from ..logger_bake_middleware.bake_summary import BakeStatus
 from .output_artifact import OutputArtifact

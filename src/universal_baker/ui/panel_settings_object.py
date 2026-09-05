@@ -3,7 +3,7 @@ from __future__ import annotations
 import bpy
 
 from ..core.controller import BakeController
-from .panel import UBK_PT_MainPanel, object_needed
+from .panel import UBK_PT_MainPanel, object_needed, source_needed
 
 # -------------------------------------------------------------------------
 # Main Settings Panel
@@ -60,19 +60,22 @@ class UBK_UL_CageSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
     bl_parent_id = "UBK_PT_TargetObjectPanel"
     bl_options = {"DEFAULT_CLOSED"}
 
-    @object_needed
     def draw_header(self, context):
         layout = self.layout
 
         active_object = BakeController.active_target_object(context)
 
         if active_object is None:
-            layout.label(text="Add an Object First", icon="INFO")
+            layout.label(text="Cage Settings : Add a Target Object First", icon="INFO")
+            return
+
+        if len(active_object.source_objects) == 0:
+            layout.label(text="Cage Settings : Add a Source Object First", icon="INFO")
             return
 
         layout.label(text=f"{active_object.object.name} Cage Settings", icon="CUBE")
 
-    @object_needed
+    @source_needed
     def draw(self, context):
         layout = self.layout
         box = layout.box()

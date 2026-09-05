@@ -197,7 +197,7 @@ class ImageResource:
         if self.image is None:
             return
 
-        bpy.data.Image.remove(self.image)
+        bpy.data.images.remove(self.image)
 
     def scale(self, width: int, height: int) -> None:
         if self.image is None:

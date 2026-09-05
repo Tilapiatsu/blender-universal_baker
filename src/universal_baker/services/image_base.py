@@ -53,7 +53,13 @@ class ImageServiceBase:
 
             image = bpy.data.images.get(resource.name)
 
-            if image is None or cls.is_image_settings_changed(image, resource):
+            if image is None:
+                image = cls.create(resource, task.uv_layout.udim_tiles)
+                resource.created = True
+
+            elif cls.is_image_settings_changed(image, resource):
+                LOG.debug("Image Settings has changed, recreating it")
+                bpy.data.images.remove(image)
                 image = cls.create(resource, task.uv_layout.udim_tiles)
                 resource.created = True
 
@@ -189,9 +195,9 @@ class ImageServiceBase:
 
     @classmethod
     def is_image_settings_changed(cls, image: bpy.types.Image, resource: ImageResource) -> bool:
-        # ISSUE: Baking with uidim detect once, the bake again without udim make Image IO lost, and cant't find the
+        # ISSUE: Baking with udim detect once, then bake again without udim make Image IO lost, and can't find the
         # file on disk because with UDIM it resolves the output image with a .1001 suffix but without udim there is not
-        # suffix at all. Need to detect the change and recreate the image resource if it changed
+        # suffix at all. Need to detect the change and recreate the image resource if changed
         return (
             image.size[0] != resource.width
             or image.size[1] != resource.height

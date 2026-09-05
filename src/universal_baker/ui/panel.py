@@ -59,6 +59,43 @@ def object_needed(func):
     return wrapper
 
 
+def source_needed(func):
+    def wrapper(self, context):
+        project = BakeController.project(context)
+        if project is None:
+            return
+
+        active_bake_group = BakeController.active_bake_group(context)
+
+        if active_bake_group is None:
+            layout = self.layout
+            box = layout.box()
+            header = box.row()
+            header.label(text="Add a Bake Group.", icon="INFO")
+
+            return
+
+        active_object = BakeController.active_target_object(context)
+
+        if active_object is None:
+            layout = self.layout
+            box = layout.box()
+            header = box.row()
+            header.label(text="Add a Target Object.", icon="INFO")
+            return
+
+        if len(active_object.source_objects) == 0:
+            layout = self.layout
+            box = layout.box()
+            header = box.row()
+            header.label(text="Add a source Object", icon="INFO")
+            return
+
+        func(self, context)
+
+    return wrapper
+
+
 def baker_needed(func):
     def wrapper(self, context):
         project = BakeController.project(context)

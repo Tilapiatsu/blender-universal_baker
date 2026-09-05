@@ -39,8 +39,8 @@ class CustomBaker(BakerBase):
         baker_objects: BakerObjects,
     ) -> Generator[BakerExecution, Any, Any]:
         # ISSUE:
-        # - Baking custom baker with cage and multiple source and target -> No active image found -> Look like a
-        # material preparation issue, the image didn't got to the baker object, or the not baker material didn't got
+        # Baking custom baker with cage and multiple source and target -> No active image found -> Look like a
+        # material preparation issue, the image didn't got to the baker object, or the baker material didn't got
         # created properly
 
         asset = BakerAsset(filepath=self.asset_path)

@@ -3,6 +3,7 @@ from __future__ import annotations
 import math
 import bpy
 
+from ..constant import LOG
 from ..runtime.label_set import LabelSet
 from ..resources.image_buffer import ImageBuffer
 from ..resources.ownership import OwnershipDatas
@@ -23,6 +24,7 @@ class UvOwnershipService:
         use_udim: bool = False,
     ) -> UvOwnershipMask:
 
+        LOG.debug("Creating UV ownership map")
         object_masks: dict[str, TileSet] = {}
         for i, o in ownership_datas.items():
             object_mask = cls.create_mask(
