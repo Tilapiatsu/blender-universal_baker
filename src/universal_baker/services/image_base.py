@@ -195,9 +195,6 @@ class ImageServiceBase:
 
     @classmethod
     def is_image_settings_changed(cls, image: bpy.types.Image, resource: ImageResource) -> bool:
-        # ISSUE: Baking with udim detect once, then bake again without udim make Image IO lost, and can't find the
-        # file on disk because with UDIM it resolves the output image with a .1001 suffix but without udim there is not
-        # suffix at all. Need to detect the change and recreate the image resource if changed
         return (
             image.size[0] != resource.width
             or image.size[1] != resource.height

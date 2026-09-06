@@ -27,8 +27,8 @@ class UvOwnership:
         with LOG.scope(LOG_SCOPE):
             from ..services.uv_ownership import UvOwnershipService
             # ISSUE:
-            # Baking with Multiple Targets and multiple sources and Cages, and only the first target of the list get baked
-            # properly -> Its an issue with the ownership mapsk
+            # Baking with Multiple Targets and multiple sources and Cages, and only the first target of the list get a
+            # proper mask properly -> It look to be an issue with the ownership mapsk
             # NOTE: Baking with multiple Targets, No Source Objects, without UDIM -> OK
             # NOTE: Baking With multiple Targets, No Source Objects, With UDIM -> Only the first one have the proper mask
 
