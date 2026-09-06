@@ -10,7 +10,6 @@ from pathlib import Path
 
 allowed_file_extensions = (".py", "LICENSE", ".md", ".dat", ".toml")
 ignore_regular_folders = ("doc_assets", "venv", "tests", ".vscode", "__pycache__", "site_package")
-ignore_extension_folders = ignore_regular_folders + ("extensions", "batcher")
 
 
 def main(args: set | None = None) -> None:
@@ -29,8 +28,7 @@ def main(args: set | None = None) -> None:
 
     addon_id: str = namespace.addon_id
 
-    zip_main(addon_id, ignore_regular_folders, zip_suffix="_extension")
-    zip_main(addon_id, ignore_extension_folders)
+    zip_main(addon_id, ignore_regular_folders)
 
 
 def get_addon_path(addon_name: str) -> Path:
