@@ -16,7 +16,6 @@ from ..resources.image import ImageResource
 from ..resources.material import MaterialResources
 from .context import ExecutionContext
 from .settings_bake import BakeSettings
-from .evaluated_target import EvaluatedTarget
 
 
 @dataclass(slots=True)
@@ -33,8 +32,6 @@ class BakeContext(ExecutionContext):
     sources_materials: dict[str, MaterialResources] = field(default_factory=dict)
     node_tree: bpy.types.NodeTree | None = None
     image_node: bpy.types.ShaderNodeTexImage | None = None
-
-    evaluated_targets: dict[str, EvaluatedTarget] = field(default_factory=dict)
 
     _target: bpy.types.Object | None = None
     _sources: list[bpy.types.Object] | None = None

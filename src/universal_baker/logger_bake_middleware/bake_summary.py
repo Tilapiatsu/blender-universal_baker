@@ -12,6 +12,7 @@ class BakeStatus(Enum):
 
 
 class EventCategory(Enum):
+    EVALUATE_TARGETS = auto()
     OWNERSHIP = auto()
     BAKE = auto()
     PACK = auto()

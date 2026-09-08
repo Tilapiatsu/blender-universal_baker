@@ -2,8 +2,14 @@ from __future__ import annotations
 
 import bpy
 
+from dataclasses import dataclass
 
-class EvaluatedMeshContext:
+from .context import ExecutionContext
+
+
+# TODO: Need to properly write the contex to inherit from Context Class
+@dataclass(slots=True)
+class EvaluatedMeshesContext(ExecutionContext):
     def __init__(
         self,
         obj: bpy.types.Object,
