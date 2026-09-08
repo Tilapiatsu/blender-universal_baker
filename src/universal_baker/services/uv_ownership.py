@@ -32,7 +32,7 @@ class UvOwnershipService:
         for object_uuid, ownership_data in ownership_datas.items():
             LOG.debug(f"UV Ownership for {ownership_data.object_name}")
             object_mask = cls.create_mask(
-                obj=ownership_data.blender_object,
+                mesh=ownership_data.mesh,
                 resolution=resolution,
                 uv_map=ownership_data.uv_layer,
                 use_udim=use_udim,
@@ -55,7 +55,7 @@ class UvOwnershipService:
     @classmethod
     def create_mask(
         cls,
-        obj: bpy.types.Object,
+        mesh: bpy.types.Mesh,
         resolution: tuple[int, int],
         *,
         uv_map: str | None = None,
@@ -73,18 +73,13 @@ class UvOwnershipService:
         When use_udim is True, all UDIM tiles touched by the UVs
         are generated.
         """
-        if obj.type != "MESH":
-            raise TypeError(f"UV mask requires a mesh object, got {obj.type!r}")
-
-        mesh = obj.data
-
         if uv_map is None:
             uv_layer = mesh.uv_layers.active
         else:
             uv_layer = mesh.uv_layers.get(uv_map)
 
         if uv_layer is None:
-            raise ValueError(f"Object {obj.name!r} has no UV map {uv_map!r}")
+            raise ValueError(f"Object {mesh.name!r} has no UV map {uv_map!r}")
 
         width, height = resolution
 
@@ -107,7 +102,7 @@ class UvOwnershipService:
                 width,
                 height,
                 channels=1,
-                name=(name or f"{obj.name}_{uv_layer}_UVOwnership_{tile_number}"),
+                name=(name or f"{mesh.name}_{uv_layer}_UVOwnership_{tile_number}"),
             )
 
             for triangle in triangles:

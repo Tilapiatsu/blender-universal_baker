@@ -15,6 +15,15 @@ class OwnershipData:
     def blender_object(self) -> bpy.types.Object | None:
         return bpy.data.objects.get(self.object_name)
 
+    @property
+    def mesh(self) -> bpy.types.Mesh | None:
+        obj = self.blender_object
+
+        if obj is None or obj.type != "MESH":
+            return None
+
+        return obj.data
+
 
 @dataclass(slots=True)
 class OwnershipDatas:
