@@ -78,6 +78,10 @@ class UBK_PT_BakerSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
         if active_baker is None:
             return
 
+        col = box.column(align=True)
+        col.enabled = False
+        col.label(text=active_baker.uuid)
+
         box.prop(active_baker, "image_name")
 
         project = BakeController.project(context)

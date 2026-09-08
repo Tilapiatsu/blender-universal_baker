@@ -18,44 +18,43 @@ class OwnershipData:
 
 @dataclass(slots=True)
 class OwnershipDatas:
-    _index_uuids: dict[int, OwnershipData] = field(default_factory=dict)
-    _last_index: int = 0
+    _objects: dict[str, OwnershipData] = field(default_factory=dict)
 
-    def add(self, name: str, uuid: str, uv_layer: str) -> None:
-        self._last_index += 1
-        od = OwnershipData(
+    def add(
+        self,
+        name: str,
+        uuid: str,
+        uv_layer: str,
+    ) -> None:
+        self._objects[uuid] = OwnershipData(
             object_name=name,
             object_uuid=uuid,
             uv_layer=uv_layer,
         )
-        self._index_uuids[self._last_index] = od
 
-    def last_item_index(self) -> int:
-        return self._last_index
+    def get(self, uuid: str) -> OwnershipData | None:
+        return self._objects.get(uuid)
 
     def keys(self):
-        return list(self._index_uuids.keys())
+        return self._objects.keys()
 
     def values(self):
-        return self._index_uuids.values()
-
-    def update(self, *args, **kwargs):
-        return self._index_uuids.update(*args, **kwargs)
+        return self._objects.values()
 
     def items(self):
-        return self._index_uuids.items()
+        return self._objects.items()
 
-    def __contains__(self, key: int) -> bool:
-        return key in self._index_uuids
+    def __contains__(self, uuid: str) -> bool:
+        return uuid in self._objects
 
-    def __getitem__(self, key: int) -> OwnershipData:
-        return self._index_uuids[key]
-
-    def __repr__(self) -> str:
-        return repr(self._index_uuids)
+    def __getitem__(self, uuid: str) -> OwnershipData:
+        return self._objects[uuid]
 
     def __len__(self) -> int:
-        return len(self._index_uuids)
+        return len(self._objects)
 
-    def __delitem__(self, key: int) -> None:
-        del self._index_uuids[key]
+    def __delitem__(self, uuid: str) -> None:
+        del self._objects[uuid]
+
+    def __repr__(self) -> str:
+        return repr(self._objects)

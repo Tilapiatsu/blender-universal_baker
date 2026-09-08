@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from .base import AccumulatorBase
-
-from ..runtime.context_accumulate import AccumulateContext
 from ..core.registry_accumulator import registry_accumulator
+from ..runtime.context_accumulate import AccumulateContext
+from .base import AccumulatorBase
 
 
 class AlphaOverAccumulator(AccumulatorBase):
@@ -16,6 +15,9 @@ class AlphaOverAccumulator(AccumulatorBase):
 
     def execute(self, ctx: AccumulateContext) -> None:
         return super().execute(ctx)
+
+    def invalidate_previous_output(self, ctx: AccumulateContext) -> None:
+        super().invalidate_previous_output(ctx)
 
     def prepare(self, ctx: AccumulateContext):
         """

@@ -70,6 +70,9 @@ class CustomBaker(BakerBase):
     def execute(self, ctx: BakeContext) -> None:
         return super().execute(ctx)
 
+    def invalidate_previous_output(self, ctx: BakeContext) -> None:
+        super().invalidate_previous_output(ctx)
+
     def configure_preview_material(self, material):
         asset = BakerAsset(filepath=self.asset_path)
         material.use_nodes = True

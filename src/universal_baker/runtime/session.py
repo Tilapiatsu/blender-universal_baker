@@ -2,18 +2,17 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from time import perf_counter
+from typing import TYPE_CHECKING
 
 import bpy
 
-from .runtime_manager import RuntimeManager
 from .runtime import BakeRuntime
-
-from typing import TYPE_CHECKING
+from .runtime_manager import RuntimeManager
 
 if TYPE_CHECKING:
+    from .context import ExecutionContext
     from .job import Job
     from .task import Task
-    from .context import ExecutionContext
 
 
 class SessionContext:
@@ -49,6 +48,8 @@ class ExecutionSession:
     original_margin: int = 16
     original_margin_type: str = ""
 
+    output_invalidated: bool = False
+
     temporary_images: list[bpy.types.Image] = field(default_factory=list)
     temporary_materials: list[bpy.types.Material] = field(default_factory=list)
     temporary_node_groups: list[bpy.types.NodeTree] = field(default_factory=list)
@@ -58,6 +59,7 @@ class ExecutionSession:
         self.context = context
         self.runtime = RuntimeManager.current(context)
         self.runtime.register_session(self)
+        self.output_invalidated = False
         self.temporary_images = []
         self.temporary_materials = []
         self.temporary_node_groups = []

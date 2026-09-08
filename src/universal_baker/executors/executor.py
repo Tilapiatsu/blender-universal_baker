@@ -1,17 +1,17 @@
 from __future__ import annotations
 
-from typing import Callable
+from collections.abc import Callable
 
 import bpy
 
 from ..constant import LOG
-from ..runtime.task_bake import BakeTask
-from ..runtime.context import ExecutionContext
-from ..runtime.session import ExecutionSession
-from ..enum.execution import Execution
-from ..runtime.job import Job
-from ..core.registry_executor import registry_executor
 from ..core.registry_execution import registry_execution
+from ..core.registry_executor import registry_executor
+from ..enum.execution import Execution
+from ..runtime.context import ExecutionContext
+from ..runtime.job import Job
+from ..runtime.session import ExecutionSession
+from ..runtime.task_bake import BakeTask
 from .execution_target import ExecutionTarget
 
 

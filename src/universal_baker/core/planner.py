@@ -57,16 +57,18 @@ class ExecutionPlanner:
                 else:
                     continue
 
-                has_multiple_targets = len([o for o in group.target_objects if o.enabled]) > 1
+                active_targets = [obj for obj in group.target_objects if obj.enabled and obj.object is not None]
+
+                has_multiple_targets = len(active_targets) > 1
+
                 #
                 # Store UDIM Uv Informations
                 #
                 object_tiles = {}
-                group_tiles = tuple()
-                object_uuids = {}
+                group_tiles = ()
 
-                for index, obj in enumerate(group.target_objects):
-                    udim_tiles = tuple()
+                for index, obj in enumerate(active_targets):
+                    udim_tiles = ()
                     udim_tiles = UVService.detect_udim_tiles(obj.object, obj.uv_layer)
                     LOG.info(f"{len(udim_tiles)} udim tile(s) detected for {obj.object.name}:")
                     LOG.info(f"{udim_tiles}")
@@ -80,16 +82,8 @@ class ExecutionPlanner:
 
                 if has_multiple_targets:
                     ownership_datas = OwnershipDatas()
-                    for index, obj in enumerate(group.target_objects):
-                        if not obj.enabled:
-                            continue
-
-                        if obj.object is None:
-                            continue
-
+                    for index, obj in enumerate(active_targets):
                         ownership_datas.add(name=obj.object.name, uuid=obj.uuid, uv_layer=obj.uv_layer)
-
-                        object_uuids[index] = obj.uuid
 
                     uv_layout = UVLayout(
                         image_layout=ImageLayout.UDIM if group.detect_udim else ImageLayout.SINGLE,
@@ -109,7 +103,6 @@ class ExecutionPlanner:
                             output_context.output_settings.path.width,
                             output_context.output_settings.path.height,
                         ),
-                        object_index_uuids=object_uuids,
                     )
 
                     ownership_task = UvOwnershipTask(
@@ -152,13 +145,7 @@ class ExecutionPlanner:
                         override_settings=baker.settings if baker.override_settings else None,
                     )
 
-                    for obj in group.target_objects:
-                        if not obj.enabled:
-                            continue
-
-                        if obj.object is None:
-                            continue
-
+                    for obj in active_targets:
                         if obj.object.name not in object_tiles:
                             LOG.error(f"{obj.object.name} have invalid UV.")
                             # TODO: need to properly deal with the case of one object doesn't have UV -> Should skip the

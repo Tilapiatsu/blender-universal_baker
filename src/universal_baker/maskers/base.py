@@ -3,6 +3,8 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
+import numpy as np
+
 from ..constant import LOG
 from ..core.maskers import ImageMasker
 from ..core.registry_compositor import registry_compositor
@@ -70,18 +72,40 @@ class MaskerBase(ABC):
     def masking(self, ctx: MaskContext) -> None:
         """Execute the Accumulation."""
         LOG.debug("Masking ...")
-
         if ctx.inputs is None:
             LOG.error("Inputs are not defined")
             return
 
         mask = ctx.mask.mask_for_object(ctx.task.target_object_uuid)
+        for tile, buffer in mask.tile_buffers:
+            alpha = buffer.pixels[..., 3]
+
+            LOG.debug(
+                f"MASK RESULT | "
+                f"target={ctx.task.target_object_uuid} "
+                f"tile={tile} "
+                f"shape={buffer.pixels.shape} "
+                f"coverage={np.count_nonzero(alpha)} "
+                f"alpha_min={alpha.min()} "
+                f"alpha_max={alpha.max()}"
+            )
 
         for input in ctx.inputs:
+            LOG.debug(
+                f"MASK INPUT | "
+                f"target={ctx.task.target_object_uuid} "
+                f"artifact={input.artifact.uuid} "
+                f"handle={id(input)} "
+                f"loaded={input.is_loaded} "
+                f"tiles={input.tiles()} "
+            )
+
             if not mask.contains(input.tileset):
                 LOG.debug(f"Skipping {input.artifact.name}")
                 continue
+
             ImageMasker.apply_mask(input, mask, registry_compositor[self.id])
+
             input.image()
             input.reload()
 

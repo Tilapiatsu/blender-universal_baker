@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 import numpy as np
-from typing import Mapping
 
 from universal_baker.resources.label_buffer import LabelBuffer
 from universal_baker.runtime.tile_set import TileSet
@@ -18,17 +19,33 @@ class VoronoiJFA:
         dict[int, str],
     ]:
         """
-        Build:
+        Build the initial JFA seed maps.
 
-            tile -> object label image
+        Parameters
+        ----------
+        objects:
+            Mapping of object UUID -> UV coverage TileSet.
 
-        Returns the mapping between integer labels and
-        object names.
+        Returns
+        -------
+        seeds:
+            tile number -> integer seed labels.
+
+        label_to_uuid:
+            internal JFA label -> object UUID.
+
+        Notes
+        -----
+        Integer labels are internal to the JFA implementation.
+        UUIDs remain the authoritative object identity.
         """
 
-        object_ids = {name: index for index, name in enumerate(objects.keys(), start=1)}
+        # Sort UUIDs so label assignment is deterministic.
+        uuids = sorted(objects.keys())
 
-        labels_to_objects = {index: name for name, index in object_ids.items()}
+        uuid_to_label = {uuid: label for label, uuid in enumerate(uuids, start=1)}
+
+        label_to_uuid = {label: uuid for uuid, label in uuid_to_label.items()}
 
         tile_numbers = set()
 
@@ -37,23 +54,24 @@ class VoronoiJFA:
 
         result = {}
 
-        for tile_number in tile_numbers:
+        for tile_number in sorted(tile_numbers):
             tile_arrays = []
 
-            for object_name, tileset in objects.items():
-                if tile_number not in tileset.tiles:
+            for object_uuid in uuids:
+                tileset = objects[object_uuid]
+
+                if tile_number not in tileset:
                     continue
+
                 tile = tileset[tile_number]
 
                 if tile is None:
                     continue
 
-                array = tile.pixels
-
                 tile_arrays.append(
                     (
-                        object_ids[object_name],
-                        array,
+                        uuid_to_label[object_uuid],
+                        tile.pixels,
                     )
                 )
 
@@ -67,18 +85,18 @@ class VoronoiJFA:
                 dtype=np.int32,
             )
 
-            for object_id, mask in tile_arrays:
+            for label, mask in tile_arrays:
                 if mask.shape != shape:
                     raise ValueError(f"Tile {tile_number} has inconsistent resolution.")
 
                 occupied = mask != 0
 
                 # First object wins if UVs overlap.
-                seeds[occupied & (seeds == 0)] = object_id
+                seeds[occupied & (seeds == 0)] = label
 
             result[tile_number] = seeds
 
-        return result, labels_to_objects
+        return result, label_to_uuid
 
     @staticmethod
     def _jump_flood(
@@ -242,19 +260,19 @@ class VoronoiJFA:
 
         Returns
         -------
-        dict[int, np.ndarray]
+        tuple[LabelSet, dict[int, str]]
 
-            tile number -> ownership labels
+            Ownership Label -> ownership labels
 
             0 = no owner
             >0 = object ID
         """
 
-        seeds, object_ids = cls._build_seed_map(objects)
+        seeds, label_to_uuid = cls._build_seed_map(objects)
 
         ownership = LabelSet()
 
         for tile_number, seed_map in seeds.items():
             ownership[tile_number] = LabelBuffer.from_nd_array(cls._jump_flood(seed_map))
 
-        return ownership, object_ids
+        return ownership, label_to_uuid

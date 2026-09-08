@@ -1,14 +1,15 @@
 from __future__ import annotations
 
 import math
+
 import bpy
 
 from ..constant import LOG
-from ..runtime.label_set import LabelSet
 from ..resources.image_buffer import ImageBuffer
 from ..resources.ownership import OwnershipDatas
-from ..runtime.uv_ownership_mask import UvOwnershipMask
+from ..runtime.label_set import LabelSet
 from ..runtime.tile_set import TileSet
+from ..runtime.uv_ownership_mask import UvOwnershipMask
 from .voronoi_jfa import VoronoiJFA
 
 
@@ -25,29 +26,31 @@ class UvOwnershipService:
     ) -> UvOwnershipMask:
 
         LOG.debug("Creating UV ownership map")
+
         object_masks: dict[str, TileSet] = {}
-        for i, o in ownership_datas.items():
+
+        for object_uuid, ownership_data in ownership_datas.items():
+            LOG.debug(f"UV Ownership for {ownership_data.object_name}")
             object_mask = cls.create_mask(
-                obj=o.blender_object,
+                obj=ownership_data.blender_object,
                 resolution=resolution,
-                uv_map=o.uv_layer,
+                uv_map=ownership_data.uv_layer,
                 use_udim=use_udim,
-                name=f"{o.object_name}_mask",
+                name=f"{ownership_data.object_name}_mask",
             )
-            object_masks[o.object_uuid] = object_mask
 
-        ownership, _ = VoronoiJFA.calculate_ownership(object_masks)
+            object_masks[object_uuid] = object_mask
 
-        object_uuids = {i: o.object_uuid for i, o in ownership_datas.items()}
+        ownership, label_to_uuid = VoronoiJFA.calculate_ownership(object_masks)
 
-        uv_ownership_mask = UvOwnershipMask(
+        LOG.debug(f"JFA LABEL MAP | {label_to_uuid}")
+
+        return UvOwnershipMask(
             labels=ownership,
             resolution=resolution,
-            object_index_uuids=object_uuids,
+            label_to_uuid=label_to_uuid,
             name=name,
         )
-
-        return uv_ownership_mask
 
     @classmethod
     def create_mask(

@@ -33,6 +33,12 @@ class UBK_UL_TargetObjectSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
         box = layout.box()
 
         active_object = BakeController.active_target_object(context)
+        if active_object is None:
+            return
+
+        col = box.column(align=True)
+        col.enabled = False
+        col.label(text=active_object.uuid)
 
         box.prop(active_object, "uv_layer")
 

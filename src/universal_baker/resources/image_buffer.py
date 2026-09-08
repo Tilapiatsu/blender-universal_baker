@@ -42,9 +42,9 @@ class ImageBuffer:
         """Create an Empty Buffer"""
 
         if channels > 1:
-            shape = (width, height, channels)
+            shape = (height, width, channels)
         else:
-            shape = (width, height)
+            shape = (height, width)
 
         pixels = np.zeros(shape, dtype=np.float32)
 

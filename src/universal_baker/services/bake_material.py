@@ -142,13 +142,16 @@ class BakeMaterialService:
             current.append(material)
 
     @classmethod
-    def prepare(cls, objects: list[bpy.types.Object]) -> BakeMaterialSetup:
+    def prepare(cls, targets: list[bpy.types.Object], sources: list[bpy.types.Object]) -> BakeMaterialSetup:
         with LOG.scope(LOG_SCOPE):
             LOG.debug("Preparing bake materials")
             setup = BakeMaterialSetup()
 
             try:
-                for obj in objects:
+                for obj in targets:
+                    cls._prepare_object(obj, setup)
+
+                for obj in sources:
                     cls._prepare_object(obj, setup)
 
                 return setup

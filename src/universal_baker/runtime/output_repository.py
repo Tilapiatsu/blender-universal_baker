@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Iterable, Generator
+from collections.abc import Generator, Iterable
 from typing import TYPE_CHECKING
 
 from ..constant import LOG
 from ..logger_bake_middleware.bake_summary import BakeStatus
-from .output_artifact import OutputArtifact
 from .artifact_repository import ArtifactRepository
 from .image_handle import ImageHandle
+from .output_artifact import OutputArtifact
 
 if TYPE_CHECKING:
     from ..runtime.bake_group import BakeGroup
@@ -55,18 +55,34 @@ class OutputRepository:
     def remove(self, output: ImageHandle) -> None:
         self._outputs.pop(output.uuid, None)
 
-        target_key = (
+        baker_key = (
             output.bake_group.uuid,
-            output.uuid,
+            output.producer_uuid,
         )
 
-        outputs = self._index_baker.get(target_key)
+        outputs = self._index_baker.get(baker_key)
 
         if outputs and output in outputs:
             outputs.remove(output)
 
             if not outputs:
-                del self._index_baker[target_key]
+                del self._index_baker[baker_key]
+
+        target_key = (
+            output.bake_group.uuid,
+            output.producer_uuid,
+            output.target_object_uuid,
+        )
+
+        outputs = self._index_target_object.get(target_key)
+
+        if outputs and output in outputs:
+            outputs.remove(output)
+
+            if not outputs:
+                del self._index_target_object[target_key]
+
+        self._materialized.pop(output.uuid, None)
 
     def resolve_baker_outputs(
         self,
@@ -233,15 +249,19 @@ class OutputRepository:
         Removes all runtime ImageHandle associated
         with one bake_group/producer pair.
         """
+        LOG.debug(f"INVALIDATING OUTPUT | group={bake_group_uuid}, producer={producer_uuid}, count={self.count}")
+        key = (bake_group_uuid, producer_uuid)
 
-        outputs = self.resolve_baker_outputs(
-            bake_group_uuid,
-            producer_uuid,
-            materialize=False,
-        )
+        outputs = list(self._index_baker.get(key, ()))
+
+        if not len(outputs):
+            LOG.debug("No Output found")
+            return
 
         for output in outputs:
             self.remove(output)
+
+        LOG.debug(f"OUTPUT REPOSITORY AFTER INVALIDATION | count={self.count}")
 
     def clear_materialized(self, artifact_uuid: str):
         output = self._materialized.pop(artifact_uuid, None)

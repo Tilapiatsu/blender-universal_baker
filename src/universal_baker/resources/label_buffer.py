@@ -33,21 +33,21 @@ class LabelBuffer:
     @property
     def shape(self) -> tuple[int, int]:
         return (
-            self.width,
             self.height,
+            self.width,
         )
 
     @classmethod
     def empty(cls, width: int, height: int, name: str = "Image") -> LabelBuffer:
         """Create an Empty Buffer"""
-        pixels = np.zeros((width, height), dtype=np.uint32)
+        pixels = np.zeros((height, width), dtype=np.uint32)
 
         return cls(width, height, pixels, name=name)
 
     @classmethod
     def from_nd_array(cls, array: np.ndarray, name="Image"):
         shape = array.shape
-        return cls(width=shape[0], height=shape[1], pixels=array, name=name)
+        return cls(width=shape[1], height=shape[0], pixels=array, name=name)
 
     @classmethod
     def copy(cls): ...

@@ -1,18 +1,15 @@
 from __future__ import annotations
 
-import bpy
-
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-
 from ..constant import LOG
+from ..enum.image_layout import ImageLayout
+from ..logger.event import ScopeState
+from ..logger_bake_middleware.bake_summary import BakeStatus, EventCategory
+from .context_ownership_mask import OwnershipMaskContext
 from .task import Task
 from .uv_ownership_mask import UvOwnershipMask
-from ..enum.image_layout import ImageLayout
-from ..logger_bake_middleware.bake_summary import EventCategory, BakeStatus
-from ..logger.event import ScopeState
-from .context_ownership_mask import OwnershipMaskContext
 
 if TYPE_CHECKING:
     from ..resources.ownership import OwnershipDatas

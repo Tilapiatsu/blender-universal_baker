@@ -105,6 +105,9 @@ class DiffuseBaker(BakerBase):
     def execute(self, ctx: BakeContext) -> None:
         return super().execute(ctx)
 
+    def invalidate_previous_output(self, ctx: BakeContext) -> None:
+        super().invalidate_previous_output(ctx)
+
     def prepare_execution(
         self,
         baker_objects: BakerObjects,

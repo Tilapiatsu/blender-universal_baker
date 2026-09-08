@@ -73,7 +73,7 @@ class BakerBase(ABC):
         baker_objects: BakerObjects,
     ) -> Generator[BakerExecution, Any, Any]:
 
-        material_setup = BakeMaterialService.prepare(objects=[baker_objects.target])
+        material_setup = BakeMaterialService.prepare(targets=[baker_objects.target], sources=baker_objects.sources)
         baker_setup = BakerSetup(material_setup=material_setup)
 
         hide_render = {}
@@ -116,12 +116,27 @@ class BakerBase(ABC):
         with LOG.scope(LOG_SCOPE):
             LOG.info(f"{ctx.task!s}")
 
-            self.prepare(ctx)
-            self.bake(ctx)
-            self.update_baker(ctx)
-            self.export_file(ctx)
-            self.create_artifact(ctx)
-            self.cleanup(ctx)
+            try:
+                self.invalidate_previous_output(ctx)
+                self.prepare(ctx)
+                self.bake(ctx)
+                self.update_baker(ctx)
+                self.export_file(ctx)
+                self.create_artifact(ctx)
+
+            finally:
+                self.cleanup(ctx)
+
+    @abstractmethod
+    def invalidate_previous_output(self, ctx: BakeContext):
+        if not ctx.session.output_invalidated:
+            LOG.debug("Invalidate Previous Output ...")
+            ctx.session.runtime.outputs.invalidate(
+                ctx.task.bake_group_uuid,
+                ctx.task.uuid,
+            )
+
+            ctx.session.output_invalidated = True
 
     @abstractmethod
     def prepare(self, ctx: BakeContext) -> None:

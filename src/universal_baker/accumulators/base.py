@@ -41,12 +41,25 @@ class AccumulatorBase(ABC):
         with LOG.scope(LOG_SCOPE):
             LOG.info(f"{str(ctx.task)}")
 
-            self.prepare(ctx)
-            self.create_artifact(ctx)
-            self.accumulate(ctx)
-            self.update_baker(ctx)
-            self.export_file(ctx)
-            self.cleanup(ctx)
+            try:
+                # self.invalidate_previous_output(ctx)
+                self.prepare(ctx)
+                self.create_artifact(ctx)
+                self.accumulate(ctx)
+                self.update_baker(ctx)
+                self.export_file(ctx)
+            finally:
+                self.cleanup(ctx)
+
+    @abstractmethod
+    def invalidate_previous_output(self, ctx: AccumulateContext):
+        if not ctx.session.output_invalidated:
+            LOG.debug("Invalidate Previous Output ...")
+            ctx.session.runtime.outputs.invalidate(
+                ctx.task.bake_group_uuid,
+                ctx.task.uuid,
+            )
+            ctx.session.output_invalidated = True
 
     @abstractmethod
     def prepare(self, ctx: AccumulateContext) -> None:

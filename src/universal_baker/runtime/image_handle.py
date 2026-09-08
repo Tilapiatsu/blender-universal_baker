@@ -188,7 +188,7 @@ class ImageHandle:
         self._ensure_loaded()
         self._resource.reload()
 
-    def invalidate(self):
+    def clear_cache(self):
         """
         Free runtime cache.
         """

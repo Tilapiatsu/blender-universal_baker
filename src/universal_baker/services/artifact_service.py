@@ -115,11 +115,6 @@ class ArtifactService:
 
             runtime.artifacts.rebuild()
 
-            runtime.outputs.invalidate(
-                bake_group_uuid,
-                producer_uuid,
-            )
-
             artifact = runtime.artifacts.get(artifact_pg.uuid)
 
             if artifact is not None:
