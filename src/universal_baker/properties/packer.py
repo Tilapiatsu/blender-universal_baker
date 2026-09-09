@@ -1,14 +1,12 @@
 from __future__ import annotations
 
-import uuid
-
 import bpy
-
+from bpy.props import BoolProperty, EnumProperty, PointerProperty, StringProperty
 from bpy.types import PropertyGroup
-from bpy.props import EnumProperty, PointerProperty, BoolProperty, StringProperty
+
+from ..enum.channels import CHANNEL_ITEMS
 from .baker import UBK_Baker
 from .settings_pack import UBK_PackerSettings
-from ..enum.channels import CHANNEL_ITEMS
 
 
 def get_source_bakers_items(self, context):

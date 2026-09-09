@@ -241,6 +241,7 @@ class BakeController:
             return None
 
         packer = bake_group.packers.add()
+        packer.uuid = str(uuid4())
         packer.packer = packer_id
         red = packer.mappings.add()
         green = packer.mappings.add()

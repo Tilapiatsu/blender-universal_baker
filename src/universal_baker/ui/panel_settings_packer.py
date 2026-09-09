@@ -93,6 +93,10 @@ class UBK_UL_PackerSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
         active_packer = BakeController.active_packer(context)
         assert active_packer is not None
 
+        col = box.column(align=True)
+        col.enabled = False
+        col.label(text=active_packer.uuid)
+
         box.prop(active_packer, "image_name")
         if len(active_packer.mappings) != 4:
             box.label(text="Invalid Mapping.", icon="STATUS_WARNING_FILLED")

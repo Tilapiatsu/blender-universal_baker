@@ -40,7 +40,7 @@ class UBK_UL_PackList(bpy.types.UIList):
         info.enabled = False
 
         if pack_item.override_settings:
-            resolution = f"{pack_item.settings.width}×{pack_item.settings.height}"
+            resolution = f"{pack_item.settings.output_settings.width}×{pack_item.settings.output_settings.height}"
 
             info.label(text=resolution, icon="IMAGE_DATA")
 
