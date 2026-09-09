@@ -42,6 +42,7 @@ class RendererService:
             samples=cycles.samples,
             adaptive_min_samples=cycles.adaptive_min_samples,
             use_denoising=cycles.use_denoising,
+            denoising_use_gpu=cycles.denoising_use_gpu,
             bake_margin=bake.margin,
             bake_margin_type=bake.margin_type,
             bake_target=bake.target,
@@ -89,6 +90,7 @@ class RendererService:
             cycles.samples = render_settings.samples
             cycles.adaptive_min_samples = render_settings.adaptive_min_samples
             cycles.use_denoising = render_settings.use_denoising
+            cycles.denoising_use_gpu = render_settings.denoising_use_gpu
             bake.margin = render_settings.bake_margin
             bake.margin_type = render_settings.bake_margin_type
             bake.target = render_settings.bake_target
@@ -139,6 +141,7 @@ class RendererService:
             cycles.samples = sampling_settings.samples
 
         cycles.use_denoising = sampling_settings.denoise
+        cycles.denoising_use_gpu = sampling_settings.denoising_use_gpu
 
         bake = scene.render.bake
         bake.margin = settings_bake.margin

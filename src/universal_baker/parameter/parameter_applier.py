@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Any
 
-
 from .baker_custom.definition import CustomBakerDefinition
 from .baker_local.definition import LocalBakerDefinition
 from .parameter import ParameterSnapshot

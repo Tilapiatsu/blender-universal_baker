@@ -21,3 +21,5 @@ class ParameterBinding(ABC):
     @abstractmethod
     def apply(self, value: Any, context: ParameterContext) -> None:
         raise NotImplementedError
+
+    # ISSUE: Binding doesn't work for custom bakers with selected to active

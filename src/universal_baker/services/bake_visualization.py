@@ -318,9 +318,6 @@ class BakeVisualizationService:
 
         scenes = ViewportService.capture_state()
 
-        # ISSUE: need to disable visualization on exit blender ? or maybe before blender save ? Or maybe the state
-        # should be saved inside a blender property to be able to be restored even after blender restart
-
         # ISSUE: Chaning bake settings and runing bake while having display visualization uneable makes the
         # visualization lost and getting a white image. Certainely due to the the output provider, or because when
         # suspending it stored the old producer uuid and resuming visualization lead to get a invalid producer due to

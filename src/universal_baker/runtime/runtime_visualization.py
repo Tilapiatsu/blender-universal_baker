@@ -1,26 +1,24 @@
 from __future__ import annotations
 
-import bpy
-
 from contextlib import contextmanager
-
-from ..properties.baker_parameter import UBK_BakerParameterValue
-
-from ..constant import LOG
-from ..enum.visualization import VisualizationMode
-from .image_handle import ImageHandle
-from ..core.registry_definition import registry_definition
-from ..parameter.parameter_applier import ParameterApplier
-from ..parameter.parameter_context import ParameterContext
-from ..parameter.parameter import BakerParameterType
-
 from typing import TYPE_CHECKING
 
+import bpy
+
+from ..constant import LOG
+from ..core.registry_definition import registry_definition
+from ..enum.visualization import VisualizationMode
+from ..parameter.parameter import BakerParameterType
+from ..parameter.parameter_applier import ParameterApplier
+from ..parameter.parameter_context import ParameterContext
+from ..properties.baker_parameter import UBK_BakerParameterValue
+from .image_handle import ImageHandle
+
 if TYPE_CHECKING:
-    from ..services.material_override import MaterialSnapshot
-    from .visualization_state import SceneVisualizationState
     from ..bakers.base import BakerBase
     from ..packers.base import PackerBase
+    from ..services.material_override import MaterialSnapshot
+    from .visualization_state import SceneVisualizationState
 
 
 class VisualizationRuntime:
@@ -293,6 +291,17 @@ class VisualizationRuntime:
 
         finally:
             suspension.restore()
+
+    def do_suspend(self) -> VisualizationSuspension:
+        suspension = VisualizationSuspension(self)
+
+        suspension.capture()
+
+        if suspension.was_enabled:
+            LOG.debug("Suspend Visualization")
+            self.disable()
+
+        return suspension
 
     def request_preview_refresh(self):
         self._preview_dirty = True

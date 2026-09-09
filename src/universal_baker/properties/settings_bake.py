@@ -84,6 +84,11 @@ class UBK_BakeSettings(UBK_Settings):
         default=False,
     )
 
+    denoise_use_gpu: bpy.props.BoolProperty(
+        name="Use GPU",
+        default=True,
+    )
+
 
 classes = (UBK_BakeSettings,)
 

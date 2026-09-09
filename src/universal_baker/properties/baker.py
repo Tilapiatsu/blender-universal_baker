@@ -1,7 +1,8 @@
 from __future__ import annotations
+
 import bpy
+from bpy.props import BoolProperty, CollectionProperty, EnumProperty, PointerProperty, StringProperty
 from bpy.types import PropertyGroup
-from bpy.props import BoolProperty, EnumProperty, StringProperty, PointerProperty, CollectionProperty
 
 from .custom_baker import UBK_CustomBaker
 from .settings_bake import UBK_BakeSettings

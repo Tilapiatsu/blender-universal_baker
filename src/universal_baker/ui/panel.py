@@ -215,7 +215,11 @@ def draw_sampling_settings(layout, settings_bake):
             layout.prop(settings_bake, "max_samples")
         else:
             layout.prop(settings_bake, "samples")
+
         # layout.prop(settings_bake, "denoise")
+        # if settings_bake.denoise:
+        #     layout.prop(settings_bake, "denoise_use_gpu")
+        #
 
 
 # -------------------------------------------------------------------------

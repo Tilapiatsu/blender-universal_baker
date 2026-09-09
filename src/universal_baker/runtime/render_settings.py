@@ -14,6 +14,7 @@ class RenderSettings:
     adaptive_min_samples: int = 0
 
     use_denoising: bool = False
+    denoising_use_gpu: bool = True
 
     bake_margin: int = 16
     bake_margin_type: str = "ADJACENT_FACES"

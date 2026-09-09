@@ -155,8 +155,10 @@ class BakeController:
                 project = cls.project(context)
                 if project is None:
                     return
+                project.visualization.refreshing = True
                 project.visualization.enabled_preview = False
                 project.visualization.enabled_display = False
+                project.visualization.refreshing = False
 
     @staticmethod
     def resolve_map_uuid(project, uuid: str):

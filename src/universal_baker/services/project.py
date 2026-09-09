@@ -4,8 +4,8 @@ from uuid import uuid4
 
 import bpy
 
-from ..runtime.runtime_manager import RuntimeManager
 from ..constant import LOG
+from ..runtime.runtime_manager import RuntimeManager
 from .collection_bake_group import BakeGroupService
 from .collection_target_object import TargetObjectService
 
@@ -45,8 +45,10 @@ class ProjectService:
                 runtime.disable()
                 if project is None:
                     return
+                project.visualization.refreshing = True
                 project.visualization.enabled_preview = False
                 project.visualization.enabled_display = False
+                project.visualization.refreshing = False
 
     @staticmethod
     def add_target_object(context, obj: bpy.types.Object):

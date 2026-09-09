@@ -22,6 +22,7 @@ class SamplingSettings:
     min_samples: int = 0
     max_samples: int = 512
     denoise: bool = False
+    denoising_use_gpu: bool = True
 
 
 @dataclass(slots=True)
