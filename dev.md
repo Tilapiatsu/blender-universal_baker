@@ -8,7 +8,7 @@
   - [ ] option to match source and target by name ?
   - [ ] option to load collection instead of objects -> updating objects in the collection change the setup ?
   - [ ] operator to match source and target by binding box
-  - [ ] Bake from source with Cage
+  - [X] Bake from source with Cage
   - [ ] Cage Automatic Creation
   - [ ] Export automatic cage ?
   - [ ] Cage Shader
@@ -30,6 +30,10 @@
 - [ ] Every Adder ( Bake Group, Baker, Packer ) need to have a name collision prevention mechanism
 - [ ] add check for target objects without UV -> Skip the mesh and raise a warning or block the execution of the bake ?
 - [ ] add dynamic description to get and explain the registered tokens and transforms for filename
+- [ ] add a debug option in the preference who allow to:
+  - [ ] display uuid in the using
+  - [ ] register the logger with debug severity
+  - [ ] save UvOwnership mask to disk
 - [ ] Bake to Vertex Color
   - [ ] Being able to bake to vertex color -> add a "bake target" enum [["Image", "Color Attribute"]]
   - [ ] Adapt the planner to prevent creation of ownership task, accumulation map
