@@ -6,6 +6,7 @@ from ..constant import LOG
 from ..resources.baker_asset import BakerAsset
 from ..runtime.baker_objects import BakerObjects
 from ..runtime.baker_setup import BakerSetup
+from ..services.bake_material import BakeMaterialService
 from .baker_asset import BakerAssetService
 
 LOG_SCOPE = "Custom Baker Setup Service"
@@ -32,7 +33,13 @@ class CustomBakerSetupService:
 
                     setup.sources = duplicated_sources
                     setup.target = baker_objects.target
+                    material_setup = BakeMaterialService.prepare(
+                        targets=[baker_objects.target], sources=duplicated_sources
+                    )
+                    setup.material_setup = material_setup
                 else:
+                    material_setup = BakeMaterialService.prepare(targets=[baker_objects.target], sources=[])
+                    setup.material_setup = material_setup
                     setup.target = cls._prepare_object(baker_objects.target, prototype, setup)
 
                 return setup
@@ -55,7 +62,7 @@ class CustomBakerSetupService:
         setup: BakerSetup,
     ) -> bpy.types.Object:
         LOG.debug(f"Prepare setup for {obj.name}")
-        duplicate = cls._duplicate_target(obj)
+        duplicate = cls._duplicate_object(obj)
 
         # NOTE: Important to hide from rendering the base object. because it could pollute the baking for some
         # bakers ( AO, Diffuse ...)
@@ -78,23 +85,23 @@ class CustomBakerSetupService:
         return copy
 
     @staticmethod
-    def _duplicate_target(target: bpy.types.Object) -> bpy.types.Object:
-        LOG.debug("Duplicate Target")
-        bake_object = target.copy()
+    def _duplicate_object(obj: bpy.types.Object) -> bpy.types.Object:
+        LOG.debug(f"Duplicate object {obj.name}")
+        bake_object = obj.copy()
 
-        if target.data is not None:
-            bake_object.data = target.data.copy()
+        if obj.data is not None:
+            bake_object.data = obj.data.copy()
 
-        bake_object.name = f"UBK_TMP_{target.name}"
+        bake_object.name = f"UBK_TMP_{obj.name}"
 
         # Link it to the same collection as the target.
-        for collection in target.users_collection:
+        for collection in obj.users_collection:
             collection.objects.link(bake_object)
 
         return bake_object
 
     @staticmethod
-    def _copy_material(prototype: bpy.types.Object, target: bpy.types.Object, setup: BakerSetup) -> None:
+    def _copy_material(prototype: bpy.types.Object, obj: bpy.types.Object, setup: BakerSetup) -> None:
         material = prototype.active_material
 
         if material is None:
@@ -104,17 +111,17 @@ class CustomBakerSetupService:
 
         material_copy.name = f"UBK_TMP_{material.name}"
 
-        LOG.debug(f"Assign {material_copy.name} to {target.name}")
-        target.data.materials.clear()
-        target.data.materials.append(material_copy)
+        LOG.debug(f"Assign {material_copy.name} to {obj.name}")
+        obj.data.materials.clear()
+        obj.data.materials.append(material_copy)
 
         setup.temporary_materials.append(material_copy)
 
     @classmethod
-    def _copy_modifiers(cls, prototype: bpy.types.Object, target: bpy.types.Object) -> None:
+    def _copy_modifiers(cls, prototype: bpy.types.Object, obj: bpy.types.Object) -> None:
         for source_modifier in prototype.modifiers:
-            LOG.debug(f"Copying modifier {source_modifier.name} to {target.name}")
-            modifier = target.modifiers.new(
+            LOG.debug(f"Copying modifier {source_modifier.name} to {obj.name}")
+            modifier = obj.modifiers.new(
                 name=source_modifier.name,
                 type=source_modifier.type,
             )
