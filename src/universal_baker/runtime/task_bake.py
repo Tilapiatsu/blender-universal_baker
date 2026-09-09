@@ -8,9 +8,10 @@ import bpy
 
 if TYPE_CHECKING:
     from ..bakers.base import BakerBase
-    from ..properties.bake_group import UBK_BakeGroup
     from ..properties.custom_baker import UBK_CustomBaker
     from ..properties.object import UBK_TargetObject
+    from ..runtime.color_management_info import ColorManagementInfo
+    from .output_context import OutputContext
 
 from ..constant import LOG
 from ..core.output_resolver import OutputResolver
@@ -18,11 +19,14 @@ from ..logger.event import ScopeState
 from ..logger_bake_middleware.bake_summary import BakeStatus, EventCategory
 from ..runtime.settings_bake import BakeSettings
 from ..runtime.settings_cage import CageSettings
-from .task import Task
+from .task import OutputTask
 
 
 @dataclass(slots=True, frozen=True)
-class BakeTask(Task):
+class BakeTask(OutputTask):
+    output_context: OutputContext
+    color_management_info: ColorManagementInfo
+
     target_object_uuid: str
     sources: list[bpy.types.Object]
     producer: BakerBase
@@ -33,12 +37,6 @@ class BakeTask(Task):
     id: str = "BAKE"
 
     has_multiple_targets: bool = False
-
-    @property
-    def bake_group(self) -> UBK_BakeGroup | None:
-        from ..core.controller import BakeController
-
-        return BakeController.get_bake_group_from_uuid(self.bake_group_uuid)
 
     @property
     def baker_settings(self) -> UBK_CustomBaker | None:

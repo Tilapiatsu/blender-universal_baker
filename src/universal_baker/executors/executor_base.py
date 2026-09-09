@@ -2,11 +2,10 @@ from __future__ import annotations
 
 from abc import ABC
 
-from .execution_target import ExecutionTarget
-
 from ..constant import LOG
-from ..runtime.session import ExecutionSession
 from ..runtime.context import ExecutionContext
+from ..runtime.session import ExecutionSession
+from .execution_target import ExecutionTarget
 
 
 class TaskExecutor(ABC):

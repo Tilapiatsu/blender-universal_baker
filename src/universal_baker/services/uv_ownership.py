@@ -7,6 +7,7 @@ import bpy
 from ..constant import LOG
 from ..resources.image_buffer import ImageBuffer
 from ..resources.ownership import OwnershipDatas
+from ..runtime.evaluated_meshes import EvaluateMeshes
 from ..runtime.label_set import LabelSet
 from ..runtime.tile_set import TileSet
 from ..runtime.uv_ownership_mask import UvOwnershipMask
@@ -20,6 +21,7 @@ class UvOwnershipService:
     def create_uv_ownership_mask(
         cls,
         ownership_datas: OwnershipDatas,
+        evaluate_meshes: EvaluateMeshes,
         resolution: tuple[int, int],
         name: str,
         use_udim: bool = False,
@@ -31,15 +33,16 @@ class UvOwnershipService:
 
         for object_uuid, ownership_data in ownership_datas.items():
             LOG.debug(f"UV Ownership for {ownership_data.object_name}")
-            object_mask = cls.create_mask(
-                mesh=ownership_data.mesh,
-                resolution=resolution,
-                uv_map=ownership_data.uv_layer,
-                use_udim=use_udim,
-                name=f"{ownership_data.object_name}_mask",
-            )
+            with evaluate_meshes[ownership_data.object_name] as evaluated_mesh:
+                object_mask = cls.create_mask(
+                    mesh=evaluated_mesh,
+                    resolution=resolution,
+                    uv_map=ownership_data.uv_layer,
+                    use_udim=use_udim,
+                    name=f"{ownership_data.object_name}_mask",
+                )
 
-            object_masks[object_uuid] = object_mask
+                object_masks[object_uuid] = object_mask
 
         ownership, label_to_uuid = VoronoiJFA.calculate_ownership(object_masks)
 

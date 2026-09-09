@@ -5,11 +5,11 @@ from ..core.registry_executor import registry_executor
 from ..logger.event import ScopeState
 from ..logger_bake_middleware.bake_summary import EventCategory
 from ..runtime.context import ExecutionContext
+from ..runtime.context_ownership_mask import OwnershipMaskContext
 from ..runtime.session import ExecutionSession
 from ..runtime.task_ownership_mask import UvOwnershipTask
-from ..runtime.context_ownership_mask import OwnershipMaskContext
-from .executor_base import TaskExecutor
 from .execution_target import ExecutionTarget
+from .executor_base import TaskExecutor
 
 
 class OwnershipMaskExecutorInternal(TaskExecutor):

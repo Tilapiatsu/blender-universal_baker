@@ -18,11 +18,13 @@ from ..factories.settings_pack import PackSettingsResolver
 from ..resources.ownership import OwnershipDatas
 from ..resources.uv import UVLayout
 from ..runtime import color_management_info
+from ..runtime.evaluated_meshes import EvaluatedMeshDatas
 from ..runtime.job import Job
 from ..runtime.label_set import LabelSet
 from ..runtime.settings_accumulate import AccumulateSettings
 from ..runtime.task_accumulate import AccumulateTask
 from ..runtime.task_bake import BakeTask
+from ..runtime.task_evaluate_mesh import EvaluateMeshesTask
 from ..runtime.task_mask_buffer import MaskBufferTask
 from ..runtime.task_ownership_mask import UvOwnershipTask
 from ..runtime.task_pack import PackingChannel, PackingTask
@@ -61,12 +63,16 @@ class ExecutionPlanner:
 
                 has_multiple_targets = len(active_targets) > 1
 
+                evaluated_meshes_data = EvaluatedMeshDatas()
+
                 #
                 # Store UDIM Uv Informations
                 #
                 object_tiles = {}
                 group_tiles = ()
+                ownership_task = None
 
+                # NOTE: Define UV Layout and Evaluated Meshes
                 for index, obj in enumerate(active_targets):
                     udim_tiles = ()
                     udim_tiles = UVService.detect_udim_tiles(obj.object, obj.uv_layer)
@@ -80,15 +86,27 @@ class ExecutionPlanner:
 
                     object_tiles[obj.object.name] = udim_tiles
 
+                    evaluated_meshes_data.add_object(obj)
+
+                uv_layout = UVLayout(
+                    image_layout=ImageLayout.UDIM if group.detect_udim else ImageLayout.SINGLE,
+                    udim_tiles=group_tiles,
+                )
+
+                evaluate_meshes_task = EvaluateMeshesTask(
+                    uuid=str(uuid4()),
+                    name="EvaluateMeshes",
+                    enabled=True,
+                    bake_group_uuid=group.uuid,
+                    evaluated_mesh_datas=evaluated_meshes_data,
+                )
+
+                job.add_task(evaluate_meshes_task)
+
                 if has_multiple_targets:
                     ownership_datas = OwnershipDatas()
                     for index, obj in enumerate(active_targets):
                         ownership_datas.add(name=obj.object.name, uuid=obj.uuid, uv_layer=obj.uv_layer)
-
-                    uv_layout = UVLayout(
-                        image_layout=ImageLayout.UDIM if group.detect_udim else ImageLayout.SINGLE,
-                        udim_tiles=group_tiles,
-                    )
 
                     output_context = UvOwnershipOutputContextResolver.resolve(
                         group=group, scene=bpy.context.scene, global_settings=project.settings_bake
@@ -120,6 +138,7 @@ class ExecutionPlanner:
                         result=TileSet(),
                         ownership_datas=ownership_datas,
                         ownership_mask=ownership_mask,
+                        evaluate_meshes_task=evaluate_meshes_task,
                     )
 
                     job.add_task(ownership_task)
@@ -187,6 +206,7 @@ class ExecutionPlanner:
                         job.add_task(task)
 
                         if has_multiple_targets:
+                            assert ownership_task is not None
                             masker_producer = registry_masker["APPLY_MASK"]
 
                             task = MaskBufferTask(

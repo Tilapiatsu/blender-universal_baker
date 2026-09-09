@@ -14,11 +14,11 @@ from ..logger.event import ScopeState
 from ..logger_bake_middleware.bake_summary import BakeStatus, EventCategory
 from ..maskers.base import MaskerBase
 from ..runtime.task_ownership_mask import UvOwnershipTask
-from .task import Task
+from .task import OutputTask
 
 
 @dataclass(slots=True, frozen=True)
-class MaskBufferTask(Task):
+class MaskBufferTask(OutputTask):
     uv_ownership_task: UvOwnershipTask
     baker_uuid: str
     target_object_uuid: str

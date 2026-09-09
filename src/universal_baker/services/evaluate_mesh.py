@@ -2,21 +2,17 @@ from __future__ import annotations
 
 import bpy
 
-from dataclasses import dataclass
+from ..constant import LOG
 
-from .context import ExecutionContext
+LOG_SCOPE = "Evaluate Mesh"
 
 
-# TODO: Need to properly write the contex to inherit from Context Class
-@dataclass(slots=True)
-class EvaluatedMeshesContext(ExecutionContext):
+class EvaluateMesh:
     def __init__(
         self,
         obj: bpy.types.Object,
-        depsgraph: bpy.types.Depsgraph,
     ):
         self.obj = obj
-        self.depsgraph = depsgraph
         self.evaluated_obj = None
         self.mesh = None
 
@@ -36,13 +32,19 @@ class EvaluatedMeshesContext(ExecutionContext):
 
     def __enter__(self):
         if self.needs_evaluation:
-            self.evaluated_obj = self.obj.evaluated_get(self.depsgraph)
-            self.mesh = self.evaluated_obj.to_mesh()
+            with LOG.scope(LOG_SCOPE):
+                LOG.debug(f"Evaluate Object {self.obj.name}")
+                depsgraph = bpy.context.evaluated_depsgraph_get()
+
+                self.evaluated_obj = self.obj.evaluated_get(depsgraph)
+                self.mesh = self.evaluated_obj.to_mesh()
         else:
             self.mesh = self.obj.data
 
         return self.mesh
 
     def __exit__(self, exc_type, exc_value, traceback):
-        if self.evaluated_obj is not None:
-            self.evaluated_obj.to_mesh_clear()
+        with LOG.scope(LOG_SCOPE):
+            if self.evaluated_obj is not None:
+                LOG.debug(f"Clean Evaluated Object : {self.evaluated_obj.name}")
+                self.evaluated_obj.to_mesh_clear()

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 from uuid import uuid4
 
 import bpy
@@ -13,6 +13,7 @@ from ..runtime.job import Job
 from ..runtime.runtime_manager import RuntimeManager
 from ..runtime.task_accumulate import AccumulateTask
 from ..runtime.task_bake import BakeTask
+from ..runtime.task_evaluate_mesh import EvaluateMeshesTask
 from ..runtime.task_mask_buffer import MaskBufferTask
 from ..runtime.task_ownership_mask import UvOwnershipTask
 from ..runtime.task_pack import PackingTask
@@ -366,7 +367,7 @@ class BakeController:
 
         use_maskers = project.use_maskers
 
-        task_types = [BakeTask, AccumulateTask]
+        task_types = [EvaluateMeshesTask, BakeTask, AccumulateTask]
 
         if use_maskers:
             task_types += [UvOwnershipTask, MaskBufferTask]
@@ -408,7 +409,7 @@ class BakeController:
 
         use_maskers = project.use_maskers
 
-        task_types = [BakeTask, AccumulateTask, PackingTask]
+        task_types = [EvaluateMeshesTask, BakeTask, AccumulateTask, PackingTask]
 
         if use_maskers:
             task_types += [UvOwnershipTask, MaskBufferTask]
@@ -450,7 +451,7 @@ class BakeController:
 
         use_maskers = project.use_maskers
 
-        task_types = [BakeTask, AccumulateTask]
+        task_types = [EvaluateMeshesTask, BakeTask, AccumulateTask]
 
         if use_maskers:
             task_types += [UvOwnershipTask, MaskBufferTask]
@@ -528,7 +529,7 @@ class BakeController:
 
         use_maskers = project.use_maskers
 
-        task_types = [BakeTask, AccumulateTask, PackingTask]
+        task_types = [EvaluateMeshesTask, BakeTask, AccumulateTask, PackingTask]
 
         if use_maskers:
             task_types += [UvOwnershipTask, MaskBufferTask]

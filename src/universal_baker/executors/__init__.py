@@ -1,19 +1,21 @@
 from . import (
     execution_target_internal,
-    executor_bake,
-    executor_ownership,
-    executor_mask,
-    executor_pack,
     executor_accumulate,
+    executor_bake,
+    executor_evaluate_meshes,
+    executor_mask,
+    executor_ownership,
+    executor_pack,
 )
 
 modules = (
     execution_target_internal,
-    executor_bake,
-    executor_ownership,
-    executor_mask,
-    executor_pack,
     executor_accumulate,
+    executor_bake,
+    executor_evaluate_meshes,
+    executor_mask,
+    executor_ownership,
+    executor_pack,
 )
 
 

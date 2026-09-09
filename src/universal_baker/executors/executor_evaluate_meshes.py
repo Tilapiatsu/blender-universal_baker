@@ -1,35 +1,39 @@
 from __future__ import annotations
 
+from universal_baker.runtime.context_evaluate_mesh import EvaluateMeshesContext
+
 from ..constant import LOG
 from ..core.registry_executor import registry_executor
 from ..logger.event import ScopeState
 from ..logger_bake_middleware.bake_summary import EventCategory
 from ..runtime.context import ExecutionContext
-from ..runtime.context_pack import PackContext
+from ..runtime.context_ownership_mask import OwnershipMaskContext
 from ..runtime.session import ExecutionSession
-from ..runtime.task_pack import PackingTask
+from ..runtime.task_evaluate_mesh import EvaluateMeshesTask
 from .execution_target import ExecutionTarget
 from .executor_base import TaskExecutor
 
 
-class PackExecutorInternal(TaskExecutor):
+class EvaluateMeshesExecutorInternal(TaskExecutor):
     """
     Executes a Job inside the current Blender instance.
     """
 
-    id: str = "PACK"
+    id: str = "EVALUATE_MESHES"
 
     def __init__(self):
         self._cancel_requested = False
 
-    def execute_task(self, session: ExecutionSession, execution: ExecutionTarget, task: PackingTask) -> None:
-        with LOG.scope(task.producer.name):
+    def execute_task(self, session: ExecutionSession, execution: ExecutionTarget, task: EvaluateMeshesTask) -> None:
+        with LOG.scope(
+            task.name,
+        ):
             LOG.info(
                 self.init_task_message(session),
                 scope_state=ScopeState.ENTER,
-                category=EventCategory.PACK,
+                category=EventCategory.EVALUATE_MESHES,
             )
-            ctx = PackContext(
+            ctx = EvaluateMeshesContext(
                 session=session,
                 task=task,
             )
@@ -49,7 +53,6 @@ class PackExecutorInternal(TaskExecutor):
         """
         Hook called after the last task.
         """
-        pass
 
     def before_task(self, ctx: ExecutionContext) -> None:
         """
@@ -71,7 +74,7 @@ class PackExecutorInternal(TaskExecutor):
         return self._cancel_requested
 
 
-classes = (PackExecutorInternal,)
+classes = (EvaluateMeshesExecutorInternal,)
 
 
 def register():

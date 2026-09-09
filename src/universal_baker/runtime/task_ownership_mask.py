@@ -8,7 +8,8 @@ from ..enum.image_layout import ImageLayout
 from ..logger.event import ScopeState
 from ..logger_bake_middleware.bake_summary import BakeStatus, EventCategory
 from .context_ownership_mask import OwnershipMaskContext
-from .task import Task
+from .task import OutputTask
+from .task_evaluate_mesh import EvaluateMeshesTask
 from .uv_ownership_mask import UvOwnershipMask
 
 if TYPE_CHECKING:
@@ -32,6 +33,7 @@ class UvOwnership:
             LOG.info("Generting UV Ownership mask")
             result = UvOwnershipService.create_uv_ownership_mask(
                 ownership_datas=ctx.task.ownership_datas,
+                evaluate_meshes=ctx.task.evaluate_meshes_task.evaluate_meshes,
                 resolution=(
                     ctx.task.output_context.output_settings.path.width,
                     ctx.task.output_context.output_settings.path.height,
@@ -65,21 +67,20 @@ class UvOwnership:
 
 
 @dataclass(slots=True, frozen=True)
-class UvOwnershipTask(Task):
+class UvOwnershipTask(OutputTask):
     """
     Generate the UV ownership mask for one target object.
     """
 
     ownership_datas: OwnershipDatas
     ownership_mask: UvOwnershipMask
+    evaluate_meshes_task: EvaluateMeshesTask
     producer: UvOwnership = UvOwnership()
     id: str = "UV_OWNERSHIP"
 
     @property
     def bake_group_name(self) -> str:
-        from ..core.controller import BakeController
-
-        bake_group = BakeController.get_bake_group_from_uuid(self.bake_group_uuid)
+        bake_group = self.bake_group
         if bake_group is None:
             return ""
 

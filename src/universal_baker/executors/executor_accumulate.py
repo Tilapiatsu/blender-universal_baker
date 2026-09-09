@@ -3,14 +3,14 @@ from __future__ import annotations
 from universal_baker.executors.execution_target import ExecutionTarget
 
 from ..constant import LOG
+from ..core.registry_executor import registry_executor
+from ..logger.event import ScopeState
+from ..logger_bake_middleware.bake_summary import EventCategory
 from ..runtime.context import ExecutionContext
 from ..runtime.context_accumulate import AccumulateContext
 from ..runtime.session import ExecutionSession
 from ..runtime.task_accumulate import AccumulateTask
-from ..core.registry_executor import registry_executor
 from .executor_base import TaskExecutor
-from ..logger.event import ScopeState
-from ..logger_bake_middleware.bake_summary import EventCategory
 
 
 class AccumulateExecutorInternal(TaskExecutor):
