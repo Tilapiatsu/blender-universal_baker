@@ -17,6 +17,9 @@ class RendererService:
     @staticmethod
     def capture_state() -> SceneVisualizationState:
         scene = bpy.context.scene
+
+        # object_render_visibility = {obj.name: obj.hide_render for obj in scene.objects}
+
         scene_state = SceneVisualizationState(
             scene_name=scene.name,
             render_engine=scene.render.engine,
@@ -25,6 +28,7 @@ class RendererService:
             look=scene.view_settings.look,
             exposure=scene.view_settings.exposure,
             gamma=scene.view_settings.gamma,
+            # object_visibility=object_render_visibility,
         )
 
         return scene_state
@@ -82,6 +86,13 @@ class RendererService:
                 scene.view_settings.exposure = scene_state.exposure
                 scene.view_settings.gamma = scene_state.gamma
 
+            for name, visibility in scene_state.object_visibility.items():
+                obj = bpy.data.objects.get(name)
+                if obj is None:
+                    continue
+
+                obj.hide_render = visibility
+
             cycles = scene.cycles
             bake = scene.render.bake
 
@@ -111,6 +122,7 @@ class RendererService:
         """Execute a single bake task."""
         scene_state = cls.capture_state()
         render_settings = cls.capture_render_settings(ctx)
+        # cls.clear_scene_objects_visibility(ctx)
         bake_collection = cls.create_bake_collection(ctx)
 
         try:
@@ -121,6 +133,14 @@ class RendererService:
         finally:
             cls.restore(ctx, scene_state, render_settings)
             cls.clear_bake_collection(bake_collection, remove_col=True)
+
+    @classmethod
+    def clear_scene_objects_visibility(cls, ctx: BakeContext):
+        scene = bpy.context.scene
+        for obj in scene.objects:
+            if obj == ctx.target or obj in ctx.sources:
+                continue
+            obj.hide_render = True
 
     @classmethod
     def configure(cls, ctx: BakeContext):
@@ -170,7 +190,7 @@ class RendererService:
         if cage_object is not None and ctx.task.settings_cage.mode != "NONE":
             bake_collection.objects.link(cage_object)
             cage_object.hide_viewport = False
-            cage_object.hide_render = False
+            cage_object.hide_render = True
 
         for o in ctx.sources:
             bake_collection.objects.link(o)

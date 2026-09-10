@@ -46,6 +46,7 @@ class SceneVisualizationState:
     ] = field(default_factory=dict)
 
     viewports: list[ViewportState] = field(default_factory=list)
+    object_visibility: dict[str, bool] = field(default_factory=dict)
 
 
 @dataclass

@@ -14,6 +14,8 @@ class UBK_CageSettings(PropertyGroup):
         ],
         default="NONE",
     )
+
+    # TODO: Need to prevent to load the same object as the target object
     cage_object: PointerProperty(
         name="Cage Object",
         type=Object,

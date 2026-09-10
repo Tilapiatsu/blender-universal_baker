@@ -65,6 +65,11 @@ class ExecutionPlanner:
 
                 evaluated_meshes_data = EvaluatedMeshDatas()
 
+                # TODO: Need a global mecanism to hide all Cages at the begining of the job -> a new task type ?
+                # TODO: Need to be able to load a collection as a background object ( containing lights, meshes, or anything
+                # that could affect the result ). The collection need to be plugged as a baker parameter, and will be
+                # loaded on top of everything else in the scene
+
                 #
                 # Store UDIM Uv Informations
                 #
