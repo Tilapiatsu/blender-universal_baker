@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import bpy
-from universal_baker.runtime.color_management_info import ColorManagementInfo
 
-from ..runtime.runtime_visualization import VisualizationRuntime
+from ..runtime.color_management_info import ColorManagementInfo
+from ..runtime.runtime_visualization_bake import BakeVisualizationRuntime
 from ..runtime.visualization_state import (
     SceneVisualizationState,
     ViewportState,
@@ -91,7 +91,7 @@ class ViewportService:
                 shading.show_cavity = False
 
     @staticmethod
-    def restore(state: VisualizationRuntime):
+    def restore(state: BakeVisualizationRuntime):
         for scene_name, scene_state in state.scenes.items():
             scene = bpy.data.scenes.get(scene_name)
 

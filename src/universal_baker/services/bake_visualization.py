@@ -1,20 +1,19 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import bpy
 
 from ..constant import LOG
-
-from ..runtime.runtime_visualization import VisualizationRuntime
+from ..core.registry_baker import registry_baker
+from ..enum.visualization import BakeVisualizationMode
 from ..runtime.image_handle import ImageHandle
-from ..enum.visualization import VisualizationMode
-from .viewport import ViewportService
-from .preview_material import PreviewMaterialService
+from ..runtime.runtime_visualization_bake import BakeVisualizationRuntime
 from .material_display import DisplayMaterialService
 from .material_override import MaterialOverrideService
-from ..core.registry_baker import registry_baker
-from typing import TYPE_CHECKING
+from .preview_material import PreviewMaterialService
+from .viewport import ViewportService
 
 if TYPE_CHECKING:
     from ..bakers.base import BakerBase
@@ -56,9 +55,9 @@ def update_visualization(self, context):
 
             data = None
             match BakeVisualizationService.mode():
-                case VisualizationMode.PREVIEW:
+                case BakeVisualizationMode.PREVIEW:
                     data = PreviewData(producer, bake_group.uuid, baker.uuid)
-                case VisualizationMode.DISPLAY:
+                case BakeVisualizationMode.DISPLAY:
                     data = DisplayData(
                         bake_group.uuid,
                         baker.accumulated_uuid,
@@ -116,7 +115,7 @@ class PreviewData:
     bake_group_uuid: str
     producer_uuid: str
     accumulated_uuid: str | None = None
-    mode: VisualizationMode = VisualizationMode.PREVIEW
+    mode: BakeVisualizationMode = BakeVisualizationMode.PREVIEW
 
 
 @dataclass(slots=True, frozen=True)
@@ -126,11 +125,11 @@ class DisplayData:
     objects: list[bpy.types.Object]
     producer: BakerBase | PackerBase
     producer_uuid: str | None = None
-    mode: VisualizationMode = VisualizationMode.DISPLAY
+    mode: BakeVisualizationMode = BakeVisualizationMode.DISPLAY
 
 
 class BakeVisualizationService:
-    _runtime: VisualizationRuntime | None = None
+    _runtime: BakeVisualizationRuntime | None = None
 
     # ---------------------------------------------------------
     # State
@@ -141,7 +140,7 @@ class BakeVisualizationService:
         return cls._runtime is not None and cls._runtime.active
 
     @classmethod
-    def mode(cls) -> VisualizationMode | None:
+    def mode(cls) -> BakeVisualizationMode | None:
 
         if cls._runtime is None:
             return None
@@ -154,7 +153,7 @@ class BakeVisualizationService:
             from ..runtime.runtime_manager import RuntimeManager
 
             runtime = RuntimeManager.current(bpy.context)
-            cls._runtime = runtime.visualization
+            cls._runtime = runtime.bake_visualization
 
     # ---------------------------------------------------------
     # Preview
@@ -263,7 +262,7 @@ class BakeVisualizationService:
         LOG.debug("Refresh Visualization")
 
         match cls.mode():
-            case VisualizationMode.PREVIEW:
+            case BakeVisualizationMode.PREVIEW:
                 if not isinstance(data, PreviewData):
                     return False
 
@@ -271,7 +270,7 @@ class BakeVisualizationService:
 
                 cls.enable_preview(data)
 
-            case VisualizationMode.DISPLAY:
+            case BakeVisualizationMode.DISPLAY:
                 if not isinstance(data, DisplayData):
                     return False
 

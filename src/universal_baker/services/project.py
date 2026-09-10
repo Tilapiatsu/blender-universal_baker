@@ -40,7 +40,7 @@ class ProjectService:
             len(project.bake_groups) - 1,
         )
         if len(project.bake_groups) == 0:
-            runtime = RuntimeManager.current(context).visualization
+            runtime = RuntimeManager.current(context).bake_visualization
             if runtime.active:
                 runtime.disable()
                 if project is None:

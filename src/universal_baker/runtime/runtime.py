@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-
-from .output_repository import OutputRepository
+from ..runtime.runtime_visualization_cage import CageVisualizationRuntime
 from ..services.output_provider import OutputProvider
 from .artifact_repository import ArtifactRepository
-from .runtime_visualization import VisualizationRuntime
+from .output_repository import OutputRepository
+from .runtime_visualization_bake import BakeVisualizationRuntime
 
 if TYPE_CHECKING:
     from bpy.types import Scene
@@ -26,7 +26,8 @@ class BakeRuntime:
 
     outputs: OutputRepository
     provider: OutputProvider
-    visualization: VisualizationRuntime
+    bake_visualization: BakeVisualizationRuntime
+    cage_visualization: CageVisualizationRuntime
 
     def __init__(self, scene: Scene):
 
@@ -48,7 +49,8 @@ class BakeRuntime:
             repository=self.outputs,
         )
 
-        self.visualization = VisualizationRuntime()
+        self.bake_visualization = BakeVisualizationRuntime()
+        self.cage_visualization = CageVisualizationRuntime()
 
         #
         # Future runtime objects
@@ -83,7 +85,8 @@ class BakeRuntime:
         self.outputs.clear()
         self.provider.clear()
         self.preview_cache.clear()
-        self.visualization.clear()
+        self.bake_visualization.clear()
+        self.cage_visualization.clear()
         self.image_cache.clear()
         self.statistics.clear()
         self.active_sessions.clear()

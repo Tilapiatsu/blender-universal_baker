@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from bpy.props import EnumProperty, FloatProperty, PointerProperty, StringProperty
+from bpy.props import EnumProperty, FloatProperty, PointerProperty, StringProperty, BoolProperty
 from bpy.types import Image, Object, PropertyGroup
 
 
@@ -16,8 +16,12 @@ class UBK_CageSettings(PropertyGroup):
     )
 
     # TODO: Need to prevent to load the same object as the target object
-    cage_object: PointerProperty(
+    cage_object_custom: PointerProperty(
         name="Cage Object",
+        type=Object,
+    )
+    cage_object_generated: PointerProperty(
+        name="Genertated Cage Object",
         type=Object,
     )
     cage_extrusion: FloatProperty(
@@ -38,6 +42,16 @@ class UBK_CageSettings(PropertyGroup):
         default="UBK_EXTRUSION_GROUP",
     )
     skew_map: PointerProperty(name="Skew Map", type=Image)
+
+    @property
+    def cage_object(self) -> Object | None:
+        match self.cage_mode:
+            case "OBJECT":
+                return self.cage_object_custom
+            case "GENERATED":
+                return self.cage_object_generated
+            case _:
+                return None
 
 
 classes = (UBK_CageSettings,)

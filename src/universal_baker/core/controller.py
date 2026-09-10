@@ -149,7 +149,7 @@ class BakeController:
         BakerService.remove(bake_group, bake_group.active_baker_index)
 
         if len(bake_group.bakers) == 0:
-            runtime = RuntimeManager.current(context).visualization
+            runtime = RuntimeManager.current(context).bake_visualization
             if runtime.active:
                 runtime.disable()
                 project = cls.project(context)

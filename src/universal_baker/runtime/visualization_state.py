@@ -49,6 +49,20 @@ class SceneVisualizationState:
     object_visibility: dict[str, bool] = field(default_factory=dict)
 
 
+@dataclass(slots=True)
+class CageVisualizationState:
+    source_visibility: dict[str, bool]
+    target_visibility: dict[str, bool]
+
+    active_object_name: str | None
+    active_mode: str | None
+
+    cage_object_name: str | None
+    cage_collection_name: str | None
+
+    draw_handler: object | None = None
+
+
 @dataclass
 class VisualizationState:
     """

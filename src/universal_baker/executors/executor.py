@@ -50,7 +50,7 @@ class Executor:
 
             try:
                 if BakeTask in self.task_types:
-                    with session.runtime.visualization.suspend():
+                    with session.runtime.bake_visualization.suspend():
                         self.exectue_tasks(session, execution, job)
                 else:
                     self.exectue_tasks(session, execution, job)

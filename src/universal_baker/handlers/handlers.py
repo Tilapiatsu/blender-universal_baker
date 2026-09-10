@@ -25,7 +25,7 @@ def ubk_save_pre(_dummy):
         return
 
     global suspension
-    suspension = runtime.visualization.do_suspend()
+    suspension = runtime.bake_visualization.do_suspend()
 
     if suspension.was_enabled:
         global visualization_mode

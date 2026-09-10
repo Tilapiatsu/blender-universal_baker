@@ -56,6 +56,10 @@ class UBK_Visualization(PropertyGroup):
         ],
         default="NONE",
     )
+
+    cage_edit: BoolProperty(name="Edit Cage", default=False)
+    skew_edit: BoolProperty(name="Edit Skew", default=False)
+
     baker_idx: IntProperty(default=0)
     refreshing: BoolProperty(default=False)
     # is is_dragging allow to make custom bakers parameter clamping works

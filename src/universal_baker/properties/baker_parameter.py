@@ -6,7 +6,7 @@ import bpy
 def parameter_updated(self, context):
     from ..runtime.runtime_manager import RuntimeManager
 
-    runtime = RuntimeManager.get(context.scene).visualization
+    runtime = RuntimeManager.get(context.scene).bake_visualization
 
     if runtime.preview_enabled:
         runtime.request_preview_refresh()

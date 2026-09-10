@@ -98,10 +98,11 @@ class UBK_UL_CageSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
         box.separator()
 
         col = box.column(align=True)
-        if cage_settings.cage_mode != "OBJECT":
-            col.enabled = False
-
-        col.prop(cage_settings, "cage_object")
+        if cage_settings.cage_mode == "OBJECT":
+            col.prop(cage_settings, "cage_object_custom")
+        elif cage_settings.cage_mode == "GENERATED":
+            visualization = BakeController.project(context).visualization
+            col.prop(visualization, "cage_edit", toggle=True)
 
         col = box.column(align=True)
         if cage_settings.cage_object is None and cage_settings.cage_mode == "OBJECT":

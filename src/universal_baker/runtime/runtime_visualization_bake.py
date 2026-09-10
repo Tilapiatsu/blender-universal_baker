@@ -7,7 +7,7 @@ import bpy
 
 from ..constant import LOG
 from ..core.registry_definition import registry_definition
-from ..enum.visualization import VisualizationMode
+from ..enum.visualization import BakeVisualizationMode
 from ..parameter.parameter import BakerParameterType
 from ..parameter.parameter_applier import ParameterApplier
 from ..parameter.parameter_context import ParameterContext
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from .visualization_state import SceneVisualizationState
 
 
-class VisualizationRuntime:
+class BakeVisualizationRuntime:
     """
     Owns the transient runtime state of Universal Baker's
     viewport visualization system.
@@ -35,7 +35,7 @@ class VisualizationRuntime:
 
     def __init__(self):
         self._active: bool = False
-        self._mode: VisualizationMode | None = None
+        self._mode: BakeVisualizationMode | None = None
         self._active_producer = None
         self._active_image_handle = None
         self._baker_group_uuid: str | None = None
@@ -65,7 +65,7 @@ class VisualizationRuntime:
         return self._active
 
     @property
-    def mode(self) -> VisualizationMode | None:
+    def mode(self) -> BakeVisualizationMode | None:
         """
         Current visualization mode.
 
@@ -137,7 +137,7 @@ class VisualizationRuntime:
 
     def begin(
         self,
-        mode: VisualizationMode,
+        mode: BakeVisualizationMode,
         producer: BakerBase | PackerBase | None = None,
         image_handle: ImageHandle | None = None,
         bake_group_uuid: str | None = None,
@@ -162,7 +162,7 @@ class VisualizationRuntime:
         self._baker_group_uuid = bake_group_uuid
         self._producer_uuid = producer_uuid
         self._accumulated_uuid = accumulated_uuid
-        self._preview_enabled = mode == VisualizationMode.PREVIEW
+        self._preview_enabled = mode == BakeVisualizationMode.PREVIEW
         self._objects = objects if objects is not None else []
 
     # ------------------------------------------------------------------
@@ -228,7 +228,7 @@ class VisualizationRuntime:
     # Mode
     # ------------------------------------------------------------------
 
-    def set_mode(self, mode: VisualizationMode) -> None:
+    def set_mode(self, mode: BakeVisualizationMode) -> None:
         """
         Change visualization mode.
 
@@ -241,7 +241,7 @@ class VisualizationRuntime:
 
         self._mode = mode
 
-        self._preview_enabled = mode == VisualizationMode.PREVIEW
+        self._preview_enabled = mode == BakeVisualizationMode.PREVIEW
 
     def disable(self) -> None:
         from ..services.bake_visualization import BakeVisualizationService
@@ -423,7 +423,7 @@ class VisualizationRuntime:
 class VisualizationSuspension:
     def __init__(
         self,
-        runtime: VisualizationRuntime,
+        runtime: BakeVisualizationRuntime,
     ):
         self.runtime = runtime
         self.was_enabled = False
@@ -450,14 +450,14 @@ class VisualizationSuspension:
         from ..services.bake_visualization import BakeVisualizationService, DisplayData, PreviewData
 
         match self.mode:
-            case VisualizationMode.DISPLAY:
+            case BakeVisualizationMode.DISPLAY:
                 if self.active_producer is None or self.bake_group_uuid is None or self.accumulated_uuid is None:
                     return
 
                 data = DisplayData(self.bake_group_uuid, self.accumulated_uuid, self.objects, self.active_producer)
                 BakeVisualizationService.enable_display(data)
 
-            case VisualizationMode.PREVIEW:
+            case BakeVisualizationMode.PREVIEW:
                 if self.active_producer is None or self.bake_group_uuid is None or self.producer_uuid is None:
                     return
 
