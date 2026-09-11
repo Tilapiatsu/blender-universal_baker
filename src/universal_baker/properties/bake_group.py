@@ -1,21 +1,21 @@
 from __future__ import annotations
 
 import bpy
-
-from bpy.types import PropertyGroup
 from bpy.props import (
-    StringProperty,
     BoolProperty,
     CollectionProperty,
-    PointerProperty,
     IntProperty,
+    PointerProperty,
+    StringProperty,
 )
+from bpy.types import PropertyGroup
 
-from .object import UBK_TargetObject
+from ..services.bake_visualization import update_visualization
+from ..services.cage_visualization import update_active_target
 from .baker import UBK_Baker
+from .object import UBK_TargetObject
 from .packer import UBK_Packer
 from .settings_bake import UBK_BakeSettings
-from ..services.bake_visualization import update_visualization
 
 
 class UBK_BakeGroup(PropertyGroup):
@@ -41,7 +41,7 @@ class UBK_BakeGroup(PropertyGroup):
 
     target_objects: CollectionProperty(type=UBK_TargetObject)
 
-    active_target_object_index: IntProperty(default=0)
+    active_target_object_index: IntProperty(default=0, update=update_active_target)
 
     bakers: CollectionProperty(type=UBK_Baker)
     active_baker_index: IntProperty(

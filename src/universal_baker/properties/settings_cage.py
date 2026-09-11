@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from bpy.props import EnumProperty, FloatProperty, PointerProperty, StringProperty, BoolProperty
+from bpy.props import EnumProperty, FloatProperty, PointerProperty, StringProperty
 from bpy.types import Image, Object, PropertyGroup
 
 
@@ -14,6 +14,13 @@ class UBK_CageSettings(PropertyGroup):
         ],
         default="NONE",
     )
+    # TODO: Need to make it compatible with "NONE", "GENERATED" and "OBJECT" : It will be convenient to visualize Cage
+    # regardless of the context.
+    # It may be great to simplify : we certainly don't need 3 cases :
+    # - By default custom cages is set, we can just use the extrusion parameter which offset the vertices -> A cage is
+    # created for display purpose, and then stash afterward
+    # - The user can the choose to "edit_cage" to paint the distance using weight paint mode -> the Cage object is now
+    # kept but unlinked from the scene when the edit cage is disabled
 
     # TODO: Need to prevent to load the same object as the target object
     cage_object_custom: PointerProperty(

@@ -81,6 +81,9 @@ class BakeRuntime:
             - scene changes
             - runtime is destroyed
         """
+        from ..services.cage_visualization import CageVisualizationService
+
+        CageVisualizationService.disable()
 
         self.outputs.clear()
         self.provider.clear()

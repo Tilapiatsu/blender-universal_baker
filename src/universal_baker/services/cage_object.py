@@ -1,10 +1,19 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 import bpy
 
 from ..properties.object import UBK_TargetObject
 
 LOG_SCOPE = "Cage Object"
+
+
+@dataclass(slots=True)
+class CageObject:
+    object: bpy.types.Object
+    collection: bpy.types.Collection | None
+    owns_collection: bool
 
 
 class CageObjectService:
@@ -20,7 +29,7 @@ class CageObjectService:
         if target.settings_cage.cage_object_generated is not None:
             return target.settings_cage.cage_object_generated
 
-        cage = cls._get_or_create_cage(target)
+        cage = cls._get_or_create_cage(target.object)
 
         target.settings_cage.cage_object_generated = cage
 
@@ -56,14 +65,14 @@ class CageObjectService:
         if modifier is None:
             modifier = cage.modifiers.new(type=cls.MODIFIER_TYPE, name=cls.MODIFIER_NAME)
 
-        modifier.vertex_group = cage.vertex_groups.get(cls.VERTEX_GROUP_NAME)
+        modifier.vertex_group = cls.VERTEX_GROUP_NAME
 
     @classmethod
     def _ensure_vertex_group(cls, cage: bpy.types.Object) -> None:
-        vertex_group = cage.vertex_group.get(cls.VERTEX_GROUP_NAME)
+        vertex_group = cage.vertex_groups.get(cls.VERTEX_GROUP_NAME)
 
         if vertex_group is None:
-            vertex_group = cage.vertex_group.new(name=cls.VERTEX_GROUP_NAME)
+            vertex_group = cage.vertex_groups.new(name=cls.VERTEX_GROUP_NAME)
 
     @classmethod
     def _get_cage_name(cls, target_name: str) -> str:

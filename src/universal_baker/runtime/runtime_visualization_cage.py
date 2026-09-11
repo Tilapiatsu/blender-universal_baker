@@ -1,271 +1,87 @@
 from __future__ import annotations
 
-from contextlib import contextmanager
-from typing import TYPE_CHECKING
-
-import bpy
-
-from ..constant import LOG
-from ..parameter.parameter import BakerParameterType
-from ..parameter.parameter_applier import ParameterApplier
-from ..properties.baker_parameter import UBK_BakerParameterValue
-
-if TYPE_CHECKING:
-    from ..services.material_override import MaterialSnapshot
-    from .visualization_state import SceneVisualizationState
+from dataclasses import dataclass, field
 
 
+@dataclass(slots=True)
+class ObjectVisibilityState:
+    name: str
+    hide_viewport: bool
+    hide_get: bool
+
+
+@dataclass(slots=True)
 class CageVisualizationRuntime:
-    """
-    Owns the transient runtime state of Universal Baker's
-    viewport bake visualization system.
+    active: bool = False
 
-    This class deliberately does NOT contain persistent
-    user configuration. Persistent settings live in
-    properties.visualization.
+    target_uuid: str | None = None
+    target_name: str | None = None
+    cage_name: str | None = None
 
-    The runtime state exists only while Blender is running.
-    """
+    # Original object visibility.
+    visibility: dict[str, ObjectVisibilityState] = field(default_factory=dict)
 
-    def __init__(self):
-        self._active: bool = False
-        self._baker_group_uuid: str | None = None
-        self._target_uuid: str | None = None
-        self._display_enabled: bool = False
-        self._updating_parameters: bool = False
-        self._cage_object: str | None = None
-        self._scenes: dict[
-            str,
-            SceneVisualizationState,
-        ] = {}
+    # Original active object / mode.
+    active_object_name: str | None = None
+    active_object_mode: str = "OBJECT"
 
-        self._material_snapshots: list[MaterialSnapshot] = []
+    # Temporary collection.
+    temporary_collection_name: str | None = None
+    owns_temporary_collection: bool = False
 
-    # ------------------------------------------------------------------
-    # State
-    # ------------------------------------------------------------------
+    # Objects that this service linked to the temporary collection.
+    #
+    # We only remove links that we created ourselves.
+    temporary_links: set[str] = field(default_factory=set)
 
-    @property
-    def active(self) -> bool:
-        """
-        True when Universal Baker currently owns the
-        visualization state.
-        """
-        return self._active
+    # Objects involved in the visualization.
+    source_object_names: list[str] = field(default_factory=list)
+    target_object_names: list[str] = field(default_factory=list)
 
-    @property
-    def bake_group_uuid(self) -> str | None:
-        return self._baker_group_uuid
+    # GPU resources.
+    draw_handler: object | None = None
 
-    @property
-    def target_uuid(self) -> str | None:
-        return self._target_uuid
+    surface_shader: object | None = None
+    wire_shader: object | None = None
 
-    @property
-    def cage_object(self) -> bpy.types.Object:
-        return bpy.data.objects.get(self._cage_object)
-
-    @property
-    def scenes(
-        self,
-    ) -> dict[str, SceneVisualizationState]:
-        """
-        Saved scene states.
-
-        Exposed primarily to visualization services that need
-        to restore Blender state.
-        """
-        return self._scenes
-
-    @property
-    def material_snapshots(self):
-        """
-        Saved material assignments.
-
-        Exposed to MaterialOverrideService during restoration.
-        """
-        return self._material_snapshots
-
-    @property
-    def display_enabled(self) -> bool:
-        return self._display_enabled
-
-    # ------------------------------------------------------------------
-    # Activation
-    # ------------------------------------------------------------------
+    surface_batch: object | None = None
+    wire_batch: object | None = None
 
     def begin(
         self,
-        bake_group_uuid: str | None = None,
-        target_uuid: str | None = None,
-        cage_object: str | None = None,
+        *,
+        target_uuid: str,
+        target_name: str,
+        cage_name: str,
     ) -> None:
-        """
-        Start a new visualization session.
-
-        The actual Blender state should already have been captured
-        by the visualization service before calling this method.
-        """
-
-        if self._active:
-            raise RuntimeError("Visualization runtime is already active")
-
-        self._active = True
-        self._baker_group_uuid = bake_group_uuid
-        self._target_uuid = target_uuid
-        self._cage_object = cage_object if cage_object is not None else ""
-
-    # ------------------------------------------------------------------
-    # State registration
-    # ------------------------------------------------------------------
-
-    def set_scene_state(
-        self,
-        scene_name: str,
-        state: SceneVisualizationState,
-    ) -> None:
-        """
-        Store the original state of a Blender scene.
-        """
-
-        if not self._active:
-            raise RuntimeError("Cannot store visualization state before visualization begins")
-
-        self._scenes[scene_name] = state
-
-    def set_material_snapshots(
-        self,
-        snapshots,
-    ) -> None:
-        """
-        Store the original material assignments.
-        """
-
-        if not self._active:
-            raise RuntimeError("Cannot store material state before visualization begins")
-
-        self._material_snapshots = list(snapshots)
-
-    def disable(self) -> None:
-        from ..services.bake_visualization import BakeVisualizationService
-
-        BakeVisualizationService.disable()
-
-        self._display_enabled = False
-
-    # ------------------------------------------------------------------
-    # Reset
-    # ------------------------------------------------------------------
+        self.active = True
+        self.target_uuid = target_uuid
+        self.target_name = target_name
+        self.cage_name = cage_name
 
     def clear(self) -> None:
-        """
-        Clear all runtime visualization state.
+        self.active = False
 
-        This does NOT restore Blender.
+        self.target_uuid = None
+        self.target_name = None
+        self.cage_name = None
 
-        Restoration is the responsibility of
-        BakeVisualizationService.
+        self.visibility.clear()
 
-        This distinction is important because the runtime should
-        only own state, not the orchestration of restoring it.
-        """
+        self.active_object_name = None
+        self.active_object_mode = "OBJECT"
 
-        self._active = False
+        self.temporary_collection_name = None
+        self.owns_temporary_collection = False
+        self.temporary_links.clear()
 
-        self._scenes.clear()
-        self._material_snapshots.clear()
-        self._cage_object = ""
+        self.source_object_names.clear()
+        self.target_object_names.clear()
 
-    @contextmanager
-    def suspend(self):
-        suspension = VisualizationSuspension(self)
+        self.draw_handler = None
 
-        suspension.capture()
+        self.surface_shader = None
+        self.wire_shader = None
 
-        try:
-            if suspension.was_enabled:
-                LOG.debug("Suspend Visualization")
-                self.disable()
-
-            yield
-
-        finally:
-            suspension.restore()
-
-    def do_suspend(self) -> VisualizationSuspension:
-        suspension = VisualizationSuspension(self)
-
-        suspension.capture()
-
-        if suspension.was_enabled:
-            LOG.debug("Suspend Visualization")
-            self.disable()
-
-        return suspension
-
-    def request_preview_refresh(self):
-        self._preview_dirty = True
-
-    def clamp_ui_prop(
-        self,
-        ui_prop: UBK_BakerParameterValue,
-        parameter_type: BakerParameterType,
-        min: float,
-        max: float,
-    ):
-        match parameter_type:
-            case BakerParameterType.FLOAT:
-                ui_prop.float_value = ParameterApplier.clamp_value(
-                    ui_prop.float_value,
-                    min,
-                    max,
-                )
-            case BakerParameterType.INT:
-                ui_prop.int_value = ParameterApplier.clamp_value(
-                    ui_prop.int_value,
-                    min,
-                    max,
-                )
-
-    # ------------------------------------------------------------------
-    # Debugging
-    # ------------------------------------------------------------------
-
-    def __repr__(self) -> str:
-
-        return (
-            f"{self.__class__.__name__}("
-            f"active={self._active!r}, "
-            f"scenes={len(self._scenes)}, "
-            f"material_snapshots="
-            f"{len(self._material_snapshots)}"
-            f")"
-        )
-
-
-class VisualizationSuspension:
-    def __init__(
-        self,
-        runtime: CageVisualizationRuntime,
-    ):
-        self.runtime = runtime
-        self.was_enabled = False
-        self.bake_group_uuid: str | None = None
-        self.target_uuid: str | None = None
-        self.cage_object: str | None = None
-
-    def capture(self):
-        self.was_enabled = self.runtime._active
-        self.bake_group_uuid = self.runtime.bake_group_uuid
-        self.target_uuid = self.runtime.target_uuid
-        self.cage_object = self.runtime.cage_object
-
-    def restore(self):
-        if not self.was_enabled:
-            return
-
-        LOG.debug("Restore Visualization")
-        from ..services.cage_visualization import CageVisualizationService
-
-        # TODO: Need to properly enable_display
-        CageVisualizationService.enable_display(data)
+        self.surface_batch = None
+        self.wire_batch = None
