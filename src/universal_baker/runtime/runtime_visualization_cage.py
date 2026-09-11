@@ -47,6 +47,13 @@ class CageVisualizationRuntime:
     surface_batch: object | None = None
     wire_batch: object | None = None
 
+    # The cage datablock may change its evaluated geometry while
+    # weight painting. The GPU batches therefore need to be rebuilt.
+    gpu_dirty: bool = False
+
+    # Last evaluated dependency-graph update state.
+    evaluated_cage_revision: int = 0
+
     def begin(
         self,
         *,
@@ -58,6 +65,10 @@ class CageVisualizationRuntime:
         self.target_uuid = target_uuid
         self.target_name = target_name
         self.cage_name = cage_name
+        self.gpu_dirty = True
+
+    def mark_gpu_dirty(self) -> None:
+        self.gpu_dirty = True
 
     def clear(self) -> None:
         self.active = False
@@ -85,3 +96,6 @@ class CageVisualizationRuntime:
 
         self.surface_batch = None
         self.wire_batch = None
+
+        self.gpu_dirty = False
+        self.evaluated_cage_revision = 0

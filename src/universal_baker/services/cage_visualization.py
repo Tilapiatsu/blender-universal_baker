@@ -123,6 +123,8 @@ class CageVisualizationService:
     # ---------------------------------------------------------
     # Enable
     # ---------------------------------------------------------
+    # TODO: Need to link cage_settings.cage_extrusion to the displacement modifier
+    # TODO: Need to create way to enable the cage display, while dragging, and hide it after releasing
 
     @classmethod
     def enable(
@@ -173,6 +175,7 @@ class CageVisualizationService:
                 cls._configure_visibility()
                 cls._create_gpu_resources(cage)
                 cls._register_draw_handler()
+                cls._register_depsgraph_handler()
                 cls._enter_weight_paint(cage)
 
                 return True
@@ -194,6 +197,8 @@ class CageVisualizationService:
 
         This method is intentionally idempotent.
         """
+        # ISSUE: Need to disable when exiting weight paint mode
+        # ISSUE: Need to disable when changing cage_settings.mode
         with LOG.scope("Disable"):
             runtime = cls._runtime
 
@@ -203,6 +208,7 @@ class CageVisualizationService:
             LOG.debug("Disabling Cage Visualization")
 
             try:
+                cls._remove_depsgraph_handler()
                 cls._remove_draw_handler()
                 cls._release_gpu_resources()
                 cls._restore_mode_and_active_object()
@@ -229,6 +235,8 @@ class CageVisualizationService:
         If the new target does not use a cage, visualization is
         disabled.
         """
+        # ISSUE: Need to fix refresh when swapping target_object
+
         with LOG.scope("Refresh"):
             if not cls.is_active():
                 if target is None:
@@ -340,12 +348,10 @@ class CageVisualizationService:
             raise CageVisualizationError("No active Bake group found")
             return
 
-        target_objects = active_bake_group.target_objects
+        target_objects = [o.object for o in active_bake_group.target_objects if o.enabled and o.object is not None]
 
         # Capture target objects.
-        for target_item in target_objects:
-            obj = target_item.object
-
+        for obj in target_objects:
             if obj is None:
                 continue
 
@@ -488,7 +494,7 @@ class CageVisualizationService:
         if collection is None:
             return
 
-        if obj.name in collection.objects:
+        if collection.objects.get(obj.name) is not None:
             return
 
         collection.objects.link(obj)
@@ -546,31 +552,38 @@ class CageVisualizationService:
         cls,
         cage: bpy.types.Object,
     ) -> None:
-        with LOG.scope("Create GPU Resources"):
-            runtime = cls._ensure_runtime()
+        runtime = cls._ensure_runtime()
 
-            mesh = cage.data
+        # Release the previous batches first.
+        cls._release_gpu_batches()
 
-            if mesh is None:
-                raise RuntimeError(f"Cage {cage.name} has no mesh")
+        depsgraph = bpy.context.evaluated_depsgraph_get()
+        evaluated_cage = cage.evaluated_get(depsgraph)
 
-            surface_shader = gpu.shader.from_builtin("SMOOTH_COLOR")
-            wire_shader = gpu.shader.from_builtin("UNIFORM_COLOR")
+        evaluated_mesh = None
+
+        try:
+            evaluated_mesh = evaluated_cage.to_mesh()
+
+            if evaluated_mesh is None:
+                return
+
+            evaluated_mesh.calc_loop_triangles()
+
+            runtime.surface_shader = gpu.shader.from_builtin("SMOOTH_COLOR")
+
+            runtime.wire_shader = gpu.shader.from_builtin("UNIFORM_COLOR")
 
             surface_positions = []
+            surface_colors = []
 
-            mesh.calc_loop_triangles()
-
-            for triangle in mesh.loop_triangles:
+            for triangle in evaluated_mesh.loop_triangles:
                 for vertex_index in triangle.vertices:
-                    vertex = mesh.vertices[vertex_index]
+                    surface_positions.append(evaluated_mesh.vertices[vertex_index].co[:])
+                    surface_colors.append(cls.SURFACE_COLOR)
 
-                    surface_positions.append(vertex.co.copy())
-
-            surface_colors = [cls.SURFACE_COLOR for _ in surface_positions]
-
-            surface_batch = batch_for_shader(
-                surface_shader,
+            runtime.surface_batch = batch_for_shader(
+                runtime.surface_shader,
                 "TRIS",
                 {
                     "pos": surface_positions,
@@ -578,48 +591,36 @@ class CageVisualizationService:
                 },
             )
 
-            # -----------------------------------------------------
-            # Build wire batch
-            # -----------------------------------------------------
-
             wire_positions = []
 
-            for edge in mesh.edges:
-                v1 = mesh.vertices[edge.vertices[0]].co
-                v2 = mesh.vertices[edge.vertices[1]].co
+            for edge in evaluated_mesh.edges:
+                wire_positions.append(evaluated_mesh.vertices[edge.vertices[0]].co[:])
 
-                wire_positions.append(v1.copy())
-                wire_positions.append(v2.copy())
+                wire_positions.append(evaluated_mesh.vertices[edge.vertices[1]].co[:])
 
-            wire_batch = batch_for_shader(
-                wire_shader,
-                "LINES",
-                {
-                    "pos": wire_positions,
-                },
-            )
+            runtime.wire_batch = batch_for_shader(runtime.wire_shader, "LINES", {"pos": wire_positions})
 
-            runtime.surface_shader = surface_shader
-            runtime.wire_shader = wire_shader
+        finally:
+            if evaluated_mesh is not None:
+                evaluated_cage.to_mesh_clear()
 
-            runtime.surface_batch = surface_batch
-            runtime.wire_batch = wire_batch
+        runtime.gpu_dirty = False
+
+    @classmethod
+    def _release_gpu_batches(cls) -> None:
+        runtime = cls._ensure_runtime()
+
+        runtime.surface_batch = None
+        runtime.wire_batch = None
 
     @classmethod
     def _release_gpu_resources(cls) -> None:
-        with LOG.scope("Release GPU Resources"):
-            runtime = cls._runtime
+        runtime = cls._ensure_runtime()
 
-            if runtime is None:
-                return
+        cls._release_gpu_batches()
 
-            # GPU batches/shaders are Python-side references.
-            # Clearing them allows Blender/GPU resources to be released.
-            runtime.surface_batch = None
-            runtime.wire_batch = None
-
-            runtime.surface_shader = None
-            runtime.wire_shader = None
+        runtime.surface_shader = None
+        runtime.wire_shader = None
 
     # ---------------------------------------------------------
     # Draw Handler
@@ -667,84 +668,56 @@ class CageVisualizationService:
 
     @classmethod
     def _draw(cls) -> None:
-        with LOG.scope("Draw"):
-            runtime = cls._runtime
+        runtime = cls._ensure_runtime()
 
-            if runtime is None or not runtime.active:
-                return
+        if not runtime.active:
+            return
 
-            cage_name = runtime.cage_name
+        cage = bpy.data.objects.get(runtime.cage_name) if runtime.cage_name else None
 
-            if cage_name is None:
-                return
+        if cage is None:
+            return
 
-            cage = bpy.data.objects.get(cage_name)
+        # The cage's modifiers / evaluated geometry changed.
+        if runtime.gpu_dirty:
+            cls._create_gpu_resources(cage)
 
-            if cage is None:
-                return
+        if runtime.surface_batch is None:
+            return
 
-            surface_shader = runtime.surface_shader
-            wire_shader = runtime.wire_shader
+        gpu.state.blend_set("ALPHA")
 
-            surface_batch = runtime.surface_batch
-            wire_batch = runtime.wire_batch
+        # IMPORTANT:
+        # Use the depth buffer so the cage behaves like a real
+        # surface instead of being drawn through everything.
+        gpu.state.depth_test_set("LESS_EQUAL")
+        gpu.state.depth_mask_set(False)
 
-            if surface_shader is None or wire_shader is None or surface_batch is None or wire_batch is None:
-                return
+        gpu.matrix.push()
 
-            # -----------------------------------------------------
-            # Preserve GPU state
-            # -----------------------------------------------------
+        try:
+            gpu.matrix.multiply_matrix(cage.matrix_world)
 
-            try:
-                gpu.state.blend_set("ALPHA")
+            runtime.surface_shader.bind()
 
-                # We want the cage to remain visible even when it
-                # intersects/overlaps the source geometry.
-                gpu.state.depth_test_set("LESS")
-                gpu.state.face_culling_set("BACK")
+            runtime.surface_batch.draw(runtime.surface_shader)
 
-                # -------------------------------------------------
-                # Object transform
-                # -------------------------------------------------
+            if runtime.wire_batch is not None:
+                gpu.state.line_width_set(1.5)
 
-                gpu.matrix.push()
+                runtime.wire_shader.bind()
 
-                gpu.matrix.multiply_matrix(cage.matrix_world)
+                runtime.wire_shader.uniform_float("color", cls.WIRE_COLOR)
 
-                # -------------------------------------------------
-                # Surface
-                # -------------------------------------------------
+                runtime.wire_batch.draw(runtime.wire_shader)
 
-                surface_shader.bind()
+        finally:
+            gpu.matrix.pop()
 
-                surface_batch.draw(surface_shader)
-
-                # -------------------------------------------------
-                # Wire
-                # -------------------------------------------------
-
-                gpu.state.line_width_set(cls.LINE_WIDTH)
-
-                wire_shader.bind()
-
-                wire_shader.uniform_float(
-                    "color",
-                    cls.WIRE_COLOR,
-                )
-
-                wire_batch.draw(wire_shader)
-
-                gpu.matrix.pop()
-
-            finally:
-                # -------------------------------------------------
-                # Restore GPU state
-                # -------------------------------------------------
-
-                gpu.state.line_width_set(1.0)
-                gpu.state.depth_test_set("LESS_EQUAL")
-                gpu.state.blend_set("NONE")
+            gpu.state.line_width_set(1.0)
+            gpu.state.depth_mask_set(True)
+            gpu.state.depth_test_set("LESS_EQUAL")
+            gpu.state.blend_set("NONE")
 
     # ---------------------------------------------------------
     # Weight Paint
@@ -774,6 +747,7 @@ class CageVisualizationService:
 
             try:
                 bpy.ops.object.mode_set(mode="WEIGHT_PAINT")
+                cage.hide_set(True)
 
             except RuntimeError as exc:
                 LOG.warning(f"Unable to enter Weight Paint mode for cage {cage.name}: {exc}")
@@ -830,3 +804,40 @@ class CageVisualizationService:
                     bpy.ops.object.mode_set(mode=previous_mode)
                 except RuntimeError:
                     LOG.debug(f"Unable to restore mode {previous_mode}")
+
+    @classmethod
+    def depsgraph_update_post(cls, scene, depsgraph) -> None:
+        with LOG.scope(LOG_SCOPE):
+            runtime = cls._ensure_runtime()
+
+            if not runtime.active:
+                LOG.warning("Runtime is not active")
+                return
+
+            if runtime.cage_name is None:
+                LOG.warning("Cage is unknown")
+                return
+
+            cage = bpy.data.objects.get(runtime.cage_name)
+
+            if cage is None:
+                LOG.warning("Cage is None")
+                return
+
+            for update in depsgraph.updates:
+                if update.id.name == cage.name:
+                    runtime.mark_gpu_dirty()
+                    return
+
+    @classmethod
+    def _register_depsgraph_handler(cls) -> None:
+        if cls.depsgraph_update_post not in bpy.app.handlers.depsgraph_update_post:
+            LOG.debug("Registering depthgraph handler")
+            bpy.app.handlers.depsgraph_update_post.append(cls.depsgraph_update_post)
+
+    @classmethod
+    def _remove_depsgraph_handler(cls) -> None:
+        handler = cls.depsgraph_update_post
+
+        if handler in bpy.app.handlers.depsgraph_update_post:
+            bpy.app.handlers.depsgraph_update_post.remove(handler)
