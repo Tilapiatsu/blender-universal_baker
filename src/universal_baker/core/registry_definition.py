@@ -3,13 +3,10 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 from ..parameter.baker_custom.definition import CustomBakerDefinition
-from ..parameter.baker_local.definition import LocalBakerDefinition
-
-if TYPE_CHECKING:
-    from ..bakers.base import BakerBase
+from ..parameter.baker_local.definition import LocalDefinition
+from ..parameter.baker_local.metadata_loader import DefinitionObject
 
 
 @dataclass(frozen=True)
@@ -22,25 +19,25 @@ class LazyCustomDefinition:
 @dataclass(frozen=True)
 class LazyLocalDefinition:
     identifier: str
-    baker: BakerBase
-    loader: Callable[[BakerBase], LocalBakerDefinition]
+    definition_object: DefinitionObject
+    loader: Callable[[DefinitionObject], LocalDefinition]
 
 
-class BakerDefinitionError(RuntimeError):
+class DefinitionError(RuntimeError):
     pass
 
 
-class BakerDefinitionNotFoundError(BakerDefinitionError):
+class DefinitionNotFoundError(DefinitionError):
     pass
 
 
-LocalDefinitionLoader = Callable[[str], LocalBakerDefinition]
+LocalDefinitionLoader = Callable[[str], LocalDefinition]
 CustomDefinitionLoader = Callable[[str], CustomBakerDefinition]
 
 
-class BakerDefinitionRegistry:
+class DefinitionRegistry:
     def __init__(self) -> None:
-        self._local_definitions: dict[str, LocalBakerDefinition] = {}
+        self._local_definitions: dict[str, LocalDefinition] = {}
         self._custom_definitions: dict[str, CustomBakerDefinition] = {}
         self._loaders_local: dict[str, LocalDefinitionLoader] = {}
         self._loaders_custom: dict[str, CustomDefinitionLoader] = {}
@@ -51,19 +48,22 @@ class BakerDefinitionRegistry:
     # Registration
     # ------------------------------------------------------------------
 
-    def register_local(self, definition: LocalBakerDefinition) -> None:
+    def register_local(self, definition: LocalDefinition) -> None:
         identifier = definition.identifier
         if identifier in self._local_definitions:
-            raise BakerDefinitionError(f"Definition '{identifier}' is already registered.")
+            raise DefinitionError(f"Definition '{identifier}' is already registered.")
 
         self._local_definitions[identifier] = definition
 
     def register_local_lazy(
-        self, identifier: str, baker: BakerBase, loader: Callable[[BakerBase], LocalBakerDefinition]
+        self,
+        identifier: str,
+        definition_object: DefinitionObject,
+        loader: Callable[[DefinitionObject], LocalDefinition],
     ) -> None:
         self._lazy_local[identifier] = LazyLocalDefinition(
             identifier=identifier,
-            baker=baker,
+            definition_object=definition_object,
             loader=loader,
         )
 
@@ -72,7 +72,7 @@ class BakerDefinitionRegistry:
         identifier = definition.identifier
 
         if identifier in self._custom_definitions:
-            raise BakerDefinitionError(f"Definition '{identifier}' is already registered.")
+            raise DefinitionError(f"Definition '{identifier}' is already registered.")
 
         self._custom_definitions[identifier] = definition
 
@@ -89,7 +89,7 @@ class BakerDefinitionRegistry:
     # Lookup
     # ------------------------------------------------------------------
 
-    def get(self, identifier: str) -> LocalBakerDefinition | CustomBakerDefinition | None:
+    def get(self, identifier: str) -> LocalDefinition | CustomBakerDefinition | None:
 
         local = self.get_local(identifier)
 
@@ -98,7 +98,7 @@ class BakerDefinitionRegistry:
 
         return self.get_custom(identifier)
 
-    def get_local(self, identifier: str) -> LocalBakerDefinition | None:
+    def get_local(self, identifier: str) -> LocalDefinition | None:
         definition = self._local_definitions.get(identifier)
 
         if definition is not None:
@@ -109,7 +109,7 @@ class BakerDefinitionRegistry:
         if lazy is None:
             return None
 
-        definition = lazy.loader(lazy.baker)
+        definition = lazy.loader(lazy.definition_object)
 
         self._local_definitions[identifier] = definition
 
@@ -117,10 +117,10 @@ class BakerDefinitionRegistry:
 
         return definition
 
-    def require_local(self, identifier: str) -> LocalBakerDefinition:
+    def require_local(self, identifier: str) -> LocalDefinition:
         definition = self.get_local(identifier)
         if definition is None:
-            raise BakerDefinitionNotFoundError(f"No definition registered for '{identifier}'.")
+            raise DefinitionNotFoundError(f"No definition registered for '{identifier}'.")
 
         return definition
 
@@ -146,7 +146,7 @@ class BakerDefinitionRegistry:
     def require_custom(self, identifier: str) -> CustomBakerDefinition:
         definition = self.get_custom(identifier)
         if definition is None:
-            raise BakerDefinitionNotFoundError(f"No definition registered for '{identifier}'.")
+            raise DefinitionNotFoundError(f"No definition registered for '{identifier}'.")
 
         return definition
 
@@ -194,4 +194,4 @@ class BakerDefinitionRegistry:
         return self._local_definitions.keys()
 
 
-registry_definition = BakerDefinitionRegistry()
+registry_definition = DefinitionRegistry()

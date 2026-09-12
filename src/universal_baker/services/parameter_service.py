@@ -2,11 +2,13 @@ from __future__ import annotations
 
 from typing import Any
 
+import bpy
+
 from ..parameter.baker_custom.definition import CustomBakerDefinition
-from ..parameter.baker_local.definition import LocalBakerDefinition
-from ..parameter.parameter import BakerParameter, BakerParameterType, ParameterSnapshot
-from ..properties.baker_parameter import UBK_BakerParameterValue
+from ..parameter.baker_local.definition import LocalDefinition
+from ..parameter.parameter import Parameter, ParameterSnapshot, ParameterType
 from ..properties.custom_baker import UBK_CustomBaker
+from ..properties.parameter_value import UBK_ParameterValue
 
 
 class ParameterServiceError(RuntimeError):
@@ -15,9 +17,7 @@ class ParameterServiceError(RuntimeError):
 
 class ParameterService:
     @classmethod
-    def snapshot(
-        cls, definition: LocalBakerDefinition | CustomBakerDefinition, state: UBK_CustomBaker
-    ) -> ParameterSnapshot:
+    def snapshot(cls, definition: LocalDefinition | CustomBakerDefinition, state: UBK_CustomBaker) -> ParameterSnapshot:
         """
         Create an immutable-in-practice runtime snapshot of all
         current parameter values.
@@ -48,8 +48,24 @@ class ParameterService:
         return snapshot
 
     @classmethod
+    def snapshot_regular(
+        cls,
+        definition: LocalDefinition,
+        prop: bpy.types.PropertyGroup,
+    ) -> ParameterSnapshot:
+        snapshot: dict[str, Any] = {}
+
+        for parameter in definition.parameters:
+            value = getattr(prop, parameter.identifier, None)
+            if value is None:
+                raise ParameterServiceError(f"Parameter '{parameter.identifier}' not in props.")
+            snapshot[parameter.identifier] = value
+
+        return snapshot
+
+    @classmethod
     def snapshot_parameter(
-        cls, definition: LocalBakerDefinition | CustomBakerDefinition, state: UBK_CustomBaker, parameter_id: str
+        cls, definition: LocalDefinition | CustomBakerDefinition, state: UBK_CustomBaker, parameter_id: str
     ) -> Any:
         """
         Return one validated parameter value as a plain Python value.
@@ -69,7 +85,7 @@ class ParameterService:
         return cls._validate_value(parameter, value)
 
     @classmethod
-    def synchronize(cls, definition: LocalBakerDefinition | CustomBakerDefinition, state: UBK_CustomBaker) -> None:
+    def synchronize(cls, definition: LocalDefinition | CustomBakerDefinition, state: UBK_CustomBaker) -> None:
         """
         Synchronize persistent parameter storage with
         the current CustomBakerDefinition.
@@ -108,15 +124,13 @@ class ParameterService:
         state.asset_version = definition.version
 
     @classmethod
-    def get(
-        cls, definition: LocalBakerDefinition | CustomBakerDefinition, state: UBK_CustomBaker, parameter_id: str
-    ) -> Any:
+    def get(cls, definition: LocalDefinition | CustomBakerDefinition, state: UBK_CustomBaker, parameter_id: str) -> Any:
         return cls.snapshot_parameter(definition, state, parameter_id)
 
     @classmethod
     def set(
         cls,
-        definition: LocalBakerDefinition | CustomBakerDefinition,
+        definition: LocalDefinition | CustomBakerDefinition,
         state: UBK_CustomBaker,
         parameter_id: str,
         value: Any,
@@ -135,7 +149,7 @@ class ParameterService:
         cls._set_value(item, parameter, value)
 
     @staticmethod
-    def find(state: UBK_CustomBaker, parameter_id: str) -> UBK_BakerParameterValue | None:
+    def find(state: UBK_CustomBaker, parameter_id: str) -> UBK_ParameterValue | None:
 
         for item in state.parameters:
             if item.identifier == parameter_id:
@@ -144,49 +158,49 @@ class ParameterService:
         return None
 
     @staticmethod
-    def _get_value(item: UBK_BakerParameterValue, parameter: BakerParameter):
+    def _get_value(item: UBK_ParameterValue, parameter: Parameter):
 
         parameter_type = parameter.parameter_type
 
-        if parameter_type is BakerParameterType.FLOAT:
+        if parameter_type is ParameterType.FLOAT:
             return item.float_value
 
-        if parameter_type is BakerParameterType.INT:
+        if parameter_type is ParameterType.INT:
             return item.int_value
 
-        if parameter_type is BakerParameterType.BOOL:
+        if parameter_type is ParameterType.BOOL:
             return item.bool_value
 
-        if parameter_type is BakerParameterType.ENUM:
+        if parameter_type is ParameterType.ENUM:
             return item.string_value
 
         raise ParameterServiceError(f"Unsupported parameter type: {parameter_type}")
 
     @staticmethod
-    def _set_value(item: UBK_BakerParameterValue, parameter: BakerParameter, value) -> None:
+    def _set_value(item: UBK_ParameterValue, parameter: Parameter, value) -> None:
 
         parameter_type = parameter.parameter_type
 
-        if parameter_type is BakerParameterType.FLOAT:
+        if parameter_type is ParameterType.FLOAT:
             item.float_value = float(value)
             return
 
-        if parameter_type is BakerParameterType.INT:
+        if parameter_type is ParameterType.INT:
             item.int_value = int(value)
             return
 
-        if parameter_type is BakerParameterType.BOOL:
+        if parameter_type is ParameterType.BOOL:
             item.bool_value = bool(value)
             return
 
-        if parameter_type is BakerParameterType.ENUM:
+        if parameter_type is ParameterType.ENUM:
             item.string_value = str(value)
             return
 
         raise ParameterServiceError(f"Unsupported parameter type: {parameter_type}")
 
     @classmethod
-    def _validate_value(cls, parameter: BakerParameter, value):
+    def _validate_value(cls, parameter: Parameter, value):
         """
         Validate a value against the definition.
 
@@ -196,7 +210,7 @@ class ParameterService:
 
         parameter_type = parameter.parameter_type
 
-        if parameter_type is BakerParameterType.FLOAT:
+        if parameter_type is ParameterType.FLOAT:
             value = float(value)
 
             if parameter.min_value is not None:
@@ -207,7 +221,7 @@ class ParameterService:
 
             return value
 
-        if parameter_type is BakerParameterType.INT:
+        if parameter_type is ParameterType.INT:
             value = int(value)
 
             if parameter.min_value is not None:
@@ -218,10 +232,10 @@ class ParameterService:
 
             return value
 
-        if parameter_type is BakerParameterType.BOOL:
+        if parameter_type is ParameterType.BOOL:
             return bool(value)
 
-        if parameter_type is BakerParameterType.ENUM:
+        if parameter_type is ParameterType.ENUM:
             value = str(value)
 
             valid = {option.identifier for option in parameter.options}

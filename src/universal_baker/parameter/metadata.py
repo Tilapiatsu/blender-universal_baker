@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any
-from .parameter import BakerParameterOption
 
+from .parameter import ParameterOption
 
 METADATA_TEXT_NAME = "UBK_BAKER_METADATA"
 
@@ -81,12 +81,16 @@ class ParameterMetadata:
     category: str | None = None
     order: int = 0
     visible: bool = True
-    options: tuple[BakerParameterOption, ...] = ()
+    options: tuple[ParameterOption, ...] = ()
     bindings: tuple[BindingMetadata, ...] = ()
 
 
 @dataclass(frozen=True)
-class LocalBakerMetadata:
+class MetadataBase: ...
+
+
+@dataclass(frozen=True)
+class LocalMetadata(MetadataBase):
     """
     Complete metadata description of a Local Baker asset.
     """
@@ -101,7 +105,7 @@ class LocalBakerMetadata:
 
 
 @dataclass(frozen=True)
-class CustomBakerMetadata:
+class CustomBakerMetadata(MetadataBase):
     """
     Complete metadata description of a Custom Baker asset.
     """

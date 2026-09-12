@@ -54,6 +54,21 @@ def update_active_target(self, context):
     CageVisualizationService.refresh(target)
 
 
+def exit_weight_paint_callback(obj, mode):
+    if getattr(obj, mode) == "OBJECT":
+        CageVisualizationService.disable()
+
+        from ..core.controller import BakeController
+
+        project = BakeController.project(bpy.context)
+        if project is None:
+            return
+
+        visualization = project.visualization
+
+        visualization.cage_edit = False
+
+
 class CageVisualizationError(RuntimeError):
     """Base exception for Cage Visualization errors."""
 
@@ -123,7 +138,6 @@ class CageVisualizationService:
     # ---------------------------------------------------------
     # Enable
     # ---------------------------------------------------------
-    # TODO: Need to link cage_settings.cage_extrusion to the displacement modifier
     # TODO: Need to create way to enable the cage display, while dragging, and hide it after releasing
 
     @classmethod
@@ -175,7 +189,7 @@ class CageVisualizationService:
                 cls._configure_visibility()
                 cls._create_gpu_resources(cage)
                 cls._register_draw_handler()
-                cls._register_depsgraph_handler()
+                cls._register_depsgraph_handler(cage)
                 cls._enter_weight_paint(cage)
 
                 return True
@@ -197,8 +211,6 @@ class CageVisualizationService:
 
         This method is intentionally idempotent.
         """
-        # ISSUE: Need to disable when exiting weight paint mode
-        # ISSUE: Need to disable when changing cage_settings.mode
         with LOG.scope("Disable"):
             runtime = cls._runtime
 
@@ -235,7 +247,7 @@ class CageVisualizationService:
         If the new target does not use a cage, visualization is
         disabled.
         """
-        # ISSUE: Need to fix refresh when swapping target_object
+        # ISSUE: Need to fix refresh when swapping target_object : Object 'Suzanne_Eyes_LD_UBK_CAGE' cannot be selected because it is not in View Layer 'View Layer'!
 
         with LOG.scope("Refresh"):
             if not cls.is_active():
@@ -829,15 +841,35 @@ class CageVisualizationService:
                     runtime.mark_gpu_dirty()
                     return
 
+    @staticmethod
+    def subscribe_to(obj, data_path, callback):
+
+        # Get a rna subscription link from the object
+        subscribe_to = obj.path_resolve(data_path, False)
+
+        # Effectively subscribe to the rna path from the object
+        bpy.msgbus.subscribe_rna(
+            key=subscribe_to,
+            owner=obj,
+            args=(
+                obj,
+                data_path,
+            ),
+            notify=callback,
+        )
+
+    # NOTE: https://blender.stackexchange.com/questions/21408/know-when-edit-mode-is-entered-by-script-python
     @classmethod
-    def _register_depsgraph_handler(cls) -> None:
+    def _register_depsgraph_handler(cls, cage: bpy.types.Object) -> None:
         if cls.depsgraph_update_post not in bpy.app.handlers.depsgraph_update_post:
             LOG.debug("Registering depthgraph handler")
             bpy.app.handlers.depsgraph_update_post.append(cls.depsgraph_update_post)
+            cls.subscribe_to(cage, "mode", exit_weight_paint_callback)
 
     @classmethod
     def _remove_depsgraph_handler(cls) -> None:
         handler = cls.depsgraph_update_post
 
         if handler in bpy.app.handlers.depsgraph_update_post:
+            LOG.debug("Unregistering depthgraph handler")
             bpy.app.handlers.depsgraph_update_post.remove(handler)

@@ -1,8 +1,8 @@
 from . import (
-    visualization,
+    cage,
 )
 
-modules = (visualization,)
+modules = (cage,)
 
 
 def register():

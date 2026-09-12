@@ -17,7 +17,7 @@ from ..metadata import (
     MetadataValidationError,
     ParameterMetadata,
 )
-from ..parameter import BakerParameterOption
+from ..parameter import ParameterOption
 from .definition import CustomBakerDefinition
 
 
@@ -297,7 +297,7 @@ class MetadataLoader:
         )
 
     @classmethod
-    def _parse_options(cls, raw_options: Any, location: str) -> list[BakerParameterOption]:
+    def _parse_options(cls, raw_options: Any, location: str) -> list[ParameterOption]:
 
         if not isinstance(raw_options, list):
             raise MetadataValidationError(f"{location}.options must be an array.")
@@ -315,7 +315,7 @@ class MetadataLoader:
             description = cls._optional_string(raw_option, "description", "")
 
             options.append(
-                BakerParameterOption(
+                ParameterOption(
                     identifier=identifier,
                     label=name,
                     description=description,

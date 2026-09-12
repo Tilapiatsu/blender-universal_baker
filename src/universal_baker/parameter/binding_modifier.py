@@ -4,10 +4,8 @@ from dataclasses import dataclass
 from typing import Any
 
 from ..constant import LOG
-
-from .parameter_context import ParameterContext
-
 from .binding import ParameterBinding, ParameterBindingError
+from .parameter_context import ParameterContext
 
 LOG_SCOPE = "Modifier Binding"
 

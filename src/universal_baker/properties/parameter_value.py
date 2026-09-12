@@ -45,7 +45,7 @@ class DRAGGABLEPROP_OT_subscribe(bpy.types.Operator):
         return {"RUNNING_MODAL"}
 
 
-class UBK_BakerParameterValue(bpy.types.PropertyGroup):
+class UBK_ParameterValue(bpy.types.PropertyGroup):
     identifier: bpy.props.StringProperty(update=parameter_updated)
     float_value: bpy.props.FloatProperty(update=parameter_updated)
     int_value: bpy.props.IntProperty(update=parameter_updated)
@@ -55,7 +55,7 @@ class UBK_BakerParameterValue(bpy.types.PropertyGroup):
 
 classes = (
     DRAGGABLEPROP_OT_subscribe,
-    UBK_BakerParameterValue,
+    UBK_ParameterValue,
 )
 
 

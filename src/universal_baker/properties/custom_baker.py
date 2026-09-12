@@ -7,7 +7,7 @@ from bpy.props import (
 )
 from bpy.types import PropertyGroup
 
-from .baker_parameter import UBK_BakerParameterValue
+from .parameter_value import UBK_ParameterValue
 
 """
 Stores the user values of a specific custom baker. this values will be passed to the baker and to the visualization
@@ -20,7 +20,7 @@ class UBK_CustomBaker(PropertyGroup):
 
     asset_version: IntProperty(name="Asset Version", default=1)
 
-    parameters: CollectionProperty(type=UBK_BakerParameterValue)
+    parameters: CollectionProperty(type=UBK_ParameterValue)
 
 
 classes = (UBK_CustomBaker,)

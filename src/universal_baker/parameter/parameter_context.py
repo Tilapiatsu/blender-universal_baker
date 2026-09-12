@@ -4,7 +4,8 @@ from dataclasses import dataclass
 from typing import Any
 
 import bpy
-from ..properties.baker_parameter import UBK_BakerParameterValue
+
+from ..properties.parameter_value import UBK_ParameterValue
 
 
 @dataclass
@@ -17,7 +18,7 @@ class ParameterContext:
 
     object: bpy.types.Object
     materials: list[bpy.types.Material] | None = None
-    ui_prop: UBK_BakerParameterValue | None = None
+    ui_prop: UBK_ParameterValue | None = None
     scene: bpy.types.Scene | None = None
     is_dragging: bool = False
 

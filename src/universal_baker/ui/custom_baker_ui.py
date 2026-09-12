@@ -3,16 +3,16 @@ from __future__ import annotations
 import bpy
 
 from ..parameter.baker_custom.definition import CustomBakerDefinition
-from ..parameter.baker_local.definition import LocalBakerDefinition
-from ..parameter.parameter import BakerParameter, BakerParameterType
-from ..properties.baker_parameter import UBK_BakerParameterValue
+from ..parameter.baker_local.definition import LocalDefinition
+from ..parameter.parameter import Parameter, ParameterType
+from ..properties.parameter_value import UBK_ParameterValue
 from ..properties.custom_baker import UBK_CustomBaker
 from ..services.parameter_service import ParameterService
 
 
 class BakerParameterUI:
     @classmethod
-    def draw(cls, layout, definition: CustomBakerDefinition | LocalBakerDefinition, state: UBK_CustomBaker):
+    def draw(cls, layout, definition: CustomBakerDefinition | LocalDefinition, state: UBK_CustomBaker):
 
         if isinstance(definition, CustomBakerDefinition):
             layout.operator("ubk.refresh_custom_baker_parameters", icon="FILE_REFRESH")
@@ -32,20 +32,20 @@ class BakerParameterUI:
     def _draw_parameter(cls, layout, parameter, item):
         parameter_type = parameter.parameter_type
 
-        if parameter_type is BakerParameterType.FLOAT:
+        if parameter_type is ParameterType.FLOAT:
             layout.prop(item, "float_value", text=parameter.name)
 
-        elif parameter_type is BakerParameterType.INT:
+        elif parameter_type is ParameterType.INT:
             layout.prop(item, "int_value", text=parameter.name)
 
-        elif parameter_type is BakerParameterType.BOOL:
+        elif parameter_type is ParameterType.BOOL:
             layout.prop(item, "bool_value", text=parameter.name)
 
-        elif parameter_type is BakerParameterType.ENUM:
+        elif parameter_type is ParameterType.ENUM:
             cls._draw_enum(layout, parameter, item)
 
     @classmethod
-    def _draw_enum(cls, layout, parameter: BakerParameter, value: UBK_BakerParameterValue) -> None:
+    def _draw_enum(cls, layout, parameter: Parameter, value: UBK_ParameterValue) -> None:
         row = layout.row(align=True)
         row.label(text=parameter.name)
 
@@ -60,7 +60,7 @@ class BakerParameterUI:
         op.parameter_id = parameter.identifier
 
     @staticmethod
-    def _enum_label(parameter: BakerParameter, identifier: str) -> str:
+    def _enum_label(parameter: Parameter, identifier: str) -> str:
 
         for option in parameter.options:
             if option.identifier == identifier:

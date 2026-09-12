@@ -272,7 +272,7 @@ class BakerBase(ABC):
 
         registry_definition.register_local_lazy(
             identifier=self.id,
-            baker=self,
+            definition_object=self,
             loader=metadata_loader_local.load_definition,
         )
 

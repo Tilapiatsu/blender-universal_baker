@@ -1,26 +1,63 @@
 from __future__ import annotations
 
+import bpy
 from bpy.props import EnumProperty, FloatProperty, PointerProperty, StringProperty
 from bpy.types import Image, Object, PropertyGroup
+
+
+def parameter_updated(self, context):
+    from ..core.controller import BakeController
+    from ..runtime.runtime_manager import RuntimeManager
+
+    target = BakeController.active_target_object(context)
+
+    if target is None:
+        return
+
+    runtime = RuntimeManager.get(context.scene).cage_visualization
+
+    if runtime.active:
+        runtime.request_preview_refresh()
+
+    if context.scene.ubk_project.visualization.is_dragging:
+        pass
+    else:
+        bpy.ops.draggableprop.subscribe("INVOKE_DEFAULT")
+
+    runtime.refresh_preview_parameters(ui_props=self)
+
+
+def mode_updated(self, context):
+    from ..core.controller import BakeController
+    from ..runtime.runtime_manager import RuntimeManager
+
+    target = BakeController.active_target_object(context)
+
+    if target is None:
+        return
+
+    runtime = RuntimeManager.get(context.scene).cage_visualization
+
+    if runtime.active and self.cage_mode == "OBJECT":
+        from ..services.cage_visualization import CageVisualizationService
+
+        CageVisualizationService.disable()
+
+        visualization = BakeController.project(context).visualization
+
+        visualization.cage_edit = False
 
 
 class UBK_CageSettings(PropertyGroup):
     cage_mode: EnumProperty(
         name="Mode",
         items=[
-            ("NONE", "None", "Without Cage."),
-            ("OBJECT", "Object", "Specify an object as the cage"),
             ("GENERATED", "Generated", "Automatically generate Cage by offsetting vertices along normal"),
+            ("OBJECT", "Object", "Specify an object as the cage"),
         ],
-        default="NONE",
+        default="GENERATED",
+        update=mode_updated,
     )
-    # TODO: Need to make it compatible with "NONE", "GENERATED" and "OBJECT" : It will be convenient to visualize Cage
-    # regardless of the context.
-    # It may be great to simplify : we certainly don't need 3 cases :
-    # - By default custom cages is set, we can just use the extrusion parameter which offset the vertices -> A cage is
-    # created for display purpose, and then stash afterward
-    # - The user can the choose to "edit_cage" to paint the distance using weight paint mode -> the Cage object is now
-    # kept but unlinked from the scene when the edit cage is disabled
 
     # TODO: Need to prevent to load the same object as the target object
     cage_object_custom: PointerProperty(
@@ -36,6 +73,7 @@ class UBK_CageSettings(PropertyGroup):
         default=0.1,
         min=0.0,
         subtype="DISTANCE",
+        update=parameter_updated,
     )
     max_ray_distance: FloatProperty(
         name="Max Ray Distance",
@@ -57,8 +95,6 @@ class UBK_CageSettings(PropertyGroup):
                 return self.cage_object_custom
             case "GENERATED":
                 return self.cage_object_generated
-            case _:
-                return None
 
 
 classes = (UBK_CageSettings,)

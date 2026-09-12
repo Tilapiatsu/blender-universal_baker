@@ -1,5 +1,5 @@
 from . import (
-    baker_parameter,
+    parameter_value,
     custom_baker,
     settings_output,
     settings_bake,
@@ -15,7 +15,7 @@ from . import (
 )
 
 modules = (
-    baker_parameter,
+    parameter_value,
     custom_baker,
     settings_output,
     settings_bake,

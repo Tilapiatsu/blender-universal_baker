@@ -8,10 +8,10 @@ import bpy
 from ..constant import LOG
 from ..core.registry_definition import registry_definition
 from ..enum.visualization import BakeVisualizationMode
-from ..parameter.parameter import BakerParameterType
+from ..parameter.parameter import ParameterType
 from ..parameter.parameter_applier import ParameterApplier
 from ..parameter.parameter_context import ParameterContext
-from ..properties.baker_parameter import UBK_BakerParameterValue
+from ..properties.parameter_value import UBK_ParameterValue
 from .image_handle import ImageHandle
 
 if TYPE_CHECKING:
@@ -308,26 +308,26 @@ class BakeVisualizationRuntime:
 
     def clamp_ui_prop(
         self,
-        ui_prop: UBK_BakerParameterValue,
-        parameter_type: BakerParameterType,
+        ui_prop: UBK_ParameterValue,
+        parameter_type: ParameterType,
         min: float,
         max: float,
     ):
         match parameter_type:
-            case BakerParameterType.FLOAT:
+            case ParameterType.FLOAT:
                 ui_prop.float_value = ParameterApplier.clamp_value(
                     ui_prop.float_value,
                     min,
                     max,
                 )
-            case BakerParameterType.INT:
+            case ParameterType.INT:
                 ui_prop.int_value = ParameterApplier.clamp_value(
                     ui_prop.int_value,
                     min,
                     max,
                 )
 
-    def refresh_preview_parameters(self, ui_prop: UBK_BakerParameterValue | None = None, force: bool = False):
+    def refresh_preview_parameters(self, ui_prop: UBK_ParameterValue | None = None, force: bool = False):
         """Make sure the UI property element binds propely to the material, modifier or geometry node element defined in
         the custom baker definition asset"""
 

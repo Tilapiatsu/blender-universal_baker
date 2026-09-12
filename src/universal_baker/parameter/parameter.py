@@ -7,7 +7,7 @@ from typing import Any, TypeAlias
 ParameterSnapshot: TypeAlias = dict[str, Any]
 
 
-class BakerParameterType(str, Enum):
+class ParameterType(str, Enum):
     FLOAT = "FLOAT"
     INT = "INT"
     BOOL = "BOOL"
@@ -15,7 +15,7 @@ class BakerParameterType(str, Enum):
 
 
 @dataclass(frozen=True)
-class BakerParameterOption:
+class ParameterOption:
     """One option of an ENUM parameter."""
 
     identifier: str
@@ -24,7 +24,7 @@ class BakerParameterOption:
 
 
 @dataclass
-class BakerParameter:
+class Parameter:
     """
     Definition of a parameter exposed by a baker.
 
@@ -37,7 +37,7 @@ class BakerParameter:
     identifier: str
     name: str
 
-    parameter_type: BakerParameterType
+    parameter_type: ParameterType
 
     description: str = ""
 
@@ -53,7 +53,7 @@ class BakerParameter:
 
     category: str | None = None
 
-    options: tuple[BakerParameterOption, ...] = field(default_factory=tuple)
+    options: tuple[ParameterOption, ...] = field(default_factory=tuple)
 
     visible: bool = True
 
@@ -63,19 +63,19 @@ class BakerParameter:
     def validate_value(self, value: Any) -> bool:
         """Validate a value against this parameter definition."""
 
-        if self.parameter_type == BakerParameterType.FLOAT:
+        if self.parameter_type == ParameterType.FLOAT:
             if not isinstance(value, (float, int)):
                 return False
 
-        elif self.parameter_type == BakerParameterType.INT:
+        elif self.parameter_type == ParameterType.INT:
             if not isinstance(value, int):
                 return False
 
-        elif self.parameter_type == BakerParameterType.BOOL:
+        elif self.parameter_type == ParameterType.BOOL:
             if not isinstance(value, bool):
                 return False
 
-        elif self.parameter_type == BakerParameterType.ENUM:
+        elif self.parameter_type == ParameterType.ENUM:
             valid = {option.identifier for option in self.options}
 
             if value not in valid:
@@ -99,16 +99,16 @@ class BakerParameter:
         This is useful when values come from Blender properties.
         """
 
-        if self.parameter_type == BakerParameterType.FLOAT:
+        if self.parameter_type == ParameterType.FLOAT:
             return float(value)
 
-        if self.parameter_type == BakerParameterType.INT:
+        if self.parameter_type == ParameterType.INT:
             return int(value)
 
-        if self.parameter_type == BakerParameterType.BOOL:
+        if self.parameter_type == ParameterType.BOOL:
             return bool(value)
 
-        if self.parameter_type == BakerParameterType.ENUM:
+        if self.parameter_type == ParameterType.ENUM:
             return str(value)
 
         raise ValueError(f"Unsupported parameter type: {self.parameter_type}")

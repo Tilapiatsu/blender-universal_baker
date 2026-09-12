@@ -105,10 +105,8 @@ class UBK_UL_CageSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
             col.prop(visualization, "cage_edit", toggle=True)
 
         col = box.column(align=True)
-        if cage_settings.cage_object is None and cage_settings.cage_mode == "OBJECT":
-            col.enabled = False
-
-        col.prop(cage_settings, "cage_extrusion")
+        if cage_settings.cage_mode == "GENERATED":
+            col.prop(cage_settings, "cage_extrusion")
 
         col = box.column(align=True)
         col.prop(cage_settings, "max_ray_distance")

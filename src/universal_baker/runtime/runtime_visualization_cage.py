@@ -1,6 +1,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Any
+
+import bpy
+
+from ..constant import LOG
+from ..core.registry_definition import registry_definition
+from ..parameter.parameter_applier import ParameterApplier
+from ..parameter.parameter_context import ParameterContext
 
 
 @dataclass(slots=True)
@@ -54,6 +62,9 @@ class CageVisualizationRuntime:
     # Last evaluated dependency-graph update state.
     evaluated_cage_revision: int = 0
 
+    _preview_dirty: bool = False
+    _updating_parameters: bool = False
+
     def begin(
         self,
         *,
@@ -99,3 +110,54 @@ class CageVisualizationRuntime:
 
         self.gpu_dirty = False
         self.evaluated_cage_revision = 0
+
+    def request_preview_refresh(self):
+        self._preview_dirty = True
+
+    def refresh_preview_parameters(
+        self,
+        ui_props: Any | None = None,
+        force: bool = False,
+    ):
+        """Make sure the UI property element binds propely to the material, modifier or geometry node element defined in
+        the custom baker definition asset"""
+
+        LOG.debug("Refresging Parameter")
+        if not force:
+            if not self._preview_dirty:
+                return
+
+            if self._updating_parameters:
+                return
+
+        try:
+            self._updating_parameters = True
+
+            definition = registry_definition.get_local("CAGE")
+
+            if definition is None:
+                LOG.error("Definition not found")
+                return
+
+            if not self.active or self.target_uuid is None or self.cage_name is None:
+                return
+
+            from ..services.parameter_service import ParameterService
+
+            snapshot = ParameterService.snapshot_regular(definition, ui_props)
+
+            cage = bpy.data.objects.get(self.cage_name)
+
+            if cage is None:
+                LOG.error("Cage not found")
+
+            context = ParameterContext(
+                object=cage,
+                is_dragging=bpy.context.scene.ubk_project.visualization.is_dragging,
+            )
+
+            ParameterApplier.apply_regular(definition, snapshot, context)
+
+        finally:
+            self._updating_parameters = False
+            self._preview_dirty = False
