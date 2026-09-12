@@ -20,7 +20,6 @@ if TYPE_CHECKING:
     from ..packers.base import PackerBase
 
 
-# TODO: Need to refresh when changing active bake_group
 def update_visualization(self, context):
     with LOG.scope("Visualization"):
         from ..core.controller import BakeController
