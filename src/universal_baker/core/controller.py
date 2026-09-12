@@ -169,7 +169,7 @@ class BakeController:
 
         return None
 
-    # TODO:: Need to write get_source_object_from_uuid method
+    # TODO: Need to write get_source_object_from_uuid method
 
     @classmethod
     def get_target_object_from_uuid(cls, uuid: str) -> UBK_TargetObject | None:

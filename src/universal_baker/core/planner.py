@@ -128,10 +128,6 @@ class ExecutionPlanner:
                         ),
                     )
 
-                    # TODO: Need to evaluate target meshes if UvOwnershipTask task is needed, Maybe by creating a
-                    # dedicated task that could be reused accross task if needed, or by populating BakeContext, but I'm
-                    # not sure it will survive accross bake tasks. Maybe only the UvOwnershipTask needs it, and the
-                    # bakers can work without the evaluated one. Need also to evaluate the concequences on custom bakers
                     ownership_task = UvOwnershipTask(
                         uuid=str(uuid4()),
                         name="UVOwnership",
