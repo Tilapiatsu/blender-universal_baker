@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 import bpy
 
+from ..constant import LOG
 from ..properties.object import UBK_TargetObject
 from ..properties.settings_cage import UBK_CageSettings
 
@@ -27,14 +28,16 @@ class CageObjectService:
 
     @classmethod
     def acquire(cls, target: UBK_TargetObject) -> bpy.types.Object:
-        if target.settings_cage.cage_object_generated is not None:
-            return target.settings_cage.cage_object_generated
+        with LOG.scope(LOG_SCOPE):
+            if target.settings_cage.cage_object_generated is not None:
+                cls._ensure_modifiers(target.settings_cage.cage_object_generated, target.settings_cage)
+                return target.settings_cage.cage_object_generated
 
-        cage = cls._get_or_create_cage(target.object, target.settings_cage)
+            cage = cls._get_or_create_cage(target.object, target.settings_cage)
 
-        target.settings_cage.cage_object_generated = cage
+            target.settings_cage.cage_object_generated = cage
 
-        return cage
+            return cage
 
     @classmethod
     def _get_or_create_cage(cls, target: bpy.types.Object, cage_settings: UBK_CageSettings) -> bpy.types.Object:
@@ -53,7 +56,7 @@ class CageObjectService:
         return cage
 
     @classmethod
-    def _ensure_modifiers(cls, cage: bpy.types.Object, cage_settings: UBK_CageSettings) -> None:
+    def _ensure_modifiers(cls, cage: bpy.types.Object, cage_settings: UBK_CageSettings) -> bpy.types.Modifier:
         cls._ensure_vertex_group(cage)
 
         modifier = None
@@ -66,6 +69,13 @@ class CageObjectService:
         if modifier is None:
             modifier = cage.modifiers.new(type=cls.MODIFIER_TYPE, name=cls.MODIFIER_NAME)
 
+        cls._apply_modifier_parameters(modifier, cage_settings)
+
+        return modifier
+
+    @classmethod
+    def _apply_modifier_parameters(cls, modifier: bpy.types.Modifier, cage_settings: UBK_CageSettings) -> None:
+        LOG.debug("Apply modifier parameter")
         modifier.vertex_group = cls.VERTEX_GROUP_NAME
         modifier.direction = "NORMAL"
         modifier.strength = cage_settings.cage_extrusion

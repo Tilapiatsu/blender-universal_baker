@@ -165,6 +165,7 @@ class ProjectService:
 
         item = target_object.source_objects.add()
         item.object = obj
+        item.uuid = str(uuid4())
 
         target_object.active_source_object_index = len(target_object.source_objects) - 1
         return item

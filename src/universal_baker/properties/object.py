@@ -20,6 +20,8 @@ def get_uv_layer(self, context, edit_text):
 class UBK_SourceObject(PropertyGroup):
     """Source object property"""
 
+    uuid: StringProperty()
+
     enabled: BoolProperty(
         default=True,
     )

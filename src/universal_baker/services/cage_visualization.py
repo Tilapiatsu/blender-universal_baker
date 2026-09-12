@@ -19,6 +19,18 @@ LOG_SCOPE = "Cage Visualization"
 TEMP_COLLECTION_NAME = "UBK_CAGE_VISUALIZATION"
 
 
+def set_edit_cage(value: bool):
+    from ..core.controller import BakeController
+
+    project = BakeController.project(bpy.context)
+    if project is None:
+        return
+
+    visualization = project.visualization
+
+    visualization.cage_edit = value
+
+
 def update_edit_cage(self, context):
     from ..core.controller import BakeController
 
@@ -55,18 +67,16 @@ def update_active_target(self, context):
 
 
 def exit_weight_paint_callback(obj, mode):
-    if getattr(obj, mode) == "OBJECT":
-        CageVisualizationService.disable()
+    try:
+        safe_obj = getattr(obj, mode)
 
-        from ..core.controller import BakeController
+        if safe_obj == "OBJECT":
+            CageVisualizationService.disable()
 
-        project = BakeController.project(bpy.context)
-        if project is None:
-            return
+            set_edit_cage(False)
 
-        visualization = project.visualization
-
-        visualization.cage_edit = False
+    except ReferenceError:
+        return
 
 
 class CageVisualizationError(RuntimeError):
@@ -112,6 +122,8 @@ class CageVisualizationService:
     )
 
     LINE_WIDTH = 2.0
+
+    MSGBUS_OWNER = object()
 
     # ---------------------------------------------------------
     # Runtime
@@ -247,8 +259,6 @@ class CageVisualizationService:
         If the new target does not use a cage, visualization is
         disabled.
         """
-        # ISSUE: Need to fix refresh when swapping target_object : Object 'Suzanne_Eyes_LD_UBK_CAGE' cannot be selected because it is not in View Layer 'View Layer'!
-
         with LOG.scope("Refresh"):
             if not cls.is_active():
                 if target is None:
@@ -273,34 +283,17 @@ class CageVisualizationService:
 
             # Do not call disable() here because that would restore
             # the original scene visibility between targets.
-            cls._remove_draw_handler()
-            cls._release_gpu_resources()
 
-            cage = cls._acquire_cage(target)
+            # cls._remove_draw_handler()
+            # cls._release_gpu_resources()
 
-            if cage is None:
-                cls.disable()
-                return False
+            cls.disable()
+            set_edit_cage(False)
 
-            # Update runtime identity.
-            runtime.target_uuid = target.uuid
-            runtime.target_name = target.object.name
-            runtime.cage_name = cage.name
+            if target.settings_cage.cage_mode == "GENERATED":
+                cls.enable(target)
 
-            try:
-                cls._configure_visibility()
-                cls._create_gpu_resources(cage)
-                cls._register_draw_handler()
-                cls._enter_weight_paint(cage)
-
-                return True
-
-            except Exception:
-                raise CageVisualizationError("Failed to refresh Cage Visualization")
-
-                cls.disable()
-
-                return False
+            return True
 
     # ---------------------------------------------------------
     # Target
@@ -824,16 +817,19 @@ class CageVisualizationService:
 
             if not runtime.active:
                 LOG.warning("Runtime is not active")
+                cls._remove_depsgraph_handler()
                 return
 
             if runtime.cage_name is None:
                 LOG.warning("Cage is unknown")
+                cls._remove_depsgraph_handler()
                 return
 
             cage = bpy.data.objects.get(runtime.cage_name)
 
             if cage is None:
                 LOG.warning("Cage is None")
+                cls.disable()
                 return
 
             for update in depsgraph.updates:
@@ -841,16 +837,15 @@ class CageVisualizationService:
                     runtime.mark_gpu_dirty()
                     return
 
-    @staticmethod
-    def subscribe_to(obj, data_path, callback):
-
+    @classmethod
+    def subscribe_to(cls, obj, data_path, callback):
         # Get a rna subscription link from the object
         subscribe_to = obj.path_resolve(data_path, False)
 
         # Effectively subscribe to the rna path from the object
         bpy.msgbus.subscribe_rna(
             key=subscribe_to,
-            owner=obj,
+            owner=cls.MSGBUS_OWNER,
             args=(
                 obj,
                 data_path,
@@ -862,14 +857,17 @@ class CageVisualizationService:
     @classmethod
     def _register_depsgraph_handler(cls, cage: bpy.types.Object) -> None:
         if cls.depsgraph_update_post not in bpy.app.handlers.depsgraph_update_post:
-            LOG.debug("Registering depthgraph handler")
-            bpy.app.handlers.depsgraph_update_post.append(cls.depsgraph_update_post)
+            LOG.debug("Registering depsgraph handler")
             cls.subscribe_to(cage, "mode", exit_weight_paint_callback)
+            bpy.app.handlers.depsgraph_update_post.append(cls.depsgraph_update_post)
 
     @classmethod
     def _remove_depsgraph_handler(cls) -> None:
+        LOG.debug("Clear Message Bus on Cage")
+        bpy.msgbus.clear_by_owner(cls.MSGBUS_OWNER)
+
         handler = cls.depsgraph_update_post
 
         if handler in bpy.app.handlers.depsgraph_update_post:
-            LOG.debug("Unregistering depthgraph handler")
+            LOG.debug("Unregistering depsgraph handler")
             bpy.app.handlers.depsgraph_update_post.remove(handler)

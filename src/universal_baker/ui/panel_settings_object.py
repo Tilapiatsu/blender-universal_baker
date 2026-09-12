@@ -95,7 +95,6 @@ class UBK_UL_CageSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
 
         row = box.row(align=True)
         row.prop(cage_settings, "cage_mode", expand=1, text="Mode :")
-        box.separator()
 
         col = box.column(align=True)
         if cage_settings.cage_mode == "OBJECT":
