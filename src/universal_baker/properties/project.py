@@ -4,10 +4,17 @@ import bpy
 from bpy.props import BoolProperty, CollectionProperty, PointerProperty
 from bpy.types import PropertyGroup
 
+from ..services.bake_visualization import update_visualization
+from ..services.cage_visualization import update_active_target
 from .artifact import UBK_Artifact
 from .bake_group import UBK_BakeGroup
 from .settings_bake import UBK_BakeSettings
 from .visualization import UBK_Visualization
+
+
+def update_active_bake_group(self, context):
+    update_visualization(self, context)
+    update_active_target(self, context)
 
 
 class UBK_Project(PropertyGroup):
@@ -20,6 +27,7 @@ class UBK_Project(PropertyGroup):
     bake_groups: CollectionProperty(type=UBK_BakeGroup)
     active_bake_group_index: bpy.props.IntProperty(
         default=0,
+        update=update_active_bake_group,
     )
     settings_bake: PointerProperty(type=UBK_BakeSettings)
     artifacts: CollectionProperty(

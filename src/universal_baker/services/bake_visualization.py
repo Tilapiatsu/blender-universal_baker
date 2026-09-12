@@ -20,6 +20,7 @@ if TYPE_CHECKING:
     from ..packers.base import PackerBase
 
 
+# TODO: Need to refresh when changing active bake_group
 def update_visualization(self, context):
     with LOG.scope("Visualization"):
         from ..core.controller import BakeController
@@ -45,6 +46,13 @@ def update_visualization(self, context):
 
         if baker is None:
             LOG.warning("Baker not found")
+            BakeVisualizationService.disable()
+            viz.refreshing = True
+            viz.enabled_display = False
+            viz.enabled_preview = False
+            viz.mode = "NONE"
+            viz.refreshing = False
+
             return
 
         # possibly need to refresh only when preview or display is ON:
@@ -69,7 +77,6 @@ def update_visualization(self, context):
 
             if not BakeVisualizationService.refresh(data):
                 viz.enabled_display = False
-                viz.enabled_preview = False
                 viz.enabled_preview = False
                 viz.mode = "NONE"
 

@@ -51,6 +51,7 @@ def update_edit_cage(self, context):
         CageVisualizationService.disable()
 
 
+# TODO: Need to refresh when changing active bake_group
 def update_active_target(self, context):
     from ..core.controller import BakeController
 
@@ -61,6 +62,7 @@ def update_active_target(self, context):
 
     if target is None:
         CageVisualizationService.disable()
+        set_edit_cage(False)
         return
 
     CageVisualizationService.refresh(target)
