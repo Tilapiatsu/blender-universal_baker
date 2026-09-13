@@ -10,7 +10,7 @@ from ..constant import LOG
 @dataclass(slots=True)
 class CageSettings:
     cage_object_name: str | None
-    mode: str = "NONE"
+    mode: str = "GENERATED"
     cage_extrusion: float = 0.1
     max_ray_distance: float = 0.0
     extrusion_group_name: str = "UBK_EXTRUSION_GROUP"
@@ -18,7 +18,7 @@ class CageSettings:
 
     @property
     def cage_object(self) -> bpy.types.Object | None:
-        if self.cage_object_name is None or self.mode == "NONE":
+        if self.cage_object_name is None:
             return None
 
         cage_object = bpy.data.objects.get(self.cage_object_name)

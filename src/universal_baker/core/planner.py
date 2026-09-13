@@ -177,6 +177,7 @@ class ExecutionPlanner:
                             # TODO: Need to deeper test non UDIM cases
                             continue
 
+                        obj.ensure_cage_object()
                         uv_layout = UVLayout(
                             image_layout=ImageLayout.UDIM if group.detect_udim else ImageLayout.SINGLE,
                             udim_tiles=object_tiles[obj.object.name],

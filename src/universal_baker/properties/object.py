@@ -63,6 +63,14 @@ class UBK_TargetObject(PropertyGroup):
 
         return object_list
 
+    def ensure_cage_object(self) -> None:
+        if self.settings_cage.cage_mode == "OBJECT":
+            return
+
+        from ..services.cage_object import CageObjectService
+
+        self.settings_cage.cage_object_generated = CageObjectService.acquire(self)
+
 
 classes = (
     UBK_SourceObject,

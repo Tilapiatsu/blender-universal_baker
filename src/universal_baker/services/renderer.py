@@ -187,7 +187,7 @@ class RendererService:
         # Link Objets
         bake_collection.objects.link(ctx.target)
         cage_object = ctx.task.settings_cage.cage_object
-        if cage_object is not None and ctx.task.settings_cage.mode != "NONE":
+        if cage_object is not None:
             bake_collection.objects.link(cage_object)
             cage_object.hide_viewport = False
             cage_object.hide_render = True
