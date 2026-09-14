@@ -7,6 +7,7 @@ from ..resources.scene_view_transform import SceneViewTransform
 from ..runtime.context_bake import BakeContext
 from ..runtime.render_settings import RenderSettings
 from ..runtime.visualization_state import SceneVisualizationState
+from ..services.visibility_override import VisibilityOverride
 
 BAKE_COLLECTION_NAME = "UBK_BAKE_COLLECTION"
 
@@ -120,22 +121,27 @@ class RendererService:
     @classmethod
     def execute(cls, ctx: BakeContext):
         """Execute a single bake task."""
-        scene_state = cls.capture_state()
-        render_settings = cls.capture_render_settings(ctx)
-        # cls.clear_scene_objects_visibility(ctx)
-        bake_collection = cls.create_bake_collection(ctx)
+        evaluated_target = VisibilityOverride(ctx.target, False, False, False)
+        evaluated_cage = VisibilityOverride(ctx.task.settings_cage.cage_object, True, False, False)
 
-        try:
-            # cls.set_view_settings(ctx.task.producer.bake_view_transform)
-            cls.configure(ctx)
-            cls.prepare(ctx)
-            cls.bake(ctx)
-        finally:
-            cls.restore(ctx, scene_state, render_settings)
-            cls.clear_bake_collection(bake_collection, remove_col=True)
+        with evaluated_target as et, evaluated_cage as ec:
+            scene_state = cls.capture_state()
+            render_settings = cls.capture_render_settings(ctx)
+            # cls.clear_scene_objects_visibility(ctx)
+            bake_collection = cls.create_bake_collection(ctx, et, ec)
+
+            try:
+                # cls.set_view_settings(ctx.task.producer.bake_view_transform)
+                cls.configure(ctx, ec)
+                cls.prepare(ctx, et)
+                cls.bake(ctx)
+            finally:
+                cls.restore(ctx, scene_state, render_settings)
+                cls.clear_bake_collection(bake_collection, remove_col=True)
 
     @classmethod
-    def clear_scene_objects_visibility(cls, ctx: BakeContext):
+    def clear_scene_objects_visibility(cls, ctx: BakeContext, evaluated_target: bpy.types.Object):
+        """Hide every objects in the scene."""
         scene = bpy.context.scene
         for obj in scene.objects:
             if obj == ctx.target or obj in ctx.sources:
@@ -143,7 +149,11 @@ class RendererService:
             obj.hide_render = True
 
     @classmethod
-    def configure(cls, ctx: BakeContext):
+    def configure(
+        cls,
+        ctx: BakeContext,
+        evaluated_cage: bpy.types.Object | None,
+    ):
         """Configure Blender for the bake."""
         scene = ctx.session.context.scene
         settings_bake = ctx.settings.bake
@@ -169,13 +179,18 @@ class RendererService:
         bake.target = settings_bake.target
 
         bake.use_selected_to_active = ctx.task.selected_to_active
-        bake.use_cage = ctx.task.settings_cage.mode != "NONE"
-        bake.cage_object = ctx.task.settings_cage.cage_object
+        bake.use_cage = ctx.task.use_cage
+        bake.cage_object = evaluated_cage
         bake.cage_extrusion = ctx.task.settings_cage.cage_extrusion
         bake.max_ray_distance = ctx.task.settings_cage.max_ray_distance
 
     @classmethod
-    def create_bake_collection(cls, ctx: BakeContext) -> bpy.types.Collection:
+    def create_bake_collection(
+        cls,
+        ctx: BakeContext,
+        evaluated_target: bpy.types.Object,
+        evaluated_cage: bpy.types.Object | None,
+    ) -> bpy.types.Collection:
         bake_collection = bpy.data.collections.get(BAKE_COLLECTION_NAME)
 
         if bake_collection is None:
@@ -185,12 +200,13 @@ class RendererService:
         cls.clear_bake_collection(bake_collection)
 
         # Link Objets
-        bake_collection.objects.link(ctx.target)
-        cage_object = ctx.task.settings_cage.cage_object
-        if cage_object is not None:
-            bake_collection.objects.link(cage_object)
-            cage_object.hide_viewport = False
-            cage_object.hide_render = True
+        bake_collection.objects.link(evaluated_target)
+
+        if evaluated_cage is not None:
+            bake_collection.objects.link(evaluated_cage)
+            # Cage need to be invisible in render to be computed properly
+            evaluated_cage.hide_viewport = False
+            evaluated_cage.hide_render = True
 
         for o in ctx.sources:
             bake_collection.objects.link(o)
@@ -202,6 +218,17 @@ class RendererService:
         bake_collection.hide_render = False
         bake_collection.hide_select = False
         bake_collection.hide_viewport = False
+        # TODO: Need to properly deal with objects visibiliy : For targets and for cages.
+        # If cages are visible too early it can polute other target's bake -> Every Objects marked as a cage should
+        # never be set visible to render in the current bake_group
+        # If objects are not visible the bakes just failed or produce black image
+        # May need to create a task at the begining of the job to prepare the visibility of the scene and restore it at the end of
+        # the job
+        # May need to add option for target objects visibility to bake some target in isolation (for AO for exemple).
+        # Or maybe for the baker themself ?
+        ctx.target.hide_render = False
+        ctx.target.hide_select = False
+        ctx.target.hide_viewport = False
 
         layer_col = cls._get_layer_collection(bake_collection.name)
 
@@ -238,7 +265,7 @@ class RendererService:
     # -------------------------------------------------------------------------
 
     @classmethod
-    def prepare(cls, ctx: BakeContext):
+    def prepare(cls, ctx: BakeContext, evaluated_target: bpy.types.Object):
         """Prepare Blender selection."""
 
         bpy.ops.object.select_all(action="DESELECT")
@@ -246,18 +273,32 @@ class RendererService:
         for obj in ctx.sources:
             obj.select_set(True)
 
-        ctx.target.select_set(True)
+        evaluated_target.select_set(True)
 
-        ctx.session.context.view_layer.objects.active = ctx.target
+        ctx.session.context.view_layer.objects.active = evaluated_target
 
         if ctx.session.context.mode != "OBJECT":
             bpy.ops.object.mode_set(mode="OBJECT")
 
-        uv = ctx.target.data.uv_layers[ctx.task.uv_layer]
+        uv = evaluated_target.data.uv_layers[ctx.task.uv_layer]
 
-        ctx.target.data.uv_layers.active = uv
+        evaluated_target.data.uv_layers.active = uv
 
     @classmethod
     def bake(cls, ctx: BakeContext):
         """Execute Blender bake."""
+        message = f"Baking {ctx.target.name}"
+
+        if ctx.task.use_cage:
+            sources = [s.name for s in ctx.task.sources]
+
+            message += f" from sources {sources!r}"
+
+            cage = (
+                ctx.task.settings_cage.cage_object.name if ctx.task.settings_cage.cage_object is not None else "UNKNOW"
+            )
+            message += f" using Cage {cage}"
+
+        LOG.info(message)
+
         bpy.ops.object.bake(type=ctx.task.producer.blender_bake_type)

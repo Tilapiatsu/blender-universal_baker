@@ -20,6 +20,7 @@ class Task:
     name: str
     enabled: bool
     bake_group_uuid: str
+    execution_scope: str | None
 
     @property
     def bake_group(self) -> UBK_BakeGroup | None:

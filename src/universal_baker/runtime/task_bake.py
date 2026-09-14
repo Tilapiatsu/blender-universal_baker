@@ -86,6 +86,10 @@ class BakeTask(OutputTask):
 
         return file_output.absolute_path
 
+    @property
+    def use_cage(self) -> bool:
+        return len(self.sources) > 0
+
     def __repr__(self) -> str:
         result = f"BAKER_{self.baker_id} | {self.object_name:100} "
         return result

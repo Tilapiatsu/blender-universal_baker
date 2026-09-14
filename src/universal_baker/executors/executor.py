@@ -68,17 +68,22 @@ class Executor:
             if type(task).__name__ not in self.task_type_names:
                 continue
 
-            if self._cancel_requested:
-                session.cancel()
+            try:
+                if self._cancel_requested:
+                    session.cancel()
+                    break
+
+                executor = registry_executor[task.id]
+
+                with LOG.scope(task.execution_scope):
+                    executor.execute_task(
+                        session=session,
+                        execution=execution,
+                        task=task,
+                    )
+            except KeyboardInterrupt:
+                LOG.warning("Job interrupted")
                 break
-
-            executor = registry_executor[task.id]
-
-            executor.execute_task(
-                session=session,
-                execution=execution,
-                task=task,
-            )
 
         self.after_job(session)
 

@@ -63,8 +63,12 @@ class UBK_TargetObject(PropertyGroup):
 
         return object_list
 
+    @property
+    def have_source(self) -> bool:
+        return len(self.source_object_list) > 0
+
     def ensure_cage_object(self) -> None:
-        if self.settings_cage.cage_mode == "OBJECT":
+        if not self.have_source or self.settings_cage.cage_mode == "OBJECT":
             return
 
         from ..services.cage_object import CageObjectService
