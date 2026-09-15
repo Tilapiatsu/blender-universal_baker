@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import bpy
-
-from dataclasses import dataclass, field
 from collections.abc import Iterator
+from dataclasses import dataclass, field
+
+import bpy
 
 from ..constant import LOG
 from ..resources.image import ImageResource

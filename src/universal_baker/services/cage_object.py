@@ -5,7 +5,6 @@ from dataclasses import dataclass
 import bpy
 
 from ..constant import LOG
-from ..properties.object import UBK_TargetObject
 from ..properties.settings_cage import UBK_CageSettings
 
 LOG_SCOPE = "Cage Object"
@@ -27,19 +26,18 @@ class CageObjectService:
     VERTEX_GROUP_NAME = "UBK_DISPLACE"
 
     @classmethod
-    def acquire(cls, target: UBK_TargetObject) -> bpy.types.Object:
+    def acquire(cls, target: bpy.types.Object, settings_cage: UBK_CageSettings) -> bpy.types.Object:
         with LOG.scope(LOG_SCOPE):
-            LOG.debug(f"Acquire Generated Cage Object for {target.object.name}")
-            if target.settings_cage.cage_object_generated is not None:
-                cls._ensure_modifiers(target.settings_cage.cage_object_generated, target.settings_cage)
-                cls._ensure_cage_transform(target.settings_cage.cage_object_generated, target.object)
-                return target.settings_cage.cage_object_generated
+            LOG.debug(f"Acquire Generated Cage Object for {target.name}")
+            if settings_cage.cage_object_generated is not None and len(target.data.vertices) == len(
+                settings_cage.cage_object_generated.data.vertices
+            ):
+                cls._ensure_modifiers(settings_cage.cage_object_generated, settings_cage)
+                cls._ensure_cage_transform(settings_cage.cage_object_generated, target)
+                return settings_cage.cage_object_generated
 
-            cage = cls._get_or_create_cage(target.object, target.settings_cage)
-
-            cls._ensure_cage_transform(cage, target.object)
-
-            target.settings_cage.cage_object_generated = cage
+            cage = cls._get_or_create_cage(target, settings_cage)
+            cls._ensure_cage_transform(cage, target)
 
             return cage
 

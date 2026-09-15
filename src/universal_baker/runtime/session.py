@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 import bpy
 
+from ..services.scene_prepare import BakeObjects
 from .runtime import BakeRuntime
 from .runtime_manager import RuntimeManager
 
@@ -36,6 +37,7 @@ class ExecutionSession:
     context: bpy.types.Context
     runtime: BakeRuntime
     current_context: ExecutionContext | None = None
+    bake_objects: dict[str, BakeObjects] = field(default_factory=dict)
     cancelled: bool = False
     start_time: float = field(default_factory=perf_counter)
     current_task: Task | None = None

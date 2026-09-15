@@ -35,6 +35,7 @@ class BakeContext(ExecutionContext):
 
     _target: bpy.types.Object | None = None
     _sources: list[bpy.types.Object] | None = None
+    _cage: bpy.types.Object | None = None
 
     finished: bool = False
     success: bool = False
@@ -76,6 +77,17 @@ class BakeContext(ExecutionContext):
     @target.setter
     def target(self, value: bpy.types.Object) -> None:
         self._target = value
+
+    @property
+    def cage(self) -> bpy.types.Object | None:
+        if self._cage is None:
+            self._cage = self.task.settings_cage.cage_object
+
+            return self._cage
+
+    @cage.setter
+    def cage(self, value: bpy.types.Object | None) -> None:
+        self._cage = value
 
     @property
     def sources(self) -> list[bpy.types.Object]:

@@ -121,19 +121,19 @@ class RendererService:
     @classmethod
     def execute(cls, ctx: BakeContext):
         """Execute a single bake task."""
-        evaluated_target = VisibilityOverride(ctx.target, False, False, False)
-        evaluated_cage = VisibilityOverride(ctx.task.settings_cage.cage_object, True, False, False)
+        target_visibility = VisibilityOverride(ctx.target, False, False, False)
+        cage_visibility = VisibilityOverride(ctx.cage, True, False, False)
 
-        with evaluated_target as et, evaluated_cage as ec:
+        with target_visibility, cage_visibility:
             scene_state = cls.capture_state()
             render_settings = cls.capture_render_settings(ctx)
             # cls.clear_scene_objects_visibility(ctx)
-            bake_collection = cls.create_bake_collection(ctx, et, ec)
+            bake_collection = cls.create_bake_collection(ctx)
 
             try:
                 # cls.set_view_settings(ctx.task.producer.bake_view_transform)
-                cls.configure(ctx, ec)
-                cls.prepare(ctx, et)
+                cls.configure(ctx)
+                cls.prepare(ctx)
                 cls.bake(ctx)
             finally:
                 cls.restore(ctx, scene_state, render_settings)
@@ -152,7 +152,6 @@ class RendererService:
     def configure(
         cls,
         ctx: BakeContext,
-        evaluated_cage: bpy.types.Object | None,
     ):
         """Configure Blender for the bake."""
         scene = ctx.session.context.scene
@@ -180,7 +179,7 @@ class RendererService:
 
         bake.use_selected_to_active = ctx.task.selected_to_active
         bake.use_cage = ctx.task.use_cage
-        bake.cage_object = evaluated_cage
+        bake.cage_object = ctx.cage
         bake.cage_extrusion = ctx.task.settings_cage.cage_extrusion
         bake.max_ray_distance = ctx.task.settings_cage.max_ray_distance
 
@@ -188,8 +187,6 @@ class RendererService:
     def create_bake_collection(
         cls,
         ctx: BakeContext,
-        evaluated_target: bpy.types.Object,
-        evaluated_cage: bpy.types.Object | None,
     ) -> bpy.types.Collection:
         bake_collection = bpy.data.collections.get(BAKE_COLLECTION_NAME)
 
@@ -200,13 +197,13 @@ class RendererService:
         cls.clear_bake_collection(bake_collection)
 
         # Link Objets
-        bake_collection.objects.link(evaluated_target)
+        bake_collection.objects.link(ctx.target)
 
-        if evaluated_cage is not None:
-            bake_collection.objects.link(evaluated_cage)
+        if ctx.cage is not None:
+            bake_collection.objects.link(ctx.cage)
             # Cage need to be invisible in render to be computed properly
-            evaluated_cage.hide_viewport = False
-            evaluated_cage.hide_render = True
+            ctx.cage.hide_viewport = False
+            ctx.cage.hide_render = True
 
         for o in ctx.sources:
             bake_collection.objects.link(o)
@@ -265,7 +262,7 @@ class RendererService:
     # -------------------------------------------------------------------------
 
     @classmethod
-    def prepare(cls, ctx: BakeContext, evaluated_target: bpy.types.Object):
+    def prepare(cls, ctx: BakeContext):
         """Prepare Blender selection."""
 
         bpy.ops.object.select_all(action="DESELECT")
@@ -273,16 +270,16 @@ class RendererService:
         for obj in ctx.sources:
             obj.select_set(True)
 
-        evaluated_target.select_set(True)
+        ctx.target.select_set(True)
 
-        ctx.session.context.view_layer.objects.active = evaluated_target
+        ctx.session.context.view_layer.objects.active = ctx.target
 
         if ctx.session.context.mode != "OBJECT":
             bpy.ops.object.mode_set(mode="OBJECT")
 
-        uv = evaluated_target.data.uv_layers[ctx.task.uv_layer]
+        uv = ctx.target.data.uv_layers[ctx.task.uv_layer]
 
-        evaluated_target.data.uv_layers.active = uv
+        ctx.target.data.uv_layers.active = uv
 
     @classmethod
     def bake(cls, ctx: BakeContext):

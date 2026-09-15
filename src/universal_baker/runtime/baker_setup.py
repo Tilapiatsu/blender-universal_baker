@@ -17,6 +17,7 @@ class BakerSetup:
     """
 
     target: bpy.types.Object | None = None
+    cage: bpy.types.Object | None = None
     sources: list[bpy.types.Object] | None = None
     temporary_objects: list[bpy.types.Object] = field(default_factory=list)
     temporary_materials: list[bpy.types.Material] = field(default_factory=list)
@@ -81,6 +82,7 @@ class BakerSetup:
 @dataclass
 class BakerExecution:
     target: bpy.types.Object
+    cage: bpy.types.Object
     sources: list[bpy.types.Object] | None = None
     setup: BakerSetup | None = None
 

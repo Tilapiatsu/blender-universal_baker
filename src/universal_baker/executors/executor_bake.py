@@ -44,12 +44,16 @@ class BakeExecutorInternal(TaskExecutor):
                 baker=registry_baker[task.baker_id],
             )
 
-            baker_objects = BakerObjects(target=ctx.target, sources=task.sources)
+            bake_objects = session.bake_objects.get(task.target_object_uuid)
+
+            if bake_objects is None:
+                raise ValueError("Target object not found")
 
             # NOTE: Prepare the target in case of CustomBaker
-            with task.producer.prepare_execution(baker_objects) as bake_target:
+            with task.producer.prepare_execution(bake_objects) as bake_target:
                 ctx.target = bake_target.target
                 ctx.sources = bake_target.sources
+                ctx.cage = bake_target.cage
                 execution.execute(
                     session=session,
                     task=task,

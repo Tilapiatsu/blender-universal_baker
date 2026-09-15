@@ -55,7 +55,6 @@ class EvaluateMesh(Evaluate):
         return super().needs_evaluation
 
     def __enter__(self):
-
         if self.needs_evaluation:
             with LOG.scope(LOG_SCOPE):
                 LOG.debug(f"Evaluate Object {self.obj.name}")
@@ -99,7 +98,7 @@ class EvaluateObject(Evaluate):
     def needs_evaluation(self) -> bool:
         return super().needs_evaluation
 
-    def __enter__(self):
+    def evaluate(self) -> bpy.types.Object | None:
         if self.obj is None:
             return
 
@@ -121,9 +120,9 @@ class EvaluateObject(Evaluate):
 
         return self.evaluated_obj
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def clean(self) -> bool:
         if self.obj is None:
-            return
+            return False
 
         with LOG.scope(LOG_SCOPE):
             if self.evaluated_obj is not None and self.evaluated_obj != self.obj:
@@ -134,3 +133,13 @@ class EvaluateObject(Evaluate):
                 if self.evaluated_mesh is not None and self.evaluated_mesh.name in bpy.data.meshes:
                     LOG.debug(f"Clean Evaluated Mesh: {self.evaluated_mesh.name}")
                     bpy.data.meshes.remove(self.evaluated_mesh)
+
+                return True
+
+            return False
+
+    def __enter__(self) -> bpy.types.Object | None:
+        return self.evaluate()
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.clean()

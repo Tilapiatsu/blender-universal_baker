@@ -4,10 +4,10 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from uuid import uuid4
 
-
 from ..constant import LOG
-from .task import Task
 from ..logger.severity import Severity
+from ..services.scene_prepare import ScenePrepare
+from .task import Task
 
 
 class JobStatus(Enum):
@@ -24,6 +24,7 @@ class JobStatus(Enum):
 class Job:
     """A job contains every bake task."""
 
+    scene_prepare: ScenePrepare = ScenePrepare()
     tasks: list[Task] = field(default_factory=list)
     uid: str = field(default_factory=lambda: str(uuid4()))
     status: JobStatus = JobStatus.WAITING
@@ -45,6 +46,7 @@ class Job:
         LOG.info("Job Started")
 
     def notify_finished(self) -> None:
+        # TODO: Find a way to maske LOG.middleware.get() return object with typehint
         stats = LOG.middleware.get("StatisticsMiddleware")
         if stats is not None:
             if stats.warning > 0 or stats.error > 0:
@@ -107,7 +109,7 @@ Bake Job
 """
 
         for index, task in enumerate(self.tasks):
-            result += f"{index + 1:03d} | {str(task)}\n"
+            result += f"{index + 1:03d} | {task!s}\n"
 
         result += "-" * 100 + "\n"
 

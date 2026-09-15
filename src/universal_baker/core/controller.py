@@ -370,7 +370,7 @@ class BakeController:
 
         use_maskers = project.use_maskers
 
-        task_types = [EvaluateMeshesTask, BakeTask, AccumulateTask]
+        task_types = [BakeTask, AccumulateTask]
 
         if use_maskers:
             task_types += [UvOwnershipTask, MaskBufferTask]
@@ -412,7 +412,7 @@ class BakeController:
 
         use_maskers = project.use_maskers
 
-        task_types = [EvaluateMeshesTask, BakeTask, AccumulateTask, PackingTask]
+        task_types = [BakeTask, AccumulateTask, PackingTask]
 
         if use_maskers:
             task_types += [UvOwnershipTask, MaskBufferTask]
@@ -454,7 +454,7 @@ class BakeController:
 
         use_maskers = project.use_maskers
 
-        task_types = [EvaluateMeshesTask, BakeTask, AccumulateTask]
+        task_types = [BakeTask, AccumulateTask]
 
         if use_maskers:
             task_types += [UvOwnershipTask, MaskBufferTask]
@@ -532,7 +532,7 @@ class BakeController:
 
         use_maskers = project.use_maskers
 
-        task_types = [EvaluateMeshesTask, BakeTask, AccumulateTask, PackingTask]
+        task_types = [BakeTask, AccumulateTask, PackingTask]
 
         if use_maskers:
             task_types += [UvOwnershipTask, MaskBufferTask]

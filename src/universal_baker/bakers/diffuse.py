@@ -6,9 +6,9 @@ from ..core.registry_baker import registry_baker
 from ..enum.image_colorspace import ImageColorSpace
 from ..enum.view_transform import DisplayDevice, ViewTransform
 from ..parameter.metadata import BindingMetadata, ParameterMetadata
-from ..runtime.baker_objects import BakerObjects
 from ..runtime.color_management_info import ColorManagementInfo
 from ..runtime.context_bake import BakeContext
+from ..services.scene_prepare import BakeObjects
 from .base import BakerBase
 
 
@@ -110,9 +110,9 @@ class DiffuseBaker(BakerBase):
 
     def prepare_execution(
         self,
-        baker_objects: BakerObjects,
+        bake_objects: BakeObjects,
     ):
-        return super().prepare_execution(baker_objects)
+        return super().prepare_execution(bake_objects)
 
     def configure_preview_material(self, material): ...
 

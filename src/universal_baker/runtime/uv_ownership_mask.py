@@ -54,10 +54,10 @@ class UvOwnershipMask:
         uuid_to_label = {uuid: label for label, uuid in self.label_to_uuid.items()}
 
         try:
-            label = uuid_to_label[object_uuid]
             LOG.debug(
                 f"OWNERSHIP LOOKUP | uuid={object_uuid}, label={label}, known={object_uuid in self.uuid_to_label}",
             )
+            label = uuid_to_label[object_uuid]
         except KeyError:
             raise KeyError(f"Unknown ownership object: {object_uuid!r}")
 

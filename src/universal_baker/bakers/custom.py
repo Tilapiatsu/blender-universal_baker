@@ -7,10 +7,10 @@ from typing import TYPE_CHECKING, Any
 
 from ..core.registry_baker import registry_baker
 from ..resources.baker_asset import BakerAsset
-from ..runtime.baker_objects import BakerObjects
 from ..runtime.baker_setup import BakerExecution
 from ..runtime.context_bake import BakeContext
 from ..services.custom_baker_setup import CustomBakerSetupService
+from ..services.scene_prepare import BakeObjects
 from .base import BakerBase
 
 if TYPE_CHECKING:
@@ -36,7 +36,7 @@ class CustomBaker(BakerBase):
     @contextmanager
     def prepare_execution(
         self,
-        baker_objects: BakerObjects,
+        bake_objects: BakeObjects,
     ) -> Generator[BakerExecution, Any, Any]:
         # ISSUE:
         # Baking custom baker with cage and multiple source and target -> No active image found -> Look like a
@@ -47,17 +47,18 @@ class CustomBaker(BakerBase):
 
         hide_render = {}
 
-        for s in baker_objects.baker_material_objects:
+        for s in bake_objects.baker_material_objects:
             hide_render[s] = s.hide_render
 
         setup = CustomBakerSetupService.prepare(
             asset=asset,
-            baker_objects=baker_objects,
+            bake_objects=bake_objects,
         )
 
         try:
             yield BakerExecution(
                 target=setup.target,
+                cage=setup.cage,
                 sources=setup.sources,
                 setup=setup,
             )

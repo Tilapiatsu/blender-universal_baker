@@ -63,27 +63,32 @@ class Executor:
     def exectue_tasks(self, session: ExecutionSession, execution: ExecutionTarget, job: Job):
         self.before_job(session)
 
-        for task in job.tasks:
-            # Filtering tasks by types
-            if type(task).__name__ not in self.task_type_names:
-                continue
+        # NOTE: scene_prepare is evaluating the target_objects and generate the cages if necessary
+        # created objects will be removed at the end
+        with job.scene_prepare as bake_objects:
+            session.bake_objects = bake_objects
 
-            try:
-                if self._cancel_requested:
-                    session.cancel()
+            for task in job.tasks:
+                # Filtering tasks by types
+                if type(task).__name__ not in self.task_type_names:
+                    continue
+
+                try:
+                    if self._cancel_requested:
+                        session.cancel()
+                        break
+
+                    executor = registry_executor[task.id]
+
+                    with LOG.scope(task.execution_scope):
+                        executor.execute_task(
+                            session=session,
+                            execution=execution,
+                            task=task,
+                        )
+                except KeyboardInterrupt:
+                    LOG.warning("Job interrupted")
                     break
-
-                executor = registry_executor[task.id]
-
-                with LOG.scope(task.execution_scope):
-                    executor.execute_task(
-                        session=session,
-                        execution=execution,
-                        task=task,
-                    )
-            except KeyboardInterrupt:
-                LOG.warning("Job interrupted")
-                break
 
         self.after_job(session)
 

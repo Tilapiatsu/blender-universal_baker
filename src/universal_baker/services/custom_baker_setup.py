@@ -4,9 +4,9 @@ import bpy
 
 from ..constant import LOG
 from ..resources.baker_asset import BakerAsset
-from ..runtime.baker_objects import BakerObjects
 from ..runtime.baker_setup import BakerSetup
 from ..services.bake_material import BakeMaterialService
+from ..services.scene_prepare import BakeObjects
 from .baker_asset import BakerAssetService
 
 LOG_SCOPE = "Custom Baker Setup Service"
@@ -18,29 +18,31 @@ class CustomBakerSetupError(RuntimeError):
 
 class CustomBakerSetupService:
     @classmethod
-    def prepare(cls, asset: BakerAsset, baker_objects: BakerObjects) -> BakerSetup:
+    def prepare(cls, asset: BakerAsset, bake_objects: BakeObjects) -> BakerSetup:
         with LOG.scope(LOG_SCOPE):
             prototype = BakerAssetService.load_prototype(asset)
 
             setup = BakerSetup()
 
             try:
-                if baker_objects.selected_to_active:
+                if bake_objects.selected_to_active:
                     duplicated_sources = []
-                    for o in baker_objects.sources:
+                    for o in bake_objects.source_objects:
                         duplicated_source = cls._prepare_object(o, prototype, setup)
                         duplicated_sources.append(duplicated_source)
 
                     setup.sources = duplicated_sources
-                    setup.target = baker_objects.target
+                    setup.target = bake_objects.target_object
                     material_setup = BakeMaterialService.prepare(
-                        targets=[baker_objects.target], sources=duplicated_sources
+                        targets=[bake_objects.target_object], sources=duplicated_sources
                     )
                     setup.material_setup = material_setup
+                    setup.cage = bake_objects.cage_object
+
                 else:
-                    material_setup = BakeMaterialService.prepare(targets=[baker_objects.target], sources=[])
+                    material_setup = BakeMaterialService.prepare(targets=[bake_objects.target_object], sources=[])
                     setup.material_setup = material_setup
-                    setup.target = cls._prepare_object(baker_objects.target, prototype, setup)
+                    setup.target = cls._prepare_object(bake_objects.target_object, prototype, setup)
 
                 return setup
 
@@ -51,8 +53,7 @@ class CustomBakerSetupService:
                 # The prototype itself was appended from the
                 # external blend and must also be removed.
                 cls._remove_object(prototype)
-
-                raise
+                raise RuntimeError
 
     @classmethod
     def _prepare_object(

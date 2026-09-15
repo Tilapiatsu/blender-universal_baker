@@ -54,10 +54,6 @@ class UBK_TargetObject(PropertyGroup):
     settings_cage: PointerProperty(type=UBK_CageSettings)
 
     @property
-    def use_cage(self) -> bool:
-        return self.cage_mode != "NONE"
-
-    @property
     def source_object_list(self) -> list[bpy.types.Object]:
         object_list: list[bpy.types.Object] = [o.object for o in self.source_objects if o.enabled and o is not None]
 
@@ -73,7 +69,7 @@ class UBK_TargetObject(PropertyGroup):
 
         from ..services.cage_object import CageObjectService
 
-        self.settings_cage.cage_object_generated = CageObjectService.acquire(self)
+        self.settings_cage.cage_object_generated = CageObjectService.acquire(self.object, self.settings_cage)
 
 
 classes = (

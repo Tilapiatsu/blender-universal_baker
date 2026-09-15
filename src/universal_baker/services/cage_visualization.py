@@ -324,7 +324,7 @@ class CageVisualizationService:
 
         from .cage_object import CageObjectService
 
-        return CageObjectService.acquire(target)
+        return CageObjectService.acquire(target.object, target.settings_cage)
 
     # ---------------------------------------------------------
     # State Capture

@@ -15,7 +15,6 @@ from ..parameter.baker_custom.metadata_loader import MetadataLoader as metadata_
 from ..parameter.baker_local.metadata_loader import MetadataLoader as metadata_loader_local
 from ..parameter.parameter_applier import ParameterApplier
 from ..parameter.parameter_context import ParameterContext
-from ..runtime.baker_objects import BakerObjects
 from ..runtime.baker_setup import BakerExecution, BakerSetup
 from ..runtime.color_management_info import ColorManagementInfo
 from ..services.artifact_service import ArtifactService
@@ -24,6 +23,7 @@ from ..services.image_bake import ImageServiceBake
 from ..services.material import MaterialService
 from ..services.parameter_service import ParameterService
 from ..services.renderer import RendererService
+from ..services.scene_prepare import BakeObjects
 
 if TYPE_CHECKING:
     from ..parameter.metadata import ParameterMetadata
@@ -70,21 +70,25 @@ class BakerBase(ABC):
     @contextmanager
     def prepare_execution(
         self,
-        baker_objects: BakerObjects,
+        bake_objects: BakeObjects,
     ) -> Generator[BakerExecution, Any, Any]:
 
-        material_setup = BakeMaterialService.prepare(targets=[baker_objects.target], sources=baker_objects.sources)
+        material_setup = BakeMaterialService.prepare(
+            targets=[bake_objects.target_object],
+            sources=bake_objects.source_objects,
+        )
         baker_setup = BakerSetup(material_setup=material_setup)
 
         hide_render = {}
 
-        for s in baker_objects.baker_material_objects:
+        for s in bake_objects.baker_material_objects:
             hide_render[s] = s.hide_render
 
         try:
             yield BakerExecution(
-                target=baker_objects.target,
-                sources=baker_objects.sources,
+                target=bake_objects.target_object,
+                cage=bake_objects.cage_object,
+                sources=bake_objects.source_objects,
                 setup=baker_setup,
             )
 

@@ -9,7 +9,6 @@ from ..logger.event import ScopeState
 from ..logger_bake_middleware.bake_summary import BakeStatus, EventCategory
 from .context_ownership_mask import OwnershipMaskContext
 from .task import OutputTask
-from .task_evaluate_mesh import EvaluateMeshesTask
 from .uv_ownership_mask import UvOwnershipMask
 
 if TYPE_CHECKING:
@@ -24,16 +23,11 @@ class UvOwnership:
     def execute(self, ctx: OwnershipMaskContext) -> UvOwnershipMask:
         with LOG.scope(LOG_SCOPE):
             from ..services.uv_ownership import UvOwnershipService
-            # ISSUE:
-            # Baking with Multiple Targets and multiple sources and Cages, and only the first target of the list get a
-            # proper mask properly -> It look to be an issue with the ownership mapsk
-            # NOTE: Baking with multiple Targets, No Source Objects, without UDIM -> OK
-            # NOTE: Baking With multiple Targets, No Source Objects, With UDIM -> Only the first one have the proper mask
 
             LOG.info("Generting UV Ownership mask")
             result = UvOwnershipService.create_uv_ownership_mask(
                 ownership_datas=ctx.task.ownership_datas,
-                evaluate_meshes=ctx.task.evaluate_meshes_task.evaluate_meshes,
+                bake_objects=ctx.session.bake_objects,
                 resolution=(
                     ctx.task.output_context.output_settings.path.width,
                     ctx.task.output_context.output_settings.path.height,
@@ -74,7 +68,6 @@ class UvOwnershipTask(OutputTask):
 
     ownership_datas: OwnershipDatas
     ownership_mask: UvOwnershipMask
-    evaluate_meshes_task: EvaluateMeshesTask
     producer: UvOwnership = UvOwnership()
     id: str = "UV_OWNERSHIP"
 
