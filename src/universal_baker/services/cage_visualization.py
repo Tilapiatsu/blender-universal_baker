@@ -59,7 +59,7 @@ def update_active_target(self, context):
 
     target = BakeController.active_target_object(context)
 
-    if target is None:
+    if target is None or not target.have_source:
         CageVisualizationService.disable()
         set_edit_cage(False)
         return

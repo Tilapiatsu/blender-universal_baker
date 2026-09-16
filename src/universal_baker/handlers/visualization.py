@@ -7,10 +7,12 @@ from ..core.controller import BakeController
 from ..runtime.runtime_manager import RuntimeManager
 from ..services.project_synchronizer import ProjectSynchronizer
 
-suspension = None
+suspension_bake = None
+suspension_cage = None
 visualization_mode = "NONE"
 enabled_display = False
 enabled_preview = False
+enabled_cage = False
 
 
 @persistent
@@ -24,15 +26,18 @@ def ubk_save_pre(_dummy):
     if runtime is None:
         return
 
-    global suspension
-    suspension = runtime.bake_visualization.do_suspend()
+    global suspension_bake
+    suspension_bake = runtime.bake_visualization.do_suspend()
 
-    if suspension.was_enabled:
+    global suspension_cage
+    suspension_cage = runtime.cage_visualization.do_suspend()
+
+    project = BakeController.project(bpy.context)
+    if suspension_bake.was_enabled:
         global visualization_mode
         global enabled_display
         global enabled_preview
 
-        project = BakeController.project(bpy.context)
         visualization_mode = project.visualization.mode
         enabled_display = project.visualization.enabled_display
         enabled_preview = project.visualization.enabled_preview
@@ -41,28 +46,41 @@ def ubk_save_pre(_dummy):
         project.visualization.enabled_display = False
         project.visualization.enabled_preview = False
 
+    if suspension_cage.was_enabled:
+        global enabled_cage
+        enabled_cage = project.visualization.cage_edit
+
+        project.visualization.cage_edit = False
+
 
 @persistent
 def ubk_save_post(_dummy):
-    global suspension
+    project = BakeController.project(bpy.context)
 
-    if suspension is None:
-        return
+    global suspension_bake
 
-    suspension.restore()
+    if suspension_bake is not None:
+        suspension_bake.restore()
 
-    if suspension.was_enabled:
-        global visualization_mode
-        global enabled_display
-        global enabled_preview
+        if suspension_bake.was_enabled:
+            global visualization_mode
+            global enabled_display
+            global enabled_preview
 
-        project = BakeController.project(bpy.context)
+            project.visualization.refreshing = True
+            project.visualization.mode = visualization_mode
+            project.visualization.enabled_display = enabled_display
+            project.visualization.enabled_preview = enabled_preview
+            project.visualization.refreshing = False
 
-        project.visualization.refreshing = True
-        project.visualization.mode = visualization_mode
-        project.visualization.enabled_display = enabled_display
-        project.visualization.enabled_preview = enabled_preview
-        project.visualization.refreshing = False
+    if suspension_cage is not None:
+        suspension_cage.restore()
+
+        if suspension_cage.was_enabled:
+            global enabled_cage
+            project.visualization.refreshing = True
+            project.visualization.cage_edit = True
+            project.visualization.refreshing = False
 
 
 def register():
