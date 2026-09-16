@@ -9,11 +9,11 @@
   - [ ] option to load collection instead of objects -> updating objects in the collection change the setup ?
   - [ ] operator to match source and target by binding box
   - [X] Bake from source with Cage
-  - [ ] Cage Automatic Creation
+  - [X] Cage Automatic Creation
   - [ ] Allow user to choose the color of the cage in the preferences
-  - [ ] Export automatic cage ?
-  - [ ] Cage Shader
-  - [ ] Cage distance painting
+  - [ ] Export generated cage ?
+  - [X] Cage Shader
+  - [X] Cage distance painting
   - [ ] Investigate live preview of bake with Ray Portal shader : It could help display the projection error or missed rays
 - [ ] add ability to load a scene as background before baker ( usefull for AO )
 - [ ] add feature to apply background color per baker
