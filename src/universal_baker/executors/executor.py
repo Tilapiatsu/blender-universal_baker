@@ -10,6 +10,7 @@ from ..core.registry_executor import registry_executor
 from ..enum.execution import Execution
 from ..runtime.context import ExecutionContext
 from ..runtime.job import Job
+from ..runtime.runtime_manager import RuntimeManager
 from ..runtime.session import ExecutionSession
 from ..runtime.task_bake import BakeTask
 from .execution_target import ExecutionTarget
@@ -50,7 +51,9 @@ class Executor:
 
             try:
                 if BakeTask in self.task_types:
-                    with session.runtime.bake_visualization.suspend():
+                    cage_visualization = RuntimeManager.current(context).cage_visualization
+
+                    with session.runtime.bake_visualization.suspend(), cage_visualization.suspend():
                         self.exectue_tasks(session, execution, job)
                 else:
                     self.exectue_tasks(session, execution, job)

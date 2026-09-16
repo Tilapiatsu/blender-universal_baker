@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -161,3 +162,70 @@ class CageVisualizationRuntime:
         finally:
             self._updating_parameters = False
             self._preview_dirty = False
+
+    def disable(self) -> None:
+        from ..services.cage_visualization import CageVisualizationService
+
+        CageVisualizationService.disable()
+
+        self.active = False
+
+    @contextmanager
+    def suspend(self):
+        suspension = VisualizationSuspension(self)
+
+        suspension.capture()
+
+        try:
+            if suspension.was_enabled:
+                LOG.debug("Suspend Visualization")
+                self.disable()
+
+            yield
+
+        finally:
+            suspension.restore()
+
+    def do_suspend(self) -> VisualizationSuspension:
+        suspension = VisualizationSuspension(self)
+
+        suspension.capture()
+
+        if suspension.was_enabled:
+            LOG.debug("Suspend Visualization")
+            self.disable()
+
+        return suspension
+
+
+class VisualizationSuspension:
+    def __init__(
+        self,
+        runtime: CageVisualizationRuntime,
+    ):
+        self.runtime = runtime
+        self.was_enabled = False
+        self.target_uuid: str | None = None
+        self.target_name: str | None = None
+        self.cage_name: str | None = None
+
+    def capture(self):
+        self.was_enabled = self.runtime.active
+        self.target_uuid = self.runtime.target_name
+        self.cage_name = self.runtime.cage_name
+
+    def restore(self):
+        if not self.was_enabled or self.target_uuid is None:
+            return
+
+        LOG.debug("Restore Visualization")
+        from ..core.controller import BakeController
+        from ..services.cage_visualization import CageVisualizationService
+
+        target_object = BakeController.get_target_object_from_uuid(self.target_uuid)
+
+        if target_object is None:
+            LOG.warning(f"Target Object not found {self.target_name} , Restore Visualization Cancelled")
+            return
+
+        CageVisualizationService.enable(target_object)

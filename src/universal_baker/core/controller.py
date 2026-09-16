@@ -13,7 +13,6 @@ from ..runtime.job import Job
 from ..runtime.runtime_manager import RuntimeManager
 from ..runtime.task_accumulate import AccumulateTask
 from ..runtime.task_bake import BakeTask
-from ..runtime.task_evaluate_mesh import EvaluateMeshesTask
 from ..runtime.task_mask_buffer import MaskBufferTask
 from ..runtime.task_ownership_mask import UvOwnershipTask
 from ..runtime.task_pack import PackingTask

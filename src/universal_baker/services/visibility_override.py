@@ -12,6 +12,9 @@ class VisibilityState:
     hide_select: bool
 
 
+# TODO: Need to support ray visibility : When baking Diffuse for exemple, I want to be able to disable camera ray, but keep indirect and shadow ray for all sources. Its important to make interaction beetween target_objects believable
+
+
 class VisibilityOverride:
     def __init__(
         self,

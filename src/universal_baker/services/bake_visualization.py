@@ -46,11 +46,6 @@ def update_visualization(self, context):
         if baker is None:
             LOG.warning("Baker not found")
             BakeVisualizationService.disable()
-            viz.refreshing = True
-            viz.enabled_display = False
-            viz.enabled_preview = False
-            viz.mode = "NONE"
-            viz.refreshing = False
 
             return
 
@@ -240,6 +235,15 @@ class BakeVisualizationService:
 
         finally:
             cls._runtime.clear()
+            from ..core.controller import BakeController
+
+            project = BakeController.project(bpy.context)
+            viz = project.visualization
+            viz.refreshing = True
+            viz.enabled_display = False
+            viz.enabled_preview = False
+            viz.mode = "NONE"
+            viz.refreshing = False
 
     @classmethod
     def _revert_image_colorspace(cls):
@@ -303,6 +307,10 @@ class BakeVisualizationService:
 
         if cls._runtime.active:
             cls.disable()
+
+        from ..services.cage_visualization import CageVisualizationService
+
+        CageVisualizationService.disable()
 
         cls._runtime.begin(
             mode=data.mode,

@@ -5,7 +5,6 @@ from ..core.registry_baker import registry_baker
 from ..core.registry_executor import registry_executor
 from ..logger.event import ScopeState
 from ..logger_bake_middleware.bake_summary import EventCategory
-from ..runtime.baker_objects import BakerObjects
 from ..runtime.context import ExecutionContext
 from ..runtime.context_bake import BakeContext
 from ..runtime.session import ExecutionSession

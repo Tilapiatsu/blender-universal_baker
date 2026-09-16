@@ -117,11 +117,12 @@ class ExecutionSession:
             if obj.name in bpy.data.objects:
                 obj.select_set(True)
 
-        context.view_layer.objects.active = self.original_active_object
-
         try:
-            if self.original_active_object is not None and context.mode != self.original_mode:
-                bpy.ops.object.mode_set(mode=self.original_mode)
+            if self.original_active_object is not None:
+                context.view_layer.objects.active = self.original_active_object
+
+                if context.mode != self.original_mode:
+                    bpy.ops.object.mode_set(mode=self.original_mode)
 
         except RuntimeError:
             # Some modes cannot always be restored (e.g. Sculpt after deletion).

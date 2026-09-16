@@ -176,6 +176,9 @@ class CageVisualizationService:
                 cls.disable()
 
             LOG.debug(f"Enabling Cage Visualization | {target.object.name}")
+            from ..services.bake_visualization import BakeVisualizationService
+
+            BakeVisualizationService.disable()
 
             runtime = cls._ensure_runtime()
 
@@ -245,6 +248,13 @@ class CageVisualizationService:
 
             finally:
                 runtime.clear()
+                from ..core.controller import BakeController
+
+                project = BakeController.project(bpy.context)
+
+                visualization = project.visualization
+
+                visualization.cage_edit = False
 
     # ---------------------------------------------------------
     # Refresh
