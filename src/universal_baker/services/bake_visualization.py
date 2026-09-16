@@ -164,7 +164,7 @@ class BakeVisualizationService:
     def enable_preview(cls, data: PreviewData):
         cls._ensure_runtime()
         if cls.is_active():
-            cls.disable()
+            cls.disable(set_display_property=False)
 
         cls._begin(data)
 
@@ -209,7 +209,7 @@ class BakeVisualizationService:
         cls._ensure_runtime()
 
         if cls.is_active():
-            cls.disable()
+            cls.disable(set_display_property=False)
 
         cls._begin(data)
 
@@ -220,7 +220,7 @@ class BakeVisualizationService:
     # ---------------------------------------------------------
 
     @classmethod
-    def disable(cls):
+    def disable(cls, set_display_property: bool = True):
 
         if not cls.is_active() or cls._runtime is None:
             return
@@ -235,15 +235,16 @@ class BakeVisualizationService:
 
         finally:
             cls._runtime.clear()
-            from ..core.controller import BakeController
+            if set_display_property:
+                from ..core.controller import BakeController
 
-            project = BakeController.project(bpy.context)
-            viz = project.visualization
-            viz.refreshing = True
-            viz.enabled_display = False
-            viz.enabled_preview = False
-            viz.mode = "NONE"
-            viz.refreshing = False
+                project = BakeController.project(bpy.context)
+                viz = project.visualization
+                viz.refreshing = True
+                viz.enabled_display = False
+                viz.enabled_preview = False
+                viz.mode = "NONE"
+                viz.refreshing = False
 
     @classmethod
     def _revert_image_colorspace(cls):
@@ -276,7 +277,7 @@ class BakeVisualizationService:
                 if not isinstance(data, PreviewData):
                     return False
 
-                cls.disable()
+                cls.disable(set_display_property=False)
 
                 cls.enable_preview(data)
 
@@ -284,7 +285,7 @@ class BakeVisualizationService:
                 if not isinstance(data, DisplayData):
                     return False
 
-                cls.disable()
+                cls.disable(set_display_property=False)
 
                 if cls._get_image_handle(data.bake_group_uuid, data.accumulated_uuid) is None:
                     return False
@@ -306,7 +307,7 @@ class BakeVisualizationService:
         # restore it first.
 
         if cls._runtime.active:
-            cls.disable()
+            cls.disable(set_display_property=False)
 
         from ..services.cage_visualization import CageVisualizationService
 

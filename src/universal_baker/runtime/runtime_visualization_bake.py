@@ -447,7 +447,11 @@ class VisualizationSuspension:
             return
 
         LOG.debug("Restore Visualization")
+        from ..core.controller import BakeController
         from ..services.bake_visualization import BakeVisualizationService, DisplayData, PreviewData
+
+        project = BakeController.project(bpy.context)
+        viz = project.visualization
 
         match self.mode:
             case BakeVisualizationMode.DISPLAY:
@@ -457,9 +461,20 @@ class VisualizationSuspension:
                 data = DisplayData(self.bake_group_uuid, self.accumulated_uuid, self.objects, self.active_producer)
                 BakeVisualizationService.enable_display(data)
 
+                viz.refreshing = True
+                viz.enabled_display = True
+                viz.enabled_preview = False
+                viz.mode = "DISPLAY"
+                viz.refreshing = False
+
             case BakeVisualizationMode.PREVIEW:
                 if self.active_producer is None or self.bake_group_uuid is None or self.producer_uuid is None:
                     return
 
                 data = PreviewData(self.active_producer, self.bake_group_uuid, self.producer_uuid)
                 BakeVisualizationService.enable_preview(data)
+                viz.refreshing = True
+                viz.enabled_display = False
+                viz.enabled_preview = True
+                viz.mode = "PREVIEW"
+                viz.refreshing = False
