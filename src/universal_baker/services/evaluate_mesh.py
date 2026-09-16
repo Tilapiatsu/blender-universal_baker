@@ -126,8 +126,8 @@ class EvaluateObject(Evaluate):
 
         with LOG.scope(LOG_SCOPE):
             if self.evaluated_obj is not None and self.evaluated_obj != self.obj:
-                LOG.debug(f"Clean Evaluated Object : {self.evaluated_obj.name}")
                 if self.evaluated_obj.name in bpy.data.objects:
+                    LOG.debug(f"Clean Evaluated Object : {self.evaluated_obj.name}")
                     bpy.data.objects.remove(self.evaluated_obj)
 
                 if self.evaluated_mesh is not None and self.evaluated_mesh.name in bpy.data.meshes:

@@ -55,7 +55,10 @@ class ScenePrepare:
 
             evaluated_obj = evaluate_obj.evaluate()
 
-            cage = CageObjectService.acquire(evaluated_obj, obj.settings_cage)
+            if obj.have_source:
+                cage = CageObjectService.acquire(evaluated_obj, obj.settings_cage)
+            else:
+                cage = None
 
             bake_object = BakeObjects(
                 target_object=evaluated_obj,
@@ -73,11 +76,13 @@ class ScenePrepare:
             if o.clean():
                 bake_object = self.bake_objects.get(uuid)
                 if bake_object is None:
+                    LOG.warning("BakeObject not found")
                     continue
 
                 cage = bake_object.cage_object
 
                 if cage is None:
+                    LOG.warning("Cage object not found")
                     continue
 
                 LOG.debug(f"Clean Cage Object {cage.name}")

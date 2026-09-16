@@ -42,7 +42,7 @@ class ExecutionSession:
     start_time: float = field(default_factory=perf_counter)
     current_task: Task | None = None
     original_mode: str = "OBJECT"
-    original_active_object: bpy.types.Object | None = None
+    original_active_object_name: str | None = None
     original_selected_objects: list[bpy.types.Object] = field(default_factory=list)
 
     original_engine: str = ""
@@ -77,7 +77,9 @@ class ExecutionSession:
 
     def capture_scene(self, context: bpy.types.Context) -> None:
         self.original_mode = context.mode
-        self.original_active_object = context.view_layer.objects.active
+        self.original_active_object_name = (
+            context.view_layer.objects.active.name if context.view_layer.objects.active is not None else None
+        )
         self.original_selected_objects = list(context.selected_objects)
 
     def capture_render_settings(self, context: bpy.types.Context) -> None:
@@ -118,8 +120,10 @@ class ExecutionSession:
                 obj.select_set(True)
 
         try:
-            if self.original_active_object is not None:
-                context.view_layer.objects.active = self.original_active_object
+            if self.original_active_object_name is not None:
+                active_object = bpy.data.objects.get(self.original_active_object_name)
+
+                context.view_layer.objects.active = active_object
 
                 if context.mode != self.original_mode:
                     bpy.ops.object.mode_set(mode=self.original_mode)

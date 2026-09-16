@@ -96,6 +96,10 @@ class UBK_CageSettings(PropertyGroup):
             case "GENERATED":
                 return self.cage_object_generated
 
+    @property
+    def is_cage_generated(self) -> bool:
+        return self.cage_mode == "GENERATED"
+
 
 classes = (UBK_CageSettings,)
 

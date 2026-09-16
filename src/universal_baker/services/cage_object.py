@@ -28,16 +28,24 @@ class CageObjectService:
     @classmethod
     def acquire(cls, target: bpy.types.Object, settings_cage: UBK_CageSettings) -> bpy.types.Object:
         with LOG.scope(LOG_SCOPE):
-            LOG.debug(f"Acquire Generated Cage Object for {target.name}")
-            if settings_cage.cage_object_generated is not None and len(target.data.vertices) == len(
+            LOG.debug(f"Acquire Cage Object for {target.name}")
+            if not settings_cage.is_cage_generated and settings_cage.cage_object is not None:
+                LOG.debug("Retrieve Custom Cage")
+                return settings_cage.cage_object
+
+            elif settings_cage.cage_object_generated is not None and len(target.data.vertices) == len(
                 settings_cage.cage_object_generated.data.vertices
             ):
+                LOG.debug("Retrieve Generated Cage")
                 cls._ensure_modifiers(settings_cage.cage_object_generated, settings_cage)
                 cls._ensure_cage_transform(settings_cage.cage_object_generated, target)
                 return settings_cage.cage_object_generated
 
+            LOG.debug("Generated new Cage")
             cage = cls._get_or_create_cage(target, settings_cage)
             cls._ensure_cage_transform(cage, target)
+
+            settings_cage.cage_object_generated = cage
 
             return cage
 

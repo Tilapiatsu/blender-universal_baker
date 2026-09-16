@@ -52,8 +52,9 @@ class Executor:
             try:
                 if BakeTask in self.task_types:
                     cage_visualization = RuntimeManager.current(context).cage_visualization
+                    cage_visualization.do_suspend()
 
-                    with session.runtime.bake_visualization.suspend(), cage_visualization.suspend():
+                    with session.runtime.bake_visualization.suspend():
                         self.exectue_tasks(session, execution, job)
                 else:
                     self.exectue_tasks(session, execution, job)

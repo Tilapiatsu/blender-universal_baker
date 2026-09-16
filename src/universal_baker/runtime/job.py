@@ -24,13 +24,22 @@ class JobStatus(Enum):
 class Job:
     """A job contains every bake task."""
 
-    scene_prepare: ScenePrepare = ScenePrepare()
-    tasks: list[Task] = field(default_factory=list)
-    uid: str = field(default_factory=lambda: str(uuid4()))
-    status: JobStatus = JobStatus.WAITING
-    current_task: int = 0
-    progress: float = 0.0
-    errors: list[str] = field(default_factory=list)
+    scene_prepare: ScenePrepare
+    tasks: list[Task]
+    uuid: str
+    status: JobStatus
+    current_task: int
+    progress: float
+    errors: list[str]
+
+    def __init__(self) -> None:
+        self.scene_prepare = ScenePrepare()
+        self.tasks = []
+        self.uuid = str(uuid4())
+        self.status = JobStatus.WAITING
+        self.current_task = 0
+        self.progress = 0.0
+        self.errors = []
 
     @property
     def total_tasks(self) -> int:

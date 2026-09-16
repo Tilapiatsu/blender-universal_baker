@@ -211,7 +211,7 @@ class VisualizationSuspension:
 
     def capture(self):
         self.was_enabled = self.runtime.active
-        self.target_uuid = self.runtime.target_name
+        self.target_uuid = self.runtime.target_uuid
         self.cage_name = self.runtime.cage_name
 
     def restore(self):
