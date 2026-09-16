@@ -14,6 +14,7 @@ from ..services.evaluate_mesh import EvaluateObject
 class BakeObjects:
     target_object: bpy.types.Object
     cage_object: bpy.types.Object | None
+    is_cage_generated: bool = False
     source_objects: list[bpy.types.Object] = field(default_factory=list)
 
     @property
@@ -63,6 +64,7 @@ class ScenePrepare:
             bake_object = BakeObjects(
                 target_object=evaluated_obj,
                 cage_object=cage,
+                is_cage_generated=obj.settings_cage.is_cage_generated,
                 source_objects=source_objects,
             )
 
@@ -77,6 +79,9 @@ class ScenePrepare:
                 bake_object = self.bake_objects.get(uuid)
                 if bake_object is None:
                     LOG.warning("BakeObject not found")
+                    continue
+
+                if not bake_object.is_cage_generated:
                     continue
 
                 cage = bake_object.cage_object
