@@ -291,9 +291,7 @@ class RendererService:
 
             message += f" from sources {sources!r}"
 
-            cage = (
-                ctx.task.settings_cage.cage_object.name if ctx.task.settings_cage.cage_object is not None else "UNKNOW"
-            )
+            cage = ctx.cage.name if ctx.cage is not None else "UNKNOW"
             message += f" using Cage {cage}"
 
         LOG.info(message)
