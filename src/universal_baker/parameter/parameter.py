@@ -12,6 +12,8 @@ class ParameterType(str, Enum):
     INT = "INT"
     BOOL = "BOOL"
     ENUM = "ENUM"
+    OBJ = "OBJ"
+    VECTOR = "VECTOR"
 
 
 @dataclass(frozen=True)
