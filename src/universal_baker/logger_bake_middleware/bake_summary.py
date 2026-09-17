@@ -12,6 +12,7 @@ class BakeStatus(Enum):
 
 
 class EventCategory(StrEnum):
+    INIT = "INIT"
     EVALUATE_MESHES = "EVALUATE_MESHES"
     OWNERSHIP = "OWNERSHIP"
     BAKE = "BAKE"

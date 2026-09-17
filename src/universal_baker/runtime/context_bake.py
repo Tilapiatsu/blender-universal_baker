@@ -83,7 +83,7 @@ class BakeContext(ExecutionContext):
         if self._cage is None:
             self._cage = self.task.settings_cage.cage_object
 
-            return self._cage
+        return self._cage
 
     @cage.setter
     def cage(self, value: bpy.types.Object | None) -> None:

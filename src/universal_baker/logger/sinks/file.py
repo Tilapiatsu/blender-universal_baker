@@ -94,9 +94,9 @@ class FileSink(BaseSink):
 
         severity = event.severity.name
         if len(severity) == 4:
-            severity = f" {severity}  "
+            severity = f" {severity}   "
         elif len(severity) == 5:
-            severity = f" {severity} "
+            severity = f"{severity}  "
 
         return f"{timestamp} [{severity}]{category}{scope} {event.message}"
 

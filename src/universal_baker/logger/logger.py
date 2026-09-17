@@ -52,5 +52,8 @@ class Logger:
     def error(self, message: str, **kwargs) -> None:
         self.log(Severity.ERROR, message, **kwargs)
 
+    def critical(self, message: str, **kwargs) -> None:
+        self.log(Severity.CRITICAL, message, **kwargs)
+
     def separator(self, severity: Severity, **kwargs) -> None:
         self.log(severity, "=" * 100, **kwargs)

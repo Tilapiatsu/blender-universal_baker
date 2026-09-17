@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import traceback
 from collections.abc import Callable
+from time import perf_counter
 
 import bpy
 
@@ -35,6 +37,7 @@ class Executor:
         self._cancel_requested = False
         self.execution = execution
         self.task_types = task_types
+        self.start: float
 
     def execute(self, context: bpy.types.Context, job: Job) -> ExecutionSession:
         """
@@ -46,6 +49,7 @@ class Executor:
             session = ExecutionSession(context=context, job=job)
             session.initialize(context)
             job.notify_started()
+            self.start = perf_counter()
 
             execution = registry_execution[self.execution]
 
@@ -69,32 +73,40 @@ class Executor:
 
         # NOTE: scene_prepare is evaluating the target_objects and generate the cages if necessary
         # created objects will be removed at the end
-        with job.scene_prepare as bake_objects:
-            session.bake_objects = bake_objects
+        try:
+            with job.scene_prepare as bake_objects:
+                session.bake_objects = bake_objects
 
-            for task in job.tasks:
-                # Filtering tasks by types
-                if type(task).__name__ not in self.task_type_names:
-                    continue
+                for task in job.tasks:
+                    # Filtering tasks by types
+                    if type(task).__name__ not in self.task_type_names:
+                        continue
 
-                try:
-                    if self._cancel_requested:
-                        session.cancel()
+                    try:
+                        if self._cancel_requested:
+                            session.cancel()
+                            break
+
+                        executor = registry_executor[task.id]
+
+                        with LOG.scope(task.execution_scope):
+                            executor.execute_task(
+                                session=session,
+                                execution=execution,
+                                task=task,
+                            )
+                    except KeyboardInterrupt:
+                        LOG.warning("Job interrupted")
                         break
 
-                    executor = registry_executor[task.id]
+            self.after_job(session)
 
-                    with LOG.scope(task.execution_scope):
-                        executor.execute_task(
-                            session=session,
-                            execution=execution,
-                            task=task,
-                        )
-                except KeyboardInterrupt:
-                    LOG.warning("Job interrupted")
-                    break
-
-        self.after_job(session)
+        except Exception as exc:
+            traceback.print_exc()
+            job.notify_failed(
+                perf_counter() - self.start,
+                str(exc),
+            )
 
     def finish(self, session: ExecutionSession, context: bpy.types.Context, job: Job):
         session.cleanup()

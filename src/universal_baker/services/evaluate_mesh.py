@@ -84,6 +84,7 @@ class EvaluateObject(Evaluate):
         self.evaluated_obj = None
         self.evaluated_mesh = None
         self.mesh = None
+        self.has_been_evaluated: bool = False
 
         if self.obj is None:
             return
@@ -105,6 +106,8 @@ class EvaluateObject(Evaluate):
         if self.needs_evaluation:
             with LOG.scope(LOG_SCOPE):
                 LOG.debug(f"Evaluate Object {self.obj.name}")
+                hide_viewport = self.obj.hide_viewport
+                self.obj.hide_viewport = False
                 depsgraph = bpy.context.evaluated_depsgraph_get()
 
                 self.evaluated_mesh = self.obj.evaluated_get(depsgraph)
@@ -114,6 +117,10 @@ class EvaluateObject(Evaluate):
                 self.evaluated_obj.location = self.transform_state.location
                 self.evaluated_obj.rotation_euler = self.transform_state.rotation_euler
                 self.evaluated_obj.scale = self.transform_state.scale
+
+                self.obj.hide_viewport = hide_viewport
+                self.obj.hide_render = True
+                self.has_been_evaluated = True
 
         else:
             self.evaluated_obj = self.obj
@@ -125,7 +132,9 @@ class EvaluateObject(Evaluate):
             return False
 
         with LOG.scope(LOG_SCOPE):
-            if self.evaluated_obj is not None and self.evaluated_obj != self.obj:
+            if self.has_been_evaluated:
+                self.obj.hide_render = False
+
                 if self.evaluated_obj.name in bpy.data.objects:
                     LOG.debug(f"Clean Evaluated Object : {self.evaluated_obj.name}")
                     bpy.data.objects.remove(self.evaluated_obj)

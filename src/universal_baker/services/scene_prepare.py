@@ -14,8 +14,18 @@ from ..services.evaluate_mesh import EvaluateObject
 class BakeObjects:
     target_object: bpy.types.Object
     cage_object: bpy.types.Object | None
+    cage_hidden: bool = False
     is_cage_generated: bool = False
     source_objects: list[bpy.types.Object] = field(default_factory=list)
+
+    @property
+    def is_valid(self) -> bool:
+        if not self.selected_to_active and self.target_object is not None:
+            return True
+
+        return self.cage_object is not None and len(self.target_object.data.vertices) == len(
+            self.cage_object.data.vertices
+        )
 
     @property
     def selected_to_active(self) -> bool:
@@ -33,11 +43,13 @@ class ScenePrepare:
     target_objects: list[UBK_TargetObject]
     bake_objects: dict[str, BakeObjects]
     evaluate_objects: dict[str, EvaluateObject]
+    evaluated_cages: dict[str, EvaluateObject]
 
     def __init__(self) -> None:
         self.target_objects = []
         self.bake_objects = {}
         self.evaluate_objects = {}
+        self.evaluated_cages = {}
 
     def add_target_object(self, target_object: UBK_TargetObject):
         self.target_objects.append(target_object)
@@ -56,17 +68,56 @@ class ScenePrepare:
 
             evaluated_obj = evaluate_obj.evaluate()
 
+            cage_hidden = False
             if obj.have_source:
-                cage = CageObjectService.acquire(evaluated_obj, obj.settings_cage)
+                if obj.settings_cage.cage_object is None:
+                    message = "Cage Object Missing"
+                    LOG.critical(message)
+                    raise RuntimeError(message)
+                    return
+
+                cage = obj.settings_cage.cage_object
+
+                if obj.settings_cage.is_cage_generated:
+                    cage = CageObjectService.acquire(evaluated_obj, obj.settings_cage)
+                elif obj.settings_cage.cage_object is not None:
+                    evaluate_cage = EvaluateObject(obj.settings_cage.cage_object)
+
+                    self.evaluated_cages[obj.uuid] = evaluate_cage
+
+                    cage = evaluate_cage.evaluate()
+
+                assert cage is not None
+
+                cage_hidden = cage.hide_render
+                cage.hide_render = True
             else:
                 cage = None
 
             bake_object = BakeObjects(
                 target_object=evaluated_obj,
                 cage_object=cage,
+                cage_hidden=cage_hidden,
                 is_cage_generated=obj.settings_cage.is_cage_generated,
                 source_objects=source_objects,
             )
+
+            if obj.have_source:
+                if bake_object.is_valid:
+                    LOG.info(f"Target Object {obj.object.name} is valid")
+                else:
+                    assert cage is not None
+                    message = f"{bake_object.target_object.name} Object and {cage.name} cage topology doesn't match"
+                    LOG.critical(message)
+                    LOG.debug(f"{obj.object.name} vert count : {len(obj.object.data.vertices)}")
+                    LOG.debug(
+                        f"{obj.settings_cage.cage_object.name} vert count : {len(obj.settings_cage.cage_object.data.vertices)}"
+                    )
+                    LOG.debug(
+                        f"{bake_object.target_object.name} vert count : {len(bake_object.target_object.data.vertices)}"
+                    )
+                    LOG.debug(f"{cage.name} vert count : {len(cage.data.vertices)}")
+                    raise RuntimeError(message)
 
             self.bake_objects[obj.uuid] = bake_object
 
@@ -82,6 +133,8 @@ class ScenePrepare:
                     continue
 
                 if not bake_object.is_cage_generated:
+                    if bake_object.cage_object is not None:
+                        bake_object.cage_object.hide_render = bake_object.cage_hidden
                     continue
 
                 cage = bake_object.cage_object
@@ -92,3 +145,6 @@ class ScenePrepare:
 
                 LOG.debug(f"Clean Cage Object {cage.name}")
                 bpy.data.objects.remove(cage)
+
+        for uuid, o in self.evaluated_cages.items():
+            o.clean()
