@@ -4,8 +4,8 @@ import bpy
 from bpy.props import BoolProperty, CollectionProperty, PointerProperty
 from bpy.types import PropertyGroup
 
-from ..services.bake_visualization import update_visualization
-from ..services.cage_visualization import update_active_target
+from ..services.visualization_bake import update_visualization
+from ..services.visualization_cage import update_active_target
 from .artifact import UBK_Artifact
 from .bake_group import UBK_BakeGroup
 from .settings_bake import UBK_BakeSettings

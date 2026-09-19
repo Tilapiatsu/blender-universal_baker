@@ -7,10 +7,10 @@ import bpy
 from ..constant import LOG
 from ..resources.image_buffer import ImageBuffer
 from ..resources.ownership import OwnershipDatas
+from ..runtime.bake_objects import BakeObjects
 from ..runtime.label_set import LabelSet
 from ..runtime.tile_set import TileSet
 from ..runtime.uv_ownership_mask import UvOwnershipMask
-from ..services.scene_prepare import BakeObjects
 from .voronoi_jfa import VoronoiJFA
 
 

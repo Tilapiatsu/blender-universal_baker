@@ -7,8 +7,8 @@ from bpy.props import (
 )
 from bpy.types import PropertyGroup
 
-from ..services.bake_visualization import update_visualization
-from ..services.cage_visualization import update_edit_cage
+from ..services.visualization_bake import update_visualization
+from ..services.visualization_cage import update_edit_cage
 
 
 class UBK_Visualization(PropertyGroup):

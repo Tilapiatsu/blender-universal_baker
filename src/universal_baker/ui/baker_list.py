@@ -29,9 +29,16 @@ class UBK_UL_BakerList(bpy.types.UIList):
             layout.label(icon="TEXTURE")
 
     def draw_default(self, layout, item, index: int):
+
         row = layout.row(align=True)
 
         row.prop(item, "enabled", text="")
+
+        row = layout.row(align=True)
+
+        if not item.enabled:
+            row.enabled = False
+
         baker = None
 
         if registry_baker.exists(item.baker):
@@ -54,6 +61,8 @@ class UBK_UL_BakerList(bpy.types.UIList):
 
         else:
             info.label(text="Global", icon="SETTINGS")
+
+        row = layout.row(align=True)
 
         bake = row.operator(
             "ubk.bake_map",

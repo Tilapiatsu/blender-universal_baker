@@ -10,6 +10,7 @@ from ..constant import LOG
 from ..core.registry_definition import registry_definition
 from ..parameter.parameter_applier import ParameterApplier
 from ..parameter.parameter_context import ParameterContext
+from ..runtime.asset_setup import AssetSetup
 
 
 @dataclass(slots=True)
@@ -26,6 +27,7 @@ class CageVisualizationRuntime:
     target_uuid: str | None = None
     target_name: str | None = None
     cage_name: str | None = None
+    cage_asset_setup: AssetSetup | None = None
 
     # Original object visibility.
     visibility: dict[str, ObjectVisibilityState] = field(default_factory=dict)
@@ -88,6 +90,7 @@ class CageVisualizationRuntime:
         self.target_uuid = None
         self.target_name = None
         self.cage_name = None
+        self.cage_asset_setup = None
 
         self.visibility.clear()
 
@@ -164,7 +167,7 @@ class CageVisualizationRuntime:
             self._preview_dirty = False
 
     def disable(self) -> None:
-        from ..services.cage_visualization import CageVisualizationService
+        from ..services.visualization_cage import CageVisualizationService
 
         CageVisualizationService.disable()
 
@@ -220,7 +223,7 @@ class VisualizationSuspension:
 
         LOG.debug("Restore Visualization")
         from ..core.controller import BakeController
-        from ..services.cage_visualization import CageVisualizationService
+        from ..services.visualization_cage import CageVisualizationService
 
         target_object = BakeController.get_target_object_from_uuid(self.target_uuid)
 

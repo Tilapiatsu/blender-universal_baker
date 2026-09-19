@@ -15,7 +15,8 @@ from ..parameter.baker_custom.metadata_loader import MetadataLoader as metadata_
 from ..parameter.baker_local.metadata_loader import MetadataLoader as metadata_loader_local
 from ..parameter.parameter_applier import ParameterApplier
 from ..parameter.parameter_context import ParameterContext
-from ..runtime.baker_setup import BakerExecution, BakerSetup
+from ..runtime.asset_setup import AssetSetup, BakerExecution
+from ..runtime.bake_objects import BakeObjects
 from ..runtime.color_management_info import ColorManagementInfo
 from ..services.artifact_service import ArtifactService
 from ..services.bake_material import BakeMaterialService
@@ -23,7 +24,6 @@ from ..services.image_bake import ImageServiceBake
 from ..services.material import MaterialService
 from ..services.parameter_service import ParameterService
 from ..services.renderer import RendererService
-from ..services.scene_prepare import BakeObjects
 
 if TYPE_CHECKING:
     from ..parameter.metadata import ParameterMetadata
@@ -77,7 +77,7 @@ class BakerBase(ABC):
             targets=[bake_objects.target_object],
             sources=bake_objects.source_objects,
         )
-        baker_setup = BakerSetup(material_setup=material_setup)
+        baker_setup = AssetSetup(material_setup=material_setup)
 
         hide_render = {}
 

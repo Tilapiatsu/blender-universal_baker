@@ -39,7 +39,7 @@ def mode_updated(self, context):
     runtime = RuntimeManager.get(context.scene).cage_visualization
 
     if runtime.active and self.cage_mode == "OBJECT":
-        from ..services.cage_visualization import CageVisualizationService
+        from ..services.visualization_cage import CageVisualizationService
 
         CageVisualizationService.disable()
 

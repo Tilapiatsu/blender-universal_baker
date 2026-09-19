@@ -5,8 +5,8 @@ import bpy
 from ..core.registry_baker import registry_baker
 from ..enum.image_colorspace import ImageColorSpace
 from ..parameter.metadata import BindingMetadata, ParameterMetadata
+from ..runtime.bake_objects import BakeObjects
 from ..runtime.context_bake import BakeContext
-from ..services.scene_prepare import BakeObjects
 from .base import BakerBase
 
 

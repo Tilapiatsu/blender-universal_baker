@@ -4,30 +4,34 @@ from pathlib import Path
 
 import bpy
 
-from ..resources.baker_asset import BakerAsset
 from ..constant import LOG
+from ..resources.asset_external import AssetExtrenal
 
-LOG_SCOPE = "Custom Baker Service"
+LOG_SCOPE = "External Asset Service"
 
 
-class BakerAssetError(RuntimeError):
+class AssetExternalError(RuntimeError):
     """Raised when a custom baker asset cannot be loaded."""
 
 
-class BakerAssetService:
+class AssetExternalService:
+    """Load the external asset blend file and return its prototype object"""
+
     @staticmethod
-    def load_prototype(asset: BakerAsset) -> bpy.types.Object:
+    def load_prototype(asset: AssetExtrenal) -> bpy.types.Object:
 
         with LOG.scope(LOG_SCOPE):
             LOG.debug(f"Loading Prototype : {asset.filepath}")
             filepath = Path(asset.filepath)
 
             if not filepath.is_file():
-                raise BakerAssetError(f"Custom baker asset does not exist: {filepath}")
+                raise AssetExternalError(f"Custom baker asset does not exist: {filepath}")
 
             with bpy.data.libraries.load(str(filepath), link=False) as (data_from, data_to):
                 if asset.prototype_name not in data_from.objects:
-                    raise BakerAssetError(f"Prototype object '{asset.prototype_name}' was not found in '{filepath}'.")
+                    raise AssetExternalError(
+                        f"Prototype object '{asset.prototype_name}' was not found in '{filepath}'."
+                    )
 
                 data_to.objects = [asset.prototype_name]
 
@@ -37,7 +41,7 @@ class BakerAssetService:
             )
 
             if prototype is None:
-                raise BakerAssetError(f"Failed to load prototype '{asset.prototype_name}'.")
+                raise AssetExternalError(f"Failed to load prototype '{asset.prototype_name}'.")
 
             LOG.debug(f"Prototype {asset.prototype_name} properly loaded")
             return prototype

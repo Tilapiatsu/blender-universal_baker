@@ -12,6 +12,8 @@ from ..parameter.parameter import ParameterType
 from ..parameter.parameter_applier import ParameterApplier
 from ..parameter.parameter_context import ParameterContext
 from ..properties.parameter_value import UBK_ParameterValue
+from ..services.temp_collection import TempCollection
+from ..services.visibility_override import VisibilityOverride
 from .image_handle import ImageHandle
 
 if TYPE_CHECKING:
@@ -51,6 +53,8 @@ class BakeVisualizationRuntime:
         ] = {}
 
         self._material_snapshots: list[MaterialSnapshot] = []
+        self._object_visibilities: list[VisibilityOverride] = []
+        self._temp_collection: TempCollection | None = None
 
     # ------------------------------------------------------------------
     # State
@@ -105,6 +109,14 @@ class BakeVisualizationRuntime:
     @property
     def objects(self) -> list[bpy.types.Object]:
         return [bpy.data.objects[o] for o in self._objects if bpy.data.objects[o] is not None]
+
+    @property
+    def object_visibilities(self) -> list[VisibilityOverride]:
+        return self._object_visibilities
+
+    @property
+    def temp_collection(self) -> TempCollection | None:
+        return self._temp_collection
 
     @property
     def scenes(
@@ -196,6 +208,18 @@ class BakeVisualizationRuntime:
 
         self._material_snapshots = list(snapshots)
 
+    def set_object_visibilities(self, visibilities: list[VisibilityOverride]) -> None:
+        if not self._active:
+            raise RuntimeError("Cannot store object_visibility before visualization begins")
+
+        self._object_visibilities = visibilities
+
+    def set_temp_collection(self, collection: TempCollection) -> None:
+        if not self._active:
+            raise RuntimeError("Cannot store object_visibility before visualization begins")
+
+        self._temp_collection = collection
+
     # ------------------------------------------------------------------
     # Producer
     # ------------------------------------------------------------------
@@ -244,7 +268,7 @@ class BakeVisualizationRuntime:
         self._preview_enabled = mode == BakeVisualizationMode.PREVIEW
 
     def disable(self) -> None:
-        from ..services.bake_visualization import BakeVisualizationService
+        from ..services.visualization_bake import BakeVisualizationService
 
         BakeVisualizationService.disable()
 
@@ -275,6 +299,8 @@ class BakeVisualizationRuntime:
         self._scenes.clear()
         self._material_snapshots.clear()
         self._objects = []
+        self._object_visibilities = []
+        self._temp_collection = None
 
     @contextmanager
     def suspend(self):
@@ -448,7 +474,7 @@ class VisualizationSuspension:
 
         LOG.debug("Restore Visualization")
         from ..core.controller import BakeController
-        from ..services.bake_visualization import BakeVisualizationService, DisplayData, PreviewData
+        from ..services.visualization_bake import BakeVisualizationService, DisplayData, PreviewData
 
         project = BakeController.project(bpy.context)
         viz = project.visualization

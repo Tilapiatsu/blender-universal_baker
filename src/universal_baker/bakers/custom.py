@@ -6,11 +6,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from ..core.registry_baker import registry_baker
-from ..resources.baker_asset import BakerAsset
-from ..runtime.baker_setup import BakerExecution
+from ..resources.asset_external import AssetExtrenal
+from ..runtime.asset_setup import BakerExecution
+from ..runtime.bake_objects import BakeObjects
 from ..runtime.context_bake import BakeContext
-from ..services.custom_baker_setup import CustomBakerSetupService
-from ..services.scene_prepare import BakeObjects
+from ..services.asset_external_setup import AssetExternalBakeSetup
 from .base import BakerBase
 
 if TYPE_CHECKING:
@@ -43,14 +43,14 @@ class CustomBaker(BakerBase):
         # material preparation issue, the image didn't got to the baker material, or the baker material didn't got
         # created properly
 
-        asset = BakerAsset(filepath=self.asset_path)
+        asset = AssetExtrenal(filepath=self.asset_path)
 
         hide_render = {}
 
         for s in bake_objects.baker_material_objects:
             hide_render[s] = s.hide_render
 
-        setup = CustomBakerSetupService.prepare(
+        setup = AssetExternalBakeSetup.prepare(
             asset=asset,
             bake_objects=bake_objects,
         )
@@ -75,47 +75,48 @@ class CustomBaker(BakerBase):
         super().invalidate_previous_output(ctx)
 
     def configure_preview_material(self, material):
-        asset = BakerAsset(filepath=self.asset_path)
+        asset = AssetExtrenal(filepath=self.asset_path)
         material.use_nodes = True
         dst_tree = material.node_tree
         dst_tree.nodes.clear()
 
-        src_tree = CustomBakerSetupService.get_prototype_material(asset).node_tree
-        node_mapping = {}
+        with AssetExternalBakeSetup.get_prototype_material(asset) as prototype_material:
+            src_tree = prototype_material.node_tree
+            node_mapping = {}
 
-        for node in src_tree.nodes:
-            new_node = dst_tree.nodes.new(type=node.bl_idname)
-            new_node.location = node.location
-            new_node.width = node.width
-            new_node.name = node.name
+            for node in src_tree.nodes:
+                new_node = dst_tree.nodes.new(type=node.bl_idname)
+                new_node.location = node.location
+                new_node.width = node.width
+                new_node.name = node.name
 
-            for i, input_sock in enumerate(node.inputs):
-                if i < len(new_node.inputs) and not input_sock.is_linked:
-                    try:
-                        new_node.inputs[i].default_value = input_sock.default_value
-                    except AttributeError:
-                        pass
+                for i, input_sock in enumerate(node.inputs):
+                    if i < len(new_node.inputs) and not input_sock.is_linked:
+                        try:
+                            new_node.inputs[i].default_value = input_sock.default_value
+                        except AttributeError:
+                            pass
 
-            if hasattr(node, "image") and hasattr(new_node, "image"):
-                new_node.image = node.image
+                if hasattr(node, "image") and hasattr(new_node, "image"):
+                    new_node.image = node.image
 
-            if hasattr(node, "node_tree"):
-                new_node.node_tree = node.node_tree
+                if hasattr(node, "node_tree"):
+                    new_node.node_tree = node.node_tree
 
-            node_mapping[node] = new_node
+                node_mapping[node] = new_node
 
-        for link in src_tree.links:
-            from_node = node_mapping.get(link.from_node)
-            to_node = node_mapping.get(link.to_node)
+            for link in src_tree.links:
+                from_node = node_mapping.get(link.from_node)
+                to_node = node_mapping.get(link.to_node)
 
-            if from_node and to_node:
-                from_sock_idx = list(link.from_node.outputs).index(link.from_socket)
-                to_sock_idx = list(link.to_node.inputs).index(link.to_socket)
+                if from_node and to_node:
+                    from_sock_idx = list(link.from_node.outputs).index(link.from_socket)
+                    to_sock_idx = list(link.to_node.inputs).index(link.to_socket)
 
-                if not len(from_node.outputs) or not len(to_node.inputs):
-                    continue
+                    if not len(from_node.outputs) or not len(to_node.inputs):
+                        continue
 
-                dst_tree.links.new(from_node.outputs[from_sock_idx], to_node.inputs[to_sock_idx])
+                    dst_tree.links.new(from_node.outputs[from_sock_idx], to_node.inputs[to_sock_idx])
 
     def prepare(self, ctx: BakeContext):
         """

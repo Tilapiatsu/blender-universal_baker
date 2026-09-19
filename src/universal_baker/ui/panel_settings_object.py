@@ -25,7 +25,7 @@ class UBK_UL_TargetObjectSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
             layout.label(text="Add an Object First", icon="INFO")
             return
 
-        layout.label(text=f"{active_object.object.name} Settings", icon="MESH_CUBE")
+        layout.label(text=f"{active_object.object.name} Sources", icon="MESH_CUBE")
 
     @object_needed
     def draw(self, context):
@@ -42,7 +42,6 @@ class UBK_UL_TargetObjectSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
 
         box.prop(active_object, "uv_layer")
 
-        box.separator()
         box.label(text="Source Objects :")
         box.template_list(
             "UBK_UL_SourceObjectList",

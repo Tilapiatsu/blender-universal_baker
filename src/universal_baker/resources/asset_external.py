@@ -1,18 +1,17 @@
-# resources/baker_asset.py
-
 from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+
 from ..constant import PROTOTYPE_NAME
 
 
 @dataclass(frozen=True)
-class BakerAsset:
+class AssetExtrenal:
     """
-    Description of an external Universal Baker custom baker asset.
+    Description of an external Universal Baker's external asset.
 
-    The actual Blender datablocks are loaded by BakerAssetService.
+    The actual Blender datablocks are loaded by AssetExternalService.
     """
 
     filepath: Path

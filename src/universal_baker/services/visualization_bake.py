@@ -10,14 +10,19 @@ from ..core.registry_baker import registry_baker
 from ..enum.visualization import BakeVisualizationMode
 from ..runtime.image_handle import ImageHandle
 from ..runtime.runtime_visualization_bake import BakeVisualizationRuntime
+from ..services.visibility_override import VisibilityOverride
 from .material_display import DisplayMaterialService
 from .material_override import MaterialOverrideService
 from .preview_material import PreviewMaterialService
+from .temp_collection import TempCollection
 from .viewport import ViewportService
+from universal_baker.services import temp_collection
 
 if TYPE_CHECKING:
     from ..bakers.base import BakerBase
     from ..packers.base import PackerBase
+
+TEMP_COLLECTION_NAME = "UBK_PREVIEW_VISUALIZATION"
 
 
 def update_visualization(self, context):
@@ -228,6 +233,8 @@ class BakeVisualizationService:
         LOG.debug("Disabling Visualization")
 
         try:
+            cls._revert_object_visibility()
+            cls._cleanup_temp_collection()
             cls._revert_image_colorspace()
 
             MaterialOverrideService.restore(cls._runtime.material_snapshots)
@@ -309,7 +316,7 @@ class BakeVisualizationService:
         if cls._runtime.active:
             cls.disable(set_display_property=False)
 
-        from ..services.cage_visualization import CageVisualizationService
+        from ..services.visualization_cage import CageVisualizationService
 
         CageVisualizationService.disable()
 
@@ -348,6 +355,11 @@ class BakeVisualizationService:
             )
 
         if isinstance(data, PreviewData):
+            cls._runtime.set_object_visibilities(cls._prepare_objects_preview_visibility())
+            cls._set_object_visibility()
+            cls._runtime.set_temp_collection(cls._prepare_temp_collection())
+            cls._create_temp_collection()
+
             if data.producer.clear_preview_material:
                 material = PreviewMaterialService.get_or_create()
                 data.producer.configure_preview_material(material)
@@ -373,3 +385,81 @@ class BakeVisualizationService:
             cls._runtime.set_active_image_handle(handle)
             cls._runtime.set_active_producer(data.producer)
             cls._runtime.set_material_snapshots(MaterialOverrideService.apply(data.objects, material))
+
+    @classmethod
+    def _prepare_temp_collection(cls) -> TempCollection:
+
+        from ..core.controller import BakeController
+
+        bake_group = BakeController.active_bake_group(bpy.context)
+        if bake_group is None:
+            raise RuntimeError("No active Bake Group")
+
+        objects = []
+        for target in bake_group.target_objects:
+            if target.have_source:
+                objects += target.source_object_list
+                continue
+
+            if target.object is None:
+                continue
+
+            objects.append(target.object)
+
+        collection = TempCollection(TEMP_COLLECTION_NAME, objects)
+
+        return collection
+
+    @classmethod
+    def _prepare_objects_preview_visibility(cls) -> list[VisibilityOverride]:
+
+        from ..core.controller import BakeController
+
+        overrides = []
+        bake_group = BakeController.active_bake_group(bpy.context)
+        if bake_group is None:
+            raise RuntimeError("No active Bake Group")
+
+        for target in bake_group.target_objects:
+            if not target.have_source:
+                visibility_override = VisibilityOverride(target.object, hide_viewport=False)
+                continue
+
+            visibility_override = VisibilityOverride(target.object, hide_viewport=True)
+            overrides.append(visibility_override)
+
+            for source in target.source_object_list:
+                visibility_override = VisibilityOverride(source, hide_viewport=False)
+                overrides.append(visibility_override)
+
+        return overrides
+
+    @classmethod
+    def _set_object_visibility(cls):
+        if cls._runtime is None:
+            return
+
+        for ov in cls._runtime.object_visibilities:
+            ov.set_visibility()
+
+    @classmethod
+    def _revert_object_visibility(cls):
+        if cls._runtime is None:
+            return
+
+        for ov in cls._runtime.object_visibilities:
+            ov.revert_visibility()
+
+    @classmethod
+    def _create_temp_collection(cls):
+        if cls._runtime is None or cls._runtime.temp_collection is None:
+            return
+
+        cls._runtime.temp_collection.create()
+
+    @classmethod
+    def _cleanup_temp_collection(cls):
+        if cls._runtime is None or cls._runtime.temp_collection is None:
+            return
+
+        cls._runtime.temp_collection.cleanup()

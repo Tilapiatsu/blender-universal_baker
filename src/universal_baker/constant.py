@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+from pathlib import Path
+
 import bpy
 
 from .logger import Logger
@@ -22,10 +26,13 @@ PROTOTYPE_NAME = "UBK_PROTOTYPE"
 SAFE_CHR = "_"
 ADDON_PACKAGE = __package__
 
-
 DISPLAY_VIEW_TRANSFORM = SceneViewTransform()
 PREVIEW_VIEW_TRANSFORM = SceneViewTransform()
 BAKE_VIEW_TRANSFORM = SceneViewTransform()
+
+ASSET_PATH = Path(__file__).parent.resolve() / "assets"
+
+assert ADDON_PACKAGE is not None
 
 
 def get_prefs():

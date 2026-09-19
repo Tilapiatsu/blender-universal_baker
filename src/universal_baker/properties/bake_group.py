@@ -10,8 +10,8 @@ from bpy.props import (
 )
 from bpy.types import PropertyGroup
 
-from ..services.bake_visualization import update_visualization
-from ..services.cage_visualization import update_active_target
+from ..services.visualization_bake import update_visualization
+from ..services.visualization_cage import update_active_target
 from .baker import UBK_Baker
 from .object import UBK_TargetObject
 from .packer import UBK_Packer

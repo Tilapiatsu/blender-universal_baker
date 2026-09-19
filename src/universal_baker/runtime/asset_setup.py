@@ -7,11 +7,11 @@ import bpy
 from ..constant import LOG
 from ..services.bake_material import BakeMaterialSetup
 
-LOG_SCOPE = "Baker Asset"
+LOG_SCOPE = "Asset Setup"
 
 
 @dataclass
-class BakerSetup:
+class AssetSetup:
     """
     Temporary Blender state created for one custom baker operation.
     """
@@ -29,7 +29,7 @@ class BakerSetup:
         Remove all temporary Blender datablocks created by this setup.
         """
         with LOG.scope(LOG_SCOPE):
-            LOG.debug("Cleaning up BakerSetup")
+            LOG.debug("Cleaning up AssetSetup")
 
             if self.material_setup is not None:
                 self.material_setup.cleanup()
@@ -84,7 +84,7 @@ class BakerExecution:
     target: bpy.types.Object
     cage: bpy.types.Object
     sources: list[bpy.types.Object] | None = None
-    setup: BakerSetup | None = None
+    setup: AssetSetup | None = None
 
     def cleanup(self):
         if self.setup is not None:

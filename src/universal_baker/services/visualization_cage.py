@@ -176,7 +176,7 @@ class CageVisualizationService:
                 cls.disable()
 
             LOG.debug(f"Enabling Cage Visualization | {target.object.name}")
-            from ..services.bake_visualization import BakeVisualizationService
+            from ..services.visualization_bake import BakeVisualizationService
 
             BakeVisualizationService.disable()
 

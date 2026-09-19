@@ -33,6 +33,11 @@ class UBK_UL_BakeGroupList(bpy.types.UIList):
         row = layout.row(align=True)
 
         row.prop(active_bake_group, "enabled", text="")
+
+        row = layout.row(align=True)
+        if not active_bake_group.enabled:
+            row.enabled = False
+
         row.prop(active_bake_group, "name", placeholder="Name", text="")
 
         enabled_targets = sum(target_object.enabled for target_object in active_bake_group.target_objects)
@@ -48,6 +53,8 @@ class UBK_UL_BakeGroupList(bpy.types.UIList):
 
         stats.label(text=f"{enabled_targets}/{total_targets}", icon="MESH_CUBE")
         stats.label(text=f"{enabled_bakers}/{total_bakers}", icon="RENDERLAYERS")
+
+        row = layout.row(align=True)
 
         op = row.operator(
             "ubk.bake_group",

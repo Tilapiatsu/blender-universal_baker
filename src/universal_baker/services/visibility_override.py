@@ -19,9 +19,9 @@ class VisibilityOverride:
     def __init__(
         self,
         obj: bpy.types.Object | None,
-        hide_render: bool,
-        hide_viewport: bool,
-        hide_select: bool,
+        hide_render: bool = False,
+        hide_viewport: bool = False,
+        hide_select: bool = False,
     ):
         self.obj = obj
 
@@ -38,7 +38,7 @@ class VisibilityOverride:
             hide_select=self.obj.hide_select,
         )
 
-    def __enter__(self):
+    def set_visibility(self) -> bpy.types.Object:
         if self.obj is None:
             return
 
@@ -48,10 +48,16 @@ class VisibilityOverride:
 
         return self.obj
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def revert_visibility(self) -> None:
         if self.obj is None:
             return
 
         self.obj.hide_render = self.visibility_state.hide_render
         self.obj.hide_viewport = self.visibility_state.hide_viewport
         self.obj.hide_select = self.visibility_state.hide_select
+
+    def __enter__(self):
+        return self.set_visibility()
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.revert_visibility()

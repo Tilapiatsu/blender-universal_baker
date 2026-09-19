@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 import bpy
 
-from ..services.scene_prepare import BakeObjects
+from ..runtime.bake_objects import BakeObjects
 from .runtime import BakeRuntime
 from .runtime_manager import RuntimeManager
 

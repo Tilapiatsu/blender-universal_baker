@@ -6,9 +6,9 @@ from ..core.registry_baker import registry_baker
 from ..enum.image_colorspace import ImageColorSpace
 from ..enum.view_transform import DisplayDevice, ViewTransform
 from ..parameter.metadata import BindingMetadata, ParameterMetadata
+from ..runtime.bake_objects import BakeObjects
 from ..runtime.color_management_info import ColorManagementInfo
 from ..runtime.context_bake import BakeContext
-from ..services.scene_prepare import BakeObjects
 from .base import BakerBase
 
 

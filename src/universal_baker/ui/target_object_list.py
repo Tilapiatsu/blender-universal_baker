@@ -27,14 +27,18 @@ class UBK_UL_TargetObjectList(bpy.types.UIList):
 
             layout.label(text="", icon="MESH_CUBE")
 
-    def draw_default(self, layout, obj_settings, index: int):
+    def draw_default(self, layout, item, index: int):
         """Draw one object row."""
 
         row = layout.row(align=True)
 
-        row.prop(obj_settings, "enabled", text="")
+        row.prop(item, "enabled", text="")
 
-        obj = obj_settings.object
+        row = layout.row(align=True)
+        if not item.enabled:
+            row.enabled = False
+
+        obj = item.object
 
         if obj is not None:
             row.prop(obj, "name", text="", emboss=False, icon="MESH_CUBE")
@@ -42,7 +46,7 @@ class UBK_UL_TargetObjectList(bpy.types.UIList):
         else:
             row.label(text="<Missing Object>", icon="ERROR")
 
-        source_objects = len(obj_settings.source_objects)
+        source_objects = len(item.source_objects)
 
         stats = row.row()
         stats.alignment = "RIGHT"

@@ -33,6 +33,10 @@ class UBK_UL_PackList(bpy.types.UIList):
 
         row.prop(pack_item, "enabled", text="")
 
+        row = layout.row(align=True)
+        if not pack_item.enabled:
+            row.enabled = False
+
         row.label(text=pack_item.image_name, icon="NODE_COMPOSITING")
 
         info = row.row()
@@ -46,6 +50,8 @@ class UBK_UL_PackList(bpy.types.UIList):
 
         else:
             info.label(text="Global", icon="SETTINGS")
+
+        row = layout.row(align=True)
 
         pack = row.operator(
             "ubk.pack_selected",
