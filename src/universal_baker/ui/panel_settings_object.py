@@ -100,7 +100,9 @@ class UBK_UL_CageSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
             col.prop(cage_settings, "cage_object_custom")
         elif cage_settings.cage_mode == "GENERATED":
             visualization = BakeController.project(context).visualization
-            col.prop(visualization, "cage_edit", toggle=True)
+            row = col.split(align=True, factor=0.8)
+            row.prop(visualization, "cage_edit", toggle=True)
+            row.prop(visualization, "cage_color", text="")
 
         col = box.column(align=True)
         if cage_settings.cage_mode == "GENERATED":

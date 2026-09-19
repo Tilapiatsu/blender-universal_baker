@@ -3,12 +3,13 @@ from __future__ import annotations
 from bpy.props import (
     BoolProperty,
     EnumProperty,
+    FloatVectorProperty,
     IntProperty,
 )
 from bpy.types import PropertyGroup
 
 from ..services.visualization_bake import update_visualization
-from ..services.visualization_cage import update_edit_cage
+from ..services.visualization_cage import update_cage_color, update_edit_cage
 
 
 class UBK_Visualization(PropertyGroup):
@@ -64,7 +65,22 @@ class UBK_Visualization(PropertyGroup):
     baker_idx: IntProperty(default=0)
     refreshing: BoolProperty(default=False)
     # is is_dragging allow to make custom bakers parameter clamping works
-    is_dragging: BoolProperty()
+    is_dragging: BoolProperty(default=False)
+
+    cage_color: FloatVectorProperty(
+        name="Cage Color",
+        subtype="COLOR",
+        size=4,
+        min=0.0,
+        max=1.0,
+        default=[
+            0.05,
+            0.65,
+            1.0,
+            0.25,
+        ],
+        update=update_cage_color,
+    )
 
 
 classes = (UBK_Visualization,)

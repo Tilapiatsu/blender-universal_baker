@@ -31,6 +31,12 @@ def set_edit_cage(value: bool):
     visualization.cage_edit = value
 
 
+def update_cage_color(self, context):
+    if CageVisualizationService._runtime is None or not CageVisualizationService._runtime.active:
+        return
+    CageVisualizationService._refresh_cage_color()
+
+
 def update_edit_cage(self, context):
     from ..core.controller import BakeController
 
@@ -103,28 +109,28 @@ class CageVisualizationService:
     """
 
     _runtime: CageVisualizationRuntime | None = None
-
-    # ---------------------------------------------------------
-    # Configuration
-    # ---------------------------------------------------------
-
-    SURFACE_COLOR = (
-        0.05,
-        0.65,
-        1.0,
-        0.20,
-    )
-
-    WIRE_COLOR = (
+    _cage_color: tuple[float, float, float, float] = (
         0.05,
         0.65,
         1.0,
         0.25,
     )
 
+    # ---------------------------------------------------------
+    # Configuration
+    # ---------------------------------------------------------
+
     LINE_WIDTH = 2.0
 
     MSGBUS_OWNER = object()
+
+    @classmethod
+    def surface_color(cls) -> tuple[float, float, float, float]:
+        return (cls._cage_color[0], cls._cage_color[1], cls._cage_color[2], cls._cage_color[3] * 0.8)
+
+    @classmethod
+    def wire_color(cls) -> tuple[float, float, float, float]:
+        return cls._cage_color
 
     # ---------------------------------------------------------
     # Runtime
@@ -199,6 +205,7 @@ class CageVisualizationService:
             )
 
             try:
+                cls._update_cage_color()
                 cls._capture_state(target, cage)
                 cls._create_temporary_collection()
                 cls._link_visualization_objects(target, cage)
@@ -221,7 +228,7 @@ class CageVisualizationService:
     # ---------------------------------------------------------
 
     @classmethod
-    def disable(cls) -> None:
+    def disable(cls, disable_property=True) -> None:
         """
         Disable cage visualization and restore Blender state.
 
@@ -248,13 +255,9 @@ class CageVisualizationService:
 
             finally:
                 runtime.clear()
-                from ..core.controller import BakeController
 
-                project = BakeController.project(bpy.context)
-
-                visualization = project.visualization
-
-                visualization.cage_edit = False
+                if disable_property:
+                    set_edit_cage(False)
 
     # ---------------------------------------------------------
     # Refresh
@@ -298,8 +301,7 @@ class CageVisualizationService:
             # cls._remove_draw_handler()
             # cls._release_gpu_resources()
 
-            cls.disable()
-            set_edit_cage(False)
+            cls.disable(disable_property=False)
 
             if target.settings_cage.cage_mode == "GENERATED":
                 cls.enable(target)
@@ -596,7 +598,7 @@ class CageVisualizationService:
             for triangle in evaluated_mesh.loop_triangles:
                 for vertex_index in triangle.vertices:
                     surface_positions.append(evaluated_mesh.vertices[vertex_index].co[:])
-                    surface_colors.append(cls.SURFACE_COLOR)
+                    surface_colors.append(cls.surface_color())
 
             runtime.surface_batch = batch_for_shader(
                 runtime.surface_shader,
@@ -637,6 +639,31 @@ class CageVisualizationService:
 
         runtime.surface_shader = None
         runtime.wire_shader = None
+
+    @classmethod
+    def _update_cage_color(cls) -> None:
+        from ..core.controller import BakeController
+
+        project = BakeController.project(bpy.context)
+
+        cls._cage_color = project.visualization.cage_color
+
+    @classmethod
+    def _refresh_cage_color(cls) -> None:
+
+        runtime = cls._ensure_runtime()
+        cage = bpy.data.objects.get(runtime.cage_name)
+
+        if cage is None:
+            return
+
+        cls._remove_draw_handler()
+        cls._release_gpu_resources()
+
+        cls._update_cage_color()
+
+        cls._create_gpu_resources(cage)
+        cls._register_draw_handler()
 
     # ---------------------------------------------------------
     # Draw Handler
@@ -723,7 +750,7 @@ class CageVisualizationService:
 
                 runtime.wire_shader.bind()
 
-                runtime.wire_shader.uniform_float("color", cls.WIRE_COLOR)
+                runtime.wire_shader.uniform_float("color", cls.wire_color())
 
                 runtime.wire_batch.draw(runtime.wire_shader)
 
