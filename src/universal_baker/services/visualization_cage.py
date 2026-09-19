@@ -301,7 +301,7 @@ class CageVisualizationService:
             # cls._remove_draw_handler()
             # cls._release_gpu_resources()
 
-            cls.disable(disable_property=False)
+            cls.disable(disable_property=target.settings_cage.cage_mode == "OBJECT")
 
             if target.settings_cage.cage_mode == "GENERATED":
                 cls.enable(target)
