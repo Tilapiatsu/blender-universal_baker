@@ -16,13 +16,41 @@ from .material_override import MaterialOverrideService
 from .preview_material import PreviewMaterialService
 from .temp_collection import TempCollection
 from .viewport import ViewportService
-from universal_baker.services import temp_collection
 
 if TYPE_CHECKING:
     from ..bakers.base import BakerBase
     from ..packers.base import PackerBase
 
 TEMP_COLLECTION_NAME = "UBK_PREVIEW_VISUALIZATION"
+
+
+def set_preview_enabled(value: bool, set_mode=False):
+    from ..core.controller import BakeController
+
+    project = BakeController.project(bpy.context)
+
+    viz = project.visualization
+
+    print("set peview enabled to", value)
+    viz.refreshing = True
+    viz.enabled_preview = value
+    if set_mode:
+        viz.mode = "PREVIEW"
+    viz.refreshing = False
+
+
+def set_display_enabled(value: bool, set_mode=False):
+    from ..core.controller import BakeController
+
+    project = BakeController.project(bpy.context)
+
+    viz = project.visualization
+
+    viz.refreshing = True
+    viz.enabled_display = value
+    if set_mode:
+        viz.mode = "DISPLAY"
+    viz.refreshing = False
 
 
 def update_visualization(self, context):
@@ -70,6 +98,16 @@ def update_visualization(self, context):
                         baker.accumulated_uuid,
                         [o.object for o in bake_group.target_objects],
                         producer,
+                    )
+                case BakeVisualizationMode.PREVIEW_CAGE:
+                    if BakeVisualizationService.projection_target() is None:
+                        return
+                    data = PreviewData(
+                        producer,
+                        bake_group.uuid,
+                        baker.uuid,
+                        mode=BakeVisualizationMode.PREVIEW_CAGE,
+                        projection_target=BakeVisualizationService.projection_target(),
                     )
                 case _:
                     return
@@ -122,6 +160,7 @@ class PreviewData:
     producer_uuid: str
     accumulated_uuid: str | None = None
     mode: BakeVisualizationMode = BakeVisualizationMode.PREVIEW
+    projection_target: bpy.types.Object | None = None
 
 
 @dataclass(slots=True, frozen=True)
@@ -160,6 +199,11 @@ class BakeVisualizationService:
 
             runtime = RuntimeManager.current(bpy.context)
             cls._runtime = runtime.bake_visualization
+
+    @classmethod
+    def projection_target(cls) -> bpy.types.Object | None:
+        cls._ensure_runtime()
+        return cls._runtime.projection_target
 
     # ---------------------------------------------------------
     # Preview
@@ -288,6 +332,14 @@ class BakeVisualizationService:
 
                 cls.enable_preview(data)
 
+            case BakeVisualizationMode.PREVIEW_CAGE:
+                if not isinstance(data, PreviewData):
+                    return False
+
+                cls.disable(set_display_property=False)
+
+                cls.enable_preview(data)
+
             case BakeVisualizationMode.DISPLAY:
                 if not isinstance(data, DisplayData):
                     return False
@@ -316,10 +368,10 @@ class BakeVisualizationService:
         if cls._runtime.active:
             cls.disable(set_display_property=False)
 
-        from ..services.visualization_cage import CageVisualizationService
-
-        CageVisualizationService.disable()
-
+        # from ..services.visualization_cage import CageVisualizationService
+        #
+        # CageVisualizationService.disable()
+        #
         cls._runtime.begin(
             mode=data.mode,
             producer=data.producer,
@@ -327,6 +379,7 @@ class BakeVisualizationService:
             producer_uuid=data.producer_uuid,
             accumulated_uuid=data.accumulated_uuid,
             objects=[o.name for o in data.objects] if isinstance(data, DisplayData) else [],
+            projection_target=data.projection_target if isinstance(data, PreviewData) else None,
         )
 
         cls._capture_state(data)
@@ -363,7 +416,14 @@ class BakeVisualizationService:
             if data.producer.clear_preview_material:
                 material = PreviewMaterialService.get_or_create()
                 data.producer.configure_preview_material(material)
-                cls._runtime.set_material_snapshots(MaterialOverrideService.apply(bpy.context.scene.objects, material))
+                if PreviewData.projection_target is None and data.mode == BakeVisualizationMode.PREVIEW_CAGE:
+                    raise RuntimeError("Cage Projection Target is None")
+                elif data.projection_target is not None and data.mode == BakeVisualizationMode.PREVIEW_CAGE:
+                    mat_override_objects = [o for o in bpy.context.scene.objects if o != data.projection_target]
+                else:
+                    mat_override_objects = bpy.context.scene.objects
+
+                cls._runtime.set_material_snapshots(MaterialOverrideService.apply(mat_override_objects, material))
 
             cls._runtime.set_active_producer(data.producer)
 

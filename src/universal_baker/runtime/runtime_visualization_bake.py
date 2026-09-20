@@ -43,6 +43,7 @@ class BakeVisualizationRuntime:
         self._baker_group_uuid: str | None = None
         self._accumulated_uuid: str | None = None
         self._producer_uuid: str | None = None
+        self._projection_target: str | None = None
         self._preview_enabled: bool = False
         self._preview_dirty: bool = False
         self._updating_parameters: bool = False
@@ -115,6 +116,10 @@ class BakeVisualizationRuntime:
         return self._object_visibilities
 
     @property
+    def projection_target(self) -> bpy.types.Object | None:
+        return bpy.data.objects.get(self._projection_target) if self._projection_target is not None else None
+
+    @property
     def temp_collection(self) -> TempCollection | None:
         return self._temp_collection
 
@@ -156,6 +161,7 @@ class BakeVisualizationRuntime:
         producer_uuid: str | None = None,
         accumulated_uuid: str | None = None,
         objects: list[str] | None = None,
+        projection_target: bpy.types.Object | None = None,
     ) -> None:
         """
         Start a new visualization session.
@@ -176,6 +182,7 @@ class BakeVisualizationRuntime:
         self._accumulated_uuid = accumulated_uuid
         self._preview_enabled = mode == BakeVisualizationMode.PREVIEW
         self._objects = objects if objects is not None else []
+        self._projection_target = projection_target.name if projection_target is not None else None
 
     # ------------------------------------------------------------------
     # State registration

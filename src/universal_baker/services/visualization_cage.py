@@ -7,14 +7,17 @@ import gpu
 from gpu_extras.batch import batch_for_shader
 
 from ..constant import BAKE_PREVIEW_ASSET_PATH, LOG
+from ..core.registry_baker import registry_baker
+from ..enum.visualization import BakeVisualizationMode
 from ..resources.asset_external import AssetExtrenal
 from ..runtime.bake_objects import BakeObjects
 from ..runtime.runtime_visualization_cage import (
     CageVisualizationRuntime,
-    ObjectVisibilityState,
 )
 from ..services.asset_external_setup import AssetExternalCageSetup
 from ..services.temp_collection import TempCollection
+from ..services.visualization_bake import BakeVisualizationService, PreviewData, set_preview_enabled
+from .visibility_override import VisibilityOverride
 
 if TYPE_CHECKING:
     from ..properties.object import UBK_TargetObject
@@ -33,6 +36,18 @@ def set_edit_cage(value: bool):
     visualization = project.visualization
 
     visualization.cage_edit = value
+
+
+def set_bake_preview(value: bool):
+    from ..core.controller import BakeController
+
+    project = BakeController.project(bpy.context)
+    if project is None:
+        return
+
+    visualization = project.visualization
+
+    visualization.preview_bake = value
 
 
 def update_cage_color(self, context):
@@ -61,8 +76,32 @@ def update_edit_cage(self, context):
         CageVisualizationService.disable()
 
 
+def update_preview_bake(self, context):
+    from ..core.controller import BakeController
+
+    target = BakeController.active_target_object(context)
+    project = BakeController.project(context)
+
+    preview_bake = project.visualization.preview_bake
+
+    if preview_bake:
+        if target is None:
+            preview_bake = False
+            return
+
+        if not CageVisualizationService.enable_bake_preview(target):
+            preview_bake = False
+
+    else:
+        CageVisualizationService.disable_bake_preview()
+
+
 def update_active_target(self, context):
     from ..core.controller import BakeController
+
+    project = BakeController.project(context)
+
+    preview_bake = project.visualization.preview_bake
 
     if not CageVisualizationService.is_active():
         return
@@ -74,7 +113,7 @@ def update_active_target(self, context):
         set_edit_cage(False)
         return
 
-    CageVisualizationService.refresh(target)
+    CageVisualizationService.refresh(target, preview_bake)
 
 
 def exit_weight_paint_callback(obj, mode):
@@ -82,6 +121,7 @@ def exit_weight_paint_callback(obj, mode):
         safe_obj = getattr(obj, mode)
 
         if safe_obj == "OBJECT":
+            CageVisualizationService.disable_bake_preview()
             CageVisualizationService.disable()
 
             set_edit_cage(False)
@@ -244,6 +284,44 @@ class CageVisualizationService:
 
                 return False
 
+    @classmethod
+    def enable_bake_preview(
+        cls,
+        target: UBK_TargetObject,
+    ) -> None:
+        with LOG.scope(LOG_SCOPE):
+            from ..core.controller import BakeController
+
+            bake_group = BakeController.active_bake_group(bpy.context)
+
+            if bake_group is None:
+                LOG.warning("Bake Group not found")
+                return
+
+            active_baker = BakeController.active_baker(bpy.context)
+
+            if active_baker is None:
+                return
+
+            producer = registry_baker[active_baker.baker]
+
+            runtime = cls._runtime
+            if runtime is None or not runtime.active:
+                return
+
+            if runtime.cage_asset_setup is None:
+                raise ReferenceError("Projection Target is None")
+
+            data = PreviewData(
+                producer=producer,
+                bake_group_uuid=bake_group.uuid,
+                producer_uuid=active_baker.uuid,
+                mode=BakeVisualizationMode.PREVIEW_CAGE,
+                projection_target=runtime.cage_asset_setup.projection_target,
+            )
+            LOG.info("Enabling Bake Preview")
+            BakeVisualizationService.enable_preview(data)
+
     # ---------------------------------------------------------
     # Disable
     # ---------------------------------------------------------
@@ -264,6 +342,7 @@ class CageVisualizationService:
             LOG.debug("Disabling Cage Visualization")
 
             try:
+                cls.disable_bake_preview()
                 cls._remove_depsgraph_handler()
                 cls._remove_draw_handler()
                 cls._release_gpu_resources()
@@ -280,15 +359,20 @@ class CageVisualizationService:
 
                 if disable_property:
                     set_edit_cage(False)
+                    set_bake_preview(False)
+
+    @classmethod
+    def disable_bake_preview(
+        cls,
+    ) -> None:
+        with LOG.scope(LOG_SCOPE):
+            BakeVisualizationService.disable()
 
     # ---------------------------------------------------------
     # Refresh
     # ---------------------------------------------------------
     @classmethod
-    def refresh(
-        cls,
-        target: UBK_TargetObject | None,
-    ) -> bool:
+    def refresh(cls, target: UBK_TargetObject | None, preview_bake: bool = False) -> bool:
         """
         Refresh the cage visualization for a new active target.
 
@@ -303,10 +387,12 @@ class CageVisualizationService:
                 return cls.enable(target)
 
             if target is None:
+                cls.disable_bake_preview()
                 cls.disable()
                 return False
 
             if not cls._target_uses_cage(target):
+                cls.disable_bake_preview()
                 cls.disable()
                 return False
 
@@ -317,16 +403,13 @@ class CageVisualizationService:
 
             LOG.debug(f"Refreshing Cage Visualization | {runtime.target_name} -> {target.object.name}")
 
-            # Do not call disable() here because that would restore
-            # the original scene visibility between targets.
-
-            # cls._remove_draw_handler()
-            # cls._release_gpu_resources()
-
+            cls.disable_bake_preview()
             cls.disable(disable_property=target.settings_cage.cage_mode == "OBJECT")
 
             if target.settings_cage.cage_mode == "GENERATED":
                 cls.enable(target)
+                if preview_bake:
+                    cls.enable_bake_preview(target)
 
             return True
 
@@ -397,33 +480,12 @@ class CageVisualizationService:
 
             runtime.target_object_names.append(obj.name)
 
-            runtime.visibility[obj.name] = ObjectVisibilityState(
-                name=obj.name,
-                hide_viewport=obj.hide_viewport,
-                hide_get=obj.hide_get(),
-            )
-
         # Capture sources.
         for source in target.source_object_list:
             if source is None:
                 continue
 
             runtime.source_object_names.append(source.name)
-
-            if source.name not in runtime.visibility:
-                runtime.visibility[source.name] = ObjectVisibilityState(
-                    name=source.name,
-                    hide_viewport=source.hide_viewport,
-                    hide_get=source.hide_get(),
-                )
-
-        # Capture cage state too.
-        if cage.name not in runtime.visibility:
-            runtime.visibility[cage.name] = ObjectVisibilityState(
-                name=cage.name,
-                hide_viewport=cage.hide_viewport,
-                hide_get=cage.hide_get(),
-            )
 
     @classmethod
     def _get_group_targets(
@@ -462,8 +524,15 @@ class CageVisualizationService:
             if obj is None:
                 continue
 
-            obj.hide_viewport = False
-            obj.hide_set(False)
+            vo = VisibilityOverride(
+                obj=obj,
+                hide_get=False,
+                hide_viewport=False,
+            )
+
+            runtime.visibility[obj.name] = vo
+
+            vo.set_visibility()
 
         # Hide all target objects.
         for name in runtime.target_object_names:
@@ -472,29 +541,36 @@ class CageVisualizationService:
             if obj is None:
                 continue
 
-            obj.hide_viewport = True
-            obj.hide_set(True)
+            vo = VisibilityOverride(
+                obj=obj,
+                hide_get=True,
+                hide_viewport=True,
+            )
+            runtime.visibility[obj.name] = vo
+
+            vo.set_visibility()
 
         # Cage must be visible and selectable for weight paint.
         if runtime.cage_name:
             cage = bpy.data.objects.get(runtime.cage_name)
 
             if cage is not None:
-                cage.hide_viewport = False
-                cage.hide_set(False)
+                vo = VisibilityOverride(
+                    obj=cage,
+                    hide_get=False,
+                    hide_viewport=False,
+                )
+
+                runtime.visibility[cage.name] = vo
+
+                vo.set_visibility()
 
     @classmethod
     def _restore_visibility(cls) -> None:
         runtime = cls._ensure_runtime()
 
-        for state in runtime.visibility.values():
-            obj = bpy.data.objects.get(state.name)
-
-            if obj is None:
-                continue
-
-            obj.hide_viewport = state.hide_viewport
-            obj.hide_set(state.hide_get)
+        for override in runtime.visibility.values():
+            override.revert_visibility()
 
     # ---------------------------------------------------------
     # Temporary Collection

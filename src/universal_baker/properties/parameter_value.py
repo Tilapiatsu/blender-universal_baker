@@ -2,13 +2,15 @@ from __future__ import annotations
 
 import bpy
 
+from ..enum.visualization import BakeVisualizationMode
+
 
 def parameter_updated(self, context):
     from ..runtime.runtime_manager import RuntimeManager
 
     runtime = RuntimeManager.get(context.scene).bake_visualization
 
-    if runtime.preview_enabled:
+    if runtime.preview_enabled or runtime.mode == BakeVisualizationMode.PREVIEW_CAGE:
         runtime.request_preview_refresh()
 
     if context.scene.ubk_project.visualization.is_dragging:

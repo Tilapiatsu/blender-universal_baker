@@ -13,13 +13,7 @@ from ..core.registry_definition import registry_definition
 from ..parameter.parameter_applier import ParameterApplier
 from ..parameter.parameter_context import ParameterContext
 from ..runtime.asset_setup import AssetSetup
-
-
-@dataclass(slots=True)
-class ObjectVisibilityState:
-    name: str
-    hide_viewport: bool
-    hide_get: bool
+from ..services.visibility_override import VisibilityOverride
 
 
 @dataclass(slots=True)
@@ -32,7 +26,7 @@ class CageVisualizationRuntime:
     cage_asset_setup: AssetSetup | None = None
 
     # Original object visibility.
-    visibility: dict[str, ObjectVisibilityState] = field(default_factory=dict)
+    visibility: dict[str, VisibilityOverride] = field(default_factory=dict)
 
     # Original active object / mode.
     active_object_name: str | None = None

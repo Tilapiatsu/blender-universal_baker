@@ -103,6 +103,10 @@ class UBK_UL_CageSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
             row = col.split(align=True, factor=0.8)
             row.prop(visualization, "cage_edit", toggle=True)
             row.prop(visualization, "cage_color", text="")
+            row = col.column(align=True)
+            if not visualization.cage_edit:
+                row.enabled = False
+            row.prop(visualization, "preview_bake", toggle=True)
 
         col = box.column(align=True)
         if cage_settings.cage_mode == "GENERATED":
