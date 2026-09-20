@@ -1,16 +1,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-
+from typing import TYPE_CHECKING
 
 from ..constant import LOG
-from ..services.output_provider import OutputProvider
+from ..enum.channels import Channel
 from ..runtime.task_pack import PackingChannel, PackingTask
 from ..runtime.tile_set import TileSet
-
+from ..services.output_provider import OutputProvider
 from .image import ImageResource
-from ..enum.channels import Channel
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..runtime.context_pack import PackContext

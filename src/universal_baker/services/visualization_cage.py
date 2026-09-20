@@ -6,11 +6,15 @@ import bpy
 import gpu
 from gpu_extras.batch import batch_for_shader
 
-from ..constant import LOG
+from ..constant import BAKE_PREVIEW_ASSET_PATH, LOG
+from ..resources.asset_external import AssetExtrenal
+from ..runtime.bake_objects import BakeObjects
 from ..runtime.runtime_visualization_cage import (
     CageVisualizationRuntime,
     ObjectVisibilityState,
 )
+from ..services.asset_external_setup import AssetExternalCageSetup
+from ..services.temp_collection import TempCollection
 
 if TYPE_CHECKING:
     from ..properties.object import UBK_TargetObject
@@ -191,12 +195,22 @@ class CageVisualizationService:
             # -----------------------------------------------------
             # Acquire cage
             # -----------------------------------------------------
-
             cage = cls._acquire_cage(target)
 
             if cage is None:
                 LOG.warning(f"Unable to acquire cage for {target.object.name}")
                 return False
+
+            asset = AssetExtrenal(filepath=BAKE_PREVIEW_ASSET_PATH)
+            bake_objects = BakeObjects(
+                target_object=target.object,
+                cage_object=cage,
+                cage_hidden=cage.hide_render,
+                is_cage_generated=True,
+                source_objects=target.source_object_list,
+            )
+
+            runtime.cage_asset_setup = AssetExternalCageSetup.prepare(asset, bake_objects, target.uv_layer)
 
             runtime.begin(
                 target_uuid=target.uuid,
@@ -207,8 +221,15 @@ class CageVisualizationService:
             try:
                 cls._update_cage_color()
                 cls._capture_state(target, cage)
-                cls._create_temporary_collection()
-                cls._link_visualization_objects(target, cage)
+                cls._create_temporary_collection(
+                    [
+                        runtime.cage_asset_setup.target,
+                        cage,
+                        runtime.cage_asset_setup.projection_target,
+                        runtime.cage_asset_setup.projection_cage,
+                    ]
+                    + bake_objects.source_objects
+                )
                 cls._configure_visibility()
                 cls._create_gpu_resources(cage)
                 cls._register_draw_handler()
@@ -249,6 +270,7 @@ class CageVisualizationService:
                 cls._restore_mode_and_active_object()
                 cls._restore_visibility()
                 cls._cleanup_temporary_collection()
+                cls._cleanup_cage_asset_setup()
 
             except Exception:
                 raise CageVisualizationError("Failed while restoring Cage Visualization")
@@ -479,18 +501,13 @@ class CageVisualizationService:
     # ---------------------------------------------------------
     #
     @classmethod
-    def _create_temporary_collection(cls) -> bpy.types.Collection:
+    def _create_temporary_collection(cls, objects: list[bpy.types.Object]) -> bpy.types.Collection:
         runtime = cls._ensure_runtime()
 
-        collection = bpy.data.collections.new(TEMP_COLLECTION_NAME)
+        runtime.temporary_collection = TempCollection(TEMP_COLLECTION_NAME, objects=objects)
+        runtime.temporary_collection.create()
 
-        # Link to the current scene collection.
-        bpy.context.scene.collection.children.link(collection)
-
-        runtime.temporary_collection_name = collection.name
-        runtime.owns_temporary_collection = True
-
-        return collection
+        return runtime.temporary_collection.collection
 
     @classmethod
     def _get_temporary_collection(cls) -> bpy.types.Collection | None:
@@ -502,64 +519,19 @@ class CageVisualizationService:
         return bpy.data.collections.get(runtime.temporary_collection_name)
 
     @classmethod
-    def _link_object_to_temporary_collection(
-        cls,
-        obj: bpy.types.Object,
-    ) -> None:
-        runtime = cls._ensure_runtime()
-        collection = cls._get_temporary_collection()
-
-        if collection is None:
-            return
-
-        if collection.objects.get(obj.name) is not None:
-            return
-
-        collection.objects.link(obj)
-        runtime.temporary_links.add(obj.name)
-
-    @classmethod
-    def _link_visualization_objects(
-        cls,
-        target,
-        cage: bpy.types.Object,
-    ) -> None:
-        # Link cage.
-        cls._link_object_to_temporary_collection(cage)
-
-        # Link every source object belonging to the target.
-        for source in target.source_object_list:
-            if source is None:
-                continue
-
-            cls._link_object_to_temporary_collection(source)
-
-    @classmethod
     def _cleanup_temporary_collection(cls) -> None:
         runtime = cls._ensure_runtime()
 
-        if not runtime.owns_temporary_collection:
+        if runtime.temporary_collection is None:
             return
 
-        collection = cls._get_temporary_collection()
+        runtime.temporary_collection.cleanup()
 
-        if collection is None:
-            return
-
-        # Remove only the links that this service created.
-        for object_name in runtime.temporary_links:
-            obj = bpy.data.objects.get(object_name)
-
-            if obj is None:
-                continue
-
-            if collection.objects.get(obj.name) is not None:
-                collection.objects.unlink(obj)
-
-        # Now the temporary collection should be empty.
-        #
-        # Since we created it ourselves, it is safe to remove.
-        bpy.data.collections.remove(collection)
+    @classmethod
+    def _cleanup_cage_asset_setup(cls):
+        runtime = cls._ensure_runtime()
+        if runtime.cage_asset_setup is not None:
+            runtime.cage_asset_setup.cleanup()
 
     # ---------------------------------------------------------
     # GPU

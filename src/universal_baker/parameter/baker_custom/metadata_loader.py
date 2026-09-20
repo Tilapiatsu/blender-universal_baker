@@ -254,6 +254,9 @@ class MetadataLoader:
             "INT",
             "BOOL",
             "ENUM",
+            "STRING",
+            "OBJ",
+            "VECTOR",
         }
 
         if parameter_type not in allowed_types:
@@ -277,6 +280,9 @@ class MetadataLoader:
         soft_max = cls._optional_number(data, "soft_max", None)
         options = cls._parse_options(data.get("options", []), location)
         bindings = cls._parse_bindings(data.get("bindings", []), location)
+
+        if parameter_type == "VECTOR" and default is not None:
+            default = tuple(default)
 
         return ParameterMetadata(
             identifier=identifier,

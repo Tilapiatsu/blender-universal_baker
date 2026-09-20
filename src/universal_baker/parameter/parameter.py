@@ -12,6 +12,7 @@ class ParameterType(str, Enum):
     INT = "INT"
     BOOL = "BOOL"
     ENUM = "ENUM"
+    STRING = "STRING"
     OBJ = "OBJ"
     VECTOR = "VECTOR"
 

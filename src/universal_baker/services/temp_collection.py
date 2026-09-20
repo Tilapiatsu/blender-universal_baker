@@ -19,12 +19,14 @@ class TempCollection:
     def collection(self) -> bpy.types.Collection:
         return bpy.data.collections.get(self.collection_name)
 
-    def create(self) -> None:
-        self._create_temporary_collection()
+    def create(self) -> bpy.types.Collection:
+        collection = self._create_temporary_collection()
         for o in self.objects:
             self._link_object_to_temporary_collection(o)
 
-    def _create_temporary_collection(self) -> None:
+        return collection
+
+    def _create_temporary_collection(self) -> bpy.types.Collection:
         collection = bpy.data.collections.get(self.collection_name)
 
         if collection is None:
@@ -32,6 +34,7 @@ class TempCollection:
 
         # Link to the current scene collection.
         bpy.context.scene.collection.children.link(collection)
+        return collection
 
     def _link_object_to_temporary_collection(
         self,

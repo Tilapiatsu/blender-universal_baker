@@ -31,6 +31,8 @@ PREVIEW_VIEW_TRANSFORM = SceneViewTransform()
 BAKE_VIEW_TRANSFORM = SceneViewTransform()
 
 ASSET_PATH = Path(__file__).parent.resolve() / "assets"
+BAKE_PREVIEW_ASSET_PATH = ASSET_PATH / "Bake Preview.blend"
+CAGE_SCENE_OFFSET = -1000
 
 assert ADDON_PACKAGE is not None
 

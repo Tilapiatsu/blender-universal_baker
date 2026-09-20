@@ -27,6 +27,9 @@ class ParameterFactory:
         "INT": ParameterType.INT,
         "BOOL": ParameterType.BOOL,
         "ENUM": ParameterType.ENUM,
+        "STRING": ParameterType.STRING,
+        "OBJ": ParameterType.OBJ,
+        "VECTOR": ParameterType.VECTOR,
     }
 
     def create(self, metadata: ParameterMetadata) -> Parameter:
@@ -116,6 +119,33 @@ class ParameterFactory:
 
             if not isinstance(value, str):
                 raise ParameterFactoryError(f"ENUM parameter '{metadata.identifier}' requires a string default.")
+
+            return value
+
+        if parameter_type is ParameterType.STRING:
+            if value is None:
+                return False
+
+            if not isinstance(value, str):
+                raise ParameterFactoryError(f"STRING parameter '{metadata.identifier}' requires a string default.")
+
+            return value
+
+        if parameter_type is ParameterType.OBJ:
+            if value is None:
+                return False
+
+            if not isinstance(value, str):
+                raise ParameterFactoryError(f"OBJ parameter '{metadata.identifier}' requires a string default.")
+
+            return value
+
+        if parameter_type is ParameterType.VECTOR:
+            if value is None:
+                return False
+
+            if not isinstance(value, tuple):
+                raise ParameterFactoryError(f"VECTOR parameter '{metadata.identifier}' requires a tuple default.")
 
             return value
 

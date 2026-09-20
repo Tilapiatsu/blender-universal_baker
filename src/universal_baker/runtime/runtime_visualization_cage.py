@@ -6,6 +6,8 @@ from typing import Any
 
 import bpy
 
+from universal_baker.services.temp_collection import TempCollection
+
 from ..constant import LOG
 from ..core.registry_definition import registry_definition
 from ..parameter.parameter_applier import ParameterApplier
@@ -37,6 +39,7 @@ class CageVisualizationRuntime:
     active_object_mode: str = "OBJECT"
 
     # Temporary collection.
+    temporary_collection: TempCollection | None = None
     temporary_collection_name: str | None = None
     owns_temporary_collection: bool = False
 
@@ -97,6 +100,7 @@ class CageVisualizationRuntime:
         self.active_object_name = None
         self.active_object_mode = "OBJECT"
 
+        self.temporary_collection = None
         self.temporary_collection_name = None
         self.owns_temporary_collection = False
         self.temporary_links.clear()

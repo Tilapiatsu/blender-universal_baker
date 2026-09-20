@@ -4,11 +4,17 @@ from contextlib import contextmanager
 
 import bpy
 
-from ..constant import LOG
+from ..constant import CAGE_SCENE_OFFSET, LOG
+from ..core.registry_definition import registry_definition
+from ..parameter.parameter_applier import ParameterApplier
+from ..parameter.parameter_context import ParameterContext
 from ..resources.asset_external import AssetExtrenal
+from ..resources.asset_info import CageInfo
 from ..runtime.asset_setup import AssetSetup
 from ..runtime.bake_objects import BakeObjects
 from ..services.bake_material import BakeMaterialService
+from ..services.object_offset import ObjectOffset
+from ..services.parameter_service import ParameterService
 from .asset_external import AssetExternalService
 
 LOG_SCOPE = "External Asset Setup Service"
@@ -28,10 +34,6 @@ class AssetExternalSetupBase:
     ) -> bpy.types.Object:
         LOG.debug(f"Prepare setup for {obj.name}")
         duplicate = cls._duplicate_object(obj)
-
-        # NOTE: Important to hide from rendering the base object. because it could pollute the baking for some
-        # bakers ( AO, Diffuse ...)
-        obj.hide_render = True
 
         setup.temporary_objects.append(duplicate)
 
@@ -60,11 +62,11 @@ class AssetExternalSetupBase:
             bpy.data.objects.remove(prototype)
 
     @staticmethod
-    def _duplicate_object(obj: bpy.types.Object) -> bpy.types.Object:
+    def _duplicate_object(obj: bpy.types.Object, instance: bool = False) -> bpy.types.Object:
         LOG.debug(f"Duplicate object {obj.name}")
         bake_object = obj.copy()
 
-        if obj.data is not None:
+        if obj.data is not None and not instance:
             bake_object.data = obj.data.copy()
 
         bake_object.name = f"UBK_TMP_{obj.name}"
@@ -181,6 +183,8 @@ class AssetExternalBakeSetup(AssetExternalSetupBase):
                     setup.material_setup = material_setup
                     setup.target = cls._prepare_object(bake_objects.target_object, prototype, setup)
 
+                bake_objects.target_object.hide_render = True
+
                 return setup
 
             except Exception:
@@ -197,7 +201,7 @@ class AssetExternalCageSetup(AssetExternalSetupBase):
     """Apply the External asset to the proper bake objects"""
 
     @classmethod
-    def prepare(cls, asset: AssetExtrenal, bake_objects: BakeObjects) -> AssetSetup:
+    def prepare(cls, asset: AssetExtrenal, bake_objects: BakeObjects, uv_map: str) -> AssetSetup:
         with LOG.scope(LOG_SCOPE):
             prototype = AssetExternalService.load_prototype(asset)
 
@@ -209,18 +213,31 @@ class AssetExternalCageSetup(AssetExternalSetupBase):
                 setup.temporary_materials.append(m)
 
             try:
-                duplicated_sources = []
-                for o in bake_objects.source_objects:
-                    duplicated_source = cls._prepare_object(o, prototype, setup)
-                    duplicated_sources.append(duplicated_source)
+                projection_cage = cls._prepare_projection_cage(bake_objects.cage_object, setup)
 
-                setup.sources = duplicated_sources
+                setup.sources = bake_objects.source_objects
                 setup.target = bake_objects.target_object
-                # material_setup = BakeMaterialService.prepare(
-                #     targets=[bake_objects.target_object], sources=duplicated_sources
-                # )
-                # setup.material_setup = material_setup
+                setup.projection_cage = projection_cage
+
+                setup.projection_target = cls._prepare_projection_target(bake_objects.target_object, prototype, setup)
                 setup.cage = bake_objects.cage_object
+
+                offset_objects = bake_objects.source_objects + [
+                    projection_cage,
+                    bake_objects.target_object,
+                ]
+
+                do_not_offset_objects = [setup.projection_target, setup.cage]
+
+                objects = list(bpy.context.scene.objects) + [setup.projection_cage]
+
+                offset_objects = [o for o in objects if o not in do_not_offset_objects]
+
+                offset = (0, CAGE_SCENE_OFFSET, CAGE_SCENE_OFFSET)
+
+                setup.object_offset = cls._offset_objects(offset_objects, offset)
+
+                cls._apply_cage_parameters(setup, uv_map, offset)
 
                 return setup
 
@@ -232,3 +249,76 @@ class AssetExternalCageSetup(AssetExternalSetupBase):
                 # external blend and must also be removed.
                 cls._remove_object(prototype)
                 raise RuntimeError
+
+    @classmethod
+    def _prepare_projection_cage(cls, obj: bpy.types.Object, setup: AssetSetup) -> bpy.types.Object:
+        duplicate = cls._duplicate_object(obj, instance=True)
+        duplicate.name += "_PROJECTION_CAGE"
+
+        setup.temporary_objects.append(duplicate)
+
+        duplicate.hide_viewport = True
+
+        return duplicate
+
+    @classmethod
+    def _prepare_projection_target(
+        cls, obj: bpy.types.Object, prototype: bpy.types.Object, setup: AssetSetup
+    ) -> bpy.types.Object:
+        duplicate = cls._prepare_object(obj, prototype, setup)
+        duplicate.name += "_PROJECTION_TARGET"
+
+        return duplicate
+
+    @classmethod
+    def _offset_objects(cls, objects: list[bpy.types.Object], distance: tuple[float, float, float]) -> ObjectOffset:
+        offset = ObjectOffset(objects, distance)
+        offset.offset()
+        return offset
+
+    @classmethod
+    def _apply_cage_parameters(
+        cls,
+        setup: AssetSetup,
+        uv_map: str,
+        offset: tuple[float, float, float],
+    ):
+        definition = registry_definition.get_custom("BAKE_PREVIEW")
+        if definition is None:
+            LOG.error("Parameter definition not found")
+            return
+
+        cage_info = cls._get_cage_info(setup, uv_map, cls._negate_tuple(offset))
+        snapshot = ParameterService.snapshot_asset(definition, cage_info)
+
+        LOG.debug("Applying Cage parameters")
+
+        parameter_context = ParameterContext(
+            object=setup.projection_target,
+            scene=bpy.context.scene,
+        )
+
+        ParameterApplier.apply(
+            definition,
+            snapshot,
+            parameter_context,
+        )
+
+    @classmethod
+    def _get_cage_info(
+        cls,
+        setup: AssetSetup,
+        uv_map: str,
+        offset: tuple[float, float, float],
+    ):
+        cage_info = CageInfo(
+            cage_object=setup.projection_cage,
+            target_object=setup.target,
+            offset=offset,
+            uvmap=uv_map,
+        )
+        return cage_info
+
+    @classmethod
+    def _negate_tuple(cls, t: tuple[float, float, float]) -> tuple[float, float, float]:
+        return (t[0] * -1, t[1] * -1, t[2] * -1)

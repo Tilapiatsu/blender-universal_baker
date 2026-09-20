@@ -6,6 +6,7 @@ import bpy
 
 from ..constant import LOG
 from ..services.bake_material import BakeMaterialSetup
+from ..services.object_offset import ObjectOffset
 
 LOG_SCOPE = "Asset Setup"
 
@@ -18,11 +19,14 @@ class AssetSetup:
 
     target: bpy.types.Object | None = None
     cage: bpy.types.Object | None = None
+    projection_cage: bpy.types.Object | None = None
+    projection_target: bpy.types.Object | None = None
     sources: list[bpy.types.Object] | None = None
     temporary_objects: list[bpy.types.Object] = field(default_factory=list)
     temporary_materials: list[bpy.types.Material] = field(default_factory=list)
     temporary_modifiers: list[tuple[bpy.types.Object, str]] = field(default_factory=list)
     material_setup: BakeMaterialSetup | None = None
+    object_offset: ObjectOffset | None = None
 
     def cleanup(self) -> None:
         """
@@ -64,6 +68,10 @@ class AssetSetup:
             self.temporary_materials.clear()
 
             self.temporary_modifiers.clear()
+
+            if self.object_offset is not None:
+                self.object_offset.revert()
+                self.object_offset = None
 
     def __enter__(self):
         return self

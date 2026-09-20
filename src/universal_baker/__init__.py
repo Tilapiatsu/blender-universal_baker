@@ -25,6 +25,7 @@ from . import (
     accumulators,
     maskers,
     handlers,
+    assets,
 )
 
 modules = (
@@ -41,6 +42,7 @@ modules = (
     accumulators,
     maskers,
     handlers,
+    assets,
 )
 
 

@@ -9,6 +9,7 @@ from ..parameter.baker_local.definition import LocalDefinition
 from ..parameter.parameter import Parameter, ParameterSnapshot, ParameterType
 from ..properties.custom_baker import UBK_CustomBaker
 from ..properties.parameter_value import UBK_ParameterValue
+from ..resources.asset_info import AssetInfo
 
 
 class ParameterServiceError(RuntimeError):
@@ -44,6 +45,18 @@ class ParameterService:
 
         for parameter in definition.parameters:
             snapshot[parameter.identifier] = cls.snapshot_parameter(definition, state, parameter.identifier)
+
+        return snapshot
+
+    @classmethod
+    def snapshot_asset(cls, definition: CustomBakerDefinition, state: AssetInfo) -> ParameterSnapshot:
+        snapshot: dict[str, Any] = {}
+
+        for parameter in definition.parameters:
+            value = getattr(state, parameter.identifier, None)
+            if value is None:
+                raise ParameterServiceError(f"Parameter '{parameter.identifier}' not in props.")
+            snapshot[parameter.identifier] = value
 
         return snapshot
 
