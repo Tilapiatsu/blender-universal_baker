@@ -299,6 +299,8 @@ class CageVisualizationService:
     ) -> None:
         # ISSUE: In bake preview mode, the baker parameters are not updating the material inputs anymore :(
         # ISSUE: In bake preview mode, the proper view transform is not loaded correctly
+        # ISSUE: In bake preview mode, it should only display the sources associated with the current target
+        # TODO: need to tackle the ray visibility to control an object visible from secondary ray but not primary ones
 
         with LOG.scope(LOG_SCOPE):
             from ..core.controller import BakeController
