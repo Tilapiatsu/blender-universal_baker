@@ -349,7 +349,7 @@ class UBK_PT_BakerPanel(UBK_PT_MainPanel, bpy.types.Panel):
                 toggle=1,
                 icon="VIEW_CAMERA" if project.visualization.enabled_preview else "VIEW_CAMERA_UNSELECTED",
             )
-            if project.visualization.preview_bake:
+            if project.visualization.cage_edit:
                 column.enabled = False
 
             if not baker.has_image:

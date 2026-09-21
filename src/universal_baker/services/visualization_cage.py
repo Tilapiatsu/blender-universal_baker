@@ -121,9 +121,11 @@ def exit_weight_paint_callback(obj, mode):
         safe_obj = getattr(obj, mode)
 
         if safe_obj == "OBJECT":
+            # ISSUE: Crash when exit weight paint in bake preview mode
             CageVisualizationService.disable_bake_preview()
             CageVisualizationService.disable()
 
+            set_bake_preview(False)
             set_edit_cage(False)
 
     except ReferenceError:
@@ -252,6 +254,12 @@ class CageVisualizationService:
 
             runtime.cage_asset_setup = AssetExternalCageSetup.prepare(asset, bake_objects, target.uv_layer)
 
+            if runtime.cage_asset_setup is None or runtime.cage_asset_setup.object_offset_edit is None:
+                LOG.warning("Cage asset preparation failed")
+                return False
+
+            runtime.cage_asset_setup.object_offset_edit.offset()
+
             runtime.begin(
                 target_uuid=target.uuid,
                 target_name=target.object.name,
@@ -289,6 +297,8 @@ class CageVisualizationService:
         cls,
         target: UBK_TargetObject,
     ) -> None:
+        # ISSUE: In bake preview mode, the baker parameters are not updating the material inputs anymore :(
+
         with LOG.scope(LOG_SCOPE):
             from ..core.controller import BakeController
 
@@ -309,8 +319,15 @@ class CageVisualizationService:
             if runtime is None or not runtime.active:
                 return
 
-            if runtime.cage_asset_setup is None:
+            if (
+                runtime.cage_asset_setup is None
+                or runtime.cage_asset_setup.object_offset_edit is None
+                or runtime.cage_asset_setup.object_offset_preview is None
+            ):
                 raise ReferenceError("Projection Target is None")
+
+            runtime.cage_asset_setup.object_offset_edit.revert()
+            runtime.cage_asset_setup.object_offset_preview.offset()
 
             data = PreviewData(
                 producer=producer,
@@ -366,6 +383,20 @@ class CageVisualizationService:
         cls,
     ) -> None:
         with LOG.scope(LOG_SCOPE):
+            runtime = cls._runtime
+            if runtime is None or not runtime.active:
+                return
+
+            if (
+                runtime.cage_asset_setup is None
+                or runtime.cage_asset_setup.object_offset_edit is None
+                or runtime.cage_asset_setup.object_offset_preview is None
+            ):
+                raise ReferenceError("Projection Target is None")
+
+            runtime.cage_asset_setup.object_offset_preview.revert()
+            runtime.cage_asset_setup.object_offset_edit.offset()
+
             BakeVisualizationService.disable()
 
     # ---------------------------------------------------------

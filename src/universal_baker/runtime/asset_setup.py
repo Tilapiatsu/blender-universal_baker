@@ -26,7 +26,8 @@ class AssetSetup:
     temporary_materials: list[bpy.types.Material] = field(default_factory=list)
     temporary_modifiers: list[tuple[bpy.types.Object, str]] = field(default_factory=list)
     material_setup: BakeMaterialSetup | None = None
-    object_offset: ObjectOffset | None = None
+    object_offset_edit: ObjectOffset | None = None
+    object_offset_preview: ObjectOffset | None = None
 
     def cleanup(self) -> None:
         """
@@ -69,9 +70,13 @@ class AssetSetup:
 
             self.temporary_modifiers.clear()
 
-            if self.object_offset is not None:
-                self.object_offset.revert()
-                self.object_offset = None
+            if self.object_offset_edit is not None:
+                self.object_offset_edit.revert()
+                self.object_offset_edit = None
+
+            if self.object_offset_preview is not None:
+                self.object_offset_preview.revert()
+                self.object_offset_preview = None
 
     def __enter__(self):
         return self

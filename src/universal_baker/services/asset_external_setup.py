@@ -222,20 +222,18 @@ class AssetExternalCageSetup(AssetExternalSetupBase):
                 setup.projection_target = cls._prepare_projection_target(bake_objects.target_object, prototype, setup)
                 setup.cage = bake_objects.cage_object
 
-                offset_objects = bake_objects.source_objects + [
-                    projection_cage,
-                    bake_objects.target_object,
-                ]
-
-                do_not_offset_objects = [setup.projection_target, setup.cage]
-
                 objects = list(bpy.context.scene.objects) + [setup.projection_cage]
 
-                offset_objects = [o for o in objects if o not in do_not_offset_objects]
+                do_not_offset_objects_edit = setup.sources + [setup.cage, setup.target]
+                offset_objects_edit = [o for o in objects if o not in do_not_offset_objects_edit]
+
+                do_not_offset_objects_preview = [setup.projection_target, setup.cage]
+                offset_objects_preview = [o for o in objects if o not in do_not_offset_objects_preview]
 
                 offset = (0, CAGE_SCENE_OFFSET, CAGE_SCENE_OFFSET)
 
-                setup.object_offset = cls._offset_objects(offset_objects, offset)
+                setup.object_offset_edit = cls._offset_objects(offset_objects_edit, offset)
+                setup.object_offset_preview = cls._offset_objects(offset_objects_preview, offset)
 
                 cls._apply_cage_parameters(setup, uv_map, offset)
 
@@ -273,7 +271,6 @@ class AssetExternalCageSetup(AssetExternalSetupBase):
     @classmethod
     def _offset_objects(cls, objects: list[bpy.types.Object], distance: tuple[float, float, float]) -> ObjectOffset:
         offset = ObjectOffset(objects, distance)
-        offset.offset()
         return offset
 
     @classmethod
