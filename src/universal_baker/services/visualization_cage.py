@@ -298,6 +298,7 @@ class CageVisualizationService:
         target: UBK_TargetObject,
     ) -> None:
         # ISSUE: In bake preview mode, the baker parameters are not updating the material inputs anymore :(
+        # ISSUE: In bake preview mode, the proper view transform is not loaded correctly
 
         with LOG.scope(LOG_SCOPE):
             from ..core.controller import BakeController
