@@ -43,7 +43,7 @@ class BakeTask(OutputTask):
     def baker_settings(self) -> UBK_CustomBaker | None:
         from ..core.controller import BakeController
 
-        baker = BakeController.get_baker_from_uuid(self.uuid)
+        baker = BakeController.get_baker_from_uuid(self.baker_uuid)
 
         if baker is None:
             return None
