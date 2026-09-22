@@ -47,7 +47,7 @@ class AccumulatorBase(ABC):
             LOG.info(f"{str(ctx.task)}")
 
             try:
-                # self.invalidate_previous_output(ctx)
+                self.invalidate_previous_output(ctx)
                 self.prepare(ctx)
                 self.accumulate(ctx)
                 self.update_baker(ctx)
