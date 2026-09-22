@@ -98,6 +98,7 @@ class MaskerBase(ABC):
                 f"handle={id(input)} "
                 f"loaded={input.is_loaded} "
                 f"tiles={input.tiles()} "
+                f"resolution=({input.artifact.output_settings.path.width},{input.artifact.output_settings.path.height})"
             )
 
             if not mask.contains(input.tileset):
@@ -137,8 +138,8 @@ class MaskerBase(ABC):
             artifact_type=OutputStage.MASKED,
             name=ctx.task.output_name,
             bake_group_uuid=ctx.task.bake_group_uuid,
-            target_object_uuid="",
-            producer_uuid=ctx.task.uuid,
+            target_object_uuid="ALL",
+            producer_uuid=ctx.task.baker_uuid,
             image_layout=ctx.task.uv_layout.image_layout,
             uv_layout=ctx.task.uv_layout,
             absolute_path=ctx.task.absolute_filepath,

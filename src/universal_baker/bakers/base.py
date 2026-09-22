@@ -137,7 +137,7 @@ class BakerBase(ABC):
             LOG.debug("Invalidate Previous Output ...")
             ctx.session.runtime.outputs.invalidate(
                 ctx.task.bake_group_uuid,
-                ctx.task.uuid,
+                ctx.task.baker_uuid,
             )
 
             ctx.session.output_invalidated = True
@@ -204,7 +204,7 @@ class BakerBase(ABC):
             name=ctx.task.output_name,
             bake_group_uuid=ctx.task.bake_group_uuid,
             target_object_uuid=ctx.task.target_object_uuid,
-            producer_uuid=ctx.task.uuid,
+            producer_uuid=ctx.task.baker_uuid,
             image_layout=ctx.task.uv_layout.image_layout,
             uv_layout=ctx.task.uv_layout,
             absolute_path=ctx.task.absolute_filepath,
@@ -217,6 +217,7 @@ class BakerBase(ABC):
 
         ctx.output = ctx.session.runtime.outputs.get(artifact)
         if ctx.output is None:
+            LOG.debug("Output Artifact not found")
             return
 
         ctx.task.result.set_tileset(ctx.output.tileset, clear=True)

@@ -8,7 +8,7 @@ import os
 import zipfile
 from pathlib import Path
 
-allowed_file_extensions = (".py", "LICENSE", ".md", ".dat", ".toml")
+allowed_file_extensions = (".py", "LICENSE", ".md", ".dat", ".toml", ".blend")
 ignore_regular_folders = ("doc_assets", "venv", "tests", ".vscode", "__pycache__", "site_package")
 
 

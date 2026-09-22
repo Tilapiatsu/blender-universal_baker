@@ -27,6 +27,7 @@ class BakeTask(OutputTask):
     output_context: OutputContext
     color_management_info: ColorManagementInfo
 
+    baker_uuid: str
     target_object_uuid: str
     sources: list[bpy.types.Object]
     producer: BakerBase

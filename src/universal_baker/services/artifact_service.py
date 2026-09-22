@@ -76,6 +76,8 @@ class ArtifactService:
             #
             # Fill metadata
             #
+            if not producer_uuid:
+                raise ValueError(f"Artifact '{name}' cannot be registered without producer_uuid")
 
             artifact_pg.type = artifact_type.value
             artifact_pg.bake_group_uuid = bake_group_uuid

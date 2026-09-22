@@ -38,11 +38,6 @@ class CustomBaker(BakerBase):
         self,
         bake_objects: BakeObjects,
     ) -> Generator[BakerExecution, Any, Any]:
-        # ISSUE:
-        # Baking custom baker with cage and multiple source and target -> No active image found -> Look like a
-        # material preparation issue, the image didn't got to the baker material, or the baker material didn't got
-        # created properly
-
         asset = AssetExtrenal(filepath=self.asset_path)
 
         hide_render = {}

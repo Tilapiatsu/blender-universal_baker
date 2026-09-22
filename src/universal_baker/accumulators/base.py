@@ -3,6 +3,11 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
+from universal_baker.resources.image import ImageResource
+from universal_baker.runtime.tile_set import TileSet
+from universal_baker.services.image_codec import ImageCodec
+from universal_baker.services.image_io import ImageIOService
+
 from ..constant import LOG
 from ..core.accumulator import ImageAccumulator
 from ..core.registry_compositor import registry_compositor
@@ -44,22 +49,20 @@ class AccumulatorBase(ABC):
             try:
                 # self.invalidate_previous_output(ctx)
                 self.prepare(ctx)
-                self.create_artifact(ctx)
                 self.accumulate(ctx)
                 self.update_baker(ctx)
+                self.create_artifact(ctx)
                 self.export_file(ctx)
             finally:
                 self.cleanup(ctx)
 
     @abstractmethod
     def invalidate_previous_output(self, ctx: AccumulateContext):
-        if not ctx.session.output_invalidated:
-            LOG.debug("Invalidate Previous Output ...")
-            ctx.session.runtime.outputs.invalidate(
-                ctx.task.bake_group_uuid,
-                ctx.task.uuid,
-            )
-            ctx.session.output_invalidated = True
+        LOG.debug("Invalidate Previous Output ...")
+        ctx.session.runtime.outputs.invalidate(
+            ctx.task.bake_group_uuid,
+            ctx.task.id,
+        )
 
     @abstractmethod
     def prepare(self, ctx: AccumulateContext) -> None:
@@ -84,22 +87,23 @@ class AccumulatorBase(ABC):
         """Execute the Accumulation."""
         LOG.debug("Accumulating ...")
 
-        if ctx.output is None:
-            LOG.error("Output is not defined")
-            return
-
         if ctx.inputs is None:
             LOG.error("Inputs are not defined")
             return
 
-        accumulator = ImageAccumulator(ctx.output)
+        result = TileSet()
+        accumulator = ImageAccumulator(result)
 
         for image in ctx.inputs:
             accumulator.accumulate(image, registry_compositor[self.id])
 
-        ctx.output = accumulator.result()
-
-        ctx.image = ctx.output.image()
+        ctx.image = ImageResource.from_tileset(
+            result,
+            ctx.task.output_name,
+            ctx.task.absolute_filepath,
+            ctx.output_settings,
+            ctx.task.color_management_info,
+        )
 
     @abstractmethod
     def cleanup(self, ctx: AccumulateContext) -> None:
@@ -130,7 +134,7 @@ class AccumulatorBase(ABC):
             artifact_type=OutputStage.ACCUMULATED,
             name=ctx.task.output_name,
             bake_group_uuid=ctx.task.bake_group_uuid,
-            target_object_uuid="",
+            target_object_uuid="ALL",
             producer_uuid=ctx.task.uuid,
             image_layout=ctx.task.uv_layout.image_layout,
             uv_layout=ctx.task.uv_layout,

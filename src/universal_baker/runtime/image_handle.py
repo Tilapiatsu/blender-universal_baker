@@ -178,6 +178,19 @@ class ImageHandle:
                 output_settings=self._output_settings,
             )
 
+            if self._resource.image is None:
+                image = ImageResource.from_filepath(
+                    self._artifact.name,
+                    self._artifact.image.path,
+                    self._artifact.output_settings,
+                    self._artifact.color_management_info,
+                    self._artifact.is_udim,
+                )
+                if image is None:
+                    return
+
+                self._resource = image
+
             self._resource.reload()
 
     def reload(self):

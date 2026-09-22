@@ -170,7 +170,8 @@ class ExecutionPlanner:
                         task = BakeTask(
                             name=baker.image_name,
                             bake_group_uuid=group.uuid,
-                            uuid=baker.uuid,
+                            uuid=str(uuid4()),
+                            baker_uuid=baker.uuid,
                             execution_scope=obj.object.name,
                             enabled=True,
                             output_context=output_context,

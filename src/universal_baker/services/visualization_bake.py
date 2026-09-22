@@ -31,7 +31,6 @@ def set_preview_enabled(value: bool, set_mode=False):
 
     viz = project.visualization
 
-    print("set peview enabled to", value)
     viz.refreshing = True
     viz.enabled_preview = value
     if set_mode:

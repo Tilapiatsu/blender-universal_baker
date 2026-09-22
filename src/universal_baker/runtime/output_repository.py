@@ -36,13 +36,15 @@ class OutputRepository:
         self._outputs: dict[str, ImageHandle] = {}
         self._index_baker = defaultdict(list)
         self._index_target_object = defaultdict(list)
+        self._materialized = {}
+        self._artifacts.clear()
 
     def add(self, output: ImageHandle) -> None:
         self._outputs[output.uuid] = output
 
         target_key = (output.bake_group.uuid, output.producer_uuid)
-
         target_object_key = (output.bake_group.uuid, output.producer_uuid, output.target_object_uuid)
+
         self._index_baker[target_key].append(output)
         self._index_target_object[target_object_key].append(output)
 
@@ -62,7 +64,13 @@ class OutputRepository:
 
         outputs = self._index_baker.get(baker_key)
 
+        print(baker_key, "=", baker_key in self._index_baker)
+        if outputs:
+            for o in outputs:
+                print(o.uuid)
+
         if outputs and output in outputs:
+            LOG.debug(f"Removing baker output : {output.uuid}")
             outputs.remove(output)
 
             if not outputs:
@@ -76,7 +84,13 @@ class OutputRepository:
 
         outputs = self._index_target_object.get(target_key)
 
+        print(target_key, "=", target_key in self._index_target_object)
+        if outputs:
+            for o in outputs:
+                print(o.uuid)
+
         if outputs and output in outputs:
+            LOG.debug(f"Removing target objects output : {output.uuid}")
             outputs.remove(output)
 
             if not outputs:
@@ -251,8 +265,15 @@ class OutputRepository:
         """
         LOG.debug(f"INVALIDATING OUTPUT | group={bake_group_uuid}, producer={producer_uuid}, count={self.count}")
         key = (bake_group_uuid, producer_uuid)
-
         outputs = list(self._index_baker.get(key, ()))
+
+        for output in outputs:
+            print(
+                len(output.bake_group.uuid),
+                len(output.producer_uuid),
+                output.artifact.data.type,
+                output.artifact.data.name,
+            )
 
         if not len(outputs):
             LOG.debug("No Output found")

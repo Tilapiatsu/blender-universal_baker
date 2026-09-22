@@ -11,7 +11,9 @@ from ..runtime.settings_image import ImageSettings
 from ..runtime.tile_set import TileSet
 
 if TYPE_CHECKING:
+    from ..runtime.color_management_info import ColorManagementInfo
     from ..runtime.output_artifact import OutputArtifact
+    from ..runtime.settings_output import OutputSettings
 
 LOG_SCOPE = "Image Resource"
 
@@ -277,6 +279,61 @@ class ImageResource:
                 bpy.data.images.remove(image)
 
         image = artifact.load_image()
+
+        return image
+
+    @classmethod
+    def from_filepath(
+        cls,
+        name: str,
+        filepath: Path,
+        output_settings: OutputSettings,
+        color_management_info: ColorManagementInfo,
+        is_udim: bool,
+    ) -> ImageResource | None:
+        from ..services.image_io import ImageIOService
+
+        LOG.debug("Create Resource from Filepath")
+
+        image = None
+        for i in bpy.data.images:
+            if i.filepath_raw == str(filepath):
+                image = i
+
+        if image is None:
+            if not filepath.exists or not filepath.is_file():
+                LOG.error(f"Invalid Path {filepath}, It not of file or does not exists")
+                return None
+
+            image = ImageIOService.load(filepath, output_settings.color, is_udim)
+
+        return ImageIOService.init_resource(image, output_settings)
+
+        return image
+
+    @classmethod
+    def from_tileset(
+        cls,
+        tileset: TileSet,
+        name: str,
+        filepath: Path,
+        output_settings: OutputSettings,
+        color_management_info: ColorManagementInfo,
+    ) -> ImageResource:
+        from ..services.image_codec import ImageCodec
+        from ..services.image_io import ImageIOService
+
+        LOG.debug("Create Resource from Tileset")
+        for b in tileset.buffers:
+            ImageCodec.save(filepath, b, output_settings, color_management_info)
+
+        image = bpy.data.images.get(name)
+
+        if image is None:
+            LOG.debug(f"Loading Image {name}")
+            image = ImageIOService.load(filepath, output_settings.color, len(tileset.buffers) > 1)
+
+        return ImageIOService.init_resource(image, output_settings)
 
         return image
 

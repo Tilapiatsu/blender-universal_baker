@@ -106,7 +106,7 @@ class PackerBase(ABC):
             artifact_type=OutputStage.PACK,
             bake_group_uuid=ctx.task.bake_group_uuid,
             name=ctx.task.output_name,
-            target_object_uuid="",
+            target_object_uuid="ALL",
             producer_uuid=ctx.task.uuid,
             dependencies=dependencies,
             image_layout=ctx.task.uv_layout.image_layout,

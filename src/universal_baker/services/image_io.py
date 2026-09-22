@@ -71,6 +71,7 @@ class ImageIOService(ImageServiceBase):
 
     @staticmethod
     def write_udim(resource: ImageResource, tiles: TileSet) -> None:
+        """BROKEN : Cannot Access single tiles of an image"""
         for udim, buffer in tiles.items():
             pass
 
@@ -92,6 +93,8 @@ class ImageIOService(ImageServiceBase):
             image = bpy.data.images.load(str(path))
             image.colorspace_settings.name = colorspace_settings.colorspace
             image.use_view_as_render = True
+
+            image.name = image.name.split(".")[0]
 
             if is_udim:
                 image.source = "TILED"

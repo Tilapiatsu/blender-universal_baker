@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-import numpy as np
-import bpy
-from ..constant import LOG
-
 from dataclasses import dataclass
+
+import bpy
+import numpy as np
+
+from ..constant import LOG
 
 
 @dataclass(slots=True)
