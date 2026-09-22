@@ -292,7 +292,12 @@ class BakeController:
     # ---------------------------------------------------------
 
     @classmethod
-    def validate(cls, context: bpy.types.Context) -> list[str]:
+    def validate(
+        cls,
+        context: bpy.types.Context,
+        force_bake_group: bool = False,
+        force_baker: bool = False,
+    ) -> list[str]:
         errors = []
 
         project = cls.project(context)
@@ -302,7 +307,7 @@ class BakeController:
 
             return errors
 
-        enabled_bake_groups = [g for g in project.bake_groups if g.enabled]
+        enabled_bake_groups = [g for g in project.bake_groups if g.enabled or force_bake_group]
 
         if not enabled_bake_groups:
             errors.append("Every Bake Groups is disabled.")
@@ -314,10 +319,10 @@ class BakeController:
 
                     continue
 
-            # enabled_maps = [baker for baker in obj.maps if baker.enabled]
-            #
-            # if not enabled_maps:
-            #     errors.append(f"{obj.target.name} has no enabled bake maps.")
+            enabled_maps = [baker for baker in b.bakers if baker.enabled or force_baker]
+
+            if not enabled_maps:
+                errors.append(f"{b.name} has no enabled bake maps.")
 
         return errors
 
@@ -394,7 +399,7 @@ class BakeController:
 
     @classmethod
     def bake_group(cls, context: bpy.types.Context, group_index: int) -> tuple[bool, Job | list[str]]:
-        errors = cls.validate(context)
+        errors = cls.validate(context, force_bake_group=True, force_baker=True)
 
         if errors:
             return (
@@ -482,7 +487,7 @@ class BakeController:
 
     @classmethod
     def pack_all(cls, context: bpy.types.Context) -> tuple[bool, Job | list[str]]:
-        errors = cls.validate(context)
+        errors = []
 
         if errors:
             return (
@@ -555,7 +560,7 @@ class BakeController:
 
     @classmethod
     def pack_selected(cls, context: bpy.types.Context, packer_index: int) -> tuple[bool, Job | list[str]]:
-        errors = cls.validate(context)
+        errors = []
 
         if errors:
             return (

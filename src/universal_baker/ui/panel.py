@@ -352,18 +352,21 @@ class UBK_PT_BakerPanel(UBK_PT_MainPanel, bpy.types.Panel):
             if project.visualization.cage_edit:
                 column.enabled = False
 
-            if not baker.has_image:
-                return
+            if baker.has_image:
+                column = box.column(align=True)
 
-            column = box.column(align=True)
+                column.prop(
+                    project.visualization,
+                    "enabled_display",
+                    text=f"Display {baker.accumulated_image.name}",
+                    toggle=1,
+                    icon="HIDE_OFF" if project.visualization.enabled_display else "HIDE_ON",
+                )
 
-            column.prop(
-                project.visualization,
-                "enabled_display",
-                text=f"Display {baker.accumulated_image.name}",
-                toggle=1,
-                icon="HIDE_OFF" if project.visualization.enabled_display else "HIDE_ON",
-            )
+            box = self.layout.box()
+            box.operator(
+                "ubk.bake_group", icon="RESTRICT_RENDER_OFF", text="Bake Selected Bakers"
+            ).index = project.active_bake_group_index
 
 
 class UBK_PT_ProcessPanel(UBK_PT_MainPanel, bpy.types.Panel):
@@ -389,7 +392,7 @@ class UBK_PT_ProcessPanel(UBK_PT_MainPanel, bpy.types.Panel):
 
         col = layout.column()
         col.scale_y = 1.6
-        col.operator("ubk.bake_all", icon="RESTRICT_RENDER_OFF")
+        col.operator("ubk.bake_all", icon="RESTRICT_RENDER_OFF", text="Bake All")
         col.operator("ubk.pack_all", icon="NODE_COMPOSITING")
         col.operator("ubk.bake_and_pack_all", icon="LONGDISPLAY")
 

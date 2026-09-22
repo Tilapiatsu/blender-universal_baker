@@ -121,8 +121,18 @@ class RendererService:
     @classmethod
     def execute(cls, ctx: BakeContext):
         """Execute a single bake task."""
-        target_visibility = VisibilityOverride(ctx.target, False, False, False)
-        cage_visibility = VisibilityOverride(ctx.cage, True, False, False)
+        target_visibility = VisibilityOverride(
+            obj=ctx.target,
+            hide_render=False,
+            hide_viewport=False,
+            hide_select=False,
+        )
+        cage_visibility = VisibilityOverride(
+            obj=ctx.cage,
+            hide_render=True,
+            hide_viewport=False,
+            hide_select=False,
+        )
 
         with target_visibility, cage_visibility:
             scene_state = cls.capture_state()
@@ -201,9 +211,6 @@ class RendererService:
 
         if ctx.cage is not None:
             bake_collection.objects.link(ctx.cage)
-            # Cage need to be invisible in render to be computed properly
-            ctx.cage.hide_viewport = False
-            ctx.cage.hide_render = True
 
         for o in ctx.sources:
             bake_collection.objects.link(o)
@@ -215,9 +222,6 @@ class RendererService:
         bake_collection.hide_render = False
         bake_collection.hide_select = False
         bake_collection.hide_viewport = False
-        ctx.target.hide_render = False
-        ctx.target.hide_select = False
-        ctx.target.hide_viewport = False
 
         layer_col = cls._get_layer_collection(bake_collection.name)
 

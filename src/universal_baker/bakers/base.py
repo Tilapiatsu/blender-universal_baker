@@ -170,7 +170,7 @@ class BakerBase(ABC):
         LOG.debug("Update Baker ...")
         from ..core.controller import BakeController
 
-        baker = BakeController.get_baker_from_uuid(ctx.task.uuid)
+        baker = BakeController.get_baker_from_uuid(ctx.task.baker_uuid)
 
         if baker is None:
             return

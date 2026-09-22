@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import bpy
+from universal_baker.constant import LOG
 
 
 @dataclass(slots=True, frozen=True)
@@ -41,9 +42,16 @@ class VisibilityOverride:
             hide_select=self.obj.hide_select,
             hide_get=self.hide_get,
         )
+        LOG.debug(f"Store visibility state for {self.obj.name} : ")
+        LOG.debug(f"Visible = {not self.obj.hide_get()}")
+        LOG.debug(f"Viewport = {not self.obj.hide_viewport}")
+        LOG.debug(f"Select = {not self.obj.hide_select}")
+        LOG.debug(f"Render = {not self.obj.hide_render}")
+
+        self._has_overriden = False
 
     def set_visibility(self) -> bpy.types.Object:
-        if self.obj is None:
+        if self.obj is None or self._has_overriden:
             return
 
         self.obj.hide_render = self.hide_render
@@ -51,16 +59,32 @@ class VisibilityOverride:
         self.obj.hide_select = self.hide_select
         self.obj.hide_set(self.hide_get)
 
+        LOG.debug(f"Set visibility state for {self.obj.name} : ")
+        LOG.debug(f"Visible = {not self.obj.hide_get()}")
+        LOG.debug(f"Viewport = {not self.obj.hide_viewport}")
+        LOG.debug(f"Select = {not self.obj.hide_select}")
+        LOG.debug(f"Render = {not self.obj.hide_render}")
+
+        self._has_overriden = True
+
         return self.obj
 
     def revert_visibility(self) -> None:
-        if self.obj is None:
+        if self.obj is None or not self._has_overriden:
             return
 
         self.obj.hide_render = self.visibility_state.hide_render
         self.obj.hide_viewport = self.visibility_state.hide_viewport
         self.obj.hide_select = self.visibility_state.hide_select
         self.obj.hide_set(self.visibility_state.hide_get)
+
+        LOG.debug(f"visibility state for {self.obj.name} restored :")
+        LOG.debug(f"Visible = {not self.obj.hide_get()}")
+        LOG.debug(f"Viewport = {not self.obj.hide_viewport}")
+        LOG.debug(f"Select = {not self.obj.hide_select}")
+        LOG.debug(f"Render = {not self.obj.hide_render}")
+
+        self._has_overriden = False
 
     def __enter__(self):
         return self.set_visibility()

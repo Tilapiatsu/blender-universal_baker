@@ -100,6 +100,7 @@ class CageObjectService:
 
         if vertex_group is None:
             vertex_group = cage.vertex_groups.new(name=cls.VERTEX_GROUP_NAME)
+            vertex_group.add([0], 0.0, "REPLACE")
 
     @classmethod
     def _get_cage_name(cls, target_name: str) -> str:

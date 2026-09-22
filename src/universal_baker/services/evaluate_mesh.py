@@ -7,6 +7,7 @@ import bpy
 from mathutils import Euler, Vector
 
 from ..constant import LOG
+from ..services.visibility_override import VisibilityOverride
 
 LOG_SCOPE = "Evaluate"
 
@@ -94,6 +95,7 @@ class EvaluateObject(Evaluate):
             rotation_euler=self.obj.rotation_euler,
             scale=self.obj.scale,
         )
+        self.visibility_override = VisibilityOverride(self.obj, hide_render=True, hide_viewport=False)
 
     @property
     def needs_evaluation(self) -> bool:
@@ -104,10 +106,9 @@ class EvaluateObject(Evaluate):
             return
 
         if self.needs_evaluation:
+            self.visibility_override.set_visibility()
             with LOG.scope(LOG_SCOPE):
                 LOG.debug(f"Evaluate Object {self.obj.name}")
-                hide_viewport = self.obj.hide_viewport
-                self.obj.hide_viewport = False
                 depsgraph = bpy.context.evaluated_depsgraph_get()
 
                 self.evaluated_mesh = self.obj.evaluated_get(depsgraph)
@@ -118,8 +119,6 @@ class EvaluateObject(Evaluate):
                 self.evaluated_obj.rotation_euler = self.transform_state.rotation_euler
                 self.evaluated_obj.scale = self.transform_state.scale
 
-                self.obj.hide_viewport = hide_viewport
-                self.obj.hide_render = True
                 self.has_been_evaluated = True
 
         else:
@@ -133,8 +132,7 @@ class EvaluateObject(Evaluate):
 
         with LOG.scope(LOG_SCOPE):
             if self.has_been_evaluated:
-                self.obj.hide_render = False
-
+                self.visibility_override.revert_visibility()
                 if self.evaluated_obj is not None and self.evaluated_obj.name in bpy.data.objects:
                     LOG.debug(f"Clean Evaluated Object : {self.evaluated_obj.name}")
                     bpy.data.objects.remove(self.evaluated_obj)
