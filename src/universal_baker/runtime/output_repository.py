@@ -257,14 +257,6 @@ class OutputRepository:
         key = (bake_group_uuid, producer_uuid)
         outputs = list(self._index_baker.get(key, ()))
 
-        for output in outputs:
-            print(
-                len(output.bake_group.uuid),
-                len(output.producer_uuid),
-                output.artifact.data.type,
-                output.artifact.data.name,
-            )
-
         if not len(outputs):
             LOG.debug("No Output found")
             return

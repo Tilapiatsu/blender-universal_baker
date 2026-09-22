@@ -396,6 +396,7 @@ class BakeVisualizationService:
         # suspending it stored the old producer uuid and resuming visualization lead to get a invalid producer due to
         # the deprecated uuid ?
 
+        # TODO: Preview Parameters doesn't work in selected to active mode
         for scene_name, scene_state in scenes.scenes.items():
             cls._runtime.set_scene_state(
                 scene_name,
