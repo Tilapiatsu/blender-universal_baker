@@ -92,11 +92,7 @@ class FileSink(BaseSink):
         if event.category:
             category = f" [{event.category}]"
 
-        severity = event.severity.name
-        if len(severity) == 4:
-            severity = f" {severity}   "
-        elif len(severity) == 5:
-            severity = f"{severity}  "
+        severity = self.prettify_severity(event.severity)
 
         return f"{timestamp} [{severity}]{category}{scope} {event.message}"
 

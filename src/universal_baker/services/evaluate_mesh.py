@@ -135,13 +135,13 @@ class EvaluateObject(Evaluate):
             if self.has_been_evaluated:
                 self.obj.hide_render = False
 
-                if self.evaluated_obj.name in bpy.data.objects:
+                if self.evaluated_obj is not None and self.evaluated_obj.name in bpy.data.objects:
                     LOG.debug(f"Clean Evaluated Object : {self.evaluated_obj.name}")
                     bpy.data.objects.remove(self.evaluated_obj)
 
-                if self.evaluated_mesh is not None and self.evaluated_mesh.name in bpy.data.meshes:
-                    LOG.debug(f"Clean Evaluated Mesh: {self.evaluated_mesh.name}")
-                    bpy.data.meshes.remove(self.evaluated_mesh)
+                if self.mesh is not None and self.mesh.name in bpy.data.meshes:
+                    LOG.debug(f"Clean Evaluated Mesh: {self.mesh.name}")
+                    bpy.data.meshes.remove(self.mesh)
 
                 return True
 

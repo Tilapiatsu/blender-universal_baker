@@ -64,7 +64,6 @@ class OutputRepository:
 
         outputs = self._index_baker.get(baker_key)
 
-        print(baker_key, "=", baker_key in self._index_baker)
         if outputs:
             for o in outputs:
                 print(o.uuid)
@@ -84,7 +83,6 @@ class OutputRepository:
 
         outputs = self._index_target_object.get(target_key)
 
-        print(target_key, "=", target_key in self._index_target_object)
         if outputs:
             for o in outputs:
                 print(o.uuid)

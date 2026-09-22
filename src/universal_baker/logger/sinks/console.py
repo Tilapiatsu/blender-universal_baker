@@ -1,7 +1,7 @@
 from datetime import datetime
 
-from .base import BaseSink
 from ..event import LogEvent, ScopeState
+from .base import BaseSink
 
 
 class ConsoleSink(BaseSink):
@@ -12,11 +12,7 @@ class ConsoleSink(BaseSink):
         if event.scope:
             scope = "[" + " > ".join(event.scope) + "] "
 
-        severity = event.severity.name
-        if len(severity) == 4:
-            severity = f" {severity}   "
-        elif len(severity) == 5:
-            severity = f" {severity}  "
+        severity = self.prettify_severity(event.severity)
 
         message = f"[{timestamp}] [{severity}] {scope}{event.message}"
         match event.scope_state:
