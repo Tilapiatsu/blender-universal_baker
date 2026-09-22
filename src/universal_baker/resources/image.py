@@ -324,8 +324,12 @@ class ImageResource:
         from ..services.image_io import ImageIOService
 
         LOG.debug("Create Resource from Tileset")
-        for b in tileset.buffers:
-            ImageCodec.save(filepath, b, output_settings, color_management_info)
+
+        for tile in tileset.tiles:
+            tilepath = Path(str(filepath).replace("<UDIM>", str(tile)))
+            buffer = tileset[tile]
+
+            ImageCodec.save(tilepath, buffer, output_settings, color_management_info)
 
         image = bpy.data.images.get(name)
 
