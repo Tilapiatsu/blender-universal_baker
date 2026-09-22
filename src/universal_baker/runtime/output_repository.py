@@ -64,10 +64,6 @@ class OutputRepository:
 
         outputs = self._index_baker.get(baker_key)
 
-        if outputs:
-            for o in outputs:
-                print(o.uuid)
-
         if outputs and output in outputs:
             LOG.debug(f"Removing baker output : {output.uuid}")
             outputs.remove(output)
@@ -82,10 +78,6 @@ class OutputRepository:
         )
 
         outputs = self._index_target_object.get(target_key)
-
-        if outputs:
-            for o in outputs:
-                print(o.uuid)
 
         if outputs and output in outputs:
             LOG.debug(f"Removing target objects output : {output.uuid}")
