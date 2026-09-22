@@ -48,6 +48,7 @@ class UvOwnershipMask:
         # or, better:
         # Option B — ownership is resolution-independent geometry, rasterized for each bake resolution.
         # For now, Option A is much simpler.
+        # TODO: Need to test bake with UDIM of different resolution ?
 
         label = None
 

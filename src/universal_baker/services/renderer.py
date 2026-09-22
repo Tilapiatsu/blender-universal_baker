@@ -215,14 +215,6 @@ class RendererService:
         bake_collection.hide_render = False
         bake_collection.hide_select = False
         bake_collection.hide_viewport = False
-        # TODO: Need to properly deal with objects visibiliy : For targets and for cages.
-        # If cages are visible too early it can polute other target's bake -> Every Objects marked as a cage should
-        # never be set visible to render in the current bake_group
-        # If objects are not visible the bakes just failed or produce black image
-        # May need to create a task at the begining of the job to prepare the visibility of the scene and restore it at the end of
-        # the job
-        # May need to add option for target objects visibility to bake some target in isolation (for AO for exemple).
-        # Or maybe for the baker themself ?
         ctx.target.hide_render = False
         ctx.target.hide_select = False
         ctx.target.hide_viewport = False
