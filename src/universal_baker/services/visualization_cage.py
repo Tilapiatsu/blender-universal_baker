@@ -301,6 +301,8 @@ class CageVisualizationService:
         # ISSUE: In bake preview mode, the proper view transform is not loaded correctly
         # ISSUE: In bake preview mode, it should only display the sources associated with the current target
         # ISSUE: Sometime Crash when ctrl + z in bake preview mode
+        # TODO: Need to modify the parameter system to support SHADER sockets, and to insert group at the end of the
+        # Prototype node tree : just before the node group output
         # TODO: need to tackle the ray visibility to control an object visible from secondary ray but not primary ones
 
         with LOG.scope(LOG_SCOPE):
