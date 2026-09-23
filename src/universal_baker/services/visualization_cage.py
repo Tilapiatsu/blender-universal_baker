@@ -6,7 +6,7 @@ import bpy
 import gpu
 from gpu_extras.batch import batch_for_shader
 
-from ..constant import BAKE_PREVIEW_ASSET_PATH, LOG
+from ..constant import BAKE_PORTAL_PREVIEW_ASSET_PATH, LOG
 from ..core.registry_baker import registry_baker
 from ..enum.visualization import BakeVisualizationMode
 from ..resources.asset_external import AssetExtrenal
@@ -243,7 +243,7 @@ class CageVisualizationService:
                 LOG.warning(f"Unable to acquire cage for {target.object.name}")
                 return False
 
-            asset = AssetExtrenal(filepath=BAKE_PREVIEW_ASSET_PATH)
+            asset = AssetExtrenal(filepath=BAKE_PORTAL_PREVIEW_ASSET_PATH)
             bake_objects = BakeObjects(
                 target_object=target.object,
                 cage_object=cage,
@@ -281,7 +281,7 @@ class CageVisualizationService:
                 cls._configure_visibility()
                 cls._create_gpu_resources(cage)
                 cls._register_draw_handler()
-                cls._register_depsgraph_handler(cage)
+                # cls._register_depsgraph_handler(cage)
                 cls._enter_weight_paint(cage)
 
                 return True
@@ -299,7 +299,8 @@ class CageVisualizationService:
     ) -> None:
         # ISSUE: In bake preview mode, the baker parameters are not updating the material inputs anymore :(
         # ISSUE: In bake preview mode, the proper view transform is not loaded correctly
-        # ISSUE: In bake preview mode, it should only display the sources associated with the current target
+        # ISSUE: In Bake preview switching baker updates the preview properly, but selecting the selected baker again
+        # disable the preview and I want to prevent that
         # ISSUE: Sometime Crash when ctrl + z in bake preview mode
         # TODO: Need to modify the parameter system to support SHADER sockets, and to insert group at the end of the
         # Prototype node tree : just before the node group output

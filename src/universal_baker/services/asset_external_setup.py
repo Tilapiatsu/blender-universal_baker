@@ -235,8 +235,9 @@ class AssetExternalCageSetup(AssetExternalSetupBase):
                 setup.object_offset_edit = cls._offset_objects(offset_objects_edit, offset)
                 setup.object_offset_preview = cls._offset_objects(offset_objects_preview, offset)
 
-                cls._apply_cage_parameters(setup, uv_map, offset)
-
+                cls._apply_cage_portal_parameters(setup, uv_map, offset)
+                # TODO: Finish writing of _apply_cage_clippig_parameters
+                cls._apply_cage_clippig_parameters(setup)
                 return setup
 
             except Exception:
@@ -274,13 +275,41 @@ class AssetExternalCageSetup(AssetExternalSetupBase):
         return offset
 
     @classmethod
-    def _apply_cage_parameters(
+    def _apply_cage_portal_parameters(
         cls,
         setup: AssetSetup,
         uv_map: str,
         offset: tuple[float, float, float],
     ):
-        definition = registry_definition.get_custom("BAKE_PREVIEW")
+        definition = registry_definition.get_custom("BAKE_PORTAL_PREVIEW")
+        if definition is None:
+            LOG.error("Parameter definition not found")
+            return
+
+        cage_info = cls._get_cage_info(setup, uv_map, cls._negate_tuple(offset))
+        snapshot = ParameterService.snapshot_asset(definition, cage_info)
+
+        LOG.debug("Applying Cage parameters")
+
+        parameter_context = ParameterContext(
+            object=setup.projection_target,
+            scene=bpy.context.scene,
+        )
+
+        ParameterApplier.apply(
+            definition,
+            snapshot,
+            parameter_context,
+        )
+
+    @classmethod
+    def _apply_cage_clippig_parameters(
+        cls,
+        setup: AssetSetup,
+        uv_map: str,
+        offset: tuple[float, float, float],
+    ):
+        definition = registry_definition.get_custom("BAKE_PORTAL_PREVIEW")
         if definition is None:
             LOG.error("Parameter definition not found")
             return

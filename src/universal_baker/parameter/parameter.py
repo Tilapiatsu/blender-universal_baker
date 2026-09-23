@@ -15,6 +15,7 @@ class ParameterType(str, Enum):
     STRING = "STRING"
     OBJ = "OBJ"
     VECTOR = "VECTOR"
+    SHADER = "SHADER"
 
 
 @dataclass(frozen=True)
