@@ -11,12 +11,20 @@ def register():
     Register.register_assets()
 
 
+def unregister():
+    Register.unregister_assets()
+
+
 class Register:
     @classmethod
-    def register_assets(cls):
+    def files(cls):
         asset_path = Path(__file__).parent
         files = asset_path.glob("**/*.blend")
+        return files
 
+    @classmethod
+    def register_assets(cls):
+        files = cls.files()
         for f in files:
             id = f.stem.upper().replace(" ", "_")
             LOG.info(f"Registering Asset : {id}")
@@ -26,3 +34,7 @@ class Register:
                 asset_path=f,
                 loader=metadata_loader_custom.load_definition,
             )
+
+    @classmethod
+    def unregister_assets(cls):
+        pass
