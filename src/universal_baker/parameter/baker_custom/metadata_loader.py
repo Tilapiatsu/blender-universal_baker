@@ -257,6 +257,7 @@ class MetadataLoader:
             "STRING",
             "OBJ",
             "VECTOR",
+            "SHADER",
         }
 
         if parameter_type not in allowed_types:
