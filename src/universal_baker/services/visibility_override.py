@@ -3,7 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import bpy
-from universal_baker.constant import LOG
+
+from ..constant import LOG
 
 
 @dataclass(slots=True, frozen=True)
@@ -26,7 +27,10 @@ class VisibilityOverride:
         hide_select: bool = False,
         hide_get: bool = False,
     ):
-        self.obj = obj
+        if obj is None:
+            return
+
+        self.obj_name = obj.name
 
         self.hide_render = hide_render
         self.hide_viewport = hide_viewport
@@ -49,6 +53,10 @@ class VisibilityOverride:
         LOG.debug(f"Render = {not self.obj.hide_render}")
 
         self._has_overriden = False
+
+    @property
+    def obj(self) -> bpy.data.Object | None:
+        return bpy.data.objects.get(self.obj_name)
 
     def set_visibility(self) -> bpy.types.Object:
         if self.obj is None or self._has_overriden:

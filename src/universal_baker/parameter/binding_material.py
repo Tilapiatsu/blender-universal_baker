@@ -4,13 +4,14 @@ from dataclasses import dataclass
 from typing import Any
 
 import bpy
+
 from universal_baker.constant import LOG
-from .parameter_context import ParameterContext
 
 from .binding import (
     ParameterBinding,
     ParameterBindingError,
 )
+from .parameter_context import ParameterContext
 
 LOG_SCOPE = "Material Binding"
 

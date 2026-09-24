@@ -160,7 +160,7 @@ class ParameterApplier:
     ) -> str:
         return (
             f"Failed to apply parameter "
-            f"'{parameter_id}' for"
+            f"'{parameter_id}' for "
             f"'{definition.identifier}'. "
             f"Binding={type(binding).__name__}, "
             f"value={value!r}"

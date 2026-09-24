@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from universal_baker.parameter.binding_scene import ScenePropertyBinding
-
 from .binding import ParameterBinding
 from .binding_geometry_node import GeometryNodeInputBinding
 from .binding_material import MaterialSocketBinding
 from .binding_modifier import ModifierPropertyBinding
+from .binding_scene import ScenePropertyBinding
+from .binding_shader_insert import ShaderInsertBinding
 from .metadata import (
     BindingMetadata,
 )
@@ -24,6 +24,7 @@ class BindingFactory:
     def __init__(self):
         self._creators: dict[str, BindingCreator] = {
             "MATERIAL_SOCKET": self._create_material_socket,
+            "SHADER_INSERT": self._create_shader_insert,
             "MODIFIER_PROPERTY": self._create_modifier_property,
             "GEOMETRY_NODE_INPUT": self._create_geometry_node_input,
             "SCENE_PROPERTY": self._create_scene_input,
@@ -86,8 +87,8 @@ class BindingFactory:
         )
 
         socket = self._require(
-            metadata.socket,
-            "socket",
+            metadata.socket_input,
+            "socket_input",
             parameter_id,
             "MATERIAL_SOCKET",
         )
@@ -137,8 +138,8 @@ class BindingFactory:
         )
 
         socket = self._require(
-            metadata.socket,
-            "socket",
+            metadata.socket_input,
+            "socket_input",
             parameter_id,
             "GEOMETRY_NODE_INPUT",
         )
@@ -176,6 +177,43 @@ class BindingFactory:
             parameter_id=parameter_id,
             scene_name=scene,
             property_path=property,
+        )
+
+    def _create_shader_insert(self, parameter_id: str, metadata: BindingMetadata) -> ParameterBinding:
+        material = self._require(
+            metadata.material,
+            "material",
+            parameter_id,
+            "MATERIAL_SOCKET",
+        )
+
+        node = self._require(
+            metadata.node,
+            "node",
+            parameter_id,
+            "MATERIAL_SOCKET",
+        )
+
+        socket_input = self._require(
+            metadata.socket_input,
+            "socket_input",
+            parameter_id,
+            "MATERIAL_SOCKET",
+        )
+
+        socket_output = self._require(
+            metadata.socket_output,
+            "socket_output",
+            parameter_id,
+            "MATERIAL_SOCKET",
+        )
+
+        return ShaderInsertBinding(
+            parameter_id=parameter_id,
+            material_name=material,
+            node_name=node,
+            socket_input_name=socket_input,
+            socket_output_name=socket_output,
         )
 
     # ------------------------------------------------------------------

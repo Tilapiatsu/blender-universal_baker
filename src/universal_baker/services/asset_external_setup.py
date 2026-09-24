@@ -9,12 +9,13 @@ from ..core.registry_definition import registry_definition
 from ..parameter.parameter_applier import ParameterApplier
 from ..parameter.parameter_context import ParameterContext
 from ..resources.asset_external import AssetExtrenal
-from ..resources.asset_info import CageInfo
+from ..resources.asset_info import CageInfo, SourcesInfo
 from ..runtime.asset_setup import AssetSetup
 from ..runtime.bake_objects import BakeObjects
 from ..services.bake_material import BakeMaterialService
 from ..services.object_offset import ObjectOffset
 from ..services.parameter_service import ParameterService
+from ..services.shader_node_insert import ShaderNodeInsert
 from .asset_external import AssetExternalService
 
 LOG_SCOPE = "External Asset Setup Service"
@@ -60,6 +61,16 @@ class AssetExternalSetupBase:
                 bpy.data.materials.remove(m)
 
             bpy.data.objects.remove(prototype)
+
+    @staticmethod
+    def get_prototype_node(asset: AssetExtrenal, node_name: str) -> bpy.types.Node:
+        with bpy.data.libraries.load(str(asset.filepath), link=False) as (data_from, data_to):
+            if node_name in data_from.node_groups:
+                data_to.node_groups.append(node_name)
+
+        appended_node = bpy.data.node_groups.get(node_name)
+
+        return appended_node
 
     @staticmethod
     def _duplicate_object(obj: bpy.types.Object, instance: bool = False) -> bpy.types.Object:
@@ -201,13 +212,26 @@ class AssetExternalCageSetup(AssetExternalSetupBase):
     """Apply the External asset to the proper bake objects"""
 
     @classmethod
-    def prepare(cls, asset: AssetExtrenal, bake_objects: BakeObjects, uv_map: str) -> AssetSetup:
+    def prepare(
+        cls,
+        asset_portal: AssetExtrenal,
+        asset_clipping: AssetExtrenal,
+        bake_objects: BakeObjects,
+        uv_map: str,
+        max_ray_distance: float,
+    ) -> AssetSetup:
         with LOG.scope(LOG_SCOPE):
-            prototype = AssetExternalService.load_prototype(asset)
+            prototype_portal = AssetExternalService.load_prototype(asset_portal)
+            prototype_clipping = AssetExternalService.load_prototype(asset_clipping)
 
             setup = AssetSetup()
-            setup.temporary_objects.append(prototype)
-            proto_materials = [s.material for s in prototype.material_slots if s.material is not None]
+
+            setup.temporary_objects.append(prototype_portal)
+            setup.temporary_objects.append(prototype_clipping)
+
+            proto_materials = [s.material for s in prototype_portal.material_slots if s.material is not None]
+            proto_materials += [s.material for s in prototype_clipping.material_slots if s.material is not None]
+
             for m in proto_materials:
                 LOG.debug(f"store prototype material : {m.name}")
                 setup.temporary_materials.append(m)
@@ -219,7 +243,9 @@ class AssetExternalCageSetup(AssetExternalSetupBase):
                 setup.target = bake_objects.target_object
                 setup.projection_cage = projection_cage
 
-                setup.projection_target = cls._prepare_projection_target(bake_objects.target_object, prototype, setup)
+                setup.projection_target = cls._prepare_projection_target(
+                    bake_objects.target_object, prototype_portal, setup
+                )
                 setup.cage = bake_objects.cage_object
 
                 objects = list(bpy.context.scene.objects) + [setup.projection_cage]
@@ -235,9 +261,17 @@ class AssetExternalCageSetup(AssetExternalSetupBase):
                 setup.object_offset_edit = cls._offset_objects(offset_objects_edit, offset)
                 setup.object_offset_preview = cls._offset_objects(offset_objects_preview, offset)
 
+                node = bpy.data.node_groups.get("SN_ClipRayDistance")
+
+                if node is None:
+                    node = cls.get_prototype_node(asset_clipping, "SN_ClipRayDistance")
+
                 cls._apply_cage_portal_parameters(setup, uv_map, offset)
-                # TODO: Finish writing of _apply_cage_clippig_parameters
-                cls._apply_cage_clippig_parameters(setup)
+                # TODO : Need to register the apply_cage_clipping in the AssetSetup, to trigger the clipping application
+                # only when preview bake is turned on. Before the high poly model might not have material yet and I want
+                # it to be inserted beetween the baker material and the material output node
+                cls._apply_cage_clipping_parameters(setup, node, max_ray_distance)
+
                 return setup
 
             except Exception:
@@ -246,7 +280,7 @@ class AssetExternalCageSetup(AssetExternalSetupBase):
 
                 # The prototype itself was appended from the
                 # external blend and must also be removed.
-                cls._remove_object(prototype)
+                cls._remove_object(prototype_portal)
                 raise RuntimeError
 
     @classmethod
@@ -289,7 +323,7 @@ class AssetExternalCageSetup(AssetExternalSetupBase):
         cage_info = cls._get_cage_info(setup, uv_map, cls._negate_tuple(offset))
         snapshot = ParameterService.snapshot_asset(definition, cage_info)
 
-        LOG.debug("Applying Cage parameters")
+        LOG.debug("Applying Cage Portal parameters")
 
         parameter_context = ParameterContext(
             object=setup.projection_target,
@@ -303,25 +337,37 @@ class AssetExternalCageSetup(AssetExternalSetupBase):
         )
 
     @classmethod
-    def _apply_cage_clippig_parameters(
+    def _apply_cage_clipping_parameters(
         cls,
         setup: AssetSetup,
-        uv_map: str,
-        offset: tuple[float, float, float],
+        node: bpy.types.NodeGroup,
+        max_ray_distance: float,
     ):
-        definition = registry_definition.get_custom("BAKE_PORTAL_PREVIEW")
+        definition = registry_definition.get_custom("BAKE_CLIPPING_PREVIEW")
         if definition is None:
             LOG.error("Parameter definition not found")
             return
 
-        cage_info = cls._get_cage_info(setup, uv_map, cls._negate_tuple(offset))
-        snapshot = ParameterService.snapshot_asset(definition, cage_info)
+        source_info = cls._get_source_info(max_ray_distance=max_ray_distance)
+        snapshot = ParameterService.snapshot_asset(definition, source_info)
 
-        LOG.debug("Applying Cage parameters")
+        LOG.debug("Applying Cage Clipping parameters")
+
+        if setup.sources is None:
+            LOG.error("Source Objects are not registered properly")
+            return
+
+        materials = []
+
+        for source in setup.sources:
+            source_materials = [m for m in source.data.materials if m is not None]
+
+            materials = list(set(materials + source_materials))
 
         parameter_context = ParameterContext(
             object=setup.projection_target,
             scene=bpy.context.scene,
+            materials=materials,
         )
 
         ParameterApplier.apply(
@@ -336,7 +382,7 @@ class AssetExternalCageSetup(AssetExternalSetupBase):
         setup: AssetSetup,
         uv_map: str,
         offset: tuple[float, float, float],
-    ):
+    ) -> CageInfo:
         cage_info = CageInfo(
             cage_object=setup.projection_cage,
             target_object=setup.target,
@@ -344,6 +390,14 @@ class AssetExternalCageSetup(AssetExternalSetupBase):
             uvmap=uv_map,
         )
         return cage_info
+
+    @classmethod
+    def _get_source_info(cls, max_ray_distance: float) -> SourcesInfo:
+        sourc_info = SourcesInfo(
+            max_ray_distance=max_ray_distance,
+            shader="",
+        )
+        return sourc_info
 
     @classmethod
     def _negate_tuple(cls, t: tuple[float, float, float]) -> tuple[float, float, float]:

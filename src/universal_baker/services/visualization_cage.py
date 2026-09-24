@@ -6,7 +6,7 @@ import bpy
 import gpu
 from gpu_extras.batch import batch_for_shader
 
-from ..constant import BAKE_PORTAL_PREVIEW_ASSET_PATH, LOG
+from ..constant import BAKE_CLIPPING_PREVIEW_ASSET_PATH, BAKE_PORTAL_PREVIEW_ASSET_PATH, LOG
 from ..core.registry_baker import registry_baker
 from ..enum.visualization import BakeVisualizationMode
 from ..resources.asset_external import AssetExtrenal
@@ -243,7 +243,8 @@ class CageVisualizationService:
                 LOG.warning(f"Unable to acquire cage for {target.object.name}")
                 return False
 
-            asset = AssetExtrenal(filepath=BAKE_PORTAL_PREVIEW_ASSET_PATH)
+            asset_portal = AssetExtrenal(filepath=BAKE_PORTAL_PREVIEW_ASSET_PATH)
+            asset_clipping = AssetExtrenal(filepath=BAKE_CLIPPING_PREVIEW_ASSET_PATH)
             bake_objects = BakeObjects(
                 target_object=target.object,
                 cage_object=cage,
@@ -252,7 +253,13 @@ class CageVisualizationService:
                 source_objects=target.source_object_list,
             )
 
-            runtime.cage_asset_setup = AssetExternalCageSetup.prepare(asset, bake_objects, target.uv_layer)
+            runtime.cage_asset_setup = AssetExternalCageSetup.prepare(
+                asset_portal,
+                asset_clipping,
+                bake_objects,
+                target.uv_layer,
+                target.settings_cage.max_ray_distance,
+            )
 
             if runtime.cage_asset_setup is None or runtime.cage_asset_setup.object_offset_edit is None:
                 LOG.warning("Cage asset preparation failed")

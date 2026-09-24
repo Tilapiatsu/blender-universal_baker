@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal
 
-from .settings_image import ImageSettings, ColorManagementSettings
+from .settings_image import ColorManagementSettings, ImageSettings
 
 
 @dataclass(slots=True)

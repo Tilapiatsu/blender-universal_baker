@@ -40,7 +40,8 @@ class BindingMetadata:
     # Material socket binding
     material: str | None = None
     node: str | None = None
-    socket: str | None = None
+    socket_input: str | None = None
+    socket_output: str | None = None
 
     # Modifier property binding
     modifier: str | None = None
