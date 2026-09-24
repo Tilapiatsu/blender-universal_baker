@@ -64,7 +64,7 @@ class ShaderInsertBinding(ParameterBinding):
                 raise ParameterBindingError(f"Material '{self.material_name}' have no material output node.")
 
             surface_input_socket = material_output.inputs.get("Surface")
-            shader_output_socket = surface_input_socket.links[0].to_socket
+            shader_output_socket = surface_input_socket.links[0].from_socket
 
             node_tree.links.new(shader_output_socket, socket_input)
             node_tree.links.new(socket_output, surface_input_socket)
@@ -76,6 +76,6 @@ class ShaderInsertBinding(ParameterBinding):
         return context.materials
 
     def _get_material_output(self, material) -> bpy.types.Node | None:
-        for n in material.nodes:
+        for n in material.node_tree.nodes:
             if n.type == "OUTPUT_MATERIAL":
                 return n

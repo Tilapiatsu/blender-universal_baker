@@ -340,7 +340,7 @@ class AssetExternalCageSetup(AssetExternalSetupBase):
     def _apply_cage_clipping_parameters(
         cls,
         setup: AssetSetup,
-        node: bpy.types.NodeGroup,
+        node: bpy.types.NodeTree,
         max_ray_distance: float,
     ):
         definition = registry_definition.get_custom("BAKE_CLIPPING_PREVIEW")
@@ -362,6 +362,16 @@ class AssetExternalCageSetup(AssetExternalSetupBase):
         for source in setup.sources:
             source_materials = [m for m in source.data.materials if m is not None]
 
+            if len(source_materials) == 0:
+                clipping_mat = bpy.data.materials.new("UBK_TMP_Clipping_Preview")
+                source.data.materials.append(clipping_mat)
+                setup.temporary_materials.append(clipping_mat)
+                source_materials = [clipping_mat]
+
+            # Add node to source node_tree
+            for m in source_materials:
+                cls._add_node_to_material(m, node)
+
             materials = list(set(materials + source_materials))
 
         parameter_context = ParameterContext(
@@ -375,6 +385,30 @@ class AssetExternalCageSetup(AssetExternalSetupBase):
             snapshot,
             parameter_context,
         )
+
+    @classmethod
+    def _add_node_to_material(cls, material: bpy.types.Material, node: bpy.types.NodeTree):
+        material.use_nodes = True
+        node_tree = material.node_tree
+
+        if node.bl_idname == "ShaderNodeTree":
+            new_node = node_tree.nodes.new(type="ShaderNodeGroup")
+            new_node.node_tree = node
+            new_node.name = node.name
+        else:
+            new_node = node_tree.nodes.new(type=node.bl_idname)
+            for i, input_sock in enumerate(node.inputs):
+                if i < len(new_node.inputs) and not input_sock.is_linked:
+                    try:
+                        new_node.inputs[i].default_value = input_sock.default_value
+                    except AttributeError:
+                        pass
+
+            if hasattr(node, "image") and hasattr(new_node, "image"):
+                new_node.image = node.image
+
+            if hasattr(node, "node_tree"):
+                new_node.node_tree = node.node_tree
 
     @classmethod
     def _get_cage_info(
