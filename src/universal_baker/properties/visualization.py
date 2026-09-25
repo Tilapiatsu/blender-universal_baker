@@ -65,7 +65,7 @@ class UBK_Visualization(PropertyGroup):
         name="Preview Bake",
         default=False,
         update=update_preview_bake,
-        description="Preview the bake result with the cage, and evaluate any baking errors",
+        description="Preview the active baker result with the cage. It allows you to visualize and evaluate any baking quality, and the potential baking errors",
     )
 
     baker_idx: IntProperty(default=0)
