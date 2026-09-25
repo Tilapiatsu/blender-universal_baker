@@ -138,7 +138,7 @@ class EvaluateObject(Evaluate):
                     bpy.data.objects.remove(self.evaluated_obj)
 
                 if self.mesh is not None and self.mesh.name in bpy.data.meshes:
-                    LOG.debug(f"Clean Evaluated Mesh: {self.mesh.name}")
+                    LOG.debug(f"Clean Evaluated Mesh : {self.mesh.name}")
                     bpy.data.meshes.remove(self.mesh)
 
                 return True

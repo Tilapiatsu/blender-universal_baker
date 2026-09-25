@@ -306,8 +306,6 @@ class CageVisualizationService:
         # ISSUE: In Bake preview switching baker updates the preview properly, but selecting the selected baker again
         # disable the preview and I want to prevent that
         # ISSUE: Sometime Crash when ctrl + z in bake preview mode
-        # TODO: Need to modify the parameter system to support SHADER sockets, and to insert group at the end of the
-        # Prototype node tree : just before the node group output
         # TODO: need to tackle the ray visibility to control an object visible from secondary ray but not primary ones
 
         with LOG.scope(LOG_SCOPE):

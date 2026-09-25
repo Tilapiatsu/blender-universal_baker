@@ -50,6 +50,7 @@ class ScenePrepare:
 
                 if obj.settings_cage.is_cage_generated:
                     cage = CageObjectService.acquire(evaluated_obj, obj.settings_cage)
+
                 elif obj.settings_cage.cage_object is not None:
                     evaluate_cage = EvaluateObject(obj.settings_cage.cage_object)
 
@@ -96,12 +97,8 @@ class ScenePrepare:
     def __exit__(self, exc_type, exc_value, traceback):
         LOG.debug("Clean Scene Preparation")
         for uuid, o in self.evaluate_objects.items():
-            if o.clean():
-                bake_object = self.bake_objects.get(uuid)
-                if bake_object is None:
-                    LOG.warning("BakeObject not found")
-                    continue
-
+            bake_object = self.bake_objects.get(uuid)
+            if bake_object is not None:
                 if not bake_object.is_cage_generated:
                     if bake_object.cage_object is not None:
                         bake_object.cage_object.hide_render = bake_object.cage_hidden
@@ -109,12 +106,11 @@ class ScenePrepare:
 
                 cage = bake_object.cage_object
 
-                if cage is None:
-                    LOG.warning("Cage object not found")
-                    continue
+                if cage is not None:
+                    LOG.debug(f"Clean Cage Object {cage.name}")
+                    bpy.data.objects.remove(cage)
 
-                LOG.debug(f"Clean Cage Object {cage.name}")
-                bpy.data.objects.remove(cage)
+            o.clean()
 
         for uuid, o in self.evaluated_cages.items():
             o.clean()

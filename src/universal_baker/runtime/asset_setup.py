@@ -47,10 +47,12 @@ class AssetSetup:
 
                 if obj.name in bpy.data.objects:
                     LOG.debug(f"Remove Temporary Object: {obj.name}")
+                    data = obj.data
                     bpy.data.objects.remove(
                         obj,
                         do_unlink=True,
                     )
+                    bpy.data.meshes.remove(data)
 
             self.temporary_objects.clear()
 
