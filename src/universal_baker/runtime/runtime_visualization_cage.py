@@ -6,6 +6,7 @@ from typing import Any
 
 import bpy
 
+from universal_baker.resources.asset_info import SourcesInfo
 from universal_baker.services.temp_collection import TempCollection
 
 from ..constant import LOG
@@ -24,6 +25,7 @@ class CageVisualizationRuntime:
     target_name: str | None = None
     cage_name: str | None = None
     cage_asset_setup: AssetSetup | None = None
+    cage_clipping_setup: AssetSetup | None = None
 
     # Original object visibility.
     visibility: dict[str, VisibilityOverride] = field(default_factory=dict)
@@ -88,6 +90,7 @@ class CageVisualizationRuntime:
         self.target_name = None
         self.cage_name = None
         self.cage_asset_setup = None
+        self.cage_clipping_setup = None
 
         self.visibility.clear()
 
@@ -116,7 +119,7 @@ class CageVisualizationRuntime:
     def request_preview_refresh(self):
         self._preview_dirty = True
 
-    def refresh_preview_parameters(
+    def refresh_cage_preview_parameters(
         self,
         ui_props: Any | None = None,
         force: bool = False,
@@ -159,6 +162,73 @@ class CageVisualizationRuntime:
             )
 
             ParameterApplier.apply_regular(definition, snapshot, context)
+
+        finally:
+            self._updating_parameters = False
+            self._preview_dirty = False
+
+    def refresh_max_ray_distance_preview_parameters(
+        self,
+        value: float,
+        force: bool = False,
+    ):
+        """Make sure the UI property element binds propely to the material, modifier or geometry node element defined in
+        the custom baker definition asset"""
+
+        LOG.debug("Refresging Parameter")
+        if not force:
+            if not self._preview_dirty:
+                return
+
+            if self._updating_parameters:
+                return
+
+        try:
+            self._updating_parameters = True
+
+            definition = registry_definition.get_custom("BAKE_CLIPPING_PREVIEW")
+
+            if definition is None:
+                LOG.error("Definition not found")
+                return
+
+            if not self.active or self.target_uuid is None or self.cage_name is None:
+                return
+
+            from ..services.parameter_service import ParameterService
+
+            source_info = SourcesInfo(
+                max_ray_distance=value,
+                shader="",
+            )
+
+            snapshot = ParameterService.snapshot_asset(definition, source_info)
+
+            setup = self.cage_asset_setup
+            if setup is None:
+                return
+
+            if setup.sources is None:
+                LOG.error("Source Objects are not registered properly")
+                return
+
+            materials = []
+
+            for source in setup.sources:
+                source_materials = [m for m in source.data.materials if m is not None]
+                materials = list(set(materials + source_materials))
+
+            parameter_context = ParameterContext(
+                object=setup.projection_target,
+                scene=bpy.context.scene,
+                materials=materials,
+            )
+
+            ParameterApplier.apply(
+                definition,
+                snapshot,
+                parameter_context,
+            )
 
         finally:
             self._updating_parameters = False

@@ -15,7 +15,6 @@ from ..runtime.bake_objects import BakeObjects
 from ..services.bake_material import BakeMaterialService
 from ..services.object_offset import ObjectOffset
 from ..services.parameter_service import ParameterService
-from ..services.shader_node_insert import ShaderNodeInsert
 from .asset_external import AssetExternalService
 
 LOG_SCOPE = "External Asset Setup Service"
@@ -208,29 +207,24 @@ class AssetExternalBakeSetup(AssetExternalSetupBase):
                 raise RuntimeError
 
 
-class AssetExternalCageSetup(AssetExternalSetupBase):
+class AssetExternalCagePortalSetup(AssetExternalSetupBase):
     """Apply the External asset to the proper bake objects"""
 
     @classmethod
     def prepare(
         cls,
         asset_portal: AssetExtrenal,
-        asset_clipping: AssetExtrenal,
         bake_objects: BakeObjects,
         uv_map: str,
-        max_ray_distance: float,
     ) -> AssetSetup:
         with LOG.scope(LOG_SCOPE):
             prototype_portal = AssetExternalService.load_prototype(asset_portal)
-            prototype_clipping = AssetExternalService.load_prototype(asset_clipping)
 
             setup = AssetSetup()
 
             setup.temporary_objects.append(prototype_portal)
-            setup.temporary_objects.append(prototype_clipping)
 
             proto_materials = [s.material for s in prototype_portal.material_slots if s.material is not None]
-            proto_materials += [s.material for s in prototype_clipping.material_slots if s.material is not None]
 
             for m in proto_materials:
                 LOG.debug(f"store prototype material : {m.name}")
@@ -261,16 +255,7 @@ class AssetExternalCageSetup(AssetExternalSetupBase):
                 setup.object_offset_edit = cls._offset_objects(offset_objects_edit, offset)
                 setup.object_offset_preview = cls._offset_objects(offset_objects_preview, offset)
 
-                node = bpy.data.node_groups.get("SN_ClipRayDistance")
-
-                if node is None:
-                    node = cls.get_prototype_node(asset_clipping, "SN_ClipRayDistance")
-
                 cls._apply_cage_portal_parameters(setup, uv_map, offset)
-                # TODO : Need to register the apply_cage_clipping in the AssetSetup, to trigger the clipping application
-                # only when preview bake is turned on. Before the high poly model might not have material yet and I want
-                # it to be inserted beetween the baker material and the material output node
-                cls._apply_cage_clipping_parameters(setup, node, max_ray_distance)
 
                 return setup
 
@@ -337,6 +322,68 @@ class AssetExternalCageSetup(AssetExternalSetupBase):
         )
 
     @classmethod
+    def _get_cage_info(
+        cls,
+        setup: AssetSetup,
+        uv_map: str,
+        offset: tuple[float, float, float],
+    ) -> CageInfo:
+        cage_info = CageInfo(
+            cage_object=setup.projection_cage,
+            target_object=setup.target,
+            offset=offset,
+            uvmap=uv_map,
+        )
+        return cage_info
+
+    @classmethod
+    def _negate_tuple(cls, t: tuple[float, float, float]) -> tuple[float, float, float]:
+        return (t[0] * -1, t[1] * -1, t[2] * -1)
+
+
+class AssetExternalCageClippingSetup(AssetExternalSetupBase):
+    """Apply the External asset to the proper bake objects"""
+
+    @classmethod
+    def prepare(
+        cls,
+        asset_clipping: AssetExtrenal,
+        bake_objects: BakeObjects,
+        max_ray_distance: float,
+    ) -> AssetSetup:
+        with LOG.scope(LOG_SCOPE):
+            prototype_clipping = AssetExternalService.load_prototype(asset_clipping)
+
+            setup = AssetSetup()
+
+            setup.temporary_objects.append(prototype_clipping)
+
+            proto_materials = [s.material for s in prototype_clipping.material_slots if s.material is not None]
+
+            for m in proto_materials:
+                LOG.debug(f"store prototype material : {m.name}")
+                setup.temporary_materials.append(m)
+
+            try:
+                setup.sources = bake_objects.source_objects
+                setup.target = bake_objects.target_object
+                setup.cage = bake_objects.cage_object
+
+                node = bpy.data.node_groups.get("SN_ClipRayDistance")
+
+                if node is None:
+                    node = cls.get_prototype_node(asset_clipping, "SN_ClipRayDistance")
+
+                cls._apply_cage_clipping_parameters(setup, node, max_ray_distance)
+
+                return setup
+
+            except Exception:
+                LOG.error("Preparation Failed")
+                setup.cleanup()
+                raise RuntimeError
+
+    @classmethod
     def _apply_cage_clipping_parameters(
         cls,
         setup: AssetSetup,
@@ -360,13 +407,26 @@ class AssetExternalCageSetup(AssetExternalSetupBase):
         materials = []
 
         for source in setup.sources:
-            source_materials = [m for m in source.data.materials if m is not None]
+            slots = source.material_slots
 
-            if len(source_materials) == 0:
-                clipping_mat = bpy.data.materials.new("UBK_TMP_Clipping_Preview")
-                source.data.materials.append(clipping_mat)
-                setup.temporary_materials.append(clipping_mat)
-                source_materials = [clipping_mat]
+            if len(slots) == 0:
+                source.data.materials.append(None)
+
+            source_materials = []
+
+            for slot in slots:
+                if slot.material is None:
+                    clipping_mat = bpy.data.materials.get("UBK_TMP_Clipping_Preview")
+                    if clipping_mat is None:
+                        clipping_mat = bpy.data.materials.new("UBK_TMP_Clipping_Preview")
+
+                    slot.material = clipping_mat
+                    if clipping_mat not in setup.temporary_materials:
+                        setup.temporary_materials.append(clipping_mat)
+                    if clipping_mat not in source_materials:
+                        source_materials.append(clipping_mat)
+
+            source_materials = [m for m in source.data.materials if m is not None]
 
             # Add node to source node_tree
             for m in source_materials:
@@ -384,6 +444,7 @@ class AssetExternalCageSetup(AssetExternalSetupBase):
             definition,
             snapshot,
             parameter_context,
+            ignore_type=[],
         )
 
     @classmethod
@@ -411,28 +472,9 @@ class AssetExternalCageSetup(AssetExternalSetupBase):
                 new_node.node_tree = node.node_tree
 
     @classmethod
-    def _get_cage_info(
-        cls,
-        setup: AssetSetup,
-        uv_map: str,
-        offset: tuple[float, float, float],
-    ) -> CageInfo:
-        cage_info = CageInfo(
-            cage_object=setup.projection_cage,
-            target_object=setup.target,
-            offset=offset,
-            uvmap=uv_map,
-        )
-        return cage_info
-
-    @classmethod
     def _get_source_info(cls, max_ray_distance: float) -> SourcesInfo:
         sourc_info = SourcesInfo(
             max_ray_distance=max_ray_distance,
             shader="",
         )
         return sourc_info
-
-    @classmethod
-    def _negate_tuple(cls, t: tuple[float, float, float]) -> tuple[float, float, float]:
-        return (t[0] * -1, t[1] * -1, t[2] * -1)

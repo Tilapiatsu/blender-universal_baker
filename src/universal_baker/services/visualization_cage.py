@@ -14,7 +14,7 @@ from ..runtime.bake_objects import BakeObjects
 from ..runtime.runtime_visualization_cage import (
     CageVisualizationRuntime,
 )
-from ..services.asset_external_setup import AssetExternalCageSetup
+from ..services.asset_external_setup import AssetExternalCageClippingSetup, AssetExternalCagePortalSetup
 from ..services.temp_collection import TempCollection
 from ..services.visualization_bake import BakeVisualizationService, PreviewData, set_preview_enabled
 from .visibility_override import VisibilityOverride
@@ -244,7 +244,6 @@ class CageVisualizationService:
                 return False
 
             asset_portal = AssetExtrenal(filepath=BAKE_PORTAL_PREVIEW_ASSET_PATH)
-            asset_clipping = AssetExtrenal(filepath=BAKE_CLIPPING_PREVIEW_ASSET_PATH)
             bake_objects = BakeObjects(
                 target_object=target.object,
                 cage_object=cage,
@@ -253,12 +252,10 @@ class CageVisualizationService:
                 source_objects=target.source_object_list,
             )
 
-            runtime.cage_asset_setup = AssetExternalCageSetup.prepare(
+            runtime.cage_asset_setup = AssetExternalCagePortalSetup.prepare(
                 asset_portal,
-                asset_clipping,
                 bake_objects,
                 target.uv_layer,
-                target.settings_cage.max_ray_distance,
             )
 
             if runtime.cage_asset_setup is None or runtime.cage_asset_setup.object_offset_edit is None:
@@ -288,7 +285,7 @@ class CageVisualizationService:
                 cls._configure_visibility()
                 cls._create_gpu_resources(cage)
                 cls._register_draw_handler()
-                # cls._register_depsgraph_handler(cage)
+                cls._register_depsgraph_handler(cage)
                 cls._enter_weight_paint(cage)
 
                 return True
@@ -353,6 +350,27 @@ class CageVisualizationService:
             LOG.info("Enabling Bake Preview")
             BakeVisualizationService.enable_preview(data)
 
+            cage = runtime.cage_asset_setup.cage
+
+            if cage is None:
+                LOG.error("Cage not found")
+                return
+
+            asset_clipping = AssetExtrenal(filepath=BAKE_CLIPPING_PREVIEW_ASSET_PATH)
+
+            bake_objects = BakeObjects(
+                target_object=target.object,
+                cage_object=cage,
+                cage_hidden=cage.hide_render,
+                is_cage_generated=True,
+                source_objects=target.source_object_list,
+            )
+            runtime.cage_clipping_setup = AssetExternalCageClippingSetup.prepare(
+                asset_clipping,
+                bake_objects,
+                target.settings_cage.max_ray_distance,
+            )
+
     # ---------------------------------------------------------
     # Disable
     # ---------------------------------------------------------
@@ -412,6 +430,8 @@ class CageVisualizationService:
             runtime.cage_asset_setup.object_offset_edit.offset()
 
             BakeVisualizationService.disable()
+
+            cls._cleanup_cage_clipping_setup()
 
     # ---------------------------------------------------------
     # Refresh
@@ -653,6 +673,12 @@ class CageVisualizationService:
         runtime = cls._ensure_runtime()
         if runtime.cage_asset_setup is not None:
             runtime.cage_asset_setup.cleanup()
+
+    @classmethod
+    def _cleanup_cage_clipping_setup(cls):
+        runtime = cls._ensure_runtime()
+        if runtime.cage_clipping_setup is not None:
+            runtime.cage_clipping_setup.cleanup()
 
     # ---------------------------------------------------------
     # GPU

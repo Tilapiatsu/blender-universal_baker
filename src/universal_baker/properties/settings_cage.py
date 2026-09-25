@@ -5,7 +5,7 @@ from bpy.props import EnumProperty, FloatProperty, PointerProperty, StringProper
 from bpy.types import Image, Object, PropertyGroup
 
 
-def parameter_updated(self, context):
+def cage_parameter_updated(self, context):
     from ..core.controller import BakeController
     from ..runtime.runtime_manager import RuntimeManager
 
@@ -19,12 +19,26 @@ def parameter_updated(self, context):
     if runtime.active:
         runtime.request_preview_refresh()
 
-    if context.scene.ubk_project.visualization.is_dragging:
-        pass
-    else:
-        bpy.ops.draggableprop.subscribe("INVOKE_DEFAULT")
+    # if context.scene.ubk_project.visualization.is_dragging:
+    #     pass
+    # else:
+    #     bpy.ops.draggableprop.subscribe("INVOKE_DEFAULT")
+    #
+    runtime.refresh_cage_preview_parameters(ui_props=self)
 
-    runtime.refresh_preview_parameters(ui_props=self)
+
+def max_ray_distance_updated(self, context):
+    if not context.scene.ubk_project.visualization.preview_bake:
+        return
+
+    from ..runtime.runtime_manager import RuntimeManager
+
+    runtime = RuntimeManager.get(context.scene).cage_visualization
+
+    if runtime.active:
+        runtime.request_preview_refresh()
+
+    runtime.refresh_max_ray_distance_preview_parameters(value=self.max_ray_distance)
 
 
 def mode_updated(self, context):
@@ -73,7 +87,7 @@ class UBK_CageSettings(PropertyGroup):
         default=0.1,
         min=0.0,
         subtype="DISTANCE",
-        update=parameter_updated,
+        update=cage_parameter_updated,
     )
     max_ray_distance: FloatProperty(
         name="Max Ray Distance",
@@ -81,6 +95,7 @@ class UBK_CageSettings(PropertyGroup):
         min=0.0,
         subtype="DISTANCE",
         description="The maximum ray distance for matching points between the active and selected objects. If zero, there is no limit.",
+        update=max_ray_distance_updated,
     )
     extrusion_group: StringProperty(
         name="Extrusion Group",

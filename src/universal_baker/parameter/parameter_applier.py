@@ -48,6 +48,7 @@ class ParameterApplier:
         definition: CustomBakerDefinition | LocalDefinition,
         snapshot: ParameterSnapshot,
         context: ParameterContext,
+        ignore_type: list[str] = ["SHADER"],
     ) -> None:
         """
         Apply all parameters from ``snapshot``.
@@ -60,6 +61,9 @@ class ParameterApplier:
         """
 
         for parameter in definition.parameters:
+            if parameter.parameter_type in ignore_type:
+                continue
+
             parameter_id = parameter.identifier
 
             if context.ui_prop is not None and parameter_id != context.ui_prop.identifier:
