@@ -79,7 +79,7 @@ class BakeMaterialSetup:
 
             for index, material in enumerate(assignment.materials):
                 LOG.debug(f"Restoring Material: {material.name if material is not None else 'EMPTY'}")
-                if material == None:
+                if material is None:
                     obj.data.materials.clear()
                     continue
                 obj.material_slots[index].material = material

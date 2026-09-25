@@ -351,6 +351,8 @@ class AssetExternalCageClippingSetup(AssetExternalSetupBase):
         bake_objects: BakeObjects,
         max_ray_distance: float,
     ) -> AssetSetup:
+        # ISSUE: Need to find a way to pevent nodegroups to accumulate in the blender scene after. Need to find a way to
+        # Cleanup everything properly
         with LOG.scope(LOG_SCOPE):
             prototype_clipping = AssetExternalService.load_prototype(asset_clipping)
 
