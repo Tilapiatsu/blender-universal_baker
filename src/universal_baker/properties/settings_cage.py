@@ -103,6 +103,14 @@ class UBK_CageSettings(PropertyGroup):
     )
     skew_map: PointerProperty(name="Skew Map", type=Image)
 
+    skew_factor: FloatProperty(
+        name="Skew Factor",
+        description="Blend between normal and cage projection",
+        default=1.0,
+        min=0.0,
+        max=1.0,
+    )
+
     @property
     def cage_object(self) -> Object | None:
         match self.cage_mode:
@@ -114,6 +122,10 @@ class UBK_CageSettings(PropertyGroup):
     @property
     def is_cage_generated(self) -> bool:
         return self.cage_mode == "GENERATED"
+
+    @property
+    def is_skew_correction_enabled(self) -> bool:
+        return self.skew_map is not None
 
 
 classes = (UBK_CageSettings,)
