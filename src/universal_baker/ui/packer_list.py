@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import bpy
 
-# from ..core.registry_baker import registry_baker
+from ..constant import ICON_PACK
 
 
 class UBK_UL_PackList(bpy.types.UIList):
@@ -37,7 +37,7 @@ class UBK_UL_PackList(bpy.types.UIList):
         if not pack_item.enabled:
             row.enabled = False
 
-        row.label(text=pack_item.image_name, icon="NODE_COMPOSITING")
+        row.label(text=pack_item.image_name, icon=ICON_PACK)
 
         info = row.row()
         info.alignment = "RIGHT"
@@ -56,7 +56,7 @@ class UBK_UL_PackList(bpy.types.UIList):
         pack = row.operator(
             "ubk.pack_selected",
             text="",
-            icon="NODE_COMPOSITING",
+            icon=ICON_PACK,
         )
 
         pack.index = index

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import bpy
 
+from ..constant import ICON_BAKE, ICON_TARGET_OBJECT
+
 
 class UBK_UL_BakeGroupList(bpy.types.UIList):
     """UIList displaying the bake targets."""
@@ -25,7 +27,7 @@ class UBK_UL_BakeGroupList(bpy.types.UIList):
         elif self.layout_type == "GRID":
             layout.alignment = "CENTER"
 
-            layout.label(text="", icon="MESH_CUBE")
+            layout.label(text="", icon=ICON_TARGET_OBJECT)
 
     def draw_default(self, layout, active_bake_group, index: int):
         """Draw one object row."""
@@ -51,7 +53,7 @@ class UBK_UL_BakeGroupList(bpy.types.UIList):
 
         stats.enabled = False
 
-        stats.label(text=f"{enabled_targets}/{total_targets}", icon="MESH_CUBE")
+        stats.label(text=f"{enabled_targets}/{total_targets}", icon=ICON_TARGET_OBJECT)
         stats.label(text=f"{enabled_bakers}/{total_bakers}", icon="RENDERLAYERS")
 
         row = layout.row(align=True)
@@ -59,7 +61,7 @@ class UBK_UL_BakeGroupList(bpy.types.UIList):
         op = row.operator(
             "ubk.bake_group",
             text="",
-            icon="RENDER_STILL",
+            icon=ICON_BAKE,
         )
 
         op.index = index

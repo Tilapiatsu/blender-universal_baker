@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import bpy
 
+from ..constant import ICON_BAKE
 from ..core.registry_baker import registry_baker
 
 
@@ -67,7 +68,7 @@ class UBK_UL_BakerList(bpy.types.UIList):
         bake = row.operator(
             "ubk.bake_map",
             text="",
-            icon="RESTRICT_RENDER_OFF",
+            icon=ICON_BAKE,
         )
 
         bake.index = index

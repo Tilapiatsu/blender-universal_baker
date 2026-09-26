@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
-from ..constant import LOG
+from ..constant import ICON_PACK, LOG
 from ..enum.image_colorspace import ImageColorSpace
 from ..enum.output_stage import OutputStage
 from ..enum.view_transform import ViewTransform
@@ -28,7 +28,7 @@ class PackerBase(ABC):
     id: str = ""
     name: str = ""
     description: str = ""
-    icon: str = "NODE_COMPOSITING"
+    icon: str = ICON_PACK
     is_custom: bool = False
     clear_preview_material: bool = True
     viewport_render_pass: str = "COMBINED"

@@ -6,7 +6,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from ..constant import LOG, get_prefs
+from ..constant import ICON_BAKE, LOG, get_prefs
 from ..core.registry_baker import registry_baker
 from ..core.registry_definition import registry_definition
 from ..enum.image_colorspace import ImageColorSpace
@@ -46,7 +46,7 @@ class BakerBase(ABC):
     id: str = ""
     name: str = ""
     description: str = ""
-    icon: str = "RENDER_STILL"
+    icon: str = ICON_BAKE
     blender_bake_type = "DIFFUSE"
     accumulator_id = "ALPHA_OVER"
     is_custom: bool = False

@@ -1,8 +1,10 @@
 from __future__ import annotations
-from typing import Callable
+
+from collections.abc import Callable
 
 import bpy
 
+from ..constant import ICON_INFO
 from ..core.controller import BakeController
 from .panel import (
     draw_baking_settings,
@@ -36,7 +38,7 @@ def draw_output_settings(layout, settings):
     layout.use_property_decorate = False
     internal_data = BakeController.get_output_node(settings.internal_name)
     if internal_data is None:
-        layout.label(text="Add a Target object and a Map first.", icon="INFO")
+        layout.label(text="Add a Target object and a Map first.", icon=ICON_INFO)
     else:
         layout.label(text="Output")
         layout.prop(settings.output_settings, "width")
@@ -95,7 +97,7 @@ class UBK_PT_GlobalBakerSettingsPanel(UBK_UL_GlobalSettingsPanel, bpy.types.Pane
 
         box = layout.box()
         header = box.row()
-        header.label(text="Baker inherits Gobal Settings by default.", icon="INFO")
+        header.label(text="Baker inherits Gobal Settings by default.", icon=ICON_INFO)
 
 
 # -------------------------------------------------------------------------

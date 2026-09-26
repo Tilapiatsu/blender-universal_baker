@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import bpy
 
+from ..constant import ICON_CAGE_OBJECT, ICON_INFO, ICON_TARGET_OBJECT
 from ..core.controller import BakeController
 from .panel import UBK_PT_MainPanel, object_needed, source_needed
 
@@ -22,10 +23,10 @@ class UBK_UL_TargetObjectSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
         active_object = BakeController.active_target_object(context)
 
         if active_object is None:
-            layout.label(text="Add an Object First", icon="INFO")
+            layout.label(text="Add an Object First", icon=ICON_INFO)
             return
 
-        layout.label(text=f"{active_object.object.name} Sources", icon="MESH_CUBE")
+        layout.label(text=f"{active_object.object.name} Sources", icon=ICON_TARGET_OBJECT)
 
     @object_needed
     def draw(self, context):
@@ -71,14 +72,14 @@ class UBK_UL_CageSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
         active_object = BakeController.active_target_object(context)
 
         if active_object is None:
-            layout.label(text="Cage Settings : Add a Target Object First", icon="INFO")
+            layout.label(text="Cage Settings : Add a Target Object First", icon=ICON_INFO)
             return
 
         if len(active_object.source_objects) == 0:
-            layout.label(text="Cage Settings : Add a Source Object First", icon="INFO")
+            layout.label(text="Cage Settings : Add a Source Object First", icon=ICON_INFO)
             return
 
-        layout.label(text=f"{active_object.object.name} Cage Settings", icon="CUBE")
+        layout.label(text=f"{active_object.object.name} Cage Settings", icon=ICON_CAGE_OBJECT)
 
     @source_needed
     def draw(self, context):

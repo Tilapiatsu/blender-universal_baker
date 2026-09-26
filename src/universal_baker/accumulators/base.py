@@ -3,17 +3,14 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
-from universal_baker.resources.image import ImageResource
-from universal_baker.runtime.tile_set import TileSet
-from universal_baker.services.image_codec import ImageCodec
-from universal_baker.services.image_io import ImageIOService
-
-from ..constant import LOG
+from ..constant import ICON_BAKE, LOG
 from ..core.accumulator import ImageAccumulator
 from ..core.registry_compositor import registry_compositor
 from ..enum.output_stage import OutputStage
 from ..logger_bake_middleware.bake_summary import BakeStatus, EventCategory
+from ..resources.image import ImageResource
 from ..runtime.color_management_info import ColorManagementInfo
+from ..runtime.tile_set import TileSet
 from ..services.artifact_service import ArtifactService
 
 if TYPE_CHECKING:
@@ -33,7 +30,7 @@ class AccumulatorBase(ABC):
     id: str = ""
     name: str = ""
     description: str = ""
-    icon: str = "RENDER_STILL"
+    icon: str = ICON_BAKE
     color_management_info = ColorManagementInfo()
 
     def poll(self, task: Task) -> bool:

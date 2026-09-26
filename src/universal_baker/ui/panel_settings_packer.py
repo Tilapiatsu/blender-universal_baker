@@ -1,13 +1,15 @@
 from __future__ import annotations
-from typing import Callable
+
+from collections.abc import Callable
 
 import bpy
 
+from ..constant import ICON_PACK, ICON_TARGET_OBJECT
 from ..core.controller import BakeController
+from .panel import UBK_PT_MainPanel, bake_group_needed, packer_needed
 from .panel_settings_output import (
     draw_output_settings,
 )
-from .panel import bake_group_needed, packer_needed, UBK_PT_MainPanel
 
 
 def grid_layout(layout, alignment, size):
@@ -53,7 +55,7 @@ class UBK_UL_PackerPanel(UBK_PT_MainPanel, bpy.types.Panel):
 
     def draw_header(self, context):
         layout = self.layout
-        layout.label(text="Packers", icon="NODE_COMPOSITING")
+        layout.label(text="Packers", icon=ICON_PACK)
 
     @bake_group_needed
     def draw(self, context):
