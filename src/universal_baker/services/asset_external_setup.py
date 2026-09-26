@@ -353,6 +353,9 @@ class AssetExternalCageClippingSetup(AssetExternalSetupBase):
     ) -> AssetSetup:
         # ISSUE: Need to find a way to pevent nodegroups to accumulate in the blender scene after. Need to find a way to
         # Cleanup everything properly
+        # ISSUE: When going in Preview Bake : some shader nodes are remaining and still have users ( ClipRayDistance, and the custom baker
+        # shader ( curvature, AO ))
+
         with LOG.scope(LOG_SCOPE):
             prototype_clipping = AssetExternalService.load_prototype(asset_clipping)
 

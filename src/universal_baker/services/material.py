@@ -164,19 +164,6 @@ class MaterialService:
         resource.image_node = None
 
     @classmethod
-    def _create_bake_material(cls, obj: bpy.types.Object) -> bpy.types.Material:
-        name = f"{obj.name}_{BAKE_MATERIAL_NAME}_{str(len(obj.material_slots)).zfill(2)}"
-
-        if name in bpy.data.materials:
-            LOG.debug(f"Reuse Existing Bake Material {name}")
-            material = bpy.data.materials[name]
-        else:
-            LOG.debug(f"Create Bake Material {name}")
-            material = bpy.data.materials.new(name=name)
-
-        return material
-
-    @classmethod
     def _assign_material_to_slot(cls, obj: bpy.types.Object, material: bpy.types.Material, slot: int | None) -> None:
         if slot is None:
             LOG.debug(f"Add new slot and assign material {material.name} to {obj.name}")

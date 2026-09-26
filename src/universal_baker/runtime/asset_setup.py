@@ -85,10 +85,6 @@ class AssetSetup:
 
                     self._remove_nodes(node_groups)
 
-                    for node in node_groups:
-                        if node.users == 0:
-                            bpy.data.node_groups.remove(node)
-
             self.temporary_materials.clear()
 
             self.temporary_modifiers.clear()

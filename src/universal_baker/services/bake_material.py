@@ -189,6 +189,7 @@ class BakeMaterialService:
             if material_name is None:
                 material = cls._create_bake_material(obj, slot)
                 material_name = material.name
+                setup.temporary_materials.append(material)
 
             if material_name not in bpy.data.materials:
                 LOG.error(f"Material {material_name} not found")
