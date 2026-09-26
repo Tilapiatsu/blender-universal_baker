@@ -285,6 +285,7 @@ class BakeVisualizationService:
 
         finally:
             cls._runtime.clear()
+            PreviewMaterialService.clear()
             if set_display_property:
                 from ..core.controller import BakeController
 
