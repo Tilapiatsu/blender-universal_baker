@@ -101,7 +101,7 @@ class UBK_CageSettings(PropertyGroup):
         name="Extrusion Group",
         default="UBK_EXTRUSION_GROUP",
     )
-    skew_map: PointerProperty(name="Skew Map", type=Image)
+    skew_image: PointerProperty(name="Skew Image", type=Image)
 
     skew_factor: FloatProperty(
         name="Skew Factor",
@@ -125,7 +125,7 @@ class UBK_CageSettings(PropertyGroup):
 
     @property
     def is_skew_correction_enabled(self) -> bool:
-        return self.skew_map is not None
+        return self.skew_image is not None
 
 
 classes = (UBK_CageSettings,)

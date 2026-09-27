@@ -9,7 +9,7 @@ from bpy.props import (
 from bpy.types import PropertyGroup
 
 from ..services.visualization_bake import update_visualization
-from ..services.visualization_cage import update_cage_color, update_edit_cage, update_preview_bake
+from ..services.visualization_cage import update_cage_color, update_edit_cage, update_edit_skew, update_preview_bake
 
 
 class UBK_Visualization(PropertyGroup):
@@ -60,7 +60,7 @@ class UBK_Visualization(PropertyGroup):
     )
 
     cage_edit: BoolProperty(name="Edit Cage", default=False, update=update_edit_cage)
-    skew_edit: BoolProperty(name="Edit Skew", default=False)
+    skew_edit: BoolProperty(name="Edit Skew", default=False, update=update_edit_skew)
     preview_bake: BoolProperty(
         name="Preview Bake",
         default=False,

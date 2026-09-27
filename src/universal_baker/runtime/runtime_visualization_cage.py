@@ -2,24 +2,33 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 from dataclasses import dataclass, field
+from enum import Enum, auto
 from typing import Any
 
 import bpy
-
-from universal_baker.resources.asset_info import SourcesInfo
-from universal_baker.services.temp_collection import TempCollection
 
 from ..constant import LOG
 from ..core.registry_definition import registry_definition
 from ..parameter.parameter_applier import ParameterApplier
 from ..parameter.parameter_context import ParameterContext
+from ..resources.asset_info import SourcesInfo
 from ..runtime.asset_setup import AssetSetup
+from ..services.material_override import MaterialSnapshot
+from ..services.temp_collection import TempCollection
 from ..services.visibility_override import VisibilityOverride
 
 
-@dataclass(slots=True)
+class CageEditMode(Enum):
+    NONE = auto()
+    EDIT = auto()
+    SKEW = auto()
+
+
+@dataclass()
 class CageVisualizationRuntime:
     active: bool = False
+
+    cage_edit_mode: CageEditMode = CageEditMode.NONE
 
     target_uuid: str | None = None
     target_name: str | None = None
@@ -29,6 +38,10 @@ class CageVisualizationRuntime:
 
     # Original object visibility.
     visibility: dict[str, VisibilityOverride] = field(default_factory=dict)
+
+    # skew material_snapshots
+    skew_material_snapshots: list[MaterialSnapshot] = field(default_factory=list)
+    skew_material_name: str | None = None
 
     # Original active object / mode.
     active_object_name: str | None = None
@@ -67,24 +80,32 @@ class CageVisualizationRuntime:
     _preview_dirty: bool = False
     _updating_parameters: bool = False
 
+    @property
+    def skew_image_name(self) -> str:
+        return f"{self.target_name}_SKEW_IMAGE" if self.target_name is not None else "UNKOWN_SKEW_IMAGE"
+
     def begin(
         self,
         *,
         target_uuid: str,
         target_name: str,
         cage_name: str,
+        cage_edit_mode: CageEditMode,
     ) -> None:
         self.active = True
         self.target_uuid = target_uuid
         self.target_name = target_name
         self.cage_name = cage_name
         self.gpu_dirty = True
+        self.cage_edit_mode = cage_edit_mode
 
     def mark_gpu_dirty(self) -> None:
         self.gpu_dirty = True
 
     def clear(self) -> None:
         self.active = False
+
+        self.cage_edit_mode = CageEditMode.NONE
 
         self.target_uuid = None
         self.target_name = None
@@ -93,6 +114,8 @@ class CageVisualizationRuntime:
         self.cage_clipping_setup = None
 
         self.visibility.clear()
+        self.skew_material_snapshots = []
+        self.skew_material_name = None
 
         self.active_object_name = None
         self.active_object_mode = "OBJECT"
@@ -299,4 +322,4 @@ class VisualizationSuspension:
             LOG.warning(f"Target Object not found {self.target_name} , Restore Visualization Cancelled")
             return
 
-        CageVisualizationService.enable(target_object)
+        CageVisualizationService.enable(target_object, self.runtime.cage_edit_mode)

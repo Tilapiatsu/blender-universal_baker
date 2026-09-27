@@ -105,11 +105,17 @@ class UBK_UL_CageSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
 
             active_bake_group = BakeController.active_bake_group(context)
             row = col.split(align=True, factor=0.8)
-            row.prop(visualization, "cage_edit", toggle=True)
+            subrow = row.split(align=True, factor=0.5)
+            subrow.prop(visualization, "cage_edit", toggle=True)
+            subrow.prop(visualization, "skew_edit", toggle=True)
             row.prop(visualization, "cage_color", text="")
             row = col.column(align=True)
 
-            if not visualization.cage_edit or active_bake_group is None or len(active_bake_group.bakers) == 0:
+            if (
+                not (visualization.cage_edit or visualization.skew_edit)
+                or active_bake_group is None
+                or len(active_bake_group.bakers) == 0
+            ):
                 row.enabled = False
             row.prop(visualization, "preview_bake", toggle=True)
 

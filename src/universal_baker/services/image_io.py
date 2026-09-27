@@ -1,15 +1,16 @@
 from __future__ import annotations
+
 from pathlib import Path
 
 import bpy
+
 from universal_baker.runtime.settings_image import ColorManagementSettings
 
 from ..constant import LOG
-from ..runtime.output_artifact import OutputArtifact
-from ..runtime.tile_set import TileSet
-
 from ..resources.image import ImageResource
 from ..resources.image_buffer import ImageBuffer
+from ..runtime.output_artifact import OutputArtifact
+from ..runtime.tile_set import TileSet
 from .image_base import ImageServiceBase
 
 LOG_SCOPE = "Image IO"

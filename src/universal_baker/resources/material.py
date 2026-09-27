@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 import bpy
+
 from ..services.material_override import MaterialSnapshot
 
 
