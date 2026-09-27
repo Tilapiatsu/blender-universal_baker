@@ -157,7 +157,29 @@ class BakerBase(ABC):
     def bake(self, ctx: BakeContext) -> None:
         """Execute the bake."""
         LOG.debug("Baking ...")
-        RendererService.execute(ctx)
+        if ctx.task.settings_cage.is_skew_correction_enabled:
+            from ..services.bake_projection import ProjectionBakeService
+
+            service = ProjectionBakeService()
+            buffer = service.bake(
+                target=ctx.target,
+                cage=ctx.cage,
+                sources=ctx.sources,
+                uv_layer_name=ctx.task.uv_layer,
+                width=ctx.output_settings.path.width,
+                height=ctx.output_settings.path.height,
+                max_ray_distance=ctx.task.settings_cage.max_ray_distance,
+                depsgraph=ctx.blender_context.evaluated_depsgraph_get(),
+            )
+            image = ctx.image.image
+            if image is None:
+                raise RuntimeError("Bake image has not been acquired.")
+
+            buffer.write_to_blender_image(image)
+
+            image.update()
+        else:
+            RendererService.execute(ctx)
 
     @abstractmethod
     def cleanup(self, ctx: BakeContext) -> None:

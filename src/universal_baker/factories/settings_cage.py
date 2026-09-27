@@ -26,5 +26,6 @@ class CageSettingsResolver:
             cage_extrusion=settings.cage_extrusion,
             max_ray_distance=settings.max_ray_distance,
             extrusion_group_name=settings.extrusion_group,
+            is_skew_correction_enabled=settings.is_skew_correction_enabled,
             skew_map_name=settings.skew_map.name if settings.skew_map is not None else None,
         )

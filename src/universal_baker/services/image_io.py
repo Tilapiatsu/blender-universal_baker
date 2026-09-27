@@ -46,7 +46,7 @@ class ImageIOService(ImageServiceBase):
             if not tiles.is_udim and not resource.is_udim:
                 buffer = tiles.base_buffer
                 assert buffer is not None
-                if buffer.dirty:
+                if not buffer.dirty:
                     return
                 cls.write_single(resource, buffer.buffer)
 

@@ -14,6 +14,7 @@ class CageSettings:
     cage_extrusion: float = 0.1
     max_ray_distance: float = 0.0
     extrusion_group_name: str = "UBK_EXTRUSION_GROUP"
+    is_skew_correction_enabled: bool = False
     skew_map_name: str | None = None
 
     @property

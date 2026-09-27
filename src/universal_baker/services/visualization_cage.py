@@ -369,6 +369,56 @@ class CageVisualizationService:
                 target.settings_cage.max_ray_distance,
             )
 
+    @classmethod
+    def enable_edit_skew(
+        cls,
+        target: UBK_TargetObject,
+    ):
+        if target is None or target.object is None:
+            LOG.warning("Cannot edit skew: target object is missing")
+            return False
+
+        if not cls._target_uses_cage(target):
+            LOG.debug(f"Cage visualization ignored for {target.object.name}: cage disabled")
+            return False
+
+        cage = target.settings_cage.cage_object
+
+        if cage is None:
+            LOG.debug(f"Cage visualization ignored for {target.object.name}: cage disabled")
+            return False
+
+        if not target.setting_cage.is_skew_correction_enabled:
+            cls._acquire_skew_image()
+
+        cls._set_skew_map_active()
+        cls._display_skew_image()
+        cls._set_paint_mode()
+
+    @classmethod
+    def clear_skew_image(cls):
+        pass
+
+    # ---------------------------------------------------------
+    # Skew
+    # ---------------------------------------------------------
+
+    @classmethod
+    def _acquire_skew_image(cls):
+        pass
+
+    @classmethod
+    def _set_skew_map_active(cls):
+        pass
+
+    @classmethod
+    def _display_skew_image(cls):
+        pass
+
+    @classmethod
+    def _set_paint_mode(cls):
+        pass
+
     # ---------------------------------------------------------
     # Disable
     # ---------------------------------------------------------

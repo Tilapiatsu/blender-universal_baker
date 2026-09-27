@@ -71,7 +71,7 @@ class ImageBuffer:
         else:
             channels = array.shape[-1]
 
-        return cls(width=shape[0], height=shape[1], pixels=array, channels=channels, name=name)
+        return cls(width=shape[1], height=shape[0], pixels=array, channels=channels, name=name)
 
     @classmethod
     def copy(cls): ...
