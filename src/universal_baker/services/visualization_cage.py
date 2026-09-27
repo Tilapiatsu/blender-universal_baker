@@ -652,12 +652,13 @@ class CageVisualizationService:
         """
         with LOG.scope("Refresh"):
             runtime = cls._ensure_runtime()
+            edit_mode = runtime.cage_edit_mode
 
             if not cls.is_active():
                 if target is None:
                     return False
 
-                return cls.enable(target, runtime.cage_edit_mode)
+                return cls.enable(target, runtime.cage_edit_mode, preview_bake)
 
             if target is None:
                 cls.disable_bake_preview()
@@ -672,15 +673,15 @@ class CageVisualizationService:
             if runtime.target_uuid == target.uuid:
                 return True
 
+            # ISSUE: Object visibility are borken while refreshing
+            # ISSUE: bake preview gets broken while refreshing
+
             LOG.debug(f"Refreshing Cage Visualization | {runtime.target_name} -> {target.object.name}")
 
-            cls.disable_bake_preview()
-            cls.disable(disable_property=target.settings_cage.cage_mode == "OBJECT")
+            cls.disable(disable_property=target.settings_cage.cage_mode == "OBJECT", disable_bake_preview=False)
 
             if target.settings_cage.cage_mode == "GENERATED":
-                cls.enable(target, runtime.cage_edit_mode)
-                if preview_bake:
-                    cls.enable_bake_preview(target)
+                cls.enable(target, edit_mode, preview_bake)
 
             return True
 
