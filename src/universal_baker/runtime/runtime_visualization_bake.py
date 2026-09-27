@@ -420,7 +420,7 @@ class BakeVisualizationRuntime:
             for o in bpy.context.scene.objects:
                 if o.type != "MESH":
                     continue
-                materials = o.data.materials
+                materials = [s.material for s in o.material_slots if s is not None and s.material is not None]
                 context = ParameterContext(
                     object=o,
                     materials=materials,

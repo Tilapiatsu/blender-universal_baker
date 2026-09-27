@@ -32,7 +32,7 @@ class MaterialSocketBinding(ParameterBinding):
             raise ParameterBindingError(f"Material not found for parameter '{self.parameter_id}'.")
 
         for material in materials:
-            if materials is None:
+            if material is None:
                 raise ParameterBindingError(f"Material not found for parameter '{self.parameter_id}'.")
 
             if not material.use_nodes:
