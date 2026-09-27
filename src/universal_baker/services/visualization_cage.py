@@ -100,7 +100,7 @@ def update_edit_skew(self, context):
 
         project.visualization.cage_edit = False
 
-        if not CageVisualizationService.enable_skew_edit(target):
+        if not CageVisualizationService.enable_skew_edit(target, project.visualization.preview_bake):
             skew_cage = False
 
     else:
@@ -123,7 +123,7 @@ def update_edit_cage(self, context):
 
         project.visualization.skew_edit = False
 
-        if not CageVisualizationService.enable_cage_edit(target):
+        if not CageVisualizationService.enable_cage_edit(target, project.visualization.preview_bake):
             edit_cage = False
 
     else:
@@ -265,6 +265,7 @@ class CageVisualizationService:
         cls,
         target: UBK_TargetObject,
         cage_edit_mode: CageEditMode,
+        preview_bake: bool = False,
     ) -> bool:
         """
         Enable cage visualization for target.
@@ -347,6 +348,9 @@ class CageVisualizationService:
                 cls._register_draw_handler()
                 cls._register_depsgraph_handler(cage)
 
+                if preview_bake:
+                    cls.enable_bake_preview(target)
+
                 return True
 
             except Exception:
@@ -356,8 +360,8 @@ class CageVisualizationService:
                 return False
 
     @classmethod
-    def enable_cage_edit(cls, target: UBK_TargetObject) -> bool:
-        if cls.enable(target, CageEditMode.EDIT):
+    def enable_cage_edit(cls, target: UBK_TargetObject, preview_bake: bool = False) -> bool:
+        if cls.enable(target, CageEditMode.EDIT, preview_bake):
             runtime = cls._ensure_runtime()
             cage = bpy.data.objects.get(runtime.cage_name)
             if cage is None:
@@ -439,8 +443,8 @@ class CageVisualizationService:
             )
 
     @classmethod
-    def enable_skew_edit(cls, target: UBK_TargetObject) -> bool:
-        if cls.enable(target, CageEditMode.SKEW):
+    def enable_skew_edit(cls, target: UBK_TargetObject, preview_bake: bool = False) -> bool:
+        if cls.enable(target, CageEditMode.SKEW, preview_bake):
             runtime = cls._ensure_runtime()
             cage = bpy.data.objects.get(runtime.cage_name)
 
