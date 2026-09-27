@@ -360,7 +360,7 @@ class UBK_PT_BakerPanel(UBK_PT_MainPanel, bpy.types.Panel):
                 toggle=1,
                 icon=ICON_PREVIEW_ENABLE if project.visualization.enabled_preview else ICON_PREVIEW,
             )
-            if project.visualization.cage_edit:
+            if project.visualization.cage_edit or project.visualization.skew_edit:
                 column.enabled = False
 
             if baker.has_image:

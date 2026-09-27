@@ -21,7 +21,7 @@ from ..services.asset_external_setup import AssetExternalCageClippingSetup, Asse
 from ..services.material_display import DisplayMaterialService
 from ..services.material_override import MaterialOverrideService
 from ..services.temp_collection import TempCollection
-from ..services.visualization_bake import BakeVisualizationService, PreviewData, set_preview_enabled
+from ..services.visualization_bake import BakeVisualizationService, PreviewData
 from .visibility_override import VisibilityOverride
 
 if TYPE_CHECKING:
@@ -36,7 +36,6 @@ def _refreshing_dec(func):
         if self.refreshing:
             return
         self.refreshing = True
-        print("inside decorator")
         func(self, context)
         self.refreshing = False
 
@@ -363,7 +362,7 @@ class CageVisualizationService:
             cage = bpy.data.objects.get(runtime.cage_name)
             if cage is None:
                 return False
-            cls._enter_weight_paint(cage)
+            cls._enter_mode(cage, "WEIGHT_PAINT")
 
         return True
 
@@ -414,6 +413,7 @@ class CageVisualizationService:
                 mode=BakeVisualizationMode.PREVIEW_CAGE,
                 projection_target=runtime.cage_asset_setup.projection_target,
             )
+
             LOG.info("Enabling Bake Preview")
             BakeVisualizationService.enable_preview(data)
 
@@ -453,7 +453,7 @@ class CageVisualizationService:
             cls._link_skew_image_to_material(cage)
             cls._set_skew_map_active()
             cls._display_skew_image()
-            cls._enter_texture_paint(cage)
+            cls._enter_mode(cage, "TEXTURE_PAINT")
 
         return True
 
@@ -534,11 +534,12 @@ class CageVisualizationService:
         pass
 
     @classmethod
-    def _enter_texture_paint(
+    def _enter_mode(
         cls,
         cage: bpy.types.Object,
-    ) -> None:
-        with LOG.scope("Enter Texture Paint"):
+        mode: str,
+    ):
+        with LOG.scope(f"Enter {mode}"):
             # The actual cage object must be active even though
             # the GPU visualization is what the user sees.
 
@@ -556,7 +557,7 @@ class CageVisualizationService:
             bpy.context.view_layer.objects.active = cage
 
             try:
-                bpy.ops.object.mode_set(mode="TEXTURE_PAINT")
+                bpy.ops.object.mode_set(mode=mode)
                 cage.hide_set(True)
 
             except RuntimeError as exc:
@@ -1081,39 +1082,6 @@ class CageVisualizationService:
             gpu.state.depth_mask_set(True)
             gpu.state.depth_test_set("LESS_EQUAL")
             gpu.state.blend_set("NONE")
-
-    # ---------------------------------------------------------
-    # Weight Paint
-    # ---------------------------------------------------------
-
-    @classmethod
-    def _enter_weight_paint(
-        cls,
-        cage: bpy.types.Object,
-    ) -> None:
-        with LOG.scope("Enter Weight Paint"):
-            # The actual cage object must be active even though
-            # the GPU visualization is what the user sees.
-
-            if bpy.context.mode != "OBJECT":
-                try:
-                    bpy.ops.object.mode_set(mode="OBJECT")
-                except RuntimeError:
-                    pass
-
-            bpy.ops.object.select_all(action="DESELECT")
-
-            cage.hide_set(False)
-            cage.select_set(True)
-
-            bpy.context.view_layer.objects.active = cage
-
-            try:
-                bpy.ops.object.mode_set(mode="WEIGHT_PAINT")
-                cage.hide_set(True)
-
-            except RuntimeError as exc:
-                LOG.warning(f"Unable to enter Weight Paint mode for cage {cage.name}: {exc}")
 
     # ---------------------------------------------------------
     # Mode / Active Object restoration
