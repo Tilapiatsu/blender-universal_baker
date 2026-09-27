@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from enum import StrEnum, auto
 
 import bpy
 
@@ -9,10 +10,15 @@ from ..constant import LOG
 LOG_SCOPE = "Material Override"
 
 
+class MaterialTarget(StrEnum):
+    DATA = "DATA"
+    OBJECT = "OBJECT"
+
+
 @dataclass
 class MaterialSnapshot:
     object_name: str
-    material_names: list[str | None] = field(default_factory=list)
+    material_names: list[tuple[MaterialTarget, str | None]] = field(default_factory=list)
 
     @property
     def object(self) -> bpy.types.Object | None:
@@ -24,7 +30,7 @@ class MaterialSnapshot:
     @property
     def materials(self) -> list[bpy.types.Material | None]:
         materials = []
-        for mat in self.material_names:
+        for target, mat in self.material_names:
             if mat is None:
                 materials.append(None)
                 continue
@@ -37,12 +43,29 @@ class MaterialSnapshot:
 
         return materials
 
+    @property
+    def target_materials(self) -> list[tuple[MaterialTarget, bpy.types.Material | None]]:
+        taregt_materials = []
+        for target, mat in self.material_names:
+            if mat is None:
+                taregt_materials.append((target, None))
+                continue
+
+            if mat not in bpy.data.materials:
+                taregt_materials.append((target, None))
+                continue
+
+            taregt_materials.append((target, bpy.data.materials[mat]))
+
+        return taregt_materials
+
 
 class MaterialOverrideService:
     @staticmethod
     def apply(
         objects: list[bpy.types.Object],
         material: bpy.types.Material,
+        target: MaterialTarget = MaterialTarget.OBJECT,
     ) -> list[MaterialSnapshot]:
 
         with LOG.scope(LOG_SCOPE):
@@ -60,7 +83,11 @@ class MaterialOverrideService:
                 if obj.data.users > 1:
                     stored_instances.append(obj.data.name)
 
-                material_names = [slot.material.name for slot in obj.material_slots if slot.material is not None]
+                material_names = [
+                    (MaterialTarget(slot.link), slot.material.name)
+                    for slot in obj.material_slots
+                    if slot.material is not None
+                ]
 
                 LOG.debug(f"Storing materials for {obj.name} : {material_names}")
 
@@ -77,6 +104,7 @@ class MaterialOverrideService:
 
                 for index, slot in enumerate(obj.material_slots):
                     LOG.debug(f"Apply material {material.name} to slot {index}")
+                    slot.link = target.value
                     slot.material = material
 
             return snapshots
@@ -100,13 +128,16 @@ class MaterialOverrideService:
                 if not len(snapshot.material_names):
                     obj.data.materials.clear()
 
-                for index, material in enumerate(snapshot.materials):
+                for index, target_material in enumerate(snapshot.target_materials):
                     if obj.material_slots is None or index >= len(obj.material_slots):
                         continue
 
+                    target, material = target_material
+
                     LOG.debug(f"Restoring material slot {index} : {material.name if material is not None else 'EMPTY'}")
-                    if material is None:
+                    if target_material is None:
                         LOG.error(f"Material {snapshot.material_names[index]} not found, can't recover")
                         continue
 
+                    obj.material_slots[index].link = target.value
                     obj.material_slots[index].material = material

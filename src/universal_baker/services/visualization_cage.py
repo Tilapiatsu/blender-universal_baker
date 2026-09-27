@@ -378,10 +378,6 @@ class CageVisualizationService:
         # ISSUE: In Bake preview switching baker updates the preview properly, but selecting the selected baker again
         # disable the preview and I want to prevent that
         # ISSUE: Sometime Crash when ctrl + z in bake preview mode
-        # ISSUE: When edit skewing, if I enable preview bake, the display material gets overriden by the bake preview
-        # material, and I can't edit the skewing anymore. I may need to find a way to apply different materials to the
-        # cage and the projection target, but they are instances, or remove the instances but it could have other
-        # consequences
         # TODO: need to tackle the ray visibility to control an object visible from secondary ray but not primary ones
 
         with LOG.scope(LOG_SCOPE):
