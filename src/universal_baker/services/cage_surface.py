@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import bpy
-
 from mathutils import Matrix, Vector
 
 from .uv_mesh import UvMesh

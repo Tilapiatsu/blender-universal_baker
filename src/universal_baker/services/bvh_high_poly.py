@@ -39,27 +39,28 @@ class HighPolyBVHService:
 
         The BVH itself is built in object-local space.
         """
-
         self.clear()
 
-        evaluated_object = obj.evaluated_get(depsgraph)
+        if obj is None:
+            raise ValueError("Cannot build BVH from None")
 
-        mesh = evaluated_object.to_mesh()
+        if obj.type != "MESH":
+            raise TypeError(f"BVH source must be a MESH object, got {obj.type!r}")
 
-        try:
-            self._bvh = BVHTree.FromMesh(mesh)
+        self._bvh = BVHTree.FromObject(
+            obj,
+            bpy.context.evaluated_depsgraph_get(),
+            deform=True,
+            cage=False,
+        )
 
-            if self._bvh is None:
-                raise RuntimeError(f"Unable to build BVH for object '{obj.name}'.")
+        if self._bvh is None:
+            raise RuntimeError(f"BVHTree.FromObject() returned None for {obj.name!r}")
 
-            self._world_matrix = evaluated_object.matrix_world.copy()
+        self._world_matrix = obj.matrix_world.copy()
+        self._inverse_world_matrix = self._world_matrix.inverted()
 
-            self._inverse_world_matrix = self._world_matrix.inverted()
-
-            self._normal_matrix = self._world_matrix.to_3x3().inverted().transposed()
-
-        finally:
-            evaluated_object.to_mesh_clear()
+        self._normal_matrix = self._world_matrix.to_3x3().inverted().transposed()
 
     def clear(self) -> None:
         self._bvh = None

@@ -41,7 +41,9 @@ class CageProjectionService:
         cage_distance = cage_offset.length
 
         if cage_distance <= 1e-12:
-            raise ValueError("Target and cage positions are coincident.")
+            raise ValueError(
+                f"Target and cage positions are coincident.\ndistance={cage_distance}, origin={origin}, cage_position={cage_position}"
+            )
 
         cage_direction = cage_offset / cage_distance
 

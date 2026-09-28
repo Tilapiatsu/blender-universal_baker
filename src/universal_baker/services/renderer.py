@@ -279,7 +279,7 @@ class RendererService:
 
     @classmethod
     def bake(cls, ctx: BakeContext):
-        """Execute Blender bake."""
+        use_skew_correction = ctx.task.settings_cage.is_skew_correction_enabled
         message = f"Baking {ctx.target.name}"
 
         if ctx.task.use_cage:
@@ -289,7 +289,41 @@ class RendererService:
 
             cage = ctx.cage.name if ctx.cage is not None else "UNKNOW"
             message += f" using Cage {cage}"
+            if use_skew_correction:
+                message += ", using skew correction"
 
         LOG.info(message)
 
+        if use_skew_correction:
+            cls.bake_skew(ctx)
+        else:
+            cls.bake_regular(ctx)
+
+    @classmethod
+    def bake_regular(cls, ctx: BakeContext):
+        """Execute Blender bake."""
+
         bpy.ops.object.bake(type=ctx.task.producer.blender_bake_type)
+
+    @classmethod
+    def bake_skew(cls, ctx: BakeContext):
+        from ..services.bake_projection import ProjectionBakeService
+
+        service = ProjectionBakeService()
+        buffer = service.bake(
+            target=ctx.target,
+            cage=ctx.cage,
+            sources=ctx.sources,
+            uv_layer_name=ctx.task.uv_layer,
+            width=ctx.output_settings.path.width,
+            height=ctx.output_settings.path.height,
+            max_ray_distance=ctx.task.settings_cage.max_ray_distance,
+            depsgraph=ctx.blender_context.evaluated_depsgraph_get(),
+        )
+        image = ctx.image.image
+        if image is None:
+            raise RuntimeError("Bake image has not been acquired properly.")
+
+        buffer.write_to_blender_image(image)
+
+        image.update()
