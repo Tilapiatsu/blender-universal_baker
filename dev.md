@@ -57,6 +57,7 @@ inputing 10% of the resulution for exemple
 - [ ] Cavity
 - [ ] Edge
 - [ ] Normal
+  - [ ] add option to add a bevel shader in the normal map ?
 - [ ] Normal World Space
 - [ ] Position
 - [ ] Thickness
