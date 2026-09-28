@@ -9,7 +9,7 @@ from .cage_projection import CageProjectionService
 from .cage_surface import CageSurfaceSampler
 from .projection_ray import ProjectionRayBuilder
 from .uv_mesh import UvMeshExtractor
-from .uv_rasterizer import UvRasterizer
+from .uv_rasterizer import UvRasterization, UvRasterizer
 from .uv_surface import UvSurfaceSampler
 
 
@@ -113,10 +113,10 @@ class ProjectionBakeService:
     def _rasterize_projection(
         self,
         *,
-        rasterization,
-        target_sampler,
-        cage_sampler,
-        bvh_services,
+        rasterization: UvRasterization,
+        target_sampler: UvSurfaceSampler,
+        cage_sampler: CageSurfaceSampler,
+        bvh_services: list[HighPolyBVHService],
         max_ray_distance: float,
         width: int,
         height: int,
