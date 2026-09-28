@@ -673,15 +673,18 @@ class CageVisualizationService:
             if runtime.target_uuid == target.uuid:
                 return True
 
-            # ISSUE: Object visibility are borken while refreshing
-            # ISSUE: bake preview gets broken while refreshing
-
             LOG.debug(f"Refreshing Cage Visualization | {runtime.target_name} -> {target.object.name}")
 
-            cls.disable(disable_property=target.settings_cage.cage_mode == "OBJECT", disable_bake_preview=False)
+            cls.disable(disable_property=target.settings_cage.cage_mode == "OBJECT", disable_bake_preview=preview_bake)
 
             if target.settings_cage.cage_mode == "GENERATED":
-                cls.enable(target, edit_mode, preview_bake)
+                match edit_mode:
+                    case CageEditMode.EDIT:
+                        cls.enable_cage_edit(target, preview_bake)
+                    case CageEditMode.SKEW:
+                        cls.enable_skew_edit(target, preview_bake)
+                    case _:
+                        pass
 
             return True
 

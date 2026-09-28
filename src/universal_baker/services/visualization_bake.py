@@ -392,11 +392,6 @@ class BakeVisualizationService:
 
         scenes = ViewportService.capture_state()
 
-        # ISSUE: Chaning bake settings and running bake while having display visualization enable makes the
-        # visualization lost and getting a white image. Certainely due to the output provider, or because when
-        # suspending it stored the old producer uuid and resuming visualization lead to get a invalid producer due to
-        # the deprecated uuid ?
-
         # TODO: Preview Parameters doesn't work in selected to active mode
         for scene_name, scene_state in scenes.scenes.items():
             cls._runtime.set_scene_state(
