@@ -3,11 +3,10 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 import bpy
-from universal_baker.services.data_removal import ObjectRemoval
 
 from ..constant import LOG
 from ..services.bake_material import BakeMaterialSetup
-from ..services.data_removal import MaterialRemoval, NodeRemoval
+from ..services.data_removal import MaterialRemoval, ObjectRemoval
 from ..services.object_offset import ObjectOffset
 
 LOG_SCOPE = "Asset Setup"
