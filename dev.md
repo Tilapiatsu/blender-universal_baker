@@ -15,6 +15,8 @@
   - [X] Cage Shader
   - [X] Cage distance painting
   - [X] Investigate live preview of bake with Ray Portal shader : It could help display the projection error or missed rays
+  - [ ] add adaptive cage -> The cage vertex group is automatically generated to an optimal result ( maybe using
+  occlusion ?)
 - [ ] Add a percentage slider to increase or shrink the output resolution. It would help rendering preview easily by
 inputing 10% of the resulution for exemple
 - [ ] add ability to load a scene as background before baker ( usefull for AO )
