@@ -15,9 +15,12 @@ class CageProjection:
     All spatial values are expressed in world space.
     """
 
-    origin: Vector
+    target_position: Vector
+    cage_position: Vector
+
     normal_direction: Vector
     cage_direction: Vector
+
     cage_distance: float
 
 
@@ -45,10 +48,12 @@ class CageProjectionService:
                 f"Target and cage positions are coincident.\ndistance={cage_distance}, origin={origin}, cage_position={cage_position}"
             )
 
-        cage_direction = cage_offset / cage_distance
+        # cage_direction = cage_offset / cage_distance
+        cage_direction = cage_offset.normalized()
 
         return CageProjection(
-            origin=origin,
+            target_position=surface_sample.position.copy(),
+            cage_position=cage_position.copy(),
             normal_direction=normal_direction,
             cage_direction=cage_direction,
             cage_distance=cage_distance,

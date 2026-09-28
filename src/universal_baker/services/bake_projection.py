@@ -162,9 +162,22 @@ class ProjectionBakeService:
                 ray = ray_builder.build(
                     projection,
                     max_distance=max_ray_distance,
+                    reverse=True,
                 )
 
                 hit = None
+                LOG.info(
+                    "RAY DEBUG\n"
+                    f"  origin       = {ray.origin}\n"
+                    f"  direction    = {ray.direction}\n"
+                    f"  max_distance = {ray.max_distance}\n"
+                    f"  target       = {projection.target_position}\n"
+                    f"  cage         = {projection.cage_distance}\n"
+                    f"  cage_dir     = {projection.cage_direction}\n"
+                )
+                ray_end = ray.origin + ray.direction * (ray.max_distance if ray.max_distance > 0 else 1.0)
+
+                LOG.info(f"  ray_end      = {ray_end}")
 
                 for bvh in bvh_services:
                     hit = bvh.ray_cast(

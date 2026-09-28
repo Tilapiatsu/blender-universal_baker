@@ -19,6 +19,7 @@ class ProjectionRayBuilder:
         self,
         projection: CageProjection,
         max_distance: float,
+        reverse: bool = False,
     ) -> ProjectionRay:
 
         if max_distance < 0.0:
@@ -31,8 +32,11 @@ class ProjectionRayBuilder:
 
         direction.normalize()
 
+        if reverse:
+            direction.negate()
+
         return ProjectionRay(
-            origin=projection.origin.copy(),
+            origin=projection.cage_position.copy(),
             direction=direction,
             max_distance=max_distance,
         )
