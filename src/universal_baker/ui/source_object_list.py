@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import bpy
 
-from ..constant import ICON_TARGET_OBJECT
+from ..constant import ICON_SOURCE_OBJECT, ICON_TARGET_OBJECT
 
 
 class UBK_UL_SourceObjectList(bpy.types.UIList):
