@@ -1,11 +1,9 @@
 from __future__ import annotations
-from typing import Callable
 
 import bpy
 
 from ..core.controller import BakeController
-from .panel import bake_group_needed, UBK_PT_MainPanel
-
+from .panel import UBK_PT_MainPanel, bake_group_needed
 
 # -------------------------------------------------------------------------
 # Main Settings Panel
