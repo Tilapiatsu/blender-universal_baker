@@ -220,3 +220,6 @@ __marimo__/
 
 # Blender Backup
 *.blend1
+
+# baking files
+test_scenes/baking/

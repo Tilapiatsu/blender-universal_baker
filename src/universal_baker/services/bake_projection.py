@@ -162,7 +162,7 @@ class ProjectionBakeService:
                 ray = ray_builder.build(
                     projection,
                     max_distance=max_ray_distance,
-                    reverse=True,
+                    reverse=False,
                 )
 
                 hit = None
