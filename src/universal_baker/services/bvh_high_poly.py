@@ -152,16 +152,16 @@ class HighPolyBVHService:
 
         local_direction_length = direction_local.length
 
+        if local_direction_length <= 1e-12:
+            LOG.debug("Direction Length too small")
+            return None
+
         if max_distance < 0.0:
             raise ValueError("Maximum ray distance cannot be negative.")
         elif max_distance == 0.0:
             local_max_distance = float("inf")
         else:
             local_max_distance = max_distance * local_direction_length
-
-        if local_direction_length <= 1e-12:
-            LOG.debug("Direction Length too small")
-            return None
 
         direction_local.normalize()
 
