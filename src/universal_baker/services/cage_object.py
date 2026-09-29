@@ -91,7 +91,7 @@ class CageObjectService:
         modifier.vertex_group = cls.VERTEX_GROUP_NAME
         modifier.direction = "NORMAL"
         modifier.strength = cage_settings.cage_extrusion
-        modifier.mid_level = 0.5
+        modifier.mid_level = 0.0
         modifier.invert_vertex_group = True
 
     @classmethod
