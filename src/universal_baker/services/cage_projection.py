@@ -31,7 +31,7 @@ class CageProjectionService:
         cage_position: Vector,
     ) -> CageProjection:
 
-        origin = surface_sample.position.copy()
+        origin = cage_position.copy()
 
         normal_direction = surface_sample.normal.copy()
 
@@ -40,7 +40,7 @@ class CageProjectionService:
 
         normal_direction.normalize()
 
-        cage_offset = origin - cage_position
+        cage_offset = origin - surface_sample.position.copy()
         cage_distance = cage_offset.length
 
         if cage_distance <= 1e-12:

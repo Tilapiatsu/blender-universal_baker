@@ -162,22 +162,26 @@ class ProjectionBakeService:
                 ray = ray_builder.build(
                     projection,
                     max_distance=max_ray_distance,
-                    reverse=False,
+                    reverse_direction=True,
                 )
 
                 hit = None
-                LOG.info(
-                    "RAY DEBUG\n"
-                    f"  origin       = {ray.origin}\n"
-                    f"  direction    = {ray.direction}\n"
-                    f"  max_distance = {ray.max_distance}\n"
-                    f"  target       = {projection.target_position}\n"
-                    f"  cage         = {projection.cage_distance}\n"
-                    f"  cage_dir     = {projection.cage_direction}\n"
-                )
-                ray_end = ray.origin + ray.direction * (ray.max_distance if ray.max_distance > 0 else 1.0)
 
-                LOG.info(f"  ray_end      = {ray_end}")
+                if x == width // 2 and y == height // 2:
+                    ray_end = ray.origin + ray.direction * (ray.max_distance if ray.max_distance > 0 else 1.0)
+                    LOG.debug(
+                        f"Projection test:"
+                        f"  pixel           = ({x}, {y})\n"
+                        f"  cage_position   = {cage_position}\n"
+                        f"  ray_origin      = {ray.origin}\n"
+                        f"  ray_direction   = {ray.direction}\n"
+                        f"  ray_max_distance= {ray.max_distance}\n"
+                        f"  hit_position    = {hit.position if hit else None}\n"
+                        f"  target_position = {projection.target_position}\n"
+                        f"  cage_distance   = {projection.cage_distance}\n"
+                        f"  cage_dir        = {projection.cage_direction}\n"
+                        f"  ray_end         = {ray_end}"
+                    )
 
                 for bvh in bvh_services:
                     hit = bvh.ray_cast(
@@ -213,16 +217,5 @@ class ProjectionBakeService:
                 pixel[1] = hit.normal.x * 0.5 + 0.5
                 pixel[2] = hit.normal.z * 0.5 + 0.5
                 pixel[3] = 1.0
-
-                if x == width // 2 and y == height // 2:
-                    LOG.debug(
-                        f"Projection test:"
-                        f" pixel=({x}, {y})"
-                        f" target={target_sample.position}"
-                        f" cage={cage_position}"
-                        f" direction={ray.direction}"
-                        f" max_distance={ray.max_distance}"
-                        f" hit={hit.position if hit else None}"
-                    )
 
         return buffer
