@@ -4,7 +4,7 @@ import bpy
 
 from ..constant import LOG
 from ..resources.image_buffer import ImageBuffer
-from .bvh_high_poly import HighPolyBVHService
+from .bvh_high_poly import BVHRayHit, HighPolyBVHService
 from .cage_projection import CageProjectionService
 from .cage_surface import CageSurfaceSampler
 from .projection_ray import ProjectionRayBuilder
@@ -91,6 +91,7 @@ class ProjectionBakeService:
                             depsgraph,
                         )
                         bvh_services.append(bvh)
+                        bvh.isolated_test(source)
 
                     try:
                         return self._rasterize_projection(
@@ -170,6 +171,42 @@ class ProjectionBakeService:
 
                 hit = None
 
+                for bvh in bvh_services:
+                    if x == width // 2 and y == height // 2:
+                        nearest_position, nearest_normal, nearest_index, nearest_distance = bvh._bvh.find_nearest(
+                            ray.origin,
+                            ray.max_distance if ray.max_distance > 0 else float("inf"),
+                        )
+
+                        LOG.info(
+                            "NEAREST DEBUG\n"
+                            f"  origin   = {ray.origin}\n"
+                            f"  nearest  = {nearest_position}\n"
+                            f"  normal   = {nearest_normal}\n"
+                            f"  distance = {nearest_distance}\n"
+                        )
+                        to_nearest = (nearest_position - ray.origin).normalized()
+
+                        dot = ray.direction.dot(to_nearest)
+
+                        LOG.info(f"Ray alignment with nearest geometry: {dot:.4f}")
+
+                        print(bvh.diagnose_ray(ray))
+
+                    hit = bvh.ray_cast(
+                        ray.origin,
+                        ray.direction,
+                        ray.max_distance,
+                    )
+
+                    # # NOTE: Skipping raycast method make it work properly for some reasons, need to investigate why
+                    # position, normal, index, distance = bvh._bvh.ray_cast(ray.origin, ray.direction.normalized(), 2)
+                    #
+                    # hit = BVHRayHit(position=position, normal=normal, distance=distance, polygon_index=index)
+
+                    if hit is not None and hit.distance is not None:
+                        break
+
                 if x == width // 2 and y == height // 2:
                     ray_end = ray.origin + ray.direction * (ray.max_distance if ray.max_distance > 0 else 1.0)
                     LOG.debug(
@@ -186,19 +223,9 @@ class ProjectionBakeService:
                         f"  ray_end         = {ray_end}"
                     )
 
-                for bvh in bvh_services:
-                    hit = bvh.ray_cast(
-                        ray.origin,
-                        ray.direction,
-                        ray.max_distance,
-                    )
-
-                    if hit is not None:
-                        break
-
                 pixel = pixels[y, x]
 
-                if hit is None:
+                if hit is None or hit.distance is None:
                     # Miss = transparent black.
                     pixel[0] = 0.0
                     pixel[1] = 0.0

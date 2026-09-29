@@ -2,9 +2,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+import bmesh
 import bpy
 from mathutils import Matrix, Vector
 from mathutils.bvhtree import BVHTree
+from universal_baker.services.projection_ray import ProjectionRay
+
+from ..constant import LOG
 
 
 @dataclass(slots=True)
@@ -47,9 +51,10 @@ class HighPolyBVHService:
         if obj.type != "MESH":
             raise TypeError(f"BVH source must be a MESH object, got {obj.type!r}")
 
+        # self._bvh = self.bvhtree_from_object(obj, depsgraph)
         self._bvh = BVHTree.FromObject(
             obj,
-            bpy.context.evaluated_depsgraph_get(),
+            depsgraph,
             deform=True,
             cage=False,
         )
@@ -61,6 +66,43 @@ class HighPolyBVHService:
         self._inverse_world_matrix = self._world_matrix.inverted()
 
         self._normal_matrix = self._world_matrix.to_3x3().inverted().transposed()
+
+    def isolated_test(self, source: bpy.types.Object):
+        depsgraph = bpy.context.evaluated_depsgraph_get()
+
+        bvh = BVHTree.FromObject(
+            source,
+            depsgraph,
+            deform=True,
+        )
+        world_origin = Vector((0.1, 0.0, 0.1))
+        world_direction = Vector((0, 0, -1))
+
+        inverse = source.matrix_world.inverted()
+
+        local_origin = inverse @ world_origin
+        local_direction = (inverse.to_3x3() @ world_direction).normalized()
+
+        hit = bvh.ray_cast(
+            local_origin,
+            local_direction,
+            2.0,
+        )
+
+        LOG.debug(f"Isolated Test : {hit}")
+
+    def bvhtree_from_object(self, obj: bpy.types.Object, depsgraph: bpy.types.Depsgraph):
+        """Deprecated"""
+        bm = bmesh.new()
+
+        mesh = obj.to_mesh(depsgraph=depsgraph, preserve_all_data_layers=True)
+        bm.from_mesh(mesh)
+        bm.transform(obj.matrix_world)
+
+        bvhtree = BVHTree.FromBMesh(bm)
+        bm.free()
+
+        return bvhtree
 
     def clear(self) -> None:
         self._bvh = None
@@ -112,12 +154,13 @@ class HighPolyBVHService:
 
         if max_distance < 0.0:
             raise ValueError("Maximum ray distance cannot be negative.")
-        if max_distance == 0.0:
+        elif max_distance == 0.0:
             local_max_distance = float("inf")
         else:
             local_max_distance = max_distance * local_direction_length
 
         if local_direction_length <= 1e-12:
+            LOG.debug("Direction Length too small")
             return None
 
         direction_local.normalize()
@@ -141,6 +184,17 @@ class HighPolyBVHService:
             direction_local,
             local_max_distance,
         )
+        #
+        # (
+        #     location_local,
+        #     normal_local,
+        #     polygon_index,
+        #     distance_local,
+        # ) = self._bvh.ray_cast(
+        #     origin,
+        #     direction,
+        #     max_distance,
+        # )
 
         if location_local is None:
             return None
@@ -164,3 +218,42 @@ class HighPolyBVHService:
             distance=distance_world,
             polygon_index=polygon_index,
         )
+
+    def diagnose_ray(self, ray: ProjectionRay) -> tuple[Vector, Vector, Vector, int, float] | None:
+        if self._bvh is None:
+            return None
+
+        origin = ray.origin
+        direction = ray.direction.normalized()
+
+        distance = ray.max_distance if ray.max_distance > 0.0 else float("inf")
+
+        hit = self._bvh.ray_cast(
+            origin,
+            direction,
+            distance,
+        )
+
+        nearest = self._bvh.find_nearest(
+            origin,
+            distance,
+        )
+
+        LOG.info(
+            "\n"
+            "========== BVH RAY DIAGNOSTIC ==========\n"
+            f"Origin:       {origin}\n"
+            f"Direction:    {direction}\n"
+            f"Max distance: {distance}\n"
+            f"Hit:          {hit}\n"
+            f"Nearest:      {nearest}\n"
+            "========================================="
+        )
+
+        if nearest[0] is not None:
+            nearest_position = nearest[0]
+            to_nearest = (nearest_position - origin).normalized()
+
+            LOG.info(f"Direction → nearest dot: {direction.dot(to_nearest):.4f}")
+
+        return hit
