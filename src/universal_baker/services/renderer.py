@@ -303,7 +303,8 @@ class RendererService:
     def bake_regular(cls, ctx: BakeContext):
         """Execute Blender bake."""
 
-        bpy.ops.object.bake(type=ctx.task.producer.blender_bake_type)
+        with LOG.scope("Buildin Bake"):
+            bpy.ops.object.bake(type=ctx.task.producer.blender_bake_type)
 
     @classmethod
     def bake_skew(cls, ctx: BakeContext):

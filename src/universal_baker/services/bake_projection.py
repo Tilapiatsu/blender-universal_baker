@@ -12,6 +12,8 @@ from .uv_mesh import UvMeshExtractor
 from .uv_rasterizer import UvRasterization, UvRasterizer
 from .uv_surface import UvSurfaceSampler
 
+LOG_SCOPE = "Projection Bake"
+
 
 class ProjectionBakeService:
     def __init__(self) -> None:
@@ -33,82 +35,83 @@ class ProjectionBakeService:
         depsgraph: bpy.types.Depsgraph,
     ) -> ImageBuffer:
 
-        if not sources:
-            raise ValueError("Projection baking requires at least one source object.")
+        with LOG.scope(LOG_SCOPE):
+            if not sources:
+                raise ValueError("Projection baking requires at least one source object.")
 
-        # --------------------------------------------------------------
-        # Target UV representation
-        # --------------------------------------------------------------
+            # --------------------------------------------------------------
+            # Target UV representation
+            # --------------------------------------------------------------
 
-        target_evaluated = target.evaluated_get(depsgraph)
-        target_mesh = target_evaluated.to_mesh()
-
-        try:
-            uv_mesh = self._uv_mesh_extractor.extract(
-                target_mesh,
-                uv_layer_name,
-            )
-
-            rasterization = self._uv_rasterizer.rasterize(
-                uv_mesh,
-                width,
-                height,
-            )
-
-            target_sampler = UvSurfaceSampler(
-                mesh=target_mesh,
-                uv_mesh=uv_mesh,
-                matrix_world=target_evaluated.matrix_world,
-            )
-
-            # ----------------------------------------------------------
-            # Cage
-            # ----------------------------------------------------------
-
-            cage_evaluated = cage.evaluated_get(depsgraph)
-            cage_mesh = cage_evaluated.to_mesh()
+            target_evaluated = target.evaluated_get(depsgraph)
+            target_mesh = target_evaluated.to_mesh()
 
             try:
-                cage_sampler = CageSurfaceSampler(
-                    mesh=cage_mesh,
-                    uv_mesh=uv_mesh,
-                    matrix_world=cage_evaluated.matrix_world,
+                uv_mesh = self._uv_mesh_extractor.extract(
+                    target_mesh,
+                    uv_layer_name,
                 )
 
-                # ------------------------------------------------------
-                # Build source BVHs.
-                # ------------------------------------------------------
+                rasterization = self._uv_rasterizer.rasterize(
+                    uv_mesh,
+                    width,
+                    height,
+                )
 
-                bvh_services = []
+                target_sampler = UvSurfaceSampler(
+                    mesh=target_mesh,
+                    uv_mesh=uv_mesh,
+                    matrix_world=target_evaluated.matrix_world,
+                )
 
-                for source in sources:
-                    bvh = HighPolyBVHService()
-                    bvh.build(
-                        source,
-                        depsgraph,
-                    )
-                    bvh_services.append(bvh)
+                # ----------------------------------------------------------
+                # Cage
+                # ----------------------------------------------------------
+
+                cage_evaluated = cage.evaluated_get(depsgraph)
+                cage_mesh = cage_evaluated.to_mesh()
 
                 try:
-                    return self._rasterize_projection(
-                        rasterization=rasterization,
-                        target_sampler=target_sampler,
-                        cage_sampler=cage_sampler,
-                        bvh_services=bvh_services,
-                        max_ray_distance=max_ray_distance,
-                        width=width,
-                        height=height,
+                    cage_sampler = CageSurfaceSampler(
+                        mesh=cage_mesh,
+                        uv_mesh=uv_mesh,
+                        matrix_world=cage_evaluated.matrix_world,
                     )
 
+                    # ------------------------------------------------------
+                    # Build source BVHs.
+                    # ------------------------------------------------------
+
+                    bvh_services = []
+
+                    for source in sources:
+                        bvh = HighPolyBVHService()
+                        bvh.build(
+                            source,
+                            depsgraph,
+                        )
+                        bvh_services.append(bvh)
+
+                    try:
+                        return self._rasterize_projection(
+                            rasterization=rasterization,
+                            target_sampler=target_sampler,
+                            cage_sampler=cage_sampler,
+                            bvh_services=bvh_services,
+                            max_ray_distance=max_ray_distance,
+                            width=width,
+                            height=height,
+                        )
+
+                    finally:
+                        for bvh in bvh_services:
+                            bvh.clear()
+
                 finally:
-                    for bvh in bvh_services:
-                        bvh.clear()
+                    cage_evaluated.to_mesh_clear()
 
             finally:
-                cage_evaluated.to_mesh_clear()
-
-        finally:
-            target_evaluated.to_mesh_clear()
+                target_evaluated.to_mesh_clear()
 
     def _rasterize_projection(
         self,
