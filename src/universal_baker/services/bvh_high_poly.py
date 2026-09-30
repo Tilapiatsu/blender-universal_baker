@@ -152,6 +152,8 @@ class HighPolyBVHService:
 
         local_direction_length = direction_local.length
 
+        direction_local.normalize()
+
         if local_direction_length <= 1e-12:
             LOG.debug("Direction Length too small")
             return None
@@ -161,14 +163,10 @@ class HighPolyBVHService:
         elif max_distance == 0.0:
             local_max_distance = float("inf")
         else:
+            # A normalized local direction means the BVH distance is measured
+            # in local units. Convert the world-space maximum distance using
+            # the scale of the transformed direction.
             local_max_distance = max_distance * local_direction_length
-
-        direction_local.normalize()
-
-        # A normalized local direction means the BVH distance is measured
-        # in local units. Convert the world-space maximum distance using
-        # the scale of the transformed direction.
-        local_max_distance = max_distance * local_direction_length
 
         # ------------------------------------------------------------------
         # Perform the actual BVH query.
@@ -184,17 +182,6 @@ class HighPolyBVHService:
             direction_local,
             local_max_distance,
         )
-        #
-        # (
-        #     location_local,
-        #     normal_local,
-        #     polygon_index,
-        #     distance_local,
-        # ) = self._bvh.ray_cast(
-        #     origin,
-        #     direction,
-        #     max_distance,
-        # )
 
         if location_local is None:
             return None
@@ -216,6 +203,33 @@ class HighPolyBVHService:
             position=position_world,
             normal=normal_world,
             distance=distance_world,
+            polygon_index=polygon_index,
+        )
+
+    def _cast_ray(self, origin: Vector, direction: Vector, max_distance: float) -> BVHRayHit | None:
+        if self._bvh is None:
+            return None
+
+        max_distance = max_distance if max_distance > 0.0 else float("inf")
+
+        (
+            position,
+            normal,
+            polygon_index,
+            distance,
+        ) = self._bvh.ray_cast(
+            origin,
+            direction,
+            max_distance,
+        )
+
+        if position is None:
+            return None
+
+        return BVHRayHit(
+            position=position,
+            normal=normal,
+            distance=distance,
             polygon_index=polygon_index,
         )
 
