@@ -40,7 +40,7 @@ class UBK_UL_BakeGroupList(bpy.types.UIList):
         if not active_bake_group.enabled:
             row.enabled = False
 
-        row.prop(active_bake_group, "name", placeholder="Name", text="")
+        row.prop(active_bake_group, "name", placeholder="Name", emboss=False, text="")
 
         enabled_targets = sum(target_object.enabled for target_object in active_bake_group.target_objects)
         total_targets = len(active_bake_group.target_objects)
