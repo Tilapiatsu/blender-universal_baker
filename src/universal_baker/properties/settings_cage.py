@@ -125,7 +125,7 @@ class UBK_CageSettings(PropertyGroup):
 
     @property
     def is_skew_correction_enabled(self) -> bool:
-        return self.skew_image is not None and self.cage_object_generated
+        return self.skew_image is not None and self.is_cage_generated
 
 
 classes = (UBK_CageSettings,)

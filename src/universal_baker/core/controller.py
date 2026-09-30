@@ -115,6 +115,28 @@ class BakeController:
         ProjectService.remove_source_object(context, index)
 
     # ---------------------------------------------------------
+    # Skew Correction
+    # ---------------------------------------------------------
+
+    @classmethod
+    def remove_skew_image(cls, context: bpy.types.Context):
+        target_object = cls.active_target_object(context)
+
+        if not target_object:
+            return None
+
+        if target_object.settings_cage.skew_image is None:
+            return None
+
+        skew_map_name = target_object.settings_cage.skew_image.name
+        if skew_map_name in bpy.data.images:
+            bpy.data.images.remove(target_object.settings_cage.skew_image)
+
+        target_object.settings_cage.skew_image = None
+
+        return skew_map_name
+
+    # ---------------------------------------------------------
     # Baker Operations
     # ---------------------------------------------------------
 

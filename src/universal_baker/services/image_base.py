@@ -202,6 +202,7 @@ class ImageServiceBase:
             or image.filepath_raw != str(resource.filepath)
             or image.colorspace_settings.name != resource.colorspace
             or (image.tiles is not None and len(image.tiles) >= 1) != resource.is_udim
+            or (image.tiles is not None and len(image.tiles) != len(resource.tiles))
         )
 
     @classmethod
