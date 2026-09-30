@@ -4,7 +4,7 @@ import bpy
 
 from ..constant import LOG
 from ..resources.image_buffer import ImageBuffer
-from .bvh_high_poly import BVHRayHit, HighPolyBVHService
+from .bvh_high_poly import HighPolyBVHService
 from .cage_projection import CageProjectionService
 from .cage_surface import CageSurfaceSampler
 from .projection_ray import ProjectionRayBuilder
@@ -198,11 +198,6 @@ class ProjectionBakeService:
                         ray.direction,
                         ray.max_distance,
                     )
-
-                    # # NOTE: Skipping raycast method make it work properly for some reasons, need to investigate why
-                    # position, normal, index, distance = bvh._bvh.ray_cast(ray.origin, ray.direction.normalized(), 2)
-                    #
-                    # hit = BVHRayHit(position=position, normal=normal, distance=distance, polygon_index=index)
 
                     if hit is not None and hit.distance is not None:
                         break

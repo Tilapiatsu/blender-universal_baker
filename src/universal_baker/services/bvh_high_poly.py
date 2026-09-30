@@ -6,9 +6,9 @@ import bmesh
 import bpy
 from mathutils import Matrix, Vector
 from mathutils.bvhtree import BVHTree
-from universal_baker.services.projection_ray import ProjectionRay
 
 from ..constant import LOG
+from ..services.projection_ray import ProjectionRay
 
 
 @dataclass(slots=True)
