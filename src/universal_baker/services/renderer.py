@@ -1,8 +1,14 @@
 from __future__ import annotations
 
+from numpy import tile
+
 import bpy
+from universal_baker.factories.settings_output import OutputSettingsResolver
+from universal_baker.resources.image import ImageResource
+from universal_baker.services.image_codec import ImageCodec
 
 from ..constant import LOG
+from ..services.image_io import ImageIOService
 from ..resources.scene_view_transform import SceneViewTransform
 from ..runtime.context_bake import BakeContext
 from ..runtime.render_settings import RenderSettings
@@ -288,7 +294,9 @@ class RendererService:
             message += f" from sources {sources!r}"
 
             cage = ctx.cage.name if ctx.cage is not None else "UNKNOW"
+
             message += f" using Cage {cage}"
+
             if use_skew_correction:
                 message += ", using skew correction"
 
@@ -310,8 +318,11 @@ class RendererService:
     def bake_skew(cls, ctx: BakeContext):
         from ..services.bake_projection import ProjectionBakeService
 
+        tiles = ctx.task.uv_layout.udim_tiles
+
         service = ProjectionBakeService()
-        buffer = service.bake(
+
+        tile_set = service.bake(
             target=ctx.target,
             cage=ctx.cage,
             sources=ctx.sources,
@@ -320,11 +331,16 @@ class RendererService:
             height=ctx.output_settings.path.height,
             max_ray_distance=ctx.task.settings_cage.max_ray_distance,
             depsgraph=ctx.blender_context.evaluated_depsgraph_get(),
+            tiles=tiles,
         )
         image = ctx.image.image
         if image is None:
             raise RuntimeError("Bake image has not been acquired properly.")
 
-        buffer.write_to_blender_image(image)
-
-        image.update()
+        ctx.image = ImageResource.from_tileset(
+            tile_set,
+            ctx.image.name,
+            ctx.task.absolute_filepath,
+            ctx.task.output_context.output_settings,
+            ctx.task.color_management_info,
+        )

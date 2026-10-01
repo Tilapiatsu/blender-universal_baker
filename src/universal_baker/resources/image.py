@@ -336,6 +336,8 @@ class ImageResource:
         if image is None:
             LOG.debug(f"Loading Image {name}")
             image = ImageIOService.load(filepath, output_settings.color, len(tileset.buffers) > 1)
+        else:
+            image.filepath = str(filepath)
 
         return ImageIOService.init_resource(image, output_settings)
 

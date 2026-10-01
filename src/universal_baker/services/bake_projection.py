@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import bpy
 
+from ..runtime.tile_set import TileSet
+from ..services.uv import UVService
 from ..constant import LOG
 from ..resources.image_buffer import ImageBuffer
 from .bvh_high_poly import HighPolyBVHService
@@ -33,7 +35,8 @@ class ProjectionBakeService:
         height: int,
         max_ray_distance: float,
         depsgraph: bpy.types.Depsgraph,
-    ) -> ImageBuffer:
+        tiles: tuple[tuple[int, int], ...] = ((0, 0),),
+    ) -> TileSet:
 
         with LOG.scope(LOG_SCOPE):
             if not sources:
@@ -43,27 +46,12 @@ class ProjectionBakeService:
             # Target UV representation
             # --------------------------------------------------------------
 
+            tileset = TileSet()
+
             target_evaluated = target.evaluated_get(depsgraph)
             target_mesh = target_evaluated.to_mesh()
 
             try:
-                uv_mesh = self._uv_mesh_extractor.extract(
-                    target_mesh,
-                    uv_layer_name,
-                )
-
-                rasterization = self._uv_rasterizer.rasterize(
-                    uv_mesh,
-                    width,
-                    height,
-                )
-
-                target_sampler = UvSurfaceSampler(
-                    mesh=target_mesh,
-                    uv_mesh=uv_mesh,
-                    matrix_world=target_evaluated.matrix_world,
-                )
-
                 # ----------------------------------------------------------
                 # Cage
                 # ----------------------------------------------------------
@@ -71,30 +59,50 @@ class ProjectionBakeService:
                 cage_evaluated = cage.evaluated_get(depsgraph)
                 cage_mesh = cage_evaluated.to_mesh()
 
-                try:
-                    cage_sampler = CageSurfaceSampler(
-                        mesh=cage_mesh,
-                        uv_mesh=uv_mesh,
-                        matrix_world=cage_evaluated.matrix_world,
+                # ------------------------------------------------------
+                # Build source BVHs.
+                # ------------------------------------------------------
+
+                bvh_services = []
+
+                for source in sources:
+                    bvh = HighPolyBVHService()
+                    bvh.build(
+                        source,
+                        depsgraph,
                     )
+                    bvh_services.append(bvh)
 
-                    # ------------------------------------------------------
-                    # Build source BVHs.
-                    # ------------------------------------------------------
+                try:
+                    for tile in tiles:
+                        udim_tile = UVService.tile_number(tile[0], tile[1])
 
-                    bvh_services = []
-
-                    for source in sources:
-                        bvh = HighPolyBVHService()
-                        bvh.build(
-                            source,
-                            depsgraph,
+                        uv_mesh = self._uv_mesh_extractor.extract(
+                            target_mesh,
+                            uv_layer_name,
                         )
-                        bvh_services.append(bvh)
-                        bvh.isolated_test(source)
 
-                    try:
-                        return self._rasterize_projection(
+                        rasterization = self._uv_rasterizer.rasterize(
+                            uv_mesh,
+                            width,
+                            height,
+                            tile_u=tile[0],
+                            tile_v=tile[1],
+                        )
+
+                        target_sampler = UvSurfaceSampler(
+                            mesh=target_mesh,
+                            uv_mesh=uv_mesh,
+                            matrix_world=target_evaluated.matrix_world,
+                        )
+
+                        cage_sampler = CageSurfaceSampler(
+                            mesh=cage_mesh,
+                            uv_mesh=uv_mesh,
+                            matrix_world=cage_evaluated.matrix_world,
+                        )
+
+                        tileset[udim_tile] = self._rasterize_projection(
                             rasterization=rasterization,
                             target_sampler=target_sampler,
                             cage_sampler=cage_sampler,
@@ -104,12 +112,14 @@ class ProjectionBakeService:
                             height=height,
                         )
 
-                    finally:
-                        for bvh in bvh_services:
-                            bvh.clear()
+                        LOG.debug(f"Projecting tile : {udim_tile}")
+
+                    return tileset
 
                 finally:
                     cage_evaluated.to_mesh_clear()
+                    for bvh in bvh_services:
+                        bvh.clear()
 
             finally:
                 target_evaluated.to_mesh_clear()
@@ -172,27 +182,28 @@ class ProjectionBakeService:
                 hit = None
 
                 for bvh in bvh_services:
-                    if x == width // 2 and y == height // 2:
-                        nearest_position, nearest_normal, nearest_index, nearest_distance = bvh._bvh.find_nearest(
-                            ray.origin,
-                            ray.max_distance if ray.max_distance > 0 else float("inf"),
-                        )
-
-                        LOG.info(
-                            "NEAREST DEBUG\n"
-                            f"  origin   = {ray.origin}\n"
-                            f"  nearest  = {nearest_position}\n"
-                            f"  normal   = {nearest_normal}\n"
-                            f"  distance = {nearest_distance}\n"
-                        )
-                        to_nearest = (nearest_position - ray.origin).normalized()
-
-                        dot = ray.direction.dot(to_nearest)
-
-                        LOG.info(f"Ray alignment with nearest geometry: {dot:.4f}")
-
-                        print(bvh.diagnose_ray(ray))
-
+                    # NOTE: Debug Ray
+                    # if x == width // 2 and y == height // 2:
+                    #     nearest_position, nearest_normal, nearest_index, nearest_distance = bvh._bvh.find_nearest(
+                    #         ray.origin,
+                    #         ray.max_distance if ray.max_distance > 0 else float("inf"),
+                    #     )
+                    #
+                    #     LOG.info(
+                    #         "NEAREST DEBUG\n"
+                    #         f"  origin   = {ray.origin}\n"
+                    #         f"  nearest  = {nearest_position}\n"
+                    #         f"  normal   = {nearest_normal}\n"
+                    #         f"  distance = {nearest_distance}\n"
+                    #     )
+                    #     to_nearest = (nearest_position - ray.origin).normalized()
+                    #
+                    #     dot = ray.direction.dot(to_nearest)
+                    #
+                    #     LOG.info(f"Ray alignment with nearest geometry: {dot:.4f}")
+                    #
+                    #     print(bvh.diagnose_ray(ray))
+                    #
                     hit = bvh.ray_cast(
                         ray.origin,
                         ray.direction,
@@ -202,22 +213,23 @@ class ProjectionBakeService:
                     if hit is not None and hit.distance is not None:
                         break
 
-                if x == width // 2 and y == height // 2:
-                    ray_end = ray.origin + ray.direction * (ray.max_distance if ray.max_distance > 0 else 1.0)
-                    LOG.debug(
-                        f"Projection test:"
-                        f"  pixel           = ({x}, {y})\n"
-                        f"  cage_position   = {cage_position}\n"
-                        f"  ray_origin      = {ray.origin}\n"
-                        f"  ray_direction   = {ray.direction}\n"
-                        f"  ray_max_distance= {ray.max_distance}\n"
-                        f"  hit_position    = {hit.position if hit else None}\n"
-                        f"  target_position = {projection.target_position}\n"
-                        f"  cage_distance   = {projection.cage_distance}\n"
-                        f"  cage_dir        = {projection.cage_direction}\n"
-                        f"  ray_end         = {ray_end}"
-                    )
-
+                # NOTE: Debug Ray
+                # if x == width // 2 and y == height // 2:
+                #     ray_end = ray.origin + ray.direction * (ray.max_distance if ray.max_distance > 0 else 1.0)
+                #     LOG.debug(
+                #         f"Projection test:"
+                #         f"  pixel           = ({x}, {y})\n"
+                #         f"  cage_position   = {cage_position}\n"
+                #         f"  ray_origin      = {ray.origin}\n"
+                #         f"  ray_direction   = {ray.direction}\n"
+                #         f"  ray_max_distance= {ray.max_distance}\n"
+                #         f"  hit_position    = {hit.position if hit else None}\n"
+                #         f"  target_position = {projection.target_position}\n"
+                #         f"  cage_distance   = {projection.cage_distance}\n"
+                #         f"  cage_dir        = {projection.cage_direction}\n"
+                #         f"  ray_end         = {ray_end}"
+                #     )
+                #
                 pixel = pixels[y, x]
 
                 if hit is None or hit.distance is None:
