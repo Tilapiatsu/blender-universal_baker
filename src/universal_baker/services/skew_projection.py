@@ -5,10 +5,13 @@ from mathutils import Vector
 from .cage_projection import CageProjection
 
 
+from mathutils import Vector
+
+
 class SkewProjectionService:
+    @staticmethod
     def interpolate(
-        self,
-        projection: CageProjection,
+        projection,
         amount: float,
     ) -> Vector:
 
@@ -20,6 +23,12 @@ class SkewProjectionService:
         )
 
         if direction.length_squared <= 1e-12:
-            raise ValueError("Skew interpolation produced an invalid direction.")
+            raise ValueError(
+                "Skew projection produced a zero-length "
+                "direction. "
+                f"amount={amount}, "
+                f"normal={projection.normal_direction}, "
+                f"cage={projection.cage_direction}"
+            )
 
         return direction.normalized()

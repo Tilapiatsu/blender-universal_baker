@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import bpy
 
+from ..services.skew_projection import SkewProjectionService
 from ..runtime.tile_set import TileSet
 from ..services.uv import UVService
 from ..constant import LOG
@@ -134,6 +135,7 @@ class ProjectionBakeService:
         max_ray_distance: float,
         width: int,
         height: int,
+        skew_factor: float = 0.0,
     ) -> ImageBuffer:
 
         buffer = ImageBuffer.empty(
@@ -172,6 +174,16 @@ class ProjectionBakeService:
                     target_sample,
                     cage_position,
                 )
+
+                # TODO: Try to implementskewing rays : Need to test and fix it if needed
+                skew_amount = skew_factor
+
+                direction = SkewProjectionService.interpolate(
+                    projection,
+                    skew_amount,
+                )
+
+                projection.cage_direction = direction
 
                 ray = ray_builder.build(
                     projection,
