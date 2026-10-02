@@ -103,8 +103,8 @@ class UBK_CageSettings(PropertyGroup):
     )
     skew_image: PointerProperty(name="Skew Image", type=Image)
 
-    skew_factor: FloatProperty(
-        name="Skew Factor",
+    skew_intensity: FloatProperty(
+        name="Skew Intensity",
         description="Blend between normal and cage projection",
         default=1.0,
         min=0.0,

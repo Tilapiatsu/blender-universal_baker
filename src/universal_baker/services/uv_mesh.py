@@ -23,6 +23,10 @@ class UvTriangle:
     uv1: tuple[float, float]
     uv2: tuple[float, float]
 
+    normal0: tuple[float, float, float]
+    normal1: tuple[float, float, float]
+    normal2: tuple[float, float, float]
+
 
 @dataclass(frozen=True, slots=True)
 class UvMesh:
@@ -101,6 +105,10 @@ class UvMeshExtractor:
                 uv1 = tuple(uv_layer.data[second_loop_index].uv)
                 uv2 = tuple(uv_layer.data[third_loop_index].uv)
 
+                normal0 = tuple(mesh.loops[first_loop_index].normal)
+                normal1 = tuple(mesh.loops[second_loop_index].normal)
+                normal2 = tuple(mesh.loops[third_loop_index].normal)
+
                 triangles.append(
                     UvTriangle(
                         index=triangle_index,
@@ -113,6 +121,9 @@ class UvMeshExtractor:
                         uv0=(float(uv0[0]), float(uv0[1])),
                         uv1=(float(uv1[0]), float(uv1[1])),
                         uv2=(float(uv2[0]), float(uv2[1])),
+                        normal0=normal0,
+                        normal1=normal1,
+                        normal2=normal2,
                     )
                 )
 

@@ -110,15 +110,20 @@ class UvSurfaceSampler:
 
         position_world = self._matrix_world @ position_local
 
+        normal_local = Vector(triangle.normal0) * w0 + Vector(triangle.normal1) * w1 + Vector(triangle.normal2) * w2
+        normal_local.normalize()
+
+        normal_world = (self._normal_matrix @ normal_local).normalized()
+
         normal_local = vertex0.normal * w0 + vertex1.normal * w1 + vertex2.normal * w2
 
-        if normal_local.length_squared > 0.0:
-            normal_local.normalize()
-
-        normal_world = self._normal_matrix @ normal_local
-
-        if normal_world.length_squared > 0.0:
-            normal_world.normalize()
+        # if normal_local.length_squared > 0.0:
+        #     normal_local.normalize()
+        #
+        # normal_world = self._normal_matrix @ normal_local
+        #
+        # if normal_world.length_squared > 0.0:
+        #     normal_world.normalize()
 
         return BakeSurfaceSample(
             triangle_index=triangle_index,

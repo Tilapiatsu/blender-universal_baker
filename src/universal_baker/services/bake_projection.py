@@ -37,6 +37,7 @@ class ProjectionBakeService:
         max_ray_distance: float,
         depsgraph: bpy.types.Depsgraph,
         tiles: tuple[tuple[int, int], ...] = ((0, 0),),
+        skew_intensity: float = 0.0,
     ) -> TileSet:
 
         with LOG.scope(LOG_SCOPE):
@@ -111,6 +112,7 @@ class ProjectionBakeService:
                             max_ray_distance=max_ray_distance,
                             width=width,
                             height=height,
+                            skew_intensity=skew_intensity,
                         )
 
                         LOG.debug(f"Projecting tile : {udim_tile}")
@@ -135,7 +137,7 @@ class ProjectionBakeService:
         max_ray_distance: float,
         width: int,
         height: int,
-        skew_factor: float = 0.0,
+        skew_intensity: float = 0.0,
     ) -> ImageBuffer:
 
         buffer = ImageBuffer.empty(
@@ -175,8 +177,7 @@ class ProjectionBakeService:
                     cage_position,
                 )
 
-                # TODO: Try to implementskewing rays : Need to test and fix it if needed
-                skew_amount = skew_factor
+                skew_amount = skew_intensity
 
                 old_dir = projection.cage_direction
 
@@ -189,6 +190,7 @@ class ProjectionBakeService:
 
                 if x == width // 2 and y == height // 2:
                     LOG.debug(f"Skewing ray from {old_dir} -> {direction}")
+                    LOG.debug(f"Skew Amount = {skew_amount}")
 
                 ray = ray_builder.build(
                     projection,
@@ -258,22 +260,22 @@ class ProjectionBakeService:
                     continue
 
                 # Arbitrary diagnostic normalization for now.
-                # distance = hit.distance
-                # distance_value = min(
-                #     distance
-                #     / max(
-                #         projection.cage_distance,
-                #         1e-6,
-                #     ),
-                #     1.0,
-                # )
-                # pixel[0] = hit.normal.x * 0.5 + 0.5
-                # pixel[1] = hit.normal.z * 0.5 + 0.5
-                # pixel[2] = distance_value
-                # pixel[3] = 1.0
-
-                pixel[0] = direction.x * 0.5 + 0.5
-                pixel[2] = direction.y * 0.5 + 0.5
-                pixel[2] = direction.z * 0.5 + 0.5
+                distance = hit.distance
+                distance_value = min(
+                    distance
+                    / max(
+                        projection.cage_distance,
+                        1e-6,
+                    ),
+                    1.0,
+                )
+                pixel[0] = hit.normal.x * 0.5 + 0.5
+                pixel[1] = hit.normal.z * 0.5 + 0.5
+                pixel[2] = distance_value
                 pixel[3] = 1.0
+
+                # pixel[0] = direction.x * 0.5 + 0.5
+                # pixel[2] = direction.y * 0.5 + 0.5
+                # pixel[2] = direction.z * 0.5 + 0.5
+                # pixel[3] = 1.0
         return buffer

@@ -332,6 +332,7 @@ class RendererService:
             max_ray_distance=ctx.task.settings_cage.max_ray_distance,
             depsgraph=ctx.blender_context.evaluated_depsgraph_get(),
             tiles=tiles,
+            skew_intensity=ctx.task.settings_cage.skew_intensity,
         )
         image = ctx.image.image
         if image is None:

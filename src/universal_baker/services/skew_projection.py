@@ -14,8 +14,8 @@ class SkewProjectionService:
 
         amount = max(0.0, min(1.0, amount))
 
-        direction = projection.normal_direction.lerp(
-            projection.cage_direction,
+        direction = projection.cage_direction.lerp(
+            projection.normal_direction,
             amount,
         )
 

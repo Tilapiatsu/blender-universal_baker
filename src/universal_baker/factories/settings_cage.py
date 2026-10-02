@@ -28,4 +28,5 @@ class CageSettingsResolver:
             extrusion_group_name=settings.extrusion_group,
             is_skew_correction_enabled=settings.is_skew_correction_enabled,
             skew_map_name=settings.skew_image.name if settings.skew_image is not None else None,
+            skew_intensity=settings.skew_intensity,
         )
