@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import bpy
 
-from ..services.skew_projection import SkewProjectionService
-from ..runtime.tile_set import TileSet
-from ..services.uv import UVService
 from ..constant import LOG
 from ..resources.image_buffer import ImageBuffer
+from ..runtime.tile_set import TileSet
+from ..services.skew_projection import SkewProjectionService
+from ..services.uv import UVService
 from .bvh_high_poly import HighPolyBVHService
 from .cage_projection import CageProjectionService
 from .cage_surface import CageSurfaceSampler
@@ -178,12 +178,17 @@ class ProjectionBakeService:
                 # TODO: Try to implementskewing rays : Need to test and fix it if needed
                 skew_amount = skew_factor
 
+                old_dir = projection.cage_direction
+
                 direction = SkewProjectionService.interpolate(
                     projection,
                     skew_amount,
                 )
 
                 projection.cage_direction = direction
+
+                if x == width // 2 and y == height // 2:
+                    LOG.debug(f"Skewing ray from {old_dir} -> {direction}")
 
                 ray = ray_builder.build(
                     projection,
@@ -253,18 +258,22 @@ class ProjectionBakeService:
                     continue
 
                 # Arbitrary diagnostic normalization for now.
-                distance = hit.distance
-                distance_value = min(
-                    distance
-                    / max(
-                        projection.cage_distance,
-                        1e-6,
-                    ),
-                    1.0,
-                )
-                pixel[0] = hit.normal.x * 0.5 + 0.5
-                pixel[1] = hit.normal.z * 0.5 + 0.5
-                pixel[2] = distance_value
-                pixel[3] = 1.0
+                # distance = hit.distance
+                # distance_value = min(
+                #     distance
+                #     / max(
+                #         projection.cage_distance,
+                #         1e-6,
+                #     ),
+                #     1.0,
+                # )
+                # pixel[0] = hit.normal.x * 0.5 + 0.5
+                # pixel[1] = hit.normal.z * 0.5 + 0.5
+                # pixel[2] = distance_value
+                # pixel[3] = 1.0
 
+                pixel[0] = direction.x * 0.5 + 0.5
+                pixel[2] = direction.y * 0.5 + 0.5
+                pixel[2] = direction.z * 0.5 + 0.5
+                pixel[3] = 1.0
         return buffer

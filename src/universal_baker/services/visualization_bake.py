@@ -425,6 +425,10 @@ class BakeVisualizationService:
         else:
             # TODO: Investigate slight contrast difference beetween the preview and display of baked images
             material = DisplayMaterialService.get_or_create()
+            cls._runtime.set_object_visibilities(cls._prepare_objects_display_visibility())
+            cls._set_object_visibility()
+            cls._runtime.set_temp_collection(cls._prepare_temp_collection())
+            cls._create_temp_collection()
 
             handle = cls._get_image_handle(data.bake_group_uuid, data.accumulated_uuid)
             image = cls._get_image(data.bake_group_uuid, data.accumulated_uuid)
@@ -451,7 +455,6 @@ class BakeVisualizationService:
         for target in bake_group.target_objects:
             if target.have_source:
                 objects += target.source_object_list
-                continue
 
             if target.object is None:
                 continue
@@ -474,14 +477,34 @@ class BakeVisualizationService:
 
         for target in bake_group.target_objects:
             if not target.have_source:
-                visibility_override = VisibilityOverride(target.object, hide_viewport=False)
+                visibility_override = VisibilityOverride(target.object, hide_viewport=False, hide_get=False)
                 continue
 
             visibility_override = VisibilityOverride(target.object, hide_viewport=True)
             overrides.append(visibility_override)
 
             for source in target.source_object_list:
-                visibility_override = VisibilityOverride(source, hide_viewport=False)
+                visibility_override = VisibilityOverride(source, hide_viewport=False, hide_get=False)
+                overrides.append(visibility_override)
+
+        return overrides
+
+    @classmethod
+    def _prepare_objects_display_visibility(cls) -> list[VisibilityOverride]:
+
+        from ..core.controller import BakeController
+
+        overrides = []
+        bake_group = BakeController.active_bake_group(bpy.context)
+        if bake_group is None:
+            raise RuntimeError("No active Bake Group")
+
+        for target in bake_group.target_objects:
+            visibility_override = VisibilityOverride(target.object, hide_viewport=False, hide_get=False)
+            overrides.append(visibility_override)
+
+            for source in target.source_object_list:
+                visibility_override = VisibilityOverride(source, hide_viewport=True, hide_get=True)
                 overrides.append(visibility_override)
 
         return overrides

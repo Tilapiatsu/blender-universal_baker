@@ -5,13 +5,10 @@ from mathutils import Vector
 from .cage_projection import CageProjection
 
 
-from mathutils import Vector
-
-
 class SkewProjectionService:
     @staticmethod
     def interpolate(
-        projection,
+        projection: CageProjection,
         amount: float,
     ) -> Vector:
 
