@@ -1,14 +1,11 @@
 from __future__ import annotations
 
-from numpy import tile
 
 import bpy
-from universal_baker.factories.settings_output import OutputSettingsResolver
-from universal_baker.resources.image import ImageResource
-from universal_baker.services.image_codec import ImageCodec
 
+from contextlib import ExitStack
+from ..resources.image import ImageResource
 from ..constant import LOG
-from ..services.image_io import ImageIOService
 from ..resources.scene_view_transform import SceneViewTransform
 from ..runtime.context_bake import BakeContext
 from ..runtime.render_settings import RenderSettings
@@ -140,7 +137,24 @@ class RendererService:
             hide_select=False,
         )
 
-        with target_visibility, cage_visibility:
+        source_visibility = ()
+        for s in ctx.sources:
+            source_visibility += (
+                VisibilityOverride(
+                    obj=s,
+                    hide_render=False,
+                    hide_viewport=False,
+                    hide_select=False,
+                ),
+            )
+
+        with ExitStack() as stack:
+            # Entering context Managers
+            stack.enter_context(target_visibility)
+            stack.enter_context(cage_visibility)
+            for s in source_visibility:
+                stack.enter_context(s)
+
             scene_state = cls.capture_state()
             render_settings = cls.capture_render_settings(ctx)
             # cls.clear_scene_objects_visibility(ctx)

@@ -150,7 +150,6 @@ class CageVisualizationRuntime:
         """Make sure the UI property element binds propely to the material, modifier or geometry node element defined in
         the custom baker definition asset"""
 
-        LOG.debug("Refresging Parameter")
         if not force:
             if not self._preview_dirty:
                 return
@@ -158,6 +157,9 @@ class CageVisualizationRuntime:
             if self._updating_parameters:
                 return
 
+        # ISSUE: Refreshing Extrusion doesn't work refresh properly in some cases
+
+        LOG.debug("Refreshing Parameter")
         try:
             self._updating_parameters = True
 
@@ -198,7 +200,6 @@ class CageVisualizationRuntime:
         """Make sure the UI property element binds propely to the material, modifier or geometry node element defined in
         the custom baker definition asset"""
 
-        LOG.debug("Refresging Parameter")
         if not force:
             if not self._preview_dirty:
                 return
@@ -206,6 +207,7 @@ class CageVisualizationRuntime:
             if self._updating_parameters:
                 return
 
+        LOG.debug("Refreshing Parameter")
         try:
             self._updating_parameters = True
 
