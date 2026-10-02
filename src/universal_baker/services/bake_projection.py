@@ -262,9 +262,9 @@ class ProjectionBakeService:
                     ),
                     1.0,
                 )
-                pixel[0] = distance_value
-                pixel[1] = hit.normal.x * 0.5 + 0.5
-                pixel[2] = hit.normal.z * 0.5 + 0.5
+                pixel[0] = hit.normal.x * 0.5 + 0.5
+                pixel[1] = hit.normal.z * 0.5 + 0.5
+                pixel[2] = distance_value
                 pixel[3] = 1.0
 
         return buffer
