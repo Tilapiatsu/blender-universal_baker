@@ -1,16 +1,18 @@
 from __future__ import annotations
 
+from contextlib import ExitStack
 
 import bpy
 
-from contextlib import ExitStack
-from ..resources.image import ImageResource
 from ..constant import LOG
+from ..resources.image import ImageResource
 from ..resources.scene_view_transform import SceneViewTransform
 from ..runtime.context_bake import BakeContext
 from ..runtime.render_settings import RenderSettings
 from ..runtime.visualization_state import SceneVisualizationState
-from ..services.visibility_override import VisibilityOverride
+from .cage_custom import CustomCagePair
+from .temp_object import TempObject
+from .visibility_override import VisibilityOverride
 
 BAKE_COLLECTION_NAME = "UBK_BAKE_COLLECTION"
 
@@ -137,37 +139,58 @@ class RendererService:
             hide_select=False,
         )
 
-        source_visibility = ()
-        for s in ctx.sources:
-            source_visibility += (
-                VisibilityOverride(
-                    obj=s,
-                    hide_render=False,
-                    hide_viewport=False,
-                    hide_select=False,
-                ),
-            )
+        use_skew_correction = ctx.task.settings_cage.is_skew_correction_enabled
 
-        with ExitStack() as stack:
-            # Entering context Managers
-            stack.enter_context(target_visibility)
-            stack.enter_context(cage_visibility)
-            for s in source_visibility:
-                stack.enter_context(s)
+        target = None
+        cage = None
 
-            scene_state = cls.capture_state()
-            render_settings = cls.capture_render_settings(ctx)
-            # cls.clear_scene_objects_visibility(ctx)
-            bake_collection = cls.create_bake_collection(ctx)
+        if use_skew_correction:
+            pair = cls.get_skew_cage(ctx)
 
-            try:
-                # cls.set_view_settings(ctx.task.producer.bake_view_transform)
-                cls.configure(ctx)
-                cls.prepare(ctx)
-                cls.bake(ctx)
-            finally:
-                cls.restore(ctx, scene_state, render_settings)
-                cls.clear_bake_collection(bake_collection, remove_col=True)
+            target = pair.proxy
+            cage = pair.cage
+
+        else:
+            target = TempObject(ctx.target, ctx.target)
+            cage = TempObject(ctx.cage, ctx.cage)
+
+        with target as t, cage as c:
+            ctx.target = t
+            ctx.cage = c
+
+            source_visibility = ()
+            for s in ctx.sources:
+                source_visibility += (
+                    VisibilityOverride(
+                        obj=s,
+                        hide_render=False,
+                        hide_viewport=False,
+                        hide_select=False,
+                    ),
+                )
+
+            with ExitStack() as stack:
+                # Entering context Managers
+                stack.enter_context(target_visibility)
+                stack.enter_context(cage_visibility)
+                for s in source_visibility:
+                    stack.enter_context(s)
+
+                scene_state = cls.capture_state()
+                render_settings = cls.capture_render_settings(ctx)
+                # cls.clear_scene_objects_visibility(ctx)
+                bake_collection = cls.create_bake_collection(ctx)
+
+                try:
+                    # cls.set_view_settings(ctx.task.producer.bake_view_transform)
+                    cls.configure(ctx)
+                    cls.prepare(ctx)
+                    cls.bake(ctx)
+                finally:
+                    cls.restore(ctx, scene_state, render_settings)
+                    cls.clear_bake_collection(bake_collection, remove_col=True)
+                    ctx.target = target.backup_object
+                    ctx.cage = cage.backup_object
 
     @classmethod
     def clear_scene_objects_visibility(cls, ctx: BakeContext, evaluated_target: bpy.types.Object):
@@ -316,10 +339,7 @@ class RendererService:
 
         LOG.info(message)
 
-        if use_skew_correction:
-            cls.bake_skew(ctx)
-        else:
-            cls.bake_regular(ctx)
+        cls.bake_regular(ctx)
 
     @classmethod
     def bake_regular(cls, ctx: BakeContext):
@@ -327,6 +347,18 @@ class RendererService:
 
         with LOG.scope("Buildin Bake"):
             bpy.ops.object.bake(type=ctx.task.producer.blender_bake_type)
+
+    @classmethod
+    def get_skew_cage(cls, ctx: BakeContext) -> CustomCagePair:
+        from ..services.cage_custom import CustomCageBuilder
+
+        service = CustomCageBuilder()
+
+        return service.build(
+            target_object=ctx.target,
+            cage_object=ctx.cage,
+            settings=ctx.task.settings_cage,
+        )
 
     @classmethod
     def bake_skew(cls, ctx: BakeContext):

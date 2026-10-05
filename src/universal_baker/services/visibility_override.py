@@ -27,6 +27,8 @@ class VisibilityOverride:
         hide_select: bool = False,
         hide_get: bool = False,
     ):
+        self.obj_name = ""
+
         if obj is None:
             return
 

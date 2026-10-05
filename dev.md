@@ -73,6 +73,7 @@ inputing 10% of the resulution for exemple
 - [ ] Vertex Color Channel
 - [ ] Wireframe ?
 - [ ] Custom Shader ? -> Is it different than albedo
+- [ ] AOV Baking ?
 
 ## QOL
 
