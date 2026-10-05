@@ -49,10 +49,9 @@ class VisibilityOverride:
             hide_get=self.hide_get,
         )
         LOG.debug(f"Store visibility state for {self.obj.name} : ")
-        LOG.debug(f"Visible = {not self.obj.hide_get()}")
-        LOG.debug(f"Viewport = {not self.obj.hide_viewport}")
-        LOG.debug(f"Select = {not self.obj.hide_select}")
-        LOG.debug(f"Render = {not self.obj.hide_render}")
+        LOG.debug(
+            f"Visible = {not self.obj.hide_get()} | Viewport = {not self.obj.hide_viewport} | Select = {not self.obj.hide_select} | Render = {not self.obj.hide_render}"
+        )
 
         self._has_overriden = False
 
@@ -70,10 +69,9 @@ class VisibilityOverride:
         self.obj.hide_set(self.hide_get)
 
         LOG.debug(f"Set visibility state for {self.obj.name} : ")
-        LOG.debug(f"Visible = {not self.obj.hide_get()}")
-        LOG.debug(f"Viewport = {not self.obj.hide_viewport}")
-        LOG.debug(f"Select = {not self.obj.hide_select}")
-        LOG.debug(f"Render = {not self.obj.hide_render}")
+        LOG.debug(
+            f"Visible = {not self.obj.hide_get()} | Viewport = {not self.obj.hide_viewport} | Select = {not self.obj.hide_select} | Render = {not self.obj.hide_render}"
+        )
 
         self._has_overriden = True
 
@@ -89,10 +87,9 @@ class VisibilityOverride:
         self.obj.hide_set(self.visibility_state.hide_get)
 
         LOG.debug(f"visibility state for {self.obj.name} restored :")
-        LOG.debug(f"Visible = {not self.obj.hide_get()}")
-        LOG.debug(f"Viewport = {not self.obj.hide_viewport}")
-        LOG.debug(f"Select = {not self.obj.hide_select}")
-        LOG.debug(f"Render = {not self.obj.hide_render}")
+        LOG.debug(
+            f"Visible = {not self.obj.hide_get()} | Viewport = {not self.obj.hide_viewport} | Select = {not self.obj.hide_select} | Render = {not self.obj.hide_render}"
+        )
 
         self._has_overriden = False
 

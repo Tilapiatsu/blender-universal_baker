@@ -77,8 +77,8 @@ class MaterialOverrideService:
                     continue
 
                 # NOTE: Check if the object has muliple users and prevent to register snapshot multiple times
-                if obj.data.name in stored_instances:
-                    continue
+                # if obj.data.name in stored_instances:
+                #     continue
 
                 if obj.data.users > 1:
                     stored_instances.append(obj.data.name)
