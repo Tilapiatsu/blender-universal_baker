@@ -60,68 +60,58 @@ class CustomCageBuilder:
         with LOG.scope(LOG_SCOPE), self._ensure_in_scene(target_object), self._ensure_in_scene(cage_object):
             bpy.context.view_layer.update()
 
-            depsgraph = bpy.context.evaluated_depsgraph_get()
-            evaluated_low = target_object.evaluated_get(depsgraph)
-            evaluated_cage = cage_object.evaluated_get(depsgraph)
+            low_mesh = target_object.to_mesh()
+            cage_mesh = cage_object.to_mesh()
+            target_matrix = target_object.matrix_world.copy()
+            cage_matrix = cage_object.matrix_world.copy()
 
-            low_matrix = evaluated_low.matrix_world.copy()
-            cage_matrix = evaluated_cage.matrix_world.copy()
+            self._validate_topology(low_mesh, cage_mesh)
 
-            low_mesh = evaluated_low.to_mesh()
-            cage_mesh = evaluated_cage.to_mesh()
+            low_corners = self._extract_corner_mesh(low_mesh)
+            cage_corners = self._extract_corner_mesh(cage_mesh)
 
-            try:
-                self._validate_topology(low_mesh, cage_mesh)
+            # The original cage may have a different object transform.
+            # Convert cage positions into the low object's local space before
+            # calculating the projection vectors.
+            cage_to_low = target_object.matrix_world.inverted_safe() @ cage_object.matrix_world
 
-                low_corners = self._extract_corner_mesh(low_mesh)
-                cage_corners = self._extract_corner_mesh(cage_mesh)
+            cage_positions = np.empty_like(cage_corners.positions)
 
-                # The original cage may have a different object transform.
-                # Convert cage positions into the low object's local space before
-                # calculating the projection vectors.
-                cage_to_low = evaluated_low.matrix_world.inverted_safe() @ evaluated_cage.matrix_world
+            for index, position in enumerate(cage_corners.positions):
+                cage_positions[index] = (cage_to_low @ Vector(position))[:]
 
-                cage_positions = np.empty_like(cage_corners.positions)
+            # The proxy uses the evaluated low geometry directly.
+            proxy = self._create_mesh_object(
+                name=f"{target_object.name}_UBK_PROXY",
+                corners=low_corners,
+                positions=low_corners.positions,
+                matrix_world=target_matrix,
+            )
 
-                for index, position in enumerate(cage_corners.positions):
-                    cage_positions[index] = (cage_to_low @ Vector(position))[:]
+            # Build the actual skewed cage from the proxy geometry.
+            generated_cage_positions = self._build_cage_geometry(
+                target_positions=low_corners.positions,
+                original_cage_positions=cage_positions,
+                face_normals=low_corners.face_normals,
+                settings=settings,
+            )
 
-                # The proxy uses the evaluated low geometry directly.
-                proxy = self._create_mesh_object(
-                    name=f"{target_object.name}_UBK_PROXY",
-                    corners=low_corners,
-                    positions=low_corners.positions,
-                    matrix_world=low_matrix,
-                )
+            proxy_cage = self._create_mesh_object(
+                name=f"{target_object.name}_UBK_CAGE",
+                corners=low_corners,
+                positions=generated_cage_positions,
+                matrix_world=cage_matrix,
+            )
 
-                # Build the actual skewed cage from the proxy geometry.
-                generated_cage_positions = self._build_cage_geometry(
-                    target_positions=low_corners.positions,
-                    original_cage_positions=cage_positions,
-                    face_normals=low_corners.face_normals,
-                    settings=settings,
-                )
+            self._copy_material_slots(target_object, proxy)
+            self._copy_material_slots(target_object, proxy_cage)
 
-                proxy_cage = self._create_mesh_object(
-                    name=f"{target_object.name}_UBK_CAGE",
-                    corners=low_corners,
-                    positions=generated_cage_positions,
-                    matrix_world=cage_matrix,
-                )
+            proxy_cage.hide_render = True
 
-                self._copy_material_slots(target_object, proxy)
-                self._copy_material_slots(target_object, proxy_cage)
-
-                proxy_cage.hide_render = True
-
-                return CustomCagePair(
-                    proxy=TempObject(proxy, target_object, cleanup=True),
-                    cage=TempObject(proxy_cage, cage_object, cleanup=True),
-                )
-
-            finally:
-                evaluated_low.to_mesh_clear()
-                evaluated_cage.to_mesh_clear()
+            return CustomCagePair(
+                proxy=TempObject(proxy, target_object, cleanup=True),
+                cage=TempObject(proxy_cage, cage_object, cleanup=True),
+            )
 
     @contextmanager
     def _ensure_in_scene(self, obj: bpy.types.Object):

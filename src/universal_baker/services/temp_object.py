@@ -4,9 +4,9 @@ import bpy
 
 
 class TempObject:
-    def __init__(self, new_obj: bpy.types.Object, backup_obj: bpy.types.Object, cleanup: bool = False) -> None:
+    def __init__(self, new_obj: bpy.types.Object, recover_obj: bpy.types.Object, cleanup: bool = False) -> None:
         self._object = new_obj.name
-        self._backup_object = backup_obj.name
+        self._recover_object = recover_obj.name
         self._cleanup = cleanup
 
     @property
@@ -16,8 +16,8 @@ class TempObject:
         return obj
 
     @property
-    def backup_object(self) -> bpy.types.Object | None:
-        obj = bpy.data.objects.get(self._backup_object)
+    def recover_object(self) -> bpy.types.Object | None:
+        obj = bpy.data.objects.get(self._recover_object)
 
         return obj
 

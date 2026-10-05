@@ -189,8 +189,8 @@ class RendererService:
                 finally:
                     cls.restore(ctx, scene_state, render_settings)
                     cls.clear_bake_collection(bake_collection, remove_col=True)
-                    ctx.target = target.backup_object
-                    ctx.cage = cage.backup_object
+                    ctx.target = target.recover_object
+                    ctx.cage = cage.recover_object
 
     @classmethod
     def clear_scene_objects_visibility(cls, ctx: BakeContext, evaluated_target: bpy.types.Object):
