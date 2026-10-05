@@ -95,7 +95,7 @@ class EvaluateObject(Evaluate):
             rotation_euler=self.obj.rotation_euler,
             scale=self.obj.scale,
         )
-        self.visibility_override = VisibilityOverride(self.obj, hide_render=True, hide_viewport=False)
+        self.visibility_override = VisibilityOverride(self.obj, render=False, viewport=True)
 
     @property
     def needs_evaluation(self) -> bool:

@@ -801,8 +801,8 @@ class CageVisualizationService:
 
             vo = VisibilityOverride(
                 obj=obj,
-                hide_get=False,
-                hide_viewport=False,
+                show=True,
+                viewport=True,
             )
 
             runtime.visibility[obj.name] = vo
@@ -818,8 +818,8 @@ class CageVisualizationService:
 
             vo = VisibilityOverride(
                 obj=obj,
-                hide_get=True,
-                hide_viewport=True,
+                show=False,
+                viewport=False,
             )
             runtime.visibility[obj.name] = vo
 
@@ -832,8 +832,8 @@ class CageVisualizationService:
             if cage is not None:
                 vo = VisibilityOverride(
                     obj=cage,
-                    hide_get=False,
-                    hide_viewport=False,
+                    show=True,
+                    viewport=True,
                 )
 
                 runtime.visibility[cage.name] = vo

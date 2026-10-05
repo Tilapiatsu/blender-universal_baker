@@ -128,15 +128,15 @@ class RendererService:
         """Execute a single bake task."""
         target_visibility = VisibilityOverride(
             obj=ctx.target,
-            hide_render=False,
-            hide_viewport=False,
-            hide_select=False,
+            render=True,
+            viewport=True,
+            select=True,
         )
         cage_visibility = VisibilityOverride(
             obj=ctx.cage,
-            hide_render=True,
-            hide_viewport=False,
-            hide_select=False,
+            render=False,
+            viewport=True,
+            select=True,
         )
 
         use_skew_correction = ctx.task.settings_cage.is_skew_correction_enabled
@@ -163,9 +163,9 @@ class RendererService:
                 source_visibility += (
                     VisibilityOverride(
                         obj=s,
-                        hide_render=False,
-                        hide_viewport=False,
-                        hide_select=False,
+                        render=True,
+                        viewport=True,
+                        select=True,
                     ),
                 )
 
@@ -186,6 +186,8 @@ class RendererService:
                     cls.configure(ctx)
                     cls.prepare(ctx)
                     cls.bake(ctx)
+                    for o in bpy.context.scene.objects:
+                        print(o.name, o.hide_render, o.hide_viewport)
                 finally:
                     cls.restore(ctx, scene_state, render_settings)
                     cls.clear_bake_collection(bake_collection, remove_col=True)
