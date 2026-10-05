@@ -212,7 +212,7 @@ class RendererService:
                     ctx.cage = cage.recover_object
 
     @classmethod
-    def clear_scene_objects_visibility(cls, ctx: BakeContext, evaluated_target: bpy.types.Object):
+    def clear_scene_objects_visibility(cls, ctx: BakeContext):
         """Hide every objects in the scene."""
         scene = bpy.context.scene
         for obj in scene.objects:
