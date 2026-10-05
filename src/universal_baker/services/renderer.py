@@ -126,18 +126,7 @@ class RendererService:
     @classmethod
     def execute(cls, ctx: BakeContext):
         """Execute a single bake task."""
-        target_visibility = VisibilityOverride(
-            obj=ctx.target,
-            render=True,
-            viewport=True,
-            select=True,
-        )
-        cage_visibility = VisibilityOverride(
-            obj=ctx.cage,
-            render=False,
-            viewport=True,
-            select=True,
-        )
+        visibility_overrides = []
 
         use_skew_correction = ctx.task.settings_cage.is_skew_correction_enabled
 
@@ -146,35 +135,64 @@ class RendererService:
 
         if use_skew_correction:
             pair = cls.get_skew_cage(ctx)
-
             target = pair.proxy
             cage = pair.cage
+            visibility_overrides.append(
+                VisibilityOverride(
+                    obj=ctx.target,
+                    render=False,
+                    viewport=True,
+                    select=True,
+                )
+            )
+            visibility_overrides.append(
+                VisibilityOverride(
+                    obj=ctx.cage,
+                    render=False,
+                    viewport=True,
+                    select=True,
+                )
+            )
 
         else:
             target = TempObject(ctx.target, ctx.target)
             cage = TempObject(ctx.cage, ctx.cage)
 
+        for s in ctx.sources:
+            visibility_overrides.append(
+                VisibilityOverride(
+                    obj=s,
+                    render=True,
+                    viewport=True,
+                    select=True,
+                )
+            )
+
         with target as t, cage as c:
             ctx.target = t
             ctx.cage = c
-
-            source_visibility = ()
-            for s in ctx.sources:
-                source_visibility += (
-                    VisibilityOverride(
-                        obj=s,
-                        render=True,
-                        viewport=True,
-                        select=True,
-                    ),
+            visibility_overrides.append(
+                VisibilityOverride(
+                    obj=ctx.target,
+                    render=True,
+                    viewport=True,
+                    select=True,
                 )
+            )
+
+            visibility_overrides.append(
+                VisibilityOverride(
+                    obj=ctx.cage,
+                    render=False,
+                    viewport=True,
+                    select=True,
+                )
+            )
 
             with ExitStack() as stack:
                 # Entering context Managers
-                stack.enter_context(target_visibility)
-                stack.enter_context(cage_visibility)
-                for s in source_visibility:
-                    stack.enter_context(s)
+                for vo in visibility_overrides:
+                    stack.enter_context(vo)
 
                 scene_state = cls.capture_state()
                 render_settings = cls.capture_render_settings(ctx)
@@ -186,8 +204,7 @@ class RendererService:
                     cls.configure(ctx)
                     cls.prepare(ctx)
                     cls.bake(ctx)
-                    for o in bpy.context.scene.objects:
-                        print(o.name, o.hide_render, o.hide_viewport)
+
                 finally:
                     cls.restore(ctx, scene_state, render_settings)
                     cls.clear_bake_collection(bake_collection, remove_col=True)
