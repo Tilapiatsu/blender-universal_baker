@@ -35,7 +35,7 @@ class _CornerMesh:
     material_indices: list[int]
 
 
-class CustomCageBuilder:
+class SkewCageBuilder:
     """
     Builds a loop-expanded proxy/cage pair.
 

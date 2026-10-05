@@ -10,7 +10,7 @@ from ..resources.scene_view_transform import SceneViewTransform
 from ..runtime.context_bake import BakeContext
 from ..runtime.render_settings import RenderSettings
 from ..runtime.visualization_state import SceneVisualizationState
-from .cage_custom import CustomCagePair
+from .cage_skew import CustomCagePair
 from .temp_object import TempObject
 from .visibility_override import VisibilityOverride
 
@@ -350,9 +350,9 @@ class RendererService:
 
     @classmethod
     def get_skew_cage(cls, ctx: BakeContext) -> CustomCagePair:
-        from ..services.cage_custom import CustomCageBuilder
+        from ..services.cage_skew import SkewCageBuilder
 
-        service = CustomCageBuilder()
+        service = SkewCageBuilder()
 
         return service.build(
             target_object=ctx.target,
