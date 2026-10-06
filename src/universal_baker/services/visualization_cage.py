@@ -307,7 +307,6 @@ class CageVisualizationService:
             bake_objects = BakeObjects(
                 target_object=target.object,
                 cage_object=cage,
-                cage_hidden=cage.hide_render,
                 is_cage_generated=True,
                 source_objects=target.source_object_list,
             )
@@ -432,7 +431,6 @@ class CageVisualizationService:
             bake_objects = BakeObjects(
                 target_object=target.object,
                 cage_object=cage,
-                cage_hidden=cage.hide_render,
                 is_cage_generated=True,
                 source_objects=target.source_object_list,
             )
