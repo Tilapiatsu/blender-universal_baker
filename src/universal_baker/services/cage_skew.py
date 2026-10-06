@@ -253,7 +253,7 @@ class SkewCageBuilder:
 
         skew_factor = float(np.clip(settings.skew_intensity, 0.0, 1.0))
 
-        distance_scale = max(
+        distance_scale = -max(
             float(settings.cage_extrusion),
             0.0,
         )
