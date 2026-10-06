@@ -7,6 +7,7 @@ from ..properties.object import UBK_TargetObject
 from ..runtime.bake_objects import BakeObjects
 from ..services.cage_object import CageObjectService
 from ..services.evaluate_mesh import EvaluateObject
+from ..services.visibility_override import VisibilityOverride
 
 
 class ScenePrepare:
@@ -14,12 +15,14 @@ class ScenePrepare:
     bake_objects: dict[str, BakeObjects]
     evaluate_objects: dict[str, EvaluateObject]
     evaluated_cages: dict[str, EvaluateObject]
+    visibility_override: list[VisibilityOverride]
 
     def __init__(self) -> None:
         self.target_objects = []
         self.bake_objects = {}
         self.evaluate_objects = {}
         self.evaluated_cages = {}
+        self.visibility_override = []
 
     def add_target_object(self, target_object: UBK_TargetObject):
         self.target_objects.append(target_object)
@@ -33,12 +36,16 @@ class ScenePrepare:
 
             source_objects = [s.object for s in obj.source_objects if s.enabled and s.object is not None]
 
+            for s in source_objects:
+                vo = VisibilityOverride(s, render=False)
+                vo.set_visibility()
+                self.visibility_override.append(vo)
+
             evaluate_obj = EvaluateObject(obj.object)
             self.evaluate_objects[obj.uuid] = evaluate_obj
 
             evaluated_obj = evaluate_obj.evaluate()
 
-            cage_hidden = False
             if obj.have_source:
                 if obj.settings_cage.cage_object is None:
                     message = "Cage Object Missing"
@@ -60,15 +67,16 @@ class ScenePrepare:
 
                 assert cage is not None
 
-                cage_hidden = cage.hide_render
-                cage.hide_render = True
+                vo = VisibilityOverride(cage, render=False)
+                vo.set_visibility()
+                self.visibility_override.append(vo)
+
             else:
                 cage = None
 
             bake_object = BakeObjects(
                 target_object=evaluated_obj,
                 cage_object=cage,
-                cage_hidden=cage_hidden,
                 is_cage_generated=obj.settings_cage.is_cage_generated,
                 source_objects=source_objects,
             )
@@ -96,12 +104,13 @@ class ScenePrepare:
 
     def __exit__(self, exc_type, exc_value, traceback):
         LOG.debug("Clean Scene Preparation")
+        for vo in self.visibility_override:
+            vo.revert_visibility()
+
         for uuid, o in self.evaluate_objects.items():
             bake_object = self.bake_objects.get(uuid)
             if bake_object is not None:
                 if not bake_object.is_cage_generated:
-                    if bake_object.cage_object is not None:
-                        bake_object.cage_object.hide_render = bake_object.cage_hidden
                     continue
 
                 cage = bake_object.cage_object

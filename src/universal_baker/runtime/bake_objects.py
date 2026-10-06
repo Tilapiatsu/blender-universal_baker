@@ -9,7 +9,6 @@ import bpy
 class BakeObjects:
     target_object: bpy.types.Object
     cage_object: bpy.types.Object | None
-    cage_hidden: bool = False
     is_cage_generated: bool = False
     source_objects: list[bpy.types.Object] = field(default_factory=list)
 
