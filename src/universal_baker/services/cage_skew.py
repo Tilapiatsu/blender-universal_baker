@@ -280,7 +280,7 @@ class SkewCageBuilder:
         normalized_face_normals[valid_normals] = face_normals[valid_normals] / normal_lengths[valid_normals, None]
 
         # Preserve the original cage direction when skew = 0.
-        directions = original_directions * (1.0 - skew_factor) + normalized_face_normals * skew_factor
+        directions = original_directions * (1.0 - skew_factor) - normalized_face_normals * skew_factor
         direction_lengths = np.linalg.norm(directions, axis=1)
         valid_directions = direction_lengths > 1.0e-8
         normalized_directions = np.zeros_like(directions)

@@ -78,4 +78,5 @@ inputing 10% of the resulution for exemple
 ## QOL
 
 - [ ] force disable render visibility on all objects except the target objects before baking and recover after ?
+- [ ] Select the target/source object when selected from the UIList
 - [ ] add an option to match render visibility to viewport visibility to prevent rendering hidden objects ?
