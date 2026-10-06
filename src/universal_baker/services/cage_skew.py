@@ -259,33 +259,22 @@ class SkewCageBuilder:
         )
 
         delta = target_positions - original_cage_positions
-
         distances = np.linalg.norm(delta, axis=1)
-
         original_directions = np.zeros_like(delta)
-
         valid_original = distances > 1.0e-8
-
         original_directions[valid_original] = delta[valid_original] / distances[valid_original, None]
 
         # Normalize the geometric face normals defensively.
         normal_lengths = np.linalg.norm(face_normals, axis=1)
-
         normalized_face_normals = np.zeros_like(face_normals)
-
         valid_normals = normal_lengths > 1.0e-8
-
         normalized_face_normals[valid_normals] = face_normals[valid_normals] / normal_lengths[valid_normals, None]
 
         # Preserve the original cage direction when skew = 0.
         directions = original_directions * (1.0 - skew_factor) + normalized_face_normals * skew_factor
-
         direction_lengths = np.linalg.norm(directions, axis=1)
-
         valid_directions = direction_lengths > 1.0e-8
-
         normalized_directions = np.zeros_like(directions)
-
         normalized_directions[valid_directions] = (
             directions[valid_directions] / direction_lengths[valid_directions, None]
         )
@@ -299,7 +288,6 @@ class SkewCageBuilder:
 
         # If both directions are unavailable, fall back to the face normal.
         fallback_normal = ~valid_directions & ~valid_original & valid_normals
-
         normalized_directions[fallback_normal] = normalized_face_normals[fallback_normal]
 
         # Preserve the original cage distance independently from skew.
