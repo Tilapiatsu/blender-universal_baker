@@ -492,6 +492,8 @@ class VisualizationSuspension:
                     return
 
                 data = DisplayData(self.bake_group_uuid, self.accumulated_uuid, self.objects, self.active_producer)
+                # ISSUE: Render Once, Then display the rendered image. Without Leaving display, rerender the same
+                # baker, the image colorspace will  not be set properly after rebake which will shift the values...
                 BakeVisualizationService.enable_display(data)
 
                 viz.refreshing = True
