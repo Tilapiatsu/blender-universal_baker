@@ -299,6 +299,9 @@ class ImageResource:
 
         image = None
 
+        if name in bpy.data.images and bpy.data.images[name].filepath_raw == str(filepath):
+            image = bpy.data.images[name]
+
         if image is None:
             if not filepath.exists or not filepath.is_file():
                 LOG.error(f"Invalid Path {filepath}, It is not a file or it does not exists")
