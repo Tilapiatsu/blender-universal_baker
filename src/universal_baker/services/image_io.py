@@ -41,42 +41,6 @@ class ImageIOService(ImageServiceBase):
             return cls.read_image(image)
 
     @classmethod
-    def write(cls, resource: ImageResource, tiles: TileSet) -> None:
-        """Write buffer to Image"""
-        with LOG.scope(LOG_SCOPE):
-            if not tiles.is_udim and not resource.is_udim:
-                buffer = tiles.base_buffer
-                assert buffer is not None
-                if not buffer.dirty:
-                    return
-                cls.write_single(resource, buffer.buffer)
-
-            elif tiles.is_udim and resource.is_udim:
-                cls.write_udim(resource, tiles)
-
-            else:
-                LOG.error("Buffer and Image have to be compatible : Both using UDIM or both being single image.")
-
-    @staticmethod
-    def write_single(resource: ImageResource, buffer: ImageBuffer) -> None:
-        LOG.debug(f'Write Buffer "{buffer.name}" to Image "{resource.name}"')
-
-        image = resource.image
-        assert image is not None
-
-        if image.size[0] != resource.width or image.size[1] != resource.height:
-            image.scale(buffer.width, buffer.height)
-
-        buffer.write_to_blender_image(image)
-        image.update()
-
-    @staticmethod
-    def write_udim(resource: ImageResource, tiles: TileSet) -> None:
-        """BROKEN : Cannot Access single tiles of an image"""
-        for udim, buffer in tiles.items():
-            pass
-
-    @classmethod
     def export_tiles(cls, artifact: OutputArtifact, tiles: TileSet) -> None:
         for tile in tiles.keys():
             artifact.image.tile_path(tile)
