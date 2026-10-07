@@ -1,18 +1,15 @@
 from __future__ import annotations
 
-import bpy
-
 import re
-
 from pathlib import Path
 
+import bpy
 
-from ..runtime.output_context import OutputContext
-from ..runtime.output_file import OutputFile
 from ..core.registry_token import registry_token
 from ..core.registry_transform import registry_transform
 from ..enum.image_layout import ImageLayout
-
+from ..runtime.output_context import OutputContext
+from ..runtime.output_file import OutputFile
 
 _TOKEN_PATTERN = re.compile(r"\{([^{}]+)\}")
 

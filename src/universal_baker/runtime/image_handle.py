@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from dataclasses import dataclass, field
+from os import path
 
 import bpy
 
@@ -180,11 +181,11 @@ class ImageHandle:
 
             if self._resource.image is None:
                 image = ImageResource.from_filepath(
-                    self._artifact.name,
-                    self._artifact.image.path,
-                    self._artifact.output_settings,
-                    self._artifact.color_management_info,
-                    self._artifact.is_udim,
+                    name=self._artifact.name,
+                    filepath=self._artifact.image.path,
+                    output_settings=self._artifact.output_settings,
+                    color_management_info=self._artifact.color_management_info,
+                    is_udim=self._artifact.is_udim,
                 )
                 if image is None:
                     return

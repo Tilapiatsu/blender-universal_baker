@@ -78,6 +78,7 @@ class BakeTask(OutputTask):
 
     @property
     def absolute_filepath(self) -> Path:
+        # TODO: Need to change the subfolder with something like ".ubk"
         file_output = OutputResolver.resolve(
             self.output_context,
             self.uv_layout.image_layout,

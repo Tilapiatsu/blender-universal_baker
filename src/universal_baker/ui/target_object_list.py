@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import bpy
 
-from ..constant import ICON_SOURCE_OBJECT, ICON_TARGET_OBJECT
+from ..constant import ICON_BAKE, ICON_SOURCE_OBJECT, ICON_TARGET_OBJECT
 
 
 class UBK_UL_TargetObjectList(bpy.types.UIList):
@@ -59,6 +59,8 @@ class UBK_UL_TargetObjectList(bpy.types.UIList):
             stats.label(text=f"{source_objects}", icon=ICON_SOURCE_OBJECT)
         else:
             stats.label(text="no source")
+
+        row.operator("ubk.bake_target", text="", icon=ICON_BAKE).index = index
 
     def draw_filter(self, context, layout):
         """Reserved for future filtering options."""

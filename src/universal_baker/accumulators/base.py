@@ -100,6 +100,7 @@ class AccumulatorBase(ABC):
             ctx.task.absolute_filepath,
             ctx.output_settings,
             ctx.task.color_management_info,
+            ctx.task.uv_layout.image_layout.value == "UDIM",
         )
 
     @abstractmethod

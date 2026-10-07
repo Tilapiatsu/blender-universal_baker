@@ -36,6 +36,7 @@ class ImageCodec:
         filepath: Path,
         buffer: ImageBuffer,
         output_settings: OutputSettings,
+        is_udim: bool,
         color_management_info: ColorManagementInfo | None = None,
     ) -> None:
         image = cls._create_image(buffer, output_settings)
@@ -98,8 +99,7 @@ class ImageCodec:
         LOG.debug("Configuring image")
         image.filepath_raw = str(filepath)
         image.file_format = output_settings.image.file_format
-        settings = image
-        settings.colorspace_settings.name = output_settings.color.colorspace
+        image.colorspace_settings.name = output_settings.color.colorspace
         # settings.save_as_render = True
 
     @classmethod
@@ -110,6 +110,7 @@ class ImageCodec:
                     artifact.image.tile_path(tile),
                     buffer,
                     output_settings,
+                    artifact.is_udim,
                     artifact.color_management_info,
                 )
                 tiles.set_dirty(tile, False)
@@ -137,6 +138,7 @@ class ImageCodec:
                         artifact.image.tile_path(t.tile),
                         tile_set[t.tile],
                         artifact.output_settings,
+                        artifact.is_udim,
                         artifact.color_management_info,
                     )
 

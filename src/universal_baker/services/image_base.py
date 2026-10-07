@@ -18,7 +18,7 @@ class ImageServiceBase:
     """Manage destination images."""
 
     @classmethod
-    def init_resource(cls, image: bpy.types.Image, output_settings: OutputSettings) -> ImageResource:
+    def init_resource(cls, image: bpy.types.Image, output_settings: OutputSettings, is_udim: bool) -> ImageResource:
         with LOG.scope(LOG_SCOPE):
             LOG.debug(f"Init Image Resource : {image.name}")
             resource = ImageResource.create(
@@ -30,7 +30,7 @@ class ImageServiceBase:
                 image_format_settings=output_settings.image,
                 alpha=output_settings.image.alpha,
                 float_buffer=output_settings.image.float_buffer,
-                is_udim=len(image.tiles) > 1,
+                is_udim=is_udim,
                 create_image=False,
             )
 

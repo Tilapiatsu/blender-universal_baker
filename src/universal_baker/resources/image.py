@@ -111,6 +111,8 @@ class ImageResource:
             image.alpha_mode = "STRAIGHT" if alpha else "NONE"
             image.use_view_as_render = True
 
+        image.source = "TILED" if is_udim else "FILE"
+
         return cls(
             _image=name,
             _width=width,
@@ -296,18 +298,15 @@ class ImageResource:
         LOG.debug("Create Resource from Filepath")
 
         image = None
-        for i in bpy.data.images:
-            if i.filepath_raw == str(filepath):
-                image = i
 
         if image is None:
             if not filepath.exists or not filepath.is_file():
-                LOG.error(f"Invalid Path {filepath}, It not of file or does not exists")
+                LOG.error(f"Invalid Path {filepath}, It is not a file or it does not exists")
                 return None
 
             image = ImageIOService.load(filepath, output_settings.color, is_udim)
 
-        return ImageIOService.init_resource(image, output_settings)
+        return ImageIOService.init_resource(image, output_settings, is_udim)
 
         return image
 
@@ -319,6 +318,7 @@ class ImageResource:
         filepath: Path,
         output_settings: OutputSettings,
         color_management_info: ColorManagementInfo,
+        is_udim: bool,
     ) -> ImageResource:
         from ..services.image_codec import ImageCodec
         from ..services.image_io import ImageIOService
@@ -329,17 +329,23 @@ class ImageResource:
             tilepath = Path(str(filepath).replace("<UDIM>", str(tile)))
             buffer = tileset[tile]
 
-            ImageCodec.save(tilepath, buffer, output_settings, color_management_info)
+            ImageCodec.save(
+                tilepath,
+                buffer,
+                output_settings,
+                is_udim,
+                color_management_info,
+            )
 
         image = bpy.data.images.get(name)
 
         if image is None:
             LOG.debug(f"Loading Image {name}")
-            image = ImageIOService.load(filepath, output_settings.color, len(tileset.buffers) > 1)
+            image = ImageIOService.load(filepath, output_settings.color, is_udim)
         else:
             image.filepath = str(filepath)
 
-        return ImageIOService.init_resource(image, output_settings)
+        return ImageIOService.init_resource(image, output_settings, is_udim)
 
         return image
 

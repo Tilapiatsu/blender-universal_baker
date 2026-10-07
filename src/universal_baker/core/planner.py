@@ -42,6 +42,7 @@ class ExecutionPlanner:
         # Indexes == -1 means to create task for all. If indexes >= 0, only processed the inputed index
         group_index: int = -1,
         baker_index: int = -1,
+        target_index: int = -1,
         packer_index: int = -1,
     ) -> Job:
         with LOG.scope("Planner"):
@@ -58,6 +59,11 @@ class ExecutionPlanner:
                     continue
 
                 active_targets = [obj for obj in group.target_objects if obj.enabled and obj.object is not None]
+                bake_targets = [
+                    obj
+                    for idx, obj in enumerate(group.target_objects)
+                    if ((target_index == -1 and obj.enabled) or target_index == idx) and obj.object is not None
+                ]
 
                 has_multiple_targets = len(active_targets) > 1
 
@@ -71,7 +77,7 @@ class ExecutionPlanner:
                 ownership_task = None
 
                 # NOTE: Define UV Layout and Evaluated Meshes
-                for index, obj in enumerate(active_targets):
+                for index, obj in enumerate(bake_targets):
                     udim_tiles = ()
                     udim_tiles = UVService.detect_udim_tiles(obj.object, obj.uv_layer)
                     LOG.info(f"{len(udim_tiles)} udim tile(s) detected for {obj.object.name}:")
@@ -150,7 +156,7 @@ class ExecutionPlanner:
                         override_settings=baker.settings if baker.override_settings else None,
                     )
 
-                    for obj in active_targets:
+                    for trt_idx, obj in enumerate(bake_targets):
                         if obj.object.name not in object_tiles:
                             LOG.error(f"{obj.object.name} have invalid UV.")
                             # TODO: need to properly deal with the case of one object doesn't have UV -> Should skip the
@@ -159,6 +165,7 @@ class ExecutionPlanner:
                             continue
 
                         obj.ensure_cage_object()
+
                         uv_layout = UVLayout(
                             image_layout=ImageLayout.UDIM if group.detect_udim else ImageLayout.SINGLE,
                             udim_tiles=object_tiles[obj.object.name],
@@ -190,7 +197,7 @@ class ExecutionPlanner:
 
                         job.add_task(task)
 
-                        if has_multiple_targets:
+                        if len(bake_targets) > 1:
                             assert ownership_task is not None
                             masker_producer = registry_masker["APPLY_MASK"]
 

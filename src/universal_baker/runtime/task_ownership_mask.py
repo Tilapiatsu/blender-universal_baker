@@ -40,7 +40,7 @@ class UvOwnership:
 
             # NOTE: Saving Map to disk : This is for debug purpose only
             # Need to link to a global debug parameter
-            if True:
+            if False:
                 from ..core.output_resolver import OutputResolver
                 from ..services.image_codec import ImageCodec
 

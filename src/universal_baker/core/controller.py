@@ -360,6 +360,7 @@ class BakeController:
         register_packers: bool = False,
         group_index: int = -1,
         baker_index: int = -1,
+        target_index: int = -1,
         packer_index: int = -1,
     ) -> Job:
         planner = ExecutionPlanner()
@@ -370,6 +371,7 @@ class BakeController:
             register_packers=register_packers,
             group_index=group_index,
             baker_index=baker_index,
+            target_index=target_index,
             packer_index=packer_index,
         )
 
@@ -472,6 +474,48 @@ class BakeController:
             )
 
         job = cls.create_job(context, register_bakers=True, baker_index=baker_index)
+
+        project = cls.project(context)
+
+        if project is None:
+            return (False, ["Project is None"])
+
+        use_maskers = project.use_maskers
+
+        task_types = [BakeTask, AccumulateTask]
+
+        if use_maskers:
+            task_types += [UvOwnershipTask, MaskBufferTask]
+
+        preferences = get_prefs()
+
+        if preferences.use_background_blender:
+            execution = Execution.EXTERNAL
+        else:
+            execution = Execution.INTERNAL
+
+        executor = Executor(
+            execution=execution,
+            task_types=task_types,
+        )
+        executor.execute(context, job)
+
+        return (
+            True,
+            job,
+        )
+
+    @classmethod
+    def bake_target(cls, context: bpy.types.Context, target_index: int) -> tuple[bool, Job | list[str]]:
+        errors = cls.validate(context)
+
+        if errors:
+            return (
+                False,
+                errors,
+            )
+
+        job = cls.create_job(context, register_bakers=True, target_index=target_index)
 
         project = cls.project(context)
 

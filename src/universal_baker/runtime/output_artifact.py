@@ -12,7 +12,6 @@ from ..runtime.bake_group import BakeGroup
 from .color_management_info import ColorManagementInfo
 from .logical_image import LogicalImage
 from .tile_set import TileSet
-from universal_baker.runtime import bake_group
 
 if TYPE_CHECKING:
     from bpy.types import Scene
@@ -82,7 +81,7 @@ class OutputArtifact:
             LOG.debug(f"Loading Image {self.name}")
             image = ImageIOService.load(self.path, self.output_settings.color, self.image.is_udim)
 
-        return ImageIOService.init_resource(image, self.output_settings)
+        return ImageIOService.init_resource(image, self.output_settings, self.image.is_udim)
 
     def init_empty_image(self) -> None:
         from ..services.image_codec import ImageCodec
