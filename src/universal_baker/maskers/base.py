@@ -77,6 +77,9 @@ class MaskerBase(ABC):
             return
 
         mask = ctx.mask.mask_for_object(ctx.task.target_object_uuid)
+        if mask is None:
+            return
+
         for tile, buffer in mask.tile_buffers:
             alpha = buffer.pixels[..., 3]
 

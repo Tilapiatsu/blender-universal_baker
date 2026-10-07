@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from ..constant import LOG
+from ..constant import LOG, UBK_SUBFOLDER_MASK
 from ..enum.image_layout import ImageLayout
 from ..logger.event import ScopeState
 from ..logger_bake_middleware.bake_summary import BakeStatus, EventCategory
@@ -40,22 +40,24 @@ class UvOwnership:
 
             # NOTE: Saving Map to disk : This is for debug purpose only
             # Need to link to a global debug parameter
-            if False:
+            if True:
                 from ..core.output_resolver import OutputResolver
                 from ..services.image_codec import ImageCodec
 
                 for o in ctx.task.ownership_datas.values():
                     LOG.debug(f"Writing mask for {o.object_name}")
                     mask = ctx.task.ownership_mask.mask_for_object(o.object_uuid)
+                    if mask is None:
+                        continue
                     for tile, buffer in mask.tile_buffers:
                         LOG.debug(f"{tile}")
                         output = OutputResolver.resolve(
                             ctx.task.output_context,
                             ImageLayout.SINGLE,
                             suffix=f"{o.object_name}." + str(tile),
-                            sub_folder="Mask",
+                            sub_folder=UBK_SUBFOLDER_MASK,
                         )
-                        ImageCodec.save(output.absolute_path, buffer, ctx.task.output_context.output_settings)
+                        ImageCodec.save(output.absolute_path, buffer, ctx.task.output_context.output_settings, False)
 
             return result
 

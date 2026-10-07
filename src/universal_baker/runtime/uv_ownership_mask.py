@@ -39,7 +39,7 @@ class UvOwnershipMask:
     def get_tile(self, tile: int) -> LabelBuffer | None:
         return self.labels[tile]
 
-    def mask_for_object(self, object_uuid: str) -> TileSet:
+    def mask_for_object(self, object_uuid: str) -> TileSet | None:
         """Create a binary ImageMask for one object."""
 
         # ISSUE: The mask resolution should match 100% the resolution of the baker. Right now the ownership.reshape()
@@ -60,7 +60,8 @@ class UvOwnershipMask:
             )
             label = uuid_to_label[object_uuid]
         except KeyError:
-            raise KeyError(f"Unknown ownership object: {object_uuid!r}")
+            LOG.error(f"Unknown ownership object: {object_uuid!r}")
+            return
 
         tiles = TileSet()
 
