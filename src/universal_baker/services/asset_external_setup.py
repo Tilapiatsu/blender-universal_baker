@@ -178,6 +178,7 @@ class AssetExternalBakeSetup(AssetExternalSetupBase):
                     duplicated_sources = []
                     for o in bake_objects.source_objects:
                         duplicated_source = cls._prepare_object(o, prototype, setup)
+                        o.hide_render = True
                         duplicated_sources.append(duplicated_source)
 
                     setup.sources = duplicated_sources

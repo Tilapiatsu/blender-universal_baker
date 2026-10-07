@@ -124,8 +124,6 @@ class DiffuseBaker(BakerBase):
     def get_visibility_overrides(self, ctx: BakeContext) -> list[VisibilityOverride]:
         """Set Visibility."""
         l: list[VisibilityOverride] = []
-        for s in ctx.sources:
-            l.append(VisibilityOverride(s, render=True))
         return l
 
     def prepare(self, ctx: BakeContext):
