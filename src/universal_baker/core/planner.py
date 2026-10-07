@@ -48,7 +48,28 @@ class ExecutionPlanner:
         with LOG.scope("Planner"):
             from .controller import BakeController
 
+            bg_objects = []
+            # NOTE: First loop to register background Objects
+            for grp_idx, group in enumerate(project.bake_groups):
+                if group_index == -1:
+                    if not group.enabled:
+                        continue
+                elif group_index >= 0 and grp_idx == group_index:
+                    pass
+                else:
+                    continue
+
+                active_targets = [obj for obj in group.target_objects if obj.enabled and obj.object is not None]
+
+                for obj in active_targets:
+                    if obj.have_source:
+                        bg_objects += obj.source_object_list
+                    else:
+                        bg_objects.append(obj.object)
+
             job = Job()
+
+            # NOTE: Second Loop to actually build the job
             for grp_idx, group in enumerate(project.bake_groups):
                 if group_index == -1:
                     if not group.enabled:
@@ -185,6 +206,7 @@ class ExecutionPlanner:
                             color_management_info=baker_producer.color_management_info,
                             target_object_uuid=obj.uuid,
                             sources=obj.source_object_list,
+                            bg_objects=bg_objects,
                             producer=baker_producer,
                             settings=settings,
                             image_name=baker.image_name,

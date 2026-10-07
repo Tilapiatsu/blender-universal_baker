@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Generator
-from contextlib import contextmanager
+from contextlib import ExitStack, contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -24,6 +24,7 @@ from ..services.image_bake import ImageServiceBake
 from ..services.material import MaterialService
 from ..services.parameter_service import ParameterService
 from ..services.renderer import RendererService
+from ..services.visibility_override import VisibilityOverride
 
 if TYPE_CHECKING:
     from ..parameter.metadata import ParameterMetadata
@@ -121,9 +122,16 @@ class BakerBase(ABC):
             LOG.info(f"{ctx.task!s}")
 
             try:
+                visibility_overrides = self.get_visibility_overrides(ctx)
                 self.invalidate_previous_output(ctx)
                 self.prepare(ctx)
-                self.bake(ctx)
+
+                with ExitStack() as stack:
+                    for vo in visibility_overrides:
+                        stack.enter_context(vo)
+
+                    self.bake(ctx)
+
                 self.update_baker(ctx)
                 self.export_file(ctx)
                 self.create_artifact(ctx)
@@ -152,6 +160,12 @@ class BakerBase(ABC):
         MaterialService.prepare(ctx)
 
         self.apply_parameters(ctx)
+
+    @abstractmethod
+    def get_visibility_overrides(self, ctx: BakeContext) -> list[VisibilityOverride]:
+        """Get Visibility."""
+        l: list[VisibilityOverride] = []
+        return l
 
     @abstractmethod
     def bake(self, ctx: BakeContext) -> None:

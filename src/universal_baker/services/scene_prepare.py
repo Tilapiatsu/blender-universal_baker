@@ -37,7 +37,16 @@ class ScenePrepare:
             source_objects = [s.object for s in obj.source_objects if s.enabled and s.object is not None]
 
             for s in source_objects:
-                vo = VisibilityOverride(s, render=False)
+                vo = VisibilityOverride(
+                    s,
+                    render=True,
+                    visible_camera=False,
+                    visible_diffuse=True,
+                    visible_glossy=True,
+                    visible_transmission=True,
+                    visible_volume_scatter=True,
+                    visible_shadow=True,
+                )
                 vo.set_visibility()
                 self.visibility_override.append(vo)
 

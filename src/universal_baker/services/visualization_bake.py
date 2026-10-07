@@ -477,14 +477,34 @@ class BakeVisualizationService:
 
         for target in bake_group.target_objects:
             if not target.have_source:
-                visibility_override = VisibilityOverride(target.object, viewport=True, show=True)
+                visibility_override = VisibilityOverride(
+                    target.object,
+                    viewport=True,
+                    show=True,
+                    visible_camera=True,
+                    visible_diffuse=True,
+                    visible_glossy=True,
+                    visible_transmission=True,
+                    visible_volume_scatter=True,
+                    visible_shadow=True,
+                )
                 continue
 
             visibility_override = VisibilityOverride(target.object, viewport=False)
             overrides.append(visibility_override)
 
             for source in target.source_object_list:
-                visibility_override = VisibilityOverride(source, viewport=True, show=True)
+                visibility_override = VisibilityOverride(
+                    source,
+                    viewport=True,
+                    show=True,
+                    visible_camera=True,
+                    visible_diffuse=True,
+                    visible_glossy=True,
+                    visible_transmission=True,
+                    visible_volume_scatter=True,
+                    visible_shadow=True,
+                )
                 overrides.append(visibility_override)
 
         return overrides

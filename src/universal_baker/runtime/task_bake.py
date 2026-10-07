@@ -30,6 +30,7 @@ class BakeTask(OutputTask):
     baker_uuid: str
     target_object_uuid: str
     sources: list[bpy.types.Object]
+    bg_objects: list[bpy.types.Object]
     producer: BakerBase
     settings: BakeSettings
     settings_cage: CageSettings

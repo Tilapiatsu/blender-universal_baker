@@ -11,6 +11,7 @@ from ..runtime.asset_setup import BakerExecution
 from ..runtime.bake_objects import BakeObjects
 from ..runtime.context_bake import BakeContext
 from ..services.asset_external_setup import AssetExternalBakeSetup
+from ..services.visibility_override import VisibilityOverride
 from .base import BakerBase
 
 if TYPE_CHECKING:
@@ -112,6 +113,11 @@ class CustomBaker(BakerBase):
                         continue
 
                     dst_tree.links.new(from_node.outputs[from_sock_idx], to_node.inputs[to_sock_idx])
+
+    def get_visibility_overrides(self, ctx: BakeContext) -> list[VisibilityOverride]:
+        """Set Visibility."""
+        l: list[VisibilityOverride] = []
+        return l
 
     def prepare(self, ctx: BakeContext):
         """

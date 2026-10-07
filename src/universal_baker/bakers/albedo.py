@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+from collections.abc import Generator
+from contextlib import contextmanager
+from typing import Any
+
 import bpy
 
 from ..core.registry_baker import registry_baker
@@ -7,6 +11,7 @@ from ..enum.image_colorspace import ImageColorSpace
 from ..parameter.metadata import BindingMetadata, ParameterMetadata
 from ..runtime.bake_objects import BakeObjects
 from ..runtime.context_bake import BakeContext
+from ..services.visibility_override import VisibilityOverride
 from .base import BakerBase
 
 
@@ -103,6 +108,11 @@ class AlbedoBaker(BakerBase):
         bake_objects: BakeObjects,
     ):
         return super().prepare_execution(bake_objects)
+
+    def get_visibility_overrides(self, ctx: BakeContext) -> list[VisibilityOverride]:
+        """Set Visibility."""
+        l: list[VisibilityOverride] = []
+        return l
 
     def prepare(self, ctx: BakeContext):
         """

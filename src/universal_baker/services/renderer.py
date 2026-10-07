@@ -5,6 +5,7 @@ from contextlib import ExitStack
 import bpy
 
 from ..constant import LOG
+from ..enum.image_layout import ImageLayout
 from ..resources.image import ImageResource
 from ..resources.scene_view_transform import SceneViewTransform
 from ..runtime.context_bake import BakeContext
@@ -274,7 +275,7 @@ class RendererService:
         if ctx.cage is not None:
             bake_collection.objects.link(ctx.cage)
 
-        for o in ctx.sources:
+        for o in ctx.task.bg_objects:
             bake_collection.objects.link(o)
 
         # Link to current scene
@@ -329,6 +330,8 @@ class RendererService:
             obj.select_set(True)
 
         ctx.target.select_set(True)
+
+        # ISSUE: sources are not selected properly here for custom Bakers only
 
         ctx.session.context.view_layer.objects.active = ctx.target
 
@@ -409,4 +412,5 @@ class RendererService:
             ctx.task.absolute_filepath,
             ctx.task.output_context.output_settings,
             ctx.task.color_management_info,
+            ctx.task.uv_layout.image_layout == ImageLayout.UDIM,
         )
