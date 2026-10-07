@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from ..runtime.color_management_info import ColorManagementInfo
     from .output_context import OutputContext
 
-from ..constant import LOG
+from ..constant import LOG, UBK_SUBFOLDER_OBJECT_BUFFER
 from ..core.output_resolver import OutputResolver
 from ..logger.event import ScopeState
 from ..logger_bake_middleware.bake_summary import BakeStatus, EventCategory
@@ -78,12 +78,11 @@ class BakeTask(OutputTask):
 
     @property
     def absolute_filepath(self) -> Path:
-        # TODO: Need to change the subfolder with something like ".ubk"
         file_output = OutputResolver.resolve(
             self.output_context,
             self.uv_layout.image_layout,
             self.object_name if self.has_multiple_targets else None,
-            "object_buffers" if self.has_multiple_targets else None,
+            UBK_SUBFOLDER_OBJECT_BUFFER if self.has_multiple_targets else None,
         )
 
         return file_output.absolute_path

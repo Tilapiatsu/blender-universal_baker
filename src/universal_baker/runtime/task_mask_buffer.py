@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from ..properties.baker import UBK_Baker
     from ..properties.object import UBK_TargetObject
 
-from ..constant import LOG
+from ..constant import LOG, UBK_SUBFOLDER_OBJECT_BUFFER
 from ..core.output_resolver import OutputResolver
 from ..logger.event import ScopeState
 from ..logger_bake_middleware.bake_summary import BakeStatus, EventCategory
@@ -37,7 +37,7 @@ class MaskBufferTask(OutputTask):
             self.output_context,
             self.uv_layout.image_layout,
             self.uv_ownership_task.name,
-            "object_buffers" if self.has_multiple_targets else None,
+            UBK_SUBFOLDER_OBJECT_BUFFER if self.has_multiple_targets else None,
         )
 
         return file_output.absolute_path
