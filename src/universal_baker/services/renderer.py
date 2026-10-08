@@ -278,6 +278,11 @@ class RendererService:
         for o in ctx.task.bg_objects:
             bake_collection.objects.link(o)
 
+        for o in ctx.sources:
+            if o.name in bake_collection.objects:
+                continue
+            bake_collection.objects.link(o)
+
         # Link to current scene
         bpy.context.scene.collection.children.link(bake_collection)
 

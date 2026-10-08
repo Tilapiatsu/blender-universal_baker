@@ -53,6 +53,7 @@ class BakeExecutorInternal(TaskExecutor):
                 ctx.target = bake_target.target
                 ctx.sources = bake_target.sources
                 ctx.cage = bake_target.cage
+
                 execution.execute(
                     session=session,
                     task=task,
