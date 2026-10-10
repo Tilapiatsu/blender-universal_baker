@@ -1,22 +1,13 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 
 import bpy
-from mathutils import Euler, Vector
 
 from ..constant import LOG
 from ..services.visibility_override import VisibilityOverride
 
 LOG_SCOPE = "Evaluate"
-
-
-@dataclass(slots=True, frozen=True)
-class TransformState:
-    location: Vector
-    rotation_euler: Euler
-    scale: Vector
 
 
 class Evaluate(ABC):
@@ -90,11 +81,6 @@ class EvaluateObject(Evaluate):
         if self.obj is None:
             return
 
-        self.transform_state = TransformState(
-            location=self.obj.location,
-            rotation_euler=self.obj.rotation_euler,
-            scale=self.obj.scale,
-        )
         self.visibility_override = VisibilityOverride(self.obj, render=False, viewport=True)
 
     @property
@@ -115,9 +101,7 @@ class EvaluateObject(Evaluate):
                 self.mesh = bpy.data.meshes.new_from_object(self.evaluated_mesh)
                 self.evaluated_obj = bpy.data.objects.new(name=f"{self.obj.name}_UBK_EVALUATED", object_data=self.mesh)
 
-                self.evaluated_obj.location = self.transform_state.location
-                self.evaluated_obj.rotation_euler = self.transform_state.rotation_euler
-                self.evaluated_obj.scale = self.transform_state.scale
+                self.evaluated_obj.matrix_world = self.obj.matrix_world.copy()
 
                 self.has_been_evaluated = True
 

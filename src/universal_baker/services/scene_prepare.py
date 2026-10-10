@@ -2,12 +2,15 @@ from __future__ import annotations
 
 import bpy
 
-from ..constant import LOG
+from ..constant import CAGE_SKEW_REMESHER_ASSET_PATH, LOG
 from ..properties.object import UBK_TargetObject
+from ..resources.asset_external import AssetExtrenal
 from ..runtime.bake_objects import BakeObjects
-from ..services.cage_object import CageObjectService
-from ..services.evaluate_mesh import EvaluateObject
-from ..services.visibility_override import VisibilityOverride
+from ..services.asset_external_setup import AssetExternalCageSkewRemesherSetup
+from .cage_object import CageObjectService
+from .cdt_remesher import CDTRemesher
+from .evaluate_mesh import EvaluateObject
+from .visibility_override import VisibilityOverride
 
 
 class ScenePrepare:
@@ -64,8 +67,20 @@ class ScenePrepare:
 
                 cage = obj.settings_cage.cage_object
 
+                if obj.settings_cage.is_skew_correction_enabled:
+                    remesher = CDTRemesher(evaluated_obj, spacing_cm=10)
+                    evaluated_obj = remesher.build()
+
+                # if obj.settings_cage.is_skew_correction_enabled:
+                #     asset = AssetExtrenal(filepath=CAGE_SKEW_REMESHER_ASSET_PATH)
+                #     setup = AssetExternalCageSkewRemesherSetup.prepare(asset, evaluated_obj, obj.uv_layer)
+                #     evaluated_obj = setup.target
+
                 if obj.settings_cage.is_cage_generated:
-                    cage = CageObjectService.acquire(evaluated_obj, obj.settings_cage)
+                    cage = CageObjectService.acquire(
+                        evaluated_obj,
+                        obj.settings_cage,
+                    )
 
                 elif obj.settings_cage.cage_object is not None:
                     evaluate_cage = EvaluateObject(obj.settings_cage.cage_object)
