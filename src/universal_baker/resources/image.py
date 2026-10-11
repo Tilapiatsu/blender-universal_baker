@@ -89,7 +89,7 @@ class ImageResource:
         is_udim: bool = False,
         create_image: bool = True,
     ) -> ImageResource:
-        image = bpy.data.images[name]
+        image = bpy.data.images.get(name)
 
         if create_image or image is None:
             image = bpy.data.images.new(
