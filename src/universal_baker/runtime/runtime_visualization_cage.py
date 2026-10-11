@@ -157,8 +157,6 @@ class CageVisualizationRuntime:
             if self._updating_parameters:
                 return
 
-        # ISSUE: Refreshing Extrusion doesn't work refresh properly in some cases
-
         LOG.debug("Refreshing Parameter")
         try:
             self._updating_parameters = True
@@ -187,6 +185,13 @@ class CageVisualizationRuntime:
             )
 
             ParameterApplier.apply_regular(definition, snapshot, context)
+
+            if self.cage_asset_setup is not None and self.cage_asset_setup.projection_cage is not None:
+                context = ParameterContext(
+                    object=self.cage_asset_setup.projection_cage,
+                    is_dragging=bpy.context.scene.ubk_project.visualization.is_dragging,
+                )
+                ParameterApplier.apply_regular(definition, snapshot, context)
 
         finally:
             self._updating_parameters = False
