@@ -346,7 +346,7 @@ class SkewCageBuilder:
             1.0,
         )[:, None]
 
-        directions = original_directions * (1.0 - factors) + face_normals * factors
+        directions = original_directions * (1.0 - factors) - face_normals * factors
 
         lengths = np.linalg.norm(directions, axis=1)
 

@@ -129,36 +129,6 @@ class RendererService:
         """Execute a single bake task."""
         visibility_overrides = []
 
-        use_skew_correction = ctx.task.settings_cage.is_skew_correction_enabled
-
-        target = None
-        cage = None
-
-        if use_skew_correction:
-            pair = cls.get_skew_cage(ctx)
-            target = pair.proxy
-            cage = pair.cage
-            visibility_overrides.append(
-                VisibilityOverride(
-                    obj=ctx.target,
-                    render=False,
-                    viewport=True,
-                    select=True,
-                )
-            )
-            visibility_overrides.append(
-                VisibilityOverride(
-                    obj=ctx.cage,
-                    render=False,
-                    viewport=True,
-                    select=True,
-                )
-            )
-
-        else:
-            target = TempObject(ctx.target, ctx.target)
-            cage = TempObject(ctx.cage, ctx.cage)
-
         for s in ctx.sources:
             visibility_overrides.append(
                 VisibilityOverride(
@@ -169,48 +139,43 @@ class RendererService:
                 )
             )
 
-        with target as t, cage as c:
-            ctx.target = t
-            ctx.cage = c
-            visibility_overrides.append(
-                VisibilityOverride(
-                    obj=ctx.target,
-                    render=True,
-                    viewport=True,
-                    select=True,
-                )
+        visibility_overrides.append(
+            VisibilityOverride(
+                obj=ctx.target,
+                render=True,
+                viewport=True,
+                select=True,
             )
+        )
 
-            visibility_overrides.append(
-                VisibilityOverride(
-                    obj=ctx.cage,
-                    render=False,
-                    viewport=True,
-                    select=True,
-                )
+        visibility_overrides.append(
+            VisibilityOverride(
+                obj=ctx.cage,
+                render=False,
+                viewport=True,
+                select=True,
             )
+        )
 
-            with ExitStack() as stack:
-                # Entering context Managers
-                for vo in visibility_overrides:
-                    stack.enter_context(vo)
+        with ExitStack() as stack:
+            # Entering context Managers
+            for vo in visibility_overrides:
+                stack.enter_context(vo)
 
-                scene_state = cls.capture_state()
-                render_settings = cls.capture_render_settings(ctx)
-                # cls.clear_scene_objects_visibility(ctx)
-                bake_collection = cls.create_bake_collection(ctx)
+            scene_state = cls.capture_state()
+            render_settings = cls.capture_render_settings(ctx)
+            # cls.clear_scene_objects_visibility(ctx)
+            bake_collection = cls.create_bake_collection(ctx)
 
-                try:
-                    # cls.set_view_settings(ctx.task.producer.bake_view_transform)
-                    cls.configure(ctx)
-                    cls.prepare(ctx)
-                    cls.bake(ctx)
+            try:
+                # cls.set_view_settings(ctx.task.producer.bake_view_transform)
+                cls.configure(ctx)
+                cls.prepare(ctx)
+                cls.bake(ctx)
 
-                finally:
-                    cls.restore(ctx, scene_state, render_settings)
-                    cls.clear_bake_collection(bake_collection, remove_col=True)
-                    ctx.target = target.recover_object
-                    ctx.cage = cage.recover_object
+            finally:
+                cls.restore(ctx, scene_state, render_settings)
+                cls.clear_bake_collection(bake_collection, remove_col=True)
 
     @classmethod
     def clear_scene_objects_visibility(cls, ctx: BakeContext):
@@ -384,7 +349,8 @@ class RendererService:
         return service.build(
             target_object=ctx.target,
             cage_object=ctx.cage,
-            settings=ctx.task.settings_cage,
+            skew_intensity=ctx.task.settings_cage.skew_intensity,
+            cage_extrusion=ctx.task.settings_cage.cage_extrusion,
         )
 
     @classmethod

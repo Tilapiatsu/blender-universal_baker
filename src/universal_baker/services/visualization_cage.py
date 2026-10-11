@@ -7,7 +7,7 @@ import bpy
 import gpu
 from gpu_extras.batch import batch_for_shader
 
-from ..constant import BAKE_CLIPPING_PREVIEW_ASSET_PATH, BAKE_PORTAL_PREVIEW_ASSET_PATH, LOG
+from ..constant import BAKE_CLIPPING_PREVIEW_ASSET_PATH, BAKE_PORTAL_PREVIEW_ASSET_PATH, LOG, UBK_SUBFOLDER_SKEW
 from ..core.registry_baker import registry_baker
 from ..enum.visualization import BakeVisualizationMode
 from ..properties.settings_cage import UBK_CageSettings
@@ -451,7 +451,7 @@ class CageVisualizationService:
                     return False
 
                 if not target.settings_cage.is_skew_correction_enabled:
-                    cls._acquire_skew_image(target.settings_cage)
+                    cls._acquire_skew_image(target)
 
                 cls._link_skew_image_to_material(cage)
                 cls._set_skew_image_active()
@@ -471,6 +471,7 @@ class CageVisualizationService:
         image = bpy.data.images.get(runtime.skew_image_name)
         if image is not None:
             image.pack()
+            image.save()
 
     @classmethod
     def clear_skew_image(cls, target: UBK_TargetObject):
@@ -488,27 +489,38 @@ class CageVisualizationService:
     # ---------------------------------------------------------
 
     @classmethod
-    def _acquire_skew_image(cls, settings_cage: UBK_CageSettings):
+    def _acquire_skew_image(cls, target_object: UBK_TargetObject):
         runtime = cls._ensure_runtime()
         image_name = runtime.skew_image_name
 
         image = bpy.data.images.get(image_name)
 
         if image is None:
-            LOG.debug(f"Skew Image not found, Creating a new one for {image_name}")
-            image = bpy.data.images.new(
-                image_name,
-                1024,
-                1024,
-                alpha=False,
-                float_buffer=False,
-                stereo3d=False,
-                is_data=True,
-                tiled=True,
-            )
-            image.pack()
+            from ..resources.image import ImageResource
+            from ..runtime.settings_image import ImageSettings
+            from ..services.uv import UVService
+            from .image_base import ImageServiceBase
 
-        settings_cage.skew_image = image
+            tiles = UVService.detect_udim_tiles(target_object.object, target_object.uv_layer)
+
+            resource = ImageResource.create(
+                width=1024,
+                height=1024,
+                name=image_name,
+                filepath=Path("//") / UBK_SUBFOLDER_SKEW / (image_name + ".<UDIM>.png"),
+                colorspace="Non-Color",
+                image_format_settings=ImageSettings(),
+                is_udim=True,
+            )
+
+            ImageServiceBase.create(resource, tiles)
+            ImageServiceBase.save(resource)
+
+            image = resource.image
+
+            LOG.debug(f"Skew Image not found, Creating a new one for {image_name}")
+
+        target_object.settings_cage.skew_image = image
 
     @classmethod
     def _link_skew_image_to_material(cls, cage: bpy.types.Object) -> bpy.types.Image:

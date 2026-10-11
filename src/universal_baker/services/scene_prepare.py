@@ -76,8 +76,14 @@ class ScenePrepare:
 
                 if obj.settings_cage.is_cage_generated:
                     if obj.settings_cage.is_skew_correction_enabled:
-                        remesher = CDTRemesher(evaluated_obj, spacing_cm=10)
+                        remesher = CDTRemesher(evaluated_obj, spacing_cm=5)
                         evaluated_obj = remesher.build()
+                        # TODO: Need to expose the proper spacing
+                        # TODO: Need to clean the Densified mesh after baking
+                        # TODO: Need to make remesher working only when the mask value is > 0 -> it look like the simple
+                        # fact of remeshing the mesh is fixing the skewing entirely, but not being able to paint where
+                        # the remeshing is happening, also remove the ability to localize where the skew correction
+                        # should happend
 
                         CageObjectService.acquire(
                             evaluated_obj,
