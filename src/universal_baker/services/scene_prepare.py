@@ -4,10 +4,12 @@ import bpy
 
 from ..constant import CAGE_SKEW_REMESHER_ASSET_PATH, LOG
 from ..properties.object import UBK_TargetObject
+from ..properties.settings_cage import UBK_CageSettings
 from ..resources.asset_external import AssetExtrenal
 from ..runtime.bake_objects import BakeObjects
 from ..services.asset_external_setup import AssetExternalCageSkewRemesherSetup
 from .cage_object import CageObjectService
+from .cage_skew import CustomCagePair
 from .cdt_remesher import CDTRemesher
 from .evaluate_mesh import EvaluateObject
 from .visibility_override import VisibilityOverride
@@ -67,20 +69,30 @@ class ScenePrepare:
 
                 cage = obj.settings_cage.cage_object
 
-                if obj.settings_cage.is_skew_correction_enabled:
-                    remesher = CDTRemesher(evaluated_obj, spacing_cm=10)
-                    evaluated_obj = remesher.build()
-
                 # if obj.settings_cage.is_skew_correction_enabled:
                 #     asset = AssetExtrenal(filepath=CAGE_SKEW_REMESHER_ASSET_PATH)
                 #     setup = AssetExternalCageSkewRemesherSetup.prepare(asset, evaluated_obj, obj.uv_layer)
                 #     evaluated_obj = setup.target
 
                 if obj.settings_cage.is_cage_generated:
-                    cage = CageObjectService.acquire(
-                        evaluated_obj,
-                        obj.settings_cage,
-                    )
+                    if obj.settings_cage.is_skew_correction_enabled:
+                        remesher = CDTRemesher(evaluated_obj, spacing_cm=10)
+                        evaluated_obj = remesher.build()
+
+                        CageObjectService.acquire(
+                            evaluated_obj,
+                            obj.settings_cage,
+                        )
+
+                        pair = self.get_skew_cage(evaluated_obj, obj.settings_cage, obj.uv_layer)
+                        evaluated_obj = pair.proxy.object
+                        cage = pair.cage.object
+
+                    else:
+                        cage = CageObjectService.acquire(
+                            evaluated_obj,
+                            obj.settings_cage,
+                        )
 
                 elif obj.settings_cage.cage_object is not None:
                     evaluate_cage = EvaluateObject(obj.settings_cage.cage_object)
@@ -147,3 +159,22 @@ class ScenePrepare:
 
         for uuid, o in self.evaluated_cages.items():
             o.clean()
+
+    @classmethod
+    def get_skew_cage(
+        cls,
+        obj: bpy.types.Object,
+        settings_cage: UBK_CageSettings,
+        uv_layer_name: str,
+    ) -> CustomCagePair:
+        from ..services.cage_skew import SkewCageBuilder
+
+        service = SkewCageBuilder()
+
+        return service.build(
+            target_object=obj,
+            cage_object=settings_cage.cage_object,
+            skew_image=settings_cage.skew_image,
+            uv_layer_name=uv_layer_name,
+            cage_extrusion=settings_cage.cage_extrusion,
+        )

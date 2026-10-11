@@ -442,22 +442,23 @@ class CageVisualizationService:
 
     @classmethod
     def enable_skew_edit(cls, target: UBK_TargetObject, preview_bake: bool = False) -> bool:
-        if cls.enable(target, CageEditMode.SKEW, preview_bake):
-            runtime = cls._ensure_runtime()
-            cage = bpy.data.objects.get(runtime.cage_name)
+        with LOG.scope("Skew Edit"):
+            if cls.enable(target, CageEditMode.SKEW, preview_bake):
+                runtime = cls._ensure_runtime()
+                cage = bpy.data.objects.get(runtime.cage_name)
 
-            if cage is None:
-                return False
+                if cage is None:
+                    return False
 
-            if not target.settings_cage.is_skew_correction_enabled:
-                cls._acquire_skew_image(target.settings_cage)
+                if not target.settings_cage.is_skew_correction_enabled:
+                    cls._acquire_skew_image(target.settings_cage)
 
-            cls._link_skew_image_to_material(cage)
-            cls._set_skew_map_active()
-            cls._display_skew_image()
-            cls._enter_mode(cage, "TEXTURE_PAINT")
+                cls._link_skew_image_to_material(cage)
+                cls._set_skew_image_active()
+                cls._display_skew_image()
+                cls._enter_mode(cage, "TEXTURE_PAINT")
 
-        return True
+            return True
 
     @classmethod
     def _disable_skew_edit(cls):
@@ -510,7 +511,7 @@ class CageVisualizationService:
         settings_cage.skew_image = image
 
     @classmethod
-    def _link_skew_image_to_material(cls, cage: bpy.types.Object):
+    def _link_skew_image_to_material(cls, cage: bpy.types.Object) -> bpy.types.Image:
         runtime = cls._ensure_runtime()
         image_name = runtime.skew_image_name
 
@@ -526,9 +527,12 @@ class CageVisualizationService:
         runtime.skew_material_snapshots = MaterialOverrideService.apply([cage], material)
 
         DisplayMaterialService.set_image(material, image, colorspace="Non-Color")
+        LOG.debug(f"Image {image.name} Linked to Material {material.name}")
+
+        return image
 
     @classmethod
-    def _set_skew_map_active(cls):
+    def _set_skew_image_active(cls):
         pass
 
     @classmethod

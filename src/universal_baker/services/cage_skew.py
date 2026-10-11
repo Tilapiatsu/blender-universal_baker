@@ -8,7 +8,7 @@ import numpy as np
 from mathutils import Matrix, Vector
 
 from ..constant import LOG
-from ..runtime.settings_cage import CageSettings
+from .skew_field import SkewField
 from .temp_object import TempObject
 
 LOG_SCOPE = "Custom Cage Builder"
@@ -52,7 +52,9 @@ class SkewCageBuilder:
         self,
         target_object: bpy.types.Object,
         cage_object: bpy.types.Object,
-        settings: CageSettings,
+        skew_image: bpy.types.Image,
+        uv_layer_name: str,
+        cage_extrusion: float,
     ) -> CustomCagePair:
         # depsgraph = bpy.context.evaluated_depsgraph_get()
         # bpy.context.view_layer.update()
@@ -94,12 +96,20 @@ class SkewCageBuilder:
                     matrix_world=target_matrix,
                 )
 
+                skew_field = SkewField.from_image(
+                    skew_image,
+                    channel=0,
+                )
+
+                skew_factors = skew_field.sample(target_corners.uv_layers[uv_layer_name])
+
                 # Build the actual skewed cage from the proxy geometry.
                 generated_cage_positions = self._build_cage_geometry(
                     target_positions=target_corners.positions,
                     original_cage_positions=cage_positions,
                     face_normals=target_corners.face_normals,
-                    settings=settings,
+                    skew_factors=skew_factors,
+                    cage_extrusion=cage_extrusion,
                 )
 
                 proxy_cage = self._create_mesh_object(
@@ -235,12 +245,14 @@ class SkewCageBuilder:
             material_indices=material_indices,
         )
 
-    @staticmethod
+    @classmethod
     def _build_cage_geometry(
+        cls,
         target_positions: np.ndarray,
         original_cage_positions: np.ndarray,
         face_normals: np.ndarray,
-        settings: CageSettings,
+        skew_factors: np.ndarray,
+        cage_extrusion: float,
     ) -> np.ndarray:
         """
         Generate cage positions whose cage->target direction is:
@@ -260,10 +272,8 @@ class SkewCageBuilder:
         projection direction.
         """
 
-        skew_factor = float(np.clip(settings.skew_intensity, 0.0, 1.0))
-
         distance_scale = max(
-            float(settings.cage_extrusion),
+            float(cage_extrusion),
             0.0,
         )
 
@@ -280,7 +290,11 @@ class SkewCageBuilder:
         normalized_face_normals[valid_normals] = face_normals[valid_normals] / normal_lengths[valid_normals, None]
 
         # Preserve the original cage direction when skew = 0.
-        directions = original_directions * (1.0 - skew_factor) - normalized_face_normals * skew_factor
+        directions = cls._blend_directions(
+            original_directions,
+            normalized_face_normals,
+            skew_factors,
+        )
         direction_lengths = np.linalg.norm(directions, axis=1)
         valid_directions = direction_lengths > 1.0e-8
         normalized_directions = np.zeros_like(directions)
@@ -312,6 +326,41 @@ class SkewCageBuilder:
         generated = target_positions - normalized_directions * distance_scale
 
         return generated
+
+    @staticmethod
+    def _blend_directions(
+        original_directions: np.ndarray,
+        face_normals: np.ndarray,
+        skew_factors: np.ndarray,
+    ) -> np.ndarray:
+        """
+        Blend original cage directions toward geometric face normals.
+
+        skew = 0: original cage direction
+        skew = 1: geometric face normal
+        """
+
+        factors = np.clip(
+            np.asarray(skew_factors, dtype=np.float32),
+            0.0,
+            1.0,
+        )[:, None]
+
+        directions = original_directions * (1.0 - factors) + face_normals * factors
+
+        lengths = np.linalg.norm(directions, axis=1)
+
+        valid = lengths > 1.0e-8
+
+        result = np.zeros_like(directions)
+
+        result[valid] = directions[valid] / lengths[valid, None]
+
+        # If the directions cancel each other out, retain the original
+        # direction rather than creating a zero-length ray.
+        result[~valid] = original_directions[~valid]
+
+        return result
 
     @staticmethod
     def _create_mesh_object(
