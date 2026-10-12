@@ -22,10 +22,10 @@ class BaseSink(ABC):
         severity = level.name
 
         if len(severity) == 4:
-            severity = f"  {severity}  "
-        elif len(severity) == 5:
             severity = f" {severity}  "
+        elif len(severity) == 5:
+            severity = f" {severity} "
         elif len(severity) == 7:
-            severity = f" {severity}"
+            severity = f"{severity}"
 
         return severity

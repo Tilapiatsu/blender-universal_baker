@@ -431,9 +431,13 @@ class BakeVisualizationService:
             cls._create_temp_collection()
 
             handle = cls._get_image_handle(data.bake_group_uuid, data.accumulated_uuid)
-            image = cls._get_image(data.bake_group_uuid, data.accumulated_uuid)
+            if handle is None:
+                return
 
-            if handle is None or image is None or image.image is None:
+            handle.reload()
+            image = handle.image()
+
+            if image is None or image.image is None:
                 return
 
             DisplayMaterialService.set_image(material, image.image, data.producer.image_colorspace)

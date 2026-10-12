@@ -63,7 +63,7 @@ class OutputProvider:
 
     def get_producer_image(self, bake_group_uuid: str, producer_uuid: str) -> list[ImageHandle] | None:
         with LOG.scope(LOG_SCOPE):
-            LOG.debug("Request Image from repository")
+            LOG.debug("Request Producer Image from repository")
 
             # ISSUE : Cached image is a bit too dumb right now. If the user change the resolution for exemple, the
             # cached version will be considered valid and reterned but the size will be wrong.
@@ -100,7 +100,7 @@ class OutputProvider:
         self, bake_group_uuid: str, producer_uuid: str, target_object_uuid: str
     ) -> list[ImageHandle] | None:
         with LOG.scope(LOG_SCOPE):
-            LOG.debug("Request Image from repository")
+            LOG.debug("Request Target Object Image from repository")
             outputs = self._repository.resolve_target_object_outputs(bake_group_uuid, producer_uuid, target_object_uuid)
             if not outputs:
                 LOG.error(
