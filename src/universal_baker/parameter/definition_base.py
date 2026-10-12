@@ -47,14 +47,12 @@ class DefinitionBase:
         """
         Return parameters indexed by identifier.
         """
-
         return {parameter.identifier: parameter for parameter in self.parameters}
 
     def get_parameter(self, identifier: str) -> Parameter | None:
         """
         Return a parameter by identifier.
         """
-
         for parameter in self.parameters:
             if parameter.identifier == identifier:
                 return parameter
@@ -65,7 +63,6 @@ class DefinitionBase:
         """
         Return a parameter or raise an informative error.
         """
-
         parameter = self.get_parameter(identifier)
 
         if parameter is None:
@@ -81,7 +78,6 @@ class DefinitionBase:
         """
         Return all bindings associated with a parameter.
         """
-
         return self.bindings.get(
             parameter_id,
             (),
@@ -93,7 +89,6 @@ class DefinitionBase:
 
         Raises if the parameter has no bindings.
         """
-
         bindings = self.get_bindings(parameter_id)
 
         if not bindings:
@@ -141,7 +136,6 @@ class DefinitionBase:
         self._validate_bindings()
 
     def _validate_identity(self) -> None:
-
         if not self.identifier:
             raise DefinitionError("Identifier cannot be empty.")
 
@@ -149,7 +143,6 @@ class DefinitionBase:
             raise DefinitionError("Name cannot be empty.")
 
     def _validate_parameters(self) -> None:
-
         identifiers: set[str] = set()
 
         for parameter in self.parameters:
@@ -164,7 +157,6 @@ class DefinitionBase:
             identifiers.add(identifier)
 
     def _validate_bindings(self) -> None:
-
         parameter_ids = {parameter.identifier for parameter in self.parameters}
 
         for parameter_id in self.bindings:
@@ -182,4 +174,4 @@ class DefinitionBase:
         This is intentionally conservative for now.
         """
 
-        return name.strip().lower().replace(" ", "_").replace("-", "_")
+        return name.strip().upper().replace(" ", "_").replace("-", "_")

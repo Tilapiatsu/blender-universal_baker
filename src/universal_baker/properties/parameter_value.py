@@ -52,7 +52,7 @@ class UBK_ParameterValue(bpy.types.PropertyGroup):
     float_value: bpy.props.FloatProperty(update=parameter_updated)
     int_value: bpy.props.IntProperty(update=parameter_updated)
     bool_value: bpy.props.BoolProperty(update=parameter_updated)
-    enum_value: bpy.props.StringProperty(update=parameter_updated)
+    string_value: bpy.props.StringProperty(update=parameter_updated)
 
 
 classes = (

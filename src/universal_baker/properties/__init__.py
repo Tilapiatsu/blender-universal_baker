@@ -1,17 +1,17 @@
 from . import (
-    parameter_value,
+    artifact,
+    bake_group,
+    baker,
     custom_baker,
-    settings_output,
+    object,
+    packer,
+    parameter_value,
+    project,
     settings_bake,
     settings_cage,
+    settings_output,
     settings_pack,
-    baker,
-    packer,
-    object,
-    bake_group,
-    artifact,
     visualization,
-    project,
 )
 
 modules = (

@@ -1,13 +1,15 @@
 from . import (
-    diffuse,
     albedo,
     custom,
+    diffuse,
+    normal,
 )
 
 modules = (
     diffuse,
     albedo,
     custom,
+    normal,
 )
 
 
