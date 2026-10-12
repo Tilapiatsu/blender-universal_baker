@@ -392,7 +392,7 @@ class BakeVisualizationService:
 
         scenes = ViewportService.capture_state()
 
-        # TODO: Preview Parameters doesn't work in selected to active mode
+        # ISSUE: Preview Parameters doesn't work in selected to active mode
         for scene_name, scene_state in scenes.scenes.items():
             cls._runtime.set_scene_state(
                 scene_name,
