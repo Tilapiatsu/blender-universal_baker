@@ -156,18 +156,33 @@ def update_active_target(self, context):
 
     project = BakeController.project(context)
 
-    preview_bake = project.visualization.preview_bake
-
-    if not CageVisualizationService.is_active():
-        return
-
     target = BakeController.active_target_object(context)
 
     if target is None or not target.have_source:
         CageVisualizationService.disable()
         return
 
+    bpy.ops.object.select_all(action="DESELECT")
+    target.object.select_set(True)
+
+    preview_bake = project.visualization.preview_bake
+
+    if not CageVisualizationService.is_active():
+        return
+
     CageVisualizationService.refresh(target, preview_bake)
+
+
+def update_active_source(self, context):
+    from ..core.controller import BakeController
+
+    source = BakeController.active_source_object(context)
+
+    if source is None:
+        return
+
+    bpy.ops.object.select_all(action="DESELECT")
+    source.object.select_set(True)
 
 
 def exit_weight_paint_callback(obj, mode):
