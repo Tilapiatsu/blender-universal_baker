@@ -10,6 +10,7 @@ from bpy.props import (
 )
 from bpy.types import PropertyGroup
 
+from ..services.visualization_cage import update_active_source
 from .settings_cage import UBK_CageSettings
 
 
@@ -46,7 +47,8 @@ class UBK_TargetObject(PropertyGroup):
     image: PointerProperty(type=bpy.types.Image)
 
     source_objects: CollectionProperty(type=UBK_SourceObject)
-    active_source_object_index: IntProperty(default=0)
+    active_source_object_index: IntProperty(default=0, update=update_active_source)
+
     uv_layer: StringProperty(
         name="UV Map", description="UV layer used for baking", default="UVMap", search=get_uv_layer
     )
