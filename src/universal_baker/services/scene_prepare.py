@@ -76,7 +76,7 @@ class ScenePrepare:
 
                 if obj.settings_cage.is_cage_generated:
                     if obj.settings_cage.is_skew_correction_enabled:
-                        remesher = CDTRemesher(evaluated_obj, spacing_cm=5)
+                        remesher = CDTRemesher(evaluated_obj, spacing_cm=5, mask_image=obj.settings_cage.skew_image)
                         evaluated_obj = remesher.build()
                         # TODO: Need to expose the proper spacing
                         # TODO: Need to clean the Densified mesh after baking
