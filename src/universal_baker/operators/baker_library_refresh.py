@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-
 from .base import UBK_OT_Base
-from ..bakers.custom import refresh
+
+# from ..bakers.custom import refresh
 
 
 class UBK_OT_BakerlibraryRefresh(UBK_OT_Base):
@@ -14,7 +14,7 @@ class UBK_OT_BakerlibraryRefresh(UBK_OT_Base):
     bl_options = {"REGISTER", "UNDO"}
 
     def execute(self, context):
-        refresh()
+        # refresh()
 
         return {"FINISHED"}
 

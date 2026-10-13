@@ -70,7 +70,7 @@ class UBK_Preferences(AddonPreferences):
         col_box.operator("ubk.add_baker_library", text="", icon="ADD")
         col_box.operator("ubk.remove_baker_library", text="", icon="REMOVE")
         col_box.separator()
-        col_box.operator("ubk.refresh_baker_library", text="", icon="FILE_REFRESH")
+        # col_box.operator("ubk.refresh_baker_library", text="", icon="FILE_REFRESH")
 
         if len(self.baker_libraries) and 0 <= self.active_baker_library_idx < len(self.baker_libraries):
             active_lib = self.baker_libraries[self.active_baker_library_idx]

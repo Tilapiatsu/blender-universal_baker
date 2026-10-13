@@ -3,15 +3,16 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Generator
 from contextlib import ExitStack, contextmanager
-from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from ..constant import ICON_BAKE, LOG, get_prefs
+import bpy
+
+from ..constant import ICON_BAKE, LOG
+from ..core.property_class_factory import ClassFactory
 from ..core.registry_baker import registry_baker
 from ..core.registry_definition import registry_definition
 from ..enum.image_colorspace import ImageColorSpace
 from ..enum.output_stage import OutputStage
-from ..parameter.baker_custom.metadata_loader import MetadataLoader as metadata_loader_custom
 from ..parameter.baker_local.metadata_loader import MetadataLoader as metadata_loader_local
 from ..parameter.parameter_applier import ParameterApplier
 from ..parameter.parameter_context import ParameterContext
@@ -52,7 +53,6 @@ class BakerBase(ABC):
     accumulator_id = "ALPHA_OVER"
     is_custom: bool = False
     clear_preview_material: bool = True
-    asset_path: Path = Path()
     viewport_render_pass: str = "COMBINED"
     bake_colorspace: ImageColorSpace = ImageColorSpace.NON_COLOR
     image_colorspace: ImageColorSpace = ImageColorSpace.NON_COLOR
@@ -66,6 +66,14 @@ class BakerBase(ABC):
     def parameters(self) -> tuple[ParameterMetadata, ...]:
         parameters: tuple[ParameterMetadata, ...] = ()
         return parameters
+
+    @property
+    def property_class_name(self) -> str:
+        return f"UBK_{self.name.replace(' ', '')}Properties"
+
+    @property
+    def settings_name(self) -> str:
+        return f"{self.name.lower().replace(' ', '_')}_settings"
 
     @abstractmethod
     @contextmanager
@@ -287,6 +295,7 @@ class BakerBase(ABC):
 
     def register_local(self):
         LOG.info(f"Registering Building Baker : {self.id}")
+        self.register_property_class()
         registry_baker.register(self)
 
         registry_definition.register_local_lazy(
@@ -295,34 +304,17 @@ class BakerBase(ABC):
             loader=metadata_loader_local.load_definition,
         )
 
-    @classmethod
-    def register_custom(cls):
-        prefs = get_prefs()
+    def register_property_class(self):
 
-        for library in prefs.baker_libraries:
-            library_root = Path(library.path)
-            if not library_root.exists() or not library_root.is_dir():
-                LOG.warning(f"Library path is not valid : {library_root}")
-                continue
+        c = ClassFactory(self.property_class_name, None, bpy.types.PropertyGroup)
+        for p in self.parameters:
+            LOG.info(f"Registering {self.id} Property : {p.identifier}")
+            c.__annotations__[p.identifier] = p.blender_property
 
-            blend_files = [f for f in library_root.iterdir() if f.is_file() and f.suffix.lower() == ".blend"]
+        from bpy.utils import register_class
 
-            if len(blend_files) == 0:
-                LOG.warning(f"No blend file found in {library.name} library")
+        register_class(c)
 
-            LOG.info(f"Registering Library : {library.name}")
-            for blend_file in blend_files:
-                custom_baker = cls()
-                baker_name = blend_file.stem.upper().replace(" ", "_")
-                custom_baker.id += f"_{baker_name}"
-                custom_baker.asset_path = blend_file
-                custom_baker.name = blend_file.stem.capitalize()
+        from ..parameters_definition.baker_settings import UBK_BakerSettings
 
-                LOG.info(f"Registering Custom Baker : {baker_name}")
-                registry_baker.register(custom_baker)
-
-                registry_definition.register_custom_lazy(
-                    identifier=custom_baker.id,
-                    asset_path=blend_file,
-                    loader=metadata_loader_custom.load_definition,
-                )
+        UBK_BakerSettings.__annotations__[self.settings_name] = bpy.props.PointerProperty(type=c)

@@ -10,6 +10,7 @@ from .binding_scene import ScenePropertyBinding
 from .binding_shader_insert import ShaderInsertBinding
 from .metadata import (
     BindingMetadata,
+    BindingType,
 )
 
 
@@ -23,11 +24,11 @@ BindingCreator = Callable[[str, BindingMetadata], ParameterBinding]
 class BindingFactory:
     def __init__(self):
         self._creators: dict[str, BindingCreator] = {
-            "MATERIAL_SOCKET": self._create_material_socket,
-            "SHADER_INSERT": self._create_shader_insert,
-            "MODIFIER_PROPERTY": self._create_modifier_property,
-            "GEOMETRY_NODE_INPUT": self._create_geometry_node_input,
-            "SCENE_PROPERTY": self._create_scene_input,
+            BindingType.MATERIAL_SOCKET.value: self._create_material_socket,
+            BindingType.SHADER_INSERT.value: self._create_shader_insert,
+            BindingType.MODIFIER_PROPERTY.value: self._create_modifier_property,
+            BindingType.GEOMETRY_NODE_INPUT.value: self._create_geometry_node_input,
+            BindingType.SCENE_PROPERTY.value: self._create_scene_input,
         }
 
     # ------------------------------------------------------------------
@@ -76,21 +77,21 @@ class BindingFactory:
             metadata.material,
             "material",
             parameter_id,
-            "MATERIAL_SOCKET",
+            BindingType.MATERIAL_SOCKET,
         )
 
         node = self._require(
             metadata.node,
             "node",
             parameter_id,
-            "MATERIAL_SOCKET",
+            BindingType.MATERIAL_SOCKET,
         )
 
         socket = self._require(
             metadata.socket_input,
             "socket_input",
             parameter_id,
-            "MATERIAL_SOCKET",
+            BindingType.MATERIAL_SOCKET,
         )
 
         return MaterialSocketBinding(
@@ -109,14 +110,14 @@ class BindingFactory:
             metadata.modifier,
             "modifier",
             parameter_id,
-            "MODIFIER_PROPERTY",
+            BindingType.MODIFIER_PROPERTY,
         )
 
         property = self._require(
             metadata.property,
             "property",
             parameter_id,
-            "MODIFIER_PROPERTY",
+            BindingType.MODIFIER_PROPERTY,
         )
 
         return ModifierPropertyBinding(
@@ -134,21 +135,21 @@ class BindingFactory:
             metadata.modifier,
             "modifier",
             parameter_id,
-            "GEOMETRY_NODE_INPUT",
+            BindingType.GEOMETRY_NODE_INPUT,
         )
 
         socket = self._require(
             metadata.socket_input,
             "socket_input",
             parameter_id,
-            "GEOMETRY_NODE_INPUT",
+            BindingType.GEOMETRY_NODE_INPUT,
         )
 
         node = self._require(
             metadata.node,
             "node",
             parameter_id,
-            "GEOMETRY_NODE_INPUT",
+            BindingType.GEOMETRY_NODE_INPUT,
         )
 
         return GeometryNodeInputBinding(
@@ -159,23 +160,15 @@ class BindingFactory:
         )
 
     def _create_scene_input(self, parameter_id: str, metadata: BindingMetadata) -> ParameterBinding:
-        scene = self._require(
-            metadata.scene,
-            "scene",
-            parameter_id,
-            "SCENE_PROPERTY",
-        )
-
         property = self._require(
             metadata.property,
             "property",
             parameter_id,
-            "SCENE_PROPERTY",
+            BindingType.SCENE_PROPERTY,
         )
 
         return ScenePropertyBinding(
             parameter_id=parameter_id,
-            scene_name=scene,
             property_path=property,
         )
 
@@ -184,28 +177,28 @@ class BindingFactory:
             metadata.material,
             "material",
             parameter_id,
-            "MATERIAL_SOCKET",
+            BindingType.MATERIAL_SOCKET,
         )
 
         node = self._require(
             metadata.node,
             "node",
             parameter_id,
-            "MATERIAL_SOCKET",
+            BindingType.MATERIAL_SOCKET,
         )
 
         socket_input = self._require(
             metadata.socket_input,
             "socket_input",
             parameter_id,
-            "MATERIAL_SOCKET",
+            BindingType.MATERIAL_SOCKET,
         )
 
         socket_output = self._require(
             metadata.socket_output,
             "socket_output",
             parameter_id,
-            "MATERIAL_SOCKET",
+            BindingType.MATERIAL_SOCKET,
         )
 
         return ShaderInsertBinding(
@@ -225,7 +218,7 @@ class BindingFactory:
         value: str | None,
         field_name: str,
         parameter_id: str,
-        binding_type: str,
+        binding_type: BindingType,
     ) -> str:
 
         if not value:

@@ -1,8 +1,12 @@
 from . import (
+    baker_settings,
     cage,
 )
 
-modules = (cage,)
+modules = (
+    baker_settings,
+    cage,
+)
 
 
 def register():

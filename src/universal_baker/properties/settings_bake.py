@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import bpy
-from .settings_output import UBK_Output
+
 from .settings_base import UBK_Settings
+from .settings_output import UBK_Output
 
 
 class UBK_BakeSettings(UBK_Settings):

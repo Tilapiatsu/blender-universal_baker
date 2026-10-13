@@ -5,14 +5,18 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from universal_baker.constant import LOG
+
+from ..bakers.base import BakerBase
 from ..core.registry_baker import registry_baker
+from ..core.registry_definition import registry_definition
+from ..parameter.baker_custom.metadata_loader import MetadataLoader as metadata_loader_custom
 from ..resources.asset_external import AssetExtrenal
 from ..runtime.asset_setup import BakerExecution
 from ..runtime.bake_objects import BakeObjects
 from ..runtime.context_bake import BakeContext
 from ..services.asset_external_setup import AssetExternalBakeSetup
 from ..services.visibility_override import VisibilityOverride
-from .base import BakerBase
 
 if TYPE_CHECKING:
     from ..parameter.metadata import ParameterMetadata
@@ -27,8 +31,24 @@ class CustomBaker(BakerBase):
     icon = "TEXTURE"
     blender_bake_type = "EMIT"
     accumulator_id = "ALPHA_OVER"
-    asset_path: Path
     is_custom: bool = True
+
+    @property
+    def asset_path(self) -> Path | None:
+        assets_path = Path(__file__).parent / "assets"
+        blend_files = [
+            f
+            for f in assets_path.iterdir()
+            if f.is_file() and f.suffix.lower() == ".blend" and f.stem == self.id.lower()
+        ]
+
+        if len(blend_files) == 0 or len(blend_files) > 1:
+            LOG.error(f"{len(blend_files)} .blend files found while registering Custom Baker")
+            for f in blend_files:
+                LOG.debug(f.name)
+            return
+
+        return blend_files[0]
 
     @property
     def parameters(self) -> tuple[ParameterMetadata, ...]:
@@ -39,6 +59,7 @@ class CustomBaker(BakerBase):
         self,
         bake_objects: BakeObjects,
     ) -> Generator[BakerExecution, Any, Any]:
+        assert self.asset_path is not None
         asset = AssetExtrenal(filepath=self.asset_path)
 
         hide_render = {}
@@ -71,6 +92,7 @@ class CustomBaker(BakerBase):
         super().invalidate_previous_output(ctx)
 
     def configure_preview_material(self, material):
+        assert self.asset_path is not None
         asset = AssetExtrenal(filepath=self.asset_path)
         material.use_nodes = True
         dst_tree = material.node_tree
@@ -145,21 +167,16 @@ class CustomBaker(BakerBase):
         """Save Bake to disk."""
         super().export_file(ctx)
 
+    def register_custom(self):
+        if self.asset_path is None:
+            return
 
-classes = (CustomBaker,)
+        LOG.info(f"Registering Building Custom Baker : {self.id}")
+        self.register_property_class()
+        registry_baker.register(self)
 
-
-def register():
-    for c in classes:
-        baker = c()
-        baker.register_custom()
-
-
-def unregister():
-    for c in classes:
-        registry_baker.unregister_custom(c.id)
-
-
-def refresh():
-    unregister()
-    register()
+        registry_definition.register_custom_lazy(
+            identifier=self.id,
+            asset_path=self.asset_path,
+            loader=metadata_loader_custom.load_definition,
+        )

@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import bpy
-from universal_baker.parameter.parameter import ParameterOption
 
 from ..core.registry_baker import registry_baker
 from ..enum.image_colorspace import ImageColorSpace
 from ..enum.view_transform import DisplayDevice, ViewTransform
-from ..parameter.metadata import BindingMetadata, ParameterMetadata
+from ..parameter.metadata import BindingMetadata, BindingType, ParameterMetadata
+from ..parameter.parameter import ParameterOption, ParameterType
 from ..runtime.bake_objects import BakeObjects
 from ..runtime.color_management_info import ColorManagementInfo
 from ..runtime.context_bake import BakeContext
@@ -41,8 +41,7 @@ class NormalBaker(BakerBase):
 
         b: tuple[BindingMetadata, ...] = (
             BindingMetadata(
-                binding_type="SCENE_PROPERTY",
-                scene=bpy.context.scene.name,
+                binding_type=BindingType.SCENE_PROPERTY,
                 property="render.bake.normal_space",
             ),
         )
@@ -61,7 +60,7 @@ class NormalBaker(BakerBase):
             name="Space",
             default="TANGENT",
             description="Choose Normal Space for Baking.",
-            type="ENUM",
+            type=ParameterType.ENUM,
             options=options,
             category="Influence",
             order=0,
@@ -100,8 +99,7 @@ class NormalBaker(BakerBase):
 
         b: tuple[BindingMetadata, ...] = (
             BindingMetadata(
-                binding_type="SCENE_PROPERTY",
-                scene=bpy.context.scene.name,
+                binding_type=BindingType.SCENE_PROPERTY,
                 property="render.bake.normal_r",
             ),
         )
@@ -110,7 +108,7 @@ class NormalBaker(BakerBase):
             name="R",
             default="POS_X",
             description="Axis to Bake in Red Channel.",
-            type="ENUM",
+            type=ParameterType.ENUM,
             options=options,
             category="Influence",
             order=1,
@@ -121,8 +119,7 @@ class NormalBaker(BakerBase):
 
         b: tuple[BindingMetadata, ...] = (
             BindingMetadata(
-                binding_type="SCENE_PROPERTY",
-                scene=bpy.context.scene.name,
+                binding_type=BindingType.SCENE_PROPERTY,
                 property="render.bake.normal_g",
             ),
         )
@@ -131,7 +128,7 @@ class NormalBaker(BakerBase):
             name="G",
             default="POS_Y",
             description="Axis to Bake in Green Channel.",
-            type="ENUM",
+            type=ParameterType.ENUM,
             options=options,
             category="Influence",
             order=2,
@@ -143,8 +140,7 @@ class NormalBaker(BakerBase):
 
         b: tuple[BindingMetadata, ...] = (
             BindingMetadata(
-                binding_type="SCENE_PROPERTY",
-                scene=bpy.context.scene.name,
+                binding_type=BindingType.SCENE_PROPERTY,
                 property="render.bake.normal_b",
             ),
         )
@@ -153,7 +149,7 @@ class NormalBaker(BakerBase):
             name="B",
             default="POS_Z",
             description="Axis to Bake in Blue Channel.",
-            type="ENUM",
+            type=ParameterType.ENUM,
             options=options,
             category="Influence",
             order=3,

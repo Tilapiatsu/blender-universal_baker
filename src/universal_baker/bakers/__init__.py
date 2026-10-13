@@ -1,6 +1,5 @@
 from . import (
     albedo,
-    custom,
     diffuse,
     normal,
 )
@@ -8,7 +7,6 @@ from . import (
 modules = (
     diffuse,
     albedo,
-    custom,
     normal,
 )
 

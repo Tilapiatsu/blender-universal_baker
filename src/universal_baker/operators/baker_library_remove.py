@@ -5,7 +5,8 @@ import bpy
 from ..constant import LOG, get_prefs
 from ..services.baker_library import BakerLibraryService
 from .base import UBK_OT_Base
-from ..bakers.custom import refresh
+
+# from ..bakers.custom import refresh
 
 
 class UBK_OT_BakerlibraryRemove(UBK_OT_Base):
@@ -40,7 +41,7 @@ class UBK_OT_BakerlibraryRemove(UBK_OT_Base):
 
         service.remove(preferences, preferences.active_baker_library_idx)
 
-        refresh()
+        # refresh()
 
         return {"FINISHED"}
 

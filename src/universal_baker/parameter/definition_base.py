@@ -43,6 +43,10 @@ class DefinitionBase:
     # ------------------------------------------------------------------
 
     @property
+    def settings_name(self) -> str:
+        return f"{self.name.lower().replace(' ', '_')}_settings"
+
+    @property
     def parameter_map(self) -> dict[str, Parameter]:
         """
         Return parameters indexed by identifier.

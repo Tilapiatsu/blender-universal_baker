@@ -1,14 +1,11 @@
 from __future__ import annotations
 
-from collections.abc import Generator
-from contextlib import contextmanager
-from typing import Any
-
 import bpy
 
 from ..core.registry_baker import registry_baker
 from ..enum.image_colorspace import ImageColorSpace
-from ..parameter.metadata import BindingMetadata, ParameterMetadata
+from ..parameter.metadata import BindingMetadata, BindingType, ParameterMetadata
+from ..parameter.parameter import ParameterType
 from ..runtime.bake_objects import BakeObjects
 from ..runtime.context_bake import BakeContext
 from ..services.visibility_override import VisibilityOverride
@@ -34,8 +31,7 @@ class AlbedoBaker(BakerBase):
 
         b: tuple[BindingMetadata, ...] = (
             BindingMetadata(
-                binding_type="SCENE_PROPERTY",
-                scene=bpy.context.scene.name,
+                binding_type=BindingType.SCENE_PROPERTY,
                 property="render.bake.use_pass_direct",
             ),
         )
@@ -44,7 +40,7 @@ class AlbedoBaker(BakerBase):
             name="Direct",
             default=False,
             description="Add Direct Lighting Contribution",
-            type="BOOL",
+            type=ParameterType.BOOL,
             category="Contribution",
             order=0,
             visible=False,
@@ -55,8 +51,7 @@ class AlbedoBaker(BakerBase):
 
         b: tuple[BindingMetadata, ...] = (
             BindingMetadata(
-                binding_type="SCENE_PROPERTY",
-                scene=bpy.context.scene.name,
+                binding_type=BindingType.SCENE_PROPERTY,
                 property="render.bake.use_pass_indirect",
             ),
         )
@@ -65,7 +60,7 @@ class AlbedoBaker(BakerBase):
             name="Indirect",
             default=False,
             description="Add Indirect Lighting Contribution",
-            type="BOOL",
+            type=ParameterType.BOOL,
             category="Contribution",
             order=1,
             visible=False,
@@ -76,8 +71,7 @@ class AlbedoBaker(BakerBase):
 
         b: tuple[BindingMetadata, ...] = (
             BindingMetadata(
-                binding_type="SCENE_PROPERTY",
-                scene=bpy.context.scene.name,
+                binding_type=BindingType.SCENE_PROPERTY,
                 property="render.bake.use_pass_color",
             ),
         )
@@ -86,7 +80,7 @@ class AlbedoBaker(BakerBase):
             name="Color",
             default=True,
             description="Color the pass",
-            type="BOOL",
+            type=ParameterType.BOOL,
             category="Contribution",
             order=2,
             visible=False,

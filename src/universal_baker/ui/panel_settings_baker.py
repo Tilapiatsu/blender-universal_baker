@@ -6,9 +6,9 @@ import bpy
 
 from ..core.controller import BakeController
 from ..core.registry_definition import registry_definition
+from ..parameters_definition.baker_settings import UBK_BakerSettings
 from ..properties.baker import UBK_Baker
-from ..properties.custom_baker import UBK_CustomBaker
-from .custom_baker_ui import BakerParameterUI
+from ..ui.baker_settings_ui import BakerSettingsUI
 from .panel import (
     UBK_PT_MainPanel,
     baker_needed,
@@ -86,9 +86,9 @@ class UBK_PT_BakerSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
 
         project = BakeController.project(context)
         if project is not None:
-            custom_baker = active_baker.custom_baker
-            if custom_baker is not None:
-                self.draw_baker_settings(box, active_baker, custom_baker)
+            baker_settings = active_baker.baker_settings
+            if baker_settings is not None:
+                self.draw_baker_settings(box, active_baker, baker_settings)
 
         box = layout.box()
         box.prop(
@@ -103,13 +103,18 @@ class UBK_PT_BakerSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
         else:
             box.label(text="Inherited from Global Settings")
 
-    def draw_baker_settings(self, layout, baker: UBK_Baker, custom_baker: UBK_CustomBaker):
+    def draw_baker_settings(self, layout, baker: UBK_Baker, baker_settings: UBK_BakerSettings):
         definition = registry_definition.get(baker.baker)
         if definition is None:
             layout.label(text=f"Definition for {baker.baker} not found")
             return
 
-        BakerParameterUI.draw(layout, definition, custom_baker)
+        BakerSettingsUI.draw(
+            layout,
+            definition,
+            baker.baker_settings,
+        )
+        # BakerParameterUI.draw(layout, definition, custom_baker)
 
 
 # -------------------------------------------------------------------------

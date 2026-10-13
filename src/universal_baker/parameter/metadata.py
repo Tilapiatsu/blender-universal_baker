@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from enum import StrEnum
 from typing import Any
 
-from .parameter import ParameterOption
+import bpy
+
+from .parameter import ParameterOption, ParameterType
 
 METADATA_TEXT_NAME = "UBK_BAKER_METADATA"
 
@@ -26,6 +29,14 @@ class MetadataValidationError(MetadataError):
     """The metadata has an invalid structure or value."""
 
 
+class BindingType(StrEnum):
+    MATERIAL_SOCKET = "MATERIAL_SOCKET"
+    SHADER_INSERT = "SHADER_INSERT"
+    MODIFIER_PROPERTY = "MODIFIER_PROPERTY"
+    GEOMETRY_NODE_INPUT = "GEOMETRY_NODE_INPUT"
+    SCENE_PROPERTY = "SCENE_PROPERTY"
+
+
 @dataclass(frozen=True)
 class BindingMetadata:
     """
@@ -35,7 +46,7 @@ class BindingMetadata:
     Blender or ParameterBinding.
     """
 
-    binding_type: str
+    binding_type: BindingType
 
     # Material socket binding
     material: str | None = None
@@ -47,7 +58,6 @@ class BindingMetadata:
     modifier: str | None = None
 
     # Scene property Binding
-    scene: str | None = None
     property: str | None = None
 
     # Additional binding-specific information can be kept
@@ -68,7 +78,7 @@ class ParameterMetadata:
 
     identifier: str
     name: str
-    type: str
+    type: ParameterType
     default: Any = None
     description: str = ""
 
@@ -78,12 +88,85 @@ class ParameterMetadata:
     soft_min: float | int | None = None
     soft_max: float | int | None = None
 
-    unit: str | None = None
+    unit: str = "NONE"
+    subtype: str = "NONE"
     category: str | None = None
     order: int = 0
     visible: bool = True
     options: tuple[ParameterOption, ...] = ()
     bindings: tuple[BindingMetadata, ...] = ()
+
+    @property
+    def blender_property(self):
+        match self.type:
+            case ParameterType.FLOAT:
+                return bpy.props.FloatProperty(
+                    name=self.name,
+                    default=self.default,
+                    description=self.description,
+                    soft_min=self.soft_min,
+                    soft_max=self.soft_max,
+                    min=self.min_value,
+                    max=self.max_value,
+                    unit=self.unit,
+                    subtype=self.subtype,
+                )
+            case ParameterType.BOOL:
+                return bpy.props.BoolProperty(
+                    name=self.name,
+                    default=self.default,
+                    description=self.description,
+                )
+            case ParameterType.INT:
+                return bpy.props.IntProperty(
+                    name=self.name,
+                    default=self.default,
+                    description=self.description,
+                    soft_min=self.soft_min,
+                    soft_max=self.soft_max,
+                    min=self.min_value,
+                    max=self.max_value,
+                    unit=self.unit,
+                    subtype=self.subtype,
+                )
+            case ParameterType.STRING:
+                return bpy.props.StringProperty(
+                    name=self.name,
+                    default=self.default,
+                    description=self.description,
+                )
+            case ParameterType.VECTOR:
+                return bpy.props.FloatVectorProperty(
+                    name=self.name,
+                    default=self.default,
+                    description=self.description,
+                    soft_min=self.soft_min,
+                    soft_max=self.soft_max,
+                    min=self.min_value,
+                    max=self.max_value,
+                    unit=self.unit,
+                    subtype=self.subtype,
+                )
+            case ParameterType.OBJ:
+                return bpy.props.PointerProperty(
+                    name=self.name,
+                    description=self.description,
+                    type=bpy.types.Object,
+                )
+            case ParameterType.SHADER:
+                return bpy.props.StringProperty(
+                    name=self.name,
+                    default=self.default,
+                    description=self.description,
+                )
+            case ParameterType.ENUM:
+                items = [(o.identifier, o.label, o.description) for o in self.options]
+                return bpy.props.EnumProperty(
+                    name=self.name,
+                    default=self.default,
+                    description=self.description,
+                    items=items,
+                )
 
 
 @dataclass(frozen=True)

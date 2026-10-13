@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from ..core.registry_definition import registry_definition
 from ..parameter.baker_local.metadata_loader import MetadataLoader as metadata_loader_local
-from ..parameter.metadata import BindingMetadata, ParameterMetadata
+from ..parameter.metadata import BindingMetadata, BindingType, ParameterMetadata
+from ..parameter.parameter import ParameterType
 from ..services.cage_object import CageObjectService
 
 
@@ -17,7 +18,7 @@ class DefinitionCage:
 
         b: tuple[BindingMetadata, ...] = (
             BindingMetadata(
-                binding_type="MODIFIER_PROPERTY",
+                binding_type=BindingType.MODIFIER_PROPERTY,
                 modifier=CageObjectService.MODIFIER_NAME,
                 property="strength",
             ),
@@ -27,7 +28,7 @@ class DefinitionCage:
             name="Cage Extrude",
             default=0.1,
             description="The max displacement for the cage",
-            type="FLOAT",
+            type=ParameterType.FLOAT,
             category="Cage",
             order=0,
             visible=True,
