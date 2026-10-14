@@ -155,6 +155,45 @@ class ParameterApplier:
                     )
                 ) from exc
 
+    @classmethod
+    def apply_baker(
+        cls,
+        definition: LocalDefinition | CustomBakerDefinition,
+        context: ParameterContext,
+    ) -> None:
+        """
+        Apply all parameters from baker Settings Property Group.
+        """
+
+        for parameter in definition.parameters:
+            parameter_id = parameter.identifier
+
+            value = getattr(context.ui_prop, parameter_id, None)
+
+            if value is None:
+                continue
+
+            bindings = definition.get_bindings(parameter_id)
+
+            if bindings is None:
+                continue
+
+            binding = None
+
+            try:
+                for binding in bindings:
+                    binding.apply(value=value, context=context)
+
+            except Exception as exc:
+                raise ParameterApplyError(
+                    cls._format_error(
+                        definition=definition,
+                        parameter_id=parameter_id,
+                        binding=binding,
+                        value=value,
+                    )
+                ) from exc
+
     @staticmethod
     def _format_error(
         definition: CustomBakerDefinition | LocalDefinition,

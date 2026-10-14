@@ -16,13 +16,13 @@ class Curvature(CustomBaker):
     icon = "TEXTURE"
     blender_bake_type = "EMIT"
     accumulator_id = "ALPHA_OVER"
-    clear_preview_material: bool = False
-    bake_colorspace: ImageColorSpace = ImageColorSpace.ACES_2_0
+    clear_preview_material: bool = True
+    bake_colorspace: ImageColorSpace = ImageColorSpace.NON_COLOR
     image_colorspace: ImageColorSpace = ImageColorSpace.SRGB
     color_management_info = ColorManagementInfo(
         apply_view_transform=True,
         display_device=DisplayDevice.SRGB,
-        view_transform=ViewTransform.ACES_2_0,
+        view_transform=ViewTransform.RAW,
         look="None",
         exposure=0.0,
         gamma=1.0,
@@ -35,56 +35,8 @@ class Curvature(CustomBaker):
         b: tuple[BindingMetadata, ...] = (
             BindingMetadata(
                 binding_type=BindingType.MATERIAL_SOCKET,
-                material="UBK_Ambient_Occlusion",
-                node="Ambient Occlusion",
-                socket_input="Distance",
-            ),
-        )
-        p = ParameterMetadata(
-            identifier="Distance",
-            name="Distance",
-            default=0.0,
-            description="Ambient Occlusion Distance.",
-            type=ParameterType.FLOAT,
-            soft_min=0.0,
-            soft_max=1000000.0,
-            min_value=0.0,
-            max_value=1000000.0,
-            category="Ambient Occlusion",
-            order=0,
-            visible=True,
-            bindings=b,
-        )
-
-        parameters += (p,)
-
-        b: tuple[BindingMetadata, ...] = (
-            BindingMetadata(
-                binding_type=BindingType.MATERIAL_SOCKET,
-                material="UBK_Ambient_Occlusion",
-                node="Ambient Occlusion",
-                socket_input="only_local",
-            ),
-        )
-        p = ParameterMetadata(
-            identifier="OnlyLocal",
-            name="Only Local",
-            default=False,
-            description="Compute Ambient Occlusion without considering neighboors objects.",
-            type=ParameterType.BOOL,
-            category="Ambient Occlusion",
-            order=1,
-            visible=True,
-            bindings=b,
-        )
-
-        parameters += (p,)
-
-        b: tuple[BindingMetadata, ...] = (
-            BindingMetadata(
-                binding_type=BindingType.MATERIAL_SOCKET,
-                material="UBK_Ambient_Occlusion",
-                node="SN_Bake_CC",
+                material="UBK_Curvature",
+                node="SN_Curvature",
                 socket_input="GlobalContrast",
             ),
         )
@@ -109,15 +61,15 @@ class Curvature(CustomBaker):
         b: tuple[BindingMetadata, ...] = (
             BindingMetadata(
                 binding_type=BindingType.MATERIAL_SOCKET,
-                material="UBK_Ambient_Occlusion",
-                node="SN_Bake_CC",
+                material="UBK_Curvature",
+                node="SN_Curvature",
                 socket_input="FineContrast",
             ),
         )
         p = ParameterMetadata(
             identifier="FineContrast",
             name="Fine Contrast",
-            default=0.0,
+            default=0.9,
             description="Ambient Occlusion Fine Contrast.",
             type=ParameterType.FLOAT,
             soft_min=0.0,
@@ -135,8 +87,8 @@ class Curvature(CustomBaker):
         b: tuple[BindingMetadata, ...] = (
             BindingMetadata(
                 binding_type=BindingType.MATERIAL_SOCKET,
-                material="UBK_Ambient_Occlusion",
-                node="SN_Bake_CC",
+                material="UBK_Curvature",
+                node="SN_Curvature",
                 socket_input="Gamma",
             ),
         )

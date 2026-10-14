@@ -36,7 +36,25 @@ LOG_SCOPE = "Baking"
 
 
 def update_baker_property(self, context):
-    pass
+    definition = registry_definition.require(self.name)
+
+    if definition is None:
+        return
+
+    for o in bpy.context.scene.objects:
+        if o.type != "MESH":
+            continue
+
+        materials = [s.material for s in o.material_slots if s is not None and s.material is not None]
+
+        context = ParameterContext(
+            object=o,
+            materials=materials,
+            ui_prop=self,
+            is_dragging=bpy.context.scene.ubk_project.visualization.is_dragging,
+        )
+
+        ParameterApplier.apply_baker(definition, context)
 
 
 class BakerBase(ABC):
@@ -310,6 +328,8 @@ class BakerBase(ABC):
 
     def register_property_class(self):
         c = ClassFactory(self.property_class_name, None, bpy.types.PropertyGroup)
+        c.__annotations__["name"] = bpy.props.StringProperty(name="Baker ID", default=self.id)
+
         for p in self.parameters:
             LOG.info(f"Registering {self.id} Property : {p.identifier}")
             c.__annotations__[p.identifier] = p.blender_property(update_baker_property)

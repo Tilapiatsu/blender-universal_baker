@@ -35,6 +35,7 @@ class PackerBase(ABC):
     image_colorspace: ImageColorSpace = ImageColorSpace.SRGB
     view_transform = SceneViewTransform(view_transform=ViewTransform.STANDARD)
     color_management_info = ColorManagementInfo()
+    settings_name: str = "packer_settings"
 
     def poll(self, task: Task) -> bool:
         """Whether this packer can execute this task."""

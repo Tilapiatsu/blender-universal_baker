@@ -150,6 +150,13 @@ class DefinitionRegistry:
 
         return definition
 
+    def require(self, identifier: str) -> LocalDefinition | CustomBakerDefinition:
+        definition = self.get(identifier)
+        if definition is None:
+            raise DefinitionNotFoundError(f"No Definition registered fo '{identifier}.")
+
+        return definition
+
     # ------------------------------------------------------------------
     # State
     # ------------------------------------------------------------------

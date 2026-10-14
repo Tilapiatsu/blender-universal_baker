@@ -21,6 +21,7 @@ if TYPE_CHECKING:
     from ..packers.base import PackerBase
     from ..services.material_override import MaterialSnapshot
     from .visualization_state import SceneVisualizationState
+    from ..parameters_definition.baker_settings import UBK_BakerSettings
 
 
 class BakeVisualizationRuntime:
@@ -359,6 +360,47 @@ class BakeVisualizationRuntime:
                     min,
                     max,
                 )
+
+    def refresh_baker_settings(self):
+        LOG.debug("Refresh Baker Settings")
+        if self.active_producer is None:
+            LOG.error("No Active Producer Set")
+            return
+
+        definition = registry_definition.require(self.active_producer.id)
+
+        if definition is None or self.producer_uuid is None:
+            LOG.error(f"Definition not found for {self.active_producer.id}")
+            return
+
+        from ..core.controller import BakeController
+
+        baker = BakeController.get_baker_from_uuid(self.producer_uuid)
+
+        if baker is None:
+            LOG.error("No Active Baker found")
+            return
+
+        ui_props = getattr(baker.baker_settings, self.active_producer.settings_name, None)
+
+        if ui_props is None:
+            return
+
+        for o in bpy.context.scene.objects:
+            if o.type != "MESH":
+                continue
+
+            materials = [s.material for s in o.material_slots if s is not None and s.material is not None]
+
+            context = ParameterContext(
+                object=o,
+                materials=materials,
+                ui_prop=ui_props,
+                scene=bpy.context.scene,
+                is_dragging=False,
+            )
+
+            ParameterApplier.apply_baker(definition, context)
 
     def refresh_preview_parameters(self, ui_prop: UBK_ParameterValue | None = None, force: bool = False):
         """Make sure the UI property element binds propely to the material, modifier or geometry node element defined in

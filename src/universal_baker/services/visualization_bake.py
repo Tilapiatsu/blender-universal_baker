@@ -392,7 +392,6 @@ class BakeVisualizationService:
 
         scenes = ViewportService.capture_state()
 
-        # ISSUE: Preview Parameters doesn't work in selected to active mode
         for scene_name, scene_state in scenes.scenes.items():
             cls._runtime.set_scene_state(
                 scene_name,
@@ -419,8 +418,7 @@ class BakeVisualizationService:
 
             cls._runtime.set_active_producer(data.producer)
 
-            if data.producer.is_custom:
-                cls._runtime.refresh_preview_parameters(force=True)
+            cls._runtime.refresh_baker_settings()
 
         else:
             # TODO: Investigate slight contrast difference beetween the preview and display of baked images

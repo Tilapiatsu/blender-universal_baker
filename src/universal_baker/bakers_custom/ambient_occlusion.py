@@ -16,13 +16,13 @@ class AmbientOcclusion(CustomBaker):
     icon = "TEXTURE"
     blender_bake_type = "EMIT"
     accumulator_id = "ALPHA_OVER"
-    clear_preview_material: bool = False
-    bake_colorspace: ImageColorSpace = ImageColorSpace.ACES_2_0
+    clear_preview_material: bool = True
+    bake_colorspace: ImageColorSpace = ImageColorSpace.NON_COLOR
     image_colorspace: ImageColorSpace = ImageColorSpace.SRGB
     color_management_info = ColorManagementInfo(
         apply_view_transform=True,
         display_device=DisplayDevice.SRGB,
-        view_transform=ViewTransform.ACES_2_0,
+        view_transform=ViewTransform.RAW,
         look="None",
         exposure=0.0,
         gamma=1.0,
