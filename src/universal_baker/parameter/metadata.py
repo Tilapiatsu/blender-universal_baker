@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import Any
+from typing import Any, Callable
 
 import bpy
 
@@ -96,8 +96,7 @@ class ParameterMetadata:
     options: tuple[ParameterOption, ...] = ()
     bindings: tuple[BindingMetadata, ...] = ()
 
-    @property
-    def blender_property(self):
+    def blender_property(self, update: Callable | None = None):
         match self.type:
             case ParameterType.FLOAT:
                 return bpy.props.FloatProperty(
@@ -110,12 +109,14 @@ class ParameterMetadata:
                     max=self.max_value,
                     unit=self.unit,
                     subtype=self.subtype,
+                    update=update,
                 )
             case ParameterType.BOOL:
                 return bpy.props.BoolProperty(
                     name=self.name,
                     default=self.default,
                     description=self.description,
+                    update=update,
                 )
             case ParameterType.INT:
                 return bpy.props.IntProperty(
@@ -128,12 +129,14 @@ class ParameterMetadata:
                     max=self.max_value,
                     unit=self.unit,
                     subtype=self.subtype,
+                    update=update,
                 )
             case ParameterType.STRING:
                 return bpy.props.StringProperty(
                     name=self.name,
                     default=self.default,
                     description=self.description,
+                    update=update,
                 )
             case ParameterType.VECTOR:
                 return bpy.props.FloatVectorProperty(
@@ -146,18 +149,21 @@ class ParameterMetadata:
                     max=self.max_value,
                     unit=self.unit,
                     subtype=self.subtype,
+                    update=update,
                 )
             case ParameterType.OBJ:
                 return bpy.props.PointerProperty(
                     name=self.name,
                     description=self.description,
                     type=bpy.types.Object,
+                    update=update,
                 )
             case ParameterType.SHADER:
                 return bpy.props.StringProperty(
                     name=self.name,
                     default=self.default,
                     description=self.description,
+                    update=update,
                 )
             case ParameterType.ENUM:
                 items = [(o.identifier, o.label, o.description) for o in self.options]
@@ -166,6 +172,7 @@ class ParameterMetadata:
                     default=self.default,
                     description=self.description,
                     items=items,
+                    update=update,
                 )
 
 

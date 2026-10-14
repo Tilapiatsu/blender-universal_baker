@@ -35,6 +35,10 @@ if TYPE_CHECKING:
 LOG_SCOPE = "Baking"
 
 
+def update_baker_property(self, context):
+    pass
+
+
 class BakerBase(ABC):
     """Abstract baker interface.
 
@@ -305,11 +309,10 @@ class BakerBase(ABC):
         )
 
     def register_property_class(self):
-
         c = ClassFactory(self.property_class_name, None, bpy.types.PropertyGroup)
         for p in self.parameters:
             LOG.info(f"Registering {self.id} Property : {p.identifier}")
-            c.__annotations__[p.identifier] = p.blender_property
+            c.__annotations__[p.identifier] = p.blender_property(update_baker_property)
 
         from bpy.utils import register_class
 
