@@ -48,6 +48,7 @@ inputing 10% of the resulution for exemple
 - [ ] Preset System
 - [ ] Bake external : Run another blender instance -> perform the bake -> import the result in current blender instance
 - [ ] Bake network : Investigate the use of [Flamenco](https://flamenco.blender.org/) ?
+- [ ] Create Feature to see normal map as normal in a shader
 
 ## Baker
 

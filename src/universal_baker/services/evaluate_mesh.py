@@ -46,7 +46,7 @@ class EvaluateMesh(Evaluate):
     def needs_evaluation(self) -> bool:
         return super().needs_evaluation
 
-    def __enter__(self):
+    def evaluate(self) -> bpy.types.Mesh | None:
         if self.needs_evaluation:
             with LOG.scope(LOG_SCOPE):
                 LOG.debug(f"Evaluate Object {self.obj.name}")
@@ -60,11 +60,17 @@ class EvaluateMesh(Evaluate):
 
         return self.mesh
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def clean(self) -> None:
         with LOG.scope(LOG_SCOPE):
             if self.evaluated_obj is not None:
                 LOG.debug(f"Clean Evaluated Object : {self.evaluated_obj.name}")
                 self.evaluated_obj.to_mesh_clear()
+
+    def __enter__(self):
+        return self.evaluate()
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.clean()
 
 
 class EvaluateObject(Evaluate):

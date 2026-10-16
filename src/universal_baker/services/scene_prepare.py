@@ -85,13 +85,9 @@ class ScenePrepare:
                         # the remeshing is happening, also remove the ability to localize where the skew correction
                         # should happend
 
-                        CageObjectService.acquire(
-                            evaluated_obj,
-                            obj.settings_cage,
-                        )
-
                         pair = self.get_skew_cage(evaluated_obj, obj.settings_cage, obj.uv_layer)
                         evaluated_obj = pair.proxy.object
+                        obj.settings_cage.cage_object_generated = pair.cage.object
                         cage = pair.cage.object
 
                     else:
@@ -177,9 +173,12 @@ class ScenePrepare:
 
         service = SkewCageBuilder()
 
+        cage = obj.copy()
+        cage.name = obj.name + "_UBK_CAGE"
+
         return service.build(
             target_object=obj,
-            cage_object=settings_cage.cage_object,
+            cage_object=cage,
             skew_image=settings_cage.skew_image,
             uv_layer_name=uv_layer_name,
             cage_extrusion=settings_cage.cage_extrusion,

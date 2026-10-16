@@ -36,6 +36,8 @@ LOG_SCOPE = "Baking"
 
 
 def update_baker_property(self, context):
+    # TODO: Need to optimize, and make sure only the modified property is updated -> Currently all the properties are
+    # updated when one properties is modified
     definition = registry_definition.require(self.name)
 
     if definition is None:

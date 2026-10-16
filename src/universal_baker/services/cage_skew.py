@@ -33,6 +33,7 @@ class _CornerMesh:
     face_normals: np.ndarray
 
     material_indices: list[int]
+    use_smooth: list[bool]
 
 
 class SkewCageBuilder:
@@ -56,9 +57,6 @@ class SkewCageBuilder:
         uv_layer_name: str,
         cage_extrusion: float,
     ) -> CustomCagePair:
-        # depsgraph = bpy.context.evaluated_depsgraph_get()
-        # bpy.context.view_layer.update()
-
         with LOG.scope(LOG_SCOPE), self._ensure_in_scene(target_object), self._ensure_in_scene(cage_object):
             bpy.context.view_layer.update()
 
@@ -153,10 +151,10 @@ class SkewCageBuilder:
         cage_mesh: bpy.types.Mesh,
     ) -> None:
         if len(target_mesh.polygons) != len(cage_mesh.polygons):
-            raise ValueError("Custom cage must have the same polygon count as the low mesh.")
+            raise ValueError("Custom cage must have the same polygon count as the target mesh.")
 
         if len(target_mesh.loops) != len(cage_mesh.loops):
-            raise ValueError("Custom cage must have the same loop count as the low mesh.")
+            raise ValueError("Custom cage must have the same loop count as the  mesh.")
 
         for low_poly, cage_poly in zip(
             target_mesh.polygons,
@@ -226,6 +224,8 @@ class SkewCageBuilder:
             for loop_index in polygon_loops:
                 face_normals[loop_index] = polygon_normal
 
+        use_smooth = [polygon.use_smooth for polygon in mesh.polygons]
+
         uv_layers: dict[str, np.ndarray] = {}
 
         for uv_layer in mesh.uv_layers:
@@ -243,6 +243,7 @@ class SkewCageBuilder:
             corner_normals=corner_normals,
             face_normals=face_normals,
             material_indices=material_indices,
+            use_smooth=use_smooth,
         )
 
     @classmethod
@@ -323,7 +324,7 @@ class SkewCageBuilder:
         #
         # and normalizes that vector for the ray direction.
 
-        generated = target_positions - normalized_directions * distance_scale
+        generated = target_positions + normalized_directions * distance_scale
 
         return generated
 
@@ -346,7 +347,7 @@ class SkewCageBuilder:
             1.0,
         )[:, None]
 
-        directions = original_directions * (1.0 - factors) - face_normals * factors
+        directions = original_directions * (1.0 - factors) + face_normals * factors
 
         lengths = np.linalg.norm(directions, axis=1)
 
@@ -379,8 +380,16 @@ class SkewCageBuilder:
             vertices,
             [],
             faces,
+            shade_flat=False,
         )
         mesh.update()
+
+        # Restore polygon shading flags.
+        for polygon_index, use_smooth in enumerate(corners.use_smooth):
+            mesh.polygons[polygon_index].use_smooth = use_smooth
+
+        # Restore the original evaluated corner normals.
+        mesh.normals_split_custom_set([tuple(normal) for normal in corners.corner_normals])
 
         # Restore UV data by loop index. Since this mesh is loop-expanded,
         # each loop corresponds directly to one generated vertex.
