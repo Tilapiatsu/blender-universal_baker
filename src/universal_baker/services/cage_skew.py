@@ -296,6 +296,7 @@ class SkewCageBuilder:
             normalized_face_normals,
             skew_factors,
         )
+
         direction_lengths = np.linalg.norm(directions, axis=1)
         valid_directions = direction_lengths > 1.0e-8
         normalized_directions = np.zeros_like(directions)
@@ -324,7 +325,7 @@ class SkewCageBuilder:
         #
         # and normalizes that vector for the ray direction.
 
-        generated = target_positions + normalized_directions * distance_scale
+        generated = target_positions - normalized_directions * distance_scale
 
         return generated
 
@@ -347,7 +348,7 @@ class SkewCageBuilder:
             1.0,
         )[:, None]
 
-        directions = original_directions * (1.0 - factors) + face_normals * factors
+        directions = original_directions * (1.0 - factors) - face_normals * factors
 
         lengths = np.linalg.norm(directions, axis=1)
 

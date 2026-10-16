@@ -78,6 +78,12 @@ class ScenePrepare:
                     if obj.settings_cage.is_skew_correction_enabled:
                         remesher = CDTRemesher(evaluated_obj, spacing_cm=5, mask_image=obj.settings_cage.skew_image)
                         evaluated_obj = remesher.build()
+
+                        cage = CageObjectService.acquire(
+                            evaluated_obj,
+                            obj.settings_cage,
+                        )
+
                         # TODO: Need to expose the proper spacing
                         # TODO: Need to clean the Densified mesh after baking
                         # TODO: Need to make remesher working only when the mask value is > 0 -> it look like the simple
@@ -173,12 +179,9 @@ class ScenePrepare:
 
         service = SkewCageBuilder()
 
-        cage = obj.copy()
-        cage.name = obj.name + "_UBK_CAGE"
-
         return service.build(
             target_object=obj,
-            cage_object=cage,
+            cage_object=settings_cage.cage_object_generated,
             skew_image=settings_cage.skew_image,
             uv_layer_name=uv_layer_name,
             cage_extrusion=settings_cage.cage_extrusion,
