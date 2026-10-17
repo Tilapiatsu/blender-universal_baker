@@ -92,6 +92,7 @@ class AssetExternalSetupBase:
         material = prototype.active_material
 
         if material is None:
+            return
             raise ExternalAssetSetupError("Custom baker prototype does not have an active material.")
 
         material_copy = material.copy()
@@ -229,12 +230,6 @@ class AssetExternalCagePortalSetup(AssetExternalSetupBase):
 
             setup.temporary_objects.append(prototype_portal)
 
-            proto_materials = [s.material for s in prototype_portal.material_slots if s.material is not None]
-
-            for m in proto_materials:
-                LOG.debug(f"store prototype material : {m.name}")
-                setup.temporary_materials.append(m)
-
             try:
                 projection_cage = cls._prepare_projection_cage(bake_objects.cage_object, setup)
 
@@ -290,6 +285,10 @@ class AssetExternalCagePortalSetup(AssetExternalSetupBase):
     ) -> bpy.types.Object:
         duplicate = cls._prepare_object(obj, prototype, setup)
         duplicate.name += "_PROJECTION_TARGET"
+        # TODO: Need to force smooth shading of the projection target to truely represent how the cage works during
+        # baking in blender
+        # TODO: Need to modify the position and normal attribute in geometry node to truely represent how cage works
+        # during baking
 
         return duplicate
 
@@ -356,11 +355,6 @@ class AssetExternalCageClippingSetup(AssetExternalSetupBase):
         bake_objects: BakeObjects,
         max_ray_distance: float,
     ) -> AssetSetup:
-        # ISSUE: Need to find a way to pevent nodegroups to accumulate in the blender scene after. Need to find a way to
-        # Cleanup everything properly
-        # ISSUE: When going in Preview Bake : some shader nodes are remaining and still have users ( ClipRayDistance, and the custom baker
-        # shader ( curvature, AO ))
-
         with LOG.scope(LOG_SCOPE):
             prototype_clipping = AssetExternalService.load_prototype(asset_clipping)
 
