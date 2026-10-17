@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import bpy
 
-from ..constant import CAGE_SKEW_REMESHER_ASSET_PATH, LOG
+from ..constant import CAGE_SKEW_REMESHER_ASSET_PATH, LOG, UBK_SKEW_ATTRIBUTE_NAME
 from ..properties.object import UBK_TargetObject
 from ..properties.settings_cage import UBK_CageSettings
 from ..resources.asset_external import AssetExtrenal
@@ -76,7 +76,12 @@ class ScenePrepare:
 
                 if obj.settings_cage.is_cage_generated:
                     if obj.settings_cage.is_skew_correction_enabled:
-                        remesher = CDTRemesher(evaluated_obj, spacing_cm=5, mask_image=obj.settings_cage.skew_image)
+                        remesher = CDTRemesher(
+                            evaluated_obj,
+                            spacing_cm=5,
+                            mask_image=obj.settings_cage.skew_image,
+                            mask_attribute_name=UBK_SKEW_ATTRIBUTE_NAME,
+                        )
                         evaluated_obj = remesher.build()
 
                         cage = CageObjectService.acquire(
@@ -90,6 +95,8 @@ class ScenePrepare:
                         # fact of remeshing the mesh is fixing the skewing entirely, but not being able to paint where
                         # the remeshing is happening, also remove the ability to localize where the skew correction
                         # should happend
+                        # TODO: The cage creation once densified doesn't give proper results : The vertices outside of
+                        # the densified mesh also get skewed because the mask underneath is also displaying the mesh
 
                         pair = self.get_skew_cage(evaluated_obj, obj.settings_cage, obj.uv_layer)
                         evaluated_obj = pair.proxy.object

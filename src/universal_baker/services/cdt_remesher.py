@@ -527,6 +527,7 @@ class CDTRemesher:
         mask_image: bpy.types.Image = None,
         mask_threshold: float = 0.0,
         mask_channel: str = "LUMINANCE",
+        mask_attribute_name: str = "MaskValue",
         preserve_custom_normals: bool = True,
         link_to_collection: bool = False,
     ):
@@ -547,8 +548,8 @@ class CDTRemesher:
         self.mask_image = mask_image
         self.mask_threshold = mask_threshold
         self.mask_channel = mask_channel
+        self.mask_attribute_name = (mask_attribute_name or "MaskValue").strip() or "MaskValue"
         self.preserve_custom_normals = preserve_custom_normals
-        self.link_to_collection = link_to_collection
 
     def build(self):
         src = self.mesh
@@ -673,6 +674,10 @@ class CDTRemesher:
         out_faces = []
         out_face_materials = []
         out_face_smooth = []
+        # Whether each output face belongs to the active (subdivided) mask
+        # region. This is face-local rather than vertex-local so a shared
+        # boundary vertex can have different values on either side.
+        out_face_mask_active = []
         out_corner_normals = []
         out_uvs = {layer.name: [] for layer in source_uv_layers}
         interior_budget = self.max_vertices - len(out_local)
@@ -719,6 +724,7 @@ class CDTRemesher:
             )
             if not selected and not has_split_boundary:
                 out_faces.append(list(vids))
+                out_face_mask_active.append(False)
                 poly = src.polygons[tri.polygon_index]
                 out_face_materials.append(poly.material_index)
                 out_face_smooth.append(poly.use_smooth)
@@ -832,6 +838,21 @@ class CDTRemesher:
                     out_faces.append(face)
                     out_face_materials.append(poly.material_index)
                     out_face_smooth.append(poly.use_smooth)
+                    if mask is not None:
+                        # Classify the FACE by its interior, not by its corner
+                        # vertices. A boundary vertex can be shared by an
+                        # active face and an inactive face, and corner-domain
+                        # data must be allowed to differ on those two sides.
+                        centroid_2d = (q0 + q1 + q2) / 3.0
+                        centroid_weights = barycentric_weights_2d(centroid_2d, a2, b2, c2)
+                        centroid_uv = (
+                            source_uv_triangles[uv_layer.name][0] * centroid_weights[0]
+                            + source_uv_triangles[uv_layer.name][1] * centroid_weights[1]
+                            + source_uv_triangles[uv_layer.name][2] * centroid_weights[2]
+                        )
+                        out_face_mask_active.append(mask.value_at_uv(centroid_uv) > self.mask_threshold)
+                    else:
+                        out_face_mask_active.append(False)
 
                     for cdt_vi in cdt_tri:
                         q = Vector(cdt_verts[cdt_vi])
@@ -861,6 +882,7 @@ class CDTRemesher:
         clean_faces = []
         clean_mats = []
         clean_smooth = []
+        clean_face_mask_active = []
         clean_normals = []
         clean_uvs = {layer.name: [] for layer in source_uv_layers}
         seen_faces = set()
@@ -878,6 +900,7 @@ class CDTRemesher:
             clean_faces.append(face)
             clean_mats.append(out_face_materials[fi])
             clean_smooth.append(out_face_smooth[fi])
+            clean_face_mask_active.append(out_face_mask_active[fi])
             clean_normals.extend(out_corner_normals[loop_cursor : loop_cursor + 3])
             for name in clean_uvs:
                 clean_uvs[name].extend(out_uvs[name][loop_cursor : loop_cursor + 3])
@@ -904,6 +927,37 @@ class CDTRemesher:
                 for i, uv in enumerate(values):
                     dst_uv.data[i].uv = uv
 
+        # Store mask values on the CORNER domain. Initialize every corner to
+        # zero, then write sampled image values only for corners belonging to
+        # faces classified as inside the subdivided region. This is important
+        # at the boundary: the same mesh vertex may have a nonzero corner on
+        # the active face and zero on the adjacent inactive face.
+        if mask is not None and uv_layer is not None:
+            mask_uvs = clean_uvs.get(uv_layer.name, [])
+            if len(mask_uvs) == len(new_mesh.loops) and len(clean_face_mask_active) == len(new_mesh.polygons):
+                attr = new_mesh.attributes.get(self.mask_attribute_name)
+                if attr is not None:
+                    raise ValueError(
+                        f"Corner attribute name '{self.mask_attribute_name}' conflicts "
+                        "with an existing output attribute (for example a UV map). "
+                        "Choose a different name."
+                    )
+                attr = new_mesh.attributes.new(
+                    name=self.mask_attribute_name,
+                    type="FLOAT",
+                    domain="CORNER",
+                )
+                # Explicit initialization documents and guarantees the outside
+                # region remains zero regardless of image values at its edges.
+                for item in attr.data:
+                    item.value = 0.0
+                loop_start = 0
+                for poly_index, poly in enumerate(new_mesh.polygons):
+                    if clean_face_mask_active[poly_index]:
+                        for loop_index in range(loop_start, loop_start + poly.loop_total):
+                            attr.data[loop_index].value = mask.value_at_uv(mask_uvs[loop_index])
+                    loop_start += poly.loop_total
+
         if self.preserve_custom_normals and len(clean_normals) == len(new_mesh.loops):
             try:
                 new_mesh.normals_split_custom_set(clean_normals)
@@ -916,7 +970,6 @@ class CDTRemesher:
         new_obj.name = f"{self.obj.name}_Densified"
         new_obj.matrix_world = matrix_world
         new_obj.animation_data_clear()
-        if self.link_to_collection:
-            for collection in self.obj.users_collection:
-                collection.objects.link(new_obj)
+        for collection in self.obj.users_collection:
+            collection.objects.link(new_obj)
         return new_obj
