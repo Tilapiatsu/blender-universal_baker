@@ -89,7 +89,7 @@ class CageObjectService:
     def _apply_modifier_parameters(cls, modifier: bpy.types.Modifier, cage_settings: UBK_CageSettings) -> None:
         LOG.debug("Apply modifier parameter")
         modifier.vertex_group = cls.VERTEX_GROUP_NAME
-        modifier.direction = "NORMAL"
+        modifier.direction = "CUSTOM_NORMAL"
         modifier.strength = cage_settings.cage_extrusion
         modifier.mid_level = 0.0
         modifier.invert_vertex_group = True
