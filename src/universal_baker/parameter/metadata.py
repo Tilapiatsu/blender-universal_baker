@@ -174,6 +174,13 @@ class ParameterMetadata:
                     items=items,
                     update=update,
                 )
+            case ParameterType.IMG:
+                return bpy.props.PointerProperty(
+                    name=self.name,
+                    description=self.description,
+                    type=bpy.types.Image,
+                    update=update,
+                )
 
 
 @dataclass(frozen=True)

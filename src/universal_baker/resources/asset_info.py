@@ -27,3 +27,12 @@ class CageInfo(AssetInfo):
 class SourcesInfo(AssetInfo):
     max_ray_distance: float
     shader: str
+
+
+@dataclass(slots=True, frozen=True)
+class CageSkewInfo(AssetInfo):
+    uvmap: str
+    skew_image: bpy.types.Image
+    precision: float
+    offset: float
+    optimize_resample: bool

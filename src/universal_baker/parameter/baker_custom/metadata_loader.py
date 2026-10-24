@@ -17,7 +17,7 @@ from ..metadata import (
     MetadataValidationError,
     ParameterMetadata,
 )
-from ..parameter import ParameterOption
+from ..parameter import ParameterOption, ParameterType
 from .definition import CustomBakerDefinition
 
 
@@ -258,6 +258,7 @@ class MetadataLoader:
             "OBJ",
             "VECTOR",
             "SHADER",
+            "IMG",
         }
 
         if parameter_type not in allowed_types:
@@ -288,7 +289,7 @@ class MetadataLoader:
         return ParameterMetadata(
             identifier=identifier,
             name=name,
-            type=parameter_type,
+            type=ParameterType(parameter_type),
             default=default,
             description=description,
             min_value=min_value,

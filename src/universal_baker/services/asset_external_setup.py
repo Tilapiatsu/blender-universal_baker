@@ -9,7 +9,7 @@ from ..core.registry_definition import registry_definition
 from ..parameter.parameter_applier import ParameterApplier
 from ..parameter.parameter_context import ParameterContext
 from ..resources.asset_external import AssetExtrenal
-from ..resources.asset_info import CageInfo, SourcesInfo
+from ..resources.asset_info import CageInfo, CageSkewInfo, SourcesInfo
 from ..runtime.asset_setup import AssetSetup
 from ..runtime.bake_objects import BakeObjects
 from ..services.bake_material import BakeMaterialService
@@ -482,3 +482,120 @@ class AssetExternalCageClippingSetup(AssetExternalSetupBase):
             shader="",
         )
         return sourc_info
+
+
+class AssetExternalCageSkewRemesherSetup(AssetExternalSetupBase):
+    """Apply the External asset to the proper bake objects"""
+
+    @classmethod
+    def prepare(
+        cls,
+        asset_remesher: AssetExtrenal,
+        target_object: bpy.types.Object,
+        uv_map: str,
+        skew_image: bpy.types.Image,
+        precision: float,
+        offset: float,
+    ) -> AssetSetup:
+        with LOG.scope(LOG_SCOPE):
+            prototype_remesher = AssetExternalService.load_prototype(asset_remesher)
+
+            setup = AssetSetup()
+
+            setup.temporary_objects.append(prototype_remesher)
+
+            try:
+                setup.target = cls._prepare_skew_object(target_object, prototype_remesher, setup, "_TARGET")
+                setup.cage = cls._prepare_skew_object(target_object, prototype_remesher, setup, "_CAGE")
+
+                cls._apply_cage_skew_parameters(setup, uv_map, skew_image, precision, offset)
+
+                return setup
+
+            except Exception:
+                LOG.error("Preparation Failed")
+                setup.cleanup()
+
+                # The prototype itself was appended from the
+                # external blend and must also be removed.
+                cls._remove_object(prototype_remesher)
+                raise RuntimeError
+
+    @classmethod
+    def _prepare_skew_object(
+        cls,
+        obj: bpy.types.Object,
+        prototype: bpy.types.Object,
+        setup: AssetSetup,
+        suffix: str = "_TARGET",
+    ) -> bpy.types.Object:
+        duplicate = cls._prepare_object(obj, prototype, setup)
+        duplicate.name += "_SKEW_REMESHED" + suffix
+
+        return duplicate
+
+    @classmethod
+    def _apply_cage_skew_parameters(
+        cls,
+        setup: AssetSetup,
+        uv_map: str,
+        skew_image: bpy.types.Image,
+        precision: float,
+        offset: float,
+    ):
+        definition = registry_definition.get_custom("SKEW_REMESHER")
+        if definition is None:
+            LOG.error("Parameter definition not found")
+            return
+
+        # NOTE: Applying to Target
+        target_info = cls._get_cage_skew_info(uv_map, skew_image, precision, 0)
+        snapshot = ParameterService.snapshot_asset(definition, target_info)
+
+        LOG.debug("Applying Target Skew parameters")
+
+        parameter_context = ParameterContext(
+            object=setup.target,
+            scene=bpy.context.scene,
+        )
+
+        ParameterApplier.apply(
+            definition,
+            snapshot,
+            parameter_context,
+        )
+
+        # NOTE: Applying to Cage
+        cage_info = cls._get_cage_skew_info(uv_map, skew_image, precision, offset)
+        snapshot = ParameterService.snapshot_asset(definition, cage_info)
+
+        LOG.debug("Applying Target Skew parameters")
+
+        parameter_context = ParameterContext(
+            object=setup.cage,
+            scene=bpy.context.scene,
+        )
+
+        ParameterApplier.apply(
+            definition,
+            snapshot,
+            parameter_context,
+        )
+
+    @classmethod
+    def _get_cage_skew_info(
+        cls,
+        uv_map: str,
+        image: bpy.types.Image,
+        precision: float,
+        offset: float,
+        optimize_resample: bool = True,
+    ) -> CageSkewInfo:
+        cage_info = CageSkewInfo(
+            uvmap=uv_map,
+            skew_image=image,
+            precision=precision,
+            offset=offset,
+            optimize_resample=optimize_resample,
+        )
+        return cage_info

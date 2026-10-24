@@ -37,6 +37,7 @@ BAKE_VIEW_TRANSFORM = SceneViewTransform()
 ASSET_PATH = Path(__file__).parent.resolve() / "assets"
 BAKE_PORTAL_PREVIEW_ASSET_PATH = ASSET_PATH / "Bake Portal Preview.blend"
 BAKE_CLIPPING_PREVIEW_ASSET_PATH = ASSET_PATH / "Bake Clipping Preview.blend"
+CAGE_SKEW_REMESHER_ASSET_PATH = ASSET_PATH / "Skew Remesher.blend"
 CAGE_SCENE_OFFSET = -1000
 UBK_SKEW_ATTRIBUTE_NAME = "UBK_SKEW_INTENSITY"
 

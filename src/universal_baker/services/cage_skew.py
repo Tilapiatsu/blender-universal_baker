@@ -7,7 +7,7 @@ import bpy
 import numpy as np
 from mathutils import Matrix, Vector
 
-from ..constant import LOG
+from ..constant import LOG, UBK_SKEW_ATTRIBUTE_NAME
 from .skew_field import SkewField
 from .temp_object import TempObject
 
@@ -94,9 +94,9 @@ class SkewCageBuilder:
                     matrix_world=target_matrix,
                 )
 
-                skew_field = SkewField.from_image(
-                    skew_image,
-                    channel=0,
+                skew_field = SkewField.from_attribute(
+                    mesh=cage_mesh,
+                    attribute_name=UBK_SKEW_ATTRIBUTE_NAME,
                 )
 
                 skew_factors = skew_field.sample(target_corners.uv_layers[uv_layer_name])
@@ -349,6 +349,7 @@ class SkewCageBuilder:
         )[:, None]
 
         directions = original_directions * (1.0 - factors) - face_normals * factors
+        directions = original_directions
 
         lengths = np.linalg.norm(directions, axis=1)
 

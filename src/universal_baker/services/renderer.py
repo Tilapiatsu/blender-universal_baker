@@ -301,8 +301,6 @@ class RendererService:
 
         ctx.target.select_set(True)
 
-        # ISSUE: sources are not selected properly here for custom Bakers only
-
         ctx.session.context.view_layer.objects.active = ctx.target
 
         if ctx.session.context.mode != "OBJECT":
@@ -349,8 +347,9 @@ class RendererService:
         return service.build(
             target_object=ctx.target,
             cage_object=ctx.cage,
-            skew_intensity=ctx.task.settings_cage.skew_intensity,
             cage_extrusion=ctx.task.settings_cage.cage_extrusion,
+            skew_image=ctx.task.settings_cage.skew_map,
+            uv_layer_name=ctx.task.uv_layer,
         )
 
     @classmethod

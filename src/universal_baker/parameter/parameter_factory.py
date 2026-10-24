@@ -35,6 +35,7 @@ class ParameterFactory:
         "OBJ": ParameterType.OBJ,
         "VECTOR": ParameterType.VECTOR,
         "SHADER": ParameterType.SHADER,
+        "IMG": ParameterType.IMG,
     }
 
     def create(self, metadata: ParameterMetadata) -> Parameter:
@@ -155,6 +156,15 @@ class ParameterFactory:
             return value
 
         if parameter_type is ParameterType.SHADER:
+            if value is None:
+                return False
+
+            if not isinstance(value, str):
+                raise ParameterFactoryError(f"SHADER parameter '{metadata.identifier}' requires a string default.")
+
+            return value
+
+        if parameter_type is ParameterType.IMG:
             if value is None:
                 return False
 

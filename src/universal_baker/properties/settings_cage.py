@@ -110,6 +110,13 @@ class UBK_CageSettings(PropertyGroup):
         min=0.0,
         max=1.0,
     )
+    skew_precision: FloatProperty(
+        name="Skew Precision",
+        description="The distance between each bake projection is recalculate to prerform the skew correction",
+        default=0.01,
+        min=0.0001,
+        subtype="DISTANCE",
+    )
 
     @property
     def cage_object(self) -> Object | None:

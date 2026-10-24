@@ -19,14 +19,14 @@ class ScenePrepare:
     target_objects: list[UBK_TargetObject]
     bake_objects: dict[str, BakeObjects]
     evaluate_objects: dict[str, EvaluateObject]
-    evaluated_cages: dict[str, EvaluateObject]
+    evaluate_cages: dict[str, EvaluateObject]
     visibility_override: list[VisibilityOverride]
 
     def __init__(self) -> None:
         self.target_objects = []
         self.bake_objects = {}
         self.evaluate_objects = {}
-        self.evaluated_cages = {}
+        self.evaluate_cages = {}
         self.visibility_override = []
 
     def add_target_object(self, target_object: UBK_TargetObject):
@@ -42,6 +42,7 @@ class ScenePrepare:
             source_objects = [s.object for s in obj.source_objects if s.enabled and s.object is not None]
 
             for s in source_objects:
+                # NOTE: Set source object invisible to camera
                 vo = VisibilityOverride(
                     s,
                     render=True,
@@ -55,10 +56,7 @@ class ScenePrepare:
                 vo.set_visibility()
                 self.visibility_override.append(vo)
 
-            evaluate_obj = EvaluateObject(obj.object)
-            self.evaluate_objects[obj.uuid] = evaluate_obj
-
-            evaluated_obj = evaluate_obj.evaluate()
+            evaluated_obj = self._evaluate_object(obj)
 
             if obj.have_source:
                 if obj.settings_cage.cage_object is None:
@@ -69,39 +67,26 @@ class ScenePrepare:
 
                 cage = obj.settings_cage.cage_object
 
-                # if obj.settings_cage.is_skew_correction_enabled:
-                #     asset = AssetExtrenal(filepath=CAGE_SKEW_REMESHER_ASSET_PATH)
-                #     setup = AssetExternalCageSkewRemesherSetup.prepare(asset, evaluated_obj, obj.uv_layer)
-                #     evaluated_obj = setup.target
-
                 if obj.settings_cage.is_cage_generated:
                     if obj.settings_cage.is_skew_correction_enabled:
-                        remesher = CDTRemesher(
-                            evaluated_obj,
-                            spacing_cm=5,
-                            mask_image=obj.settings_cage.skew_image,
-                            mask_attribute_name=UBK_SKEW_ATTRIBUTE_NAME,
-                        )
-                        evaluated_obj = remesher.build()
-
-                        cage = CageObjectService.acquire(
-                            evaluated_obj,
-                            obj.settings_cage,
+                        asset = AssetExtrenal(filepath=CAGE_SKEW_REMESHER_ASSET_PATH)
+                        setup = AssetExternalCageSkewRemesherSetup.prepare(
+                            asset_remesher=asset,
+                            target_object=evaluated_obj,
+                            uv_map=obj.uv_layer,
+                            skew_image=obj.settings_cage.skew_image,
+                            precision=obj.settings_cage.skew_precision,
+                            offset=obj.settings_cage.cage_extrusion,
                         )
 
-                        # TODO: Need to expose the proper spacing
-                        # TODO: Need to clean the Densified mesh after baking
-                        # TODO: Need to make remesher working only when the mask value is > 0 -> it look like the simple
-                        # fact of remeshing the mesh is fixing the skewing entirely, but not being able to paint where
-                        # the remeshing is happening, also remove the ability to localize where the skew correction
-                        # should happend
-                        # TODO: The cage creation once densified doesn't give proper results : The vertices outside of
-                        # the densified mesh also get skewed because the mask underneath is also displaying the mesh
+                        # ISSUE: Target and Cage doesn't get evaluated properly for some reason
+                        evaluate_obj = EvaluateObject(setup.target)
+                        self.evaluate_objects[obj.uuid] = evaluate_obj
+                        evaluated_obj = evaluate_obj.evaluate()
 
-                        pair = self.get_skew_cage(evaluated_obj, obj.settings_cage, obj.uv_layer)
-                        evaluated_obj = pair.proxy.object
-                        obj.settings_cage.cage_object_generated = pair.cage.object
-                        cage = pair.cage.object
+                        evaluate_cage = EvaluateObject(setup.cage)
+                        self.evaluate_cages[obj.uuid] = evaluate_cage
+                        cage = evaluate_cage.evaluate()
 
                     else:
                         cage = CageObjectService.acquire(
@@ -109,11 +94,10 @@ class ScenePrepare:
                             obj.settings_cage,
                         )
 
+                # Custom Cage
                 elif obj.settings_cage.cage_object is not None:
                     evaluate_cage = EvaluateObject(obj.settings_cage.cage_object)
-
-                    self.evaluated_cages[obj.uuid] = evaluate_cage
-
+                    self.evaluate_cages[obj.uuid] = evaluate_cage
                     cage = evaluate_cage.evaluate()
 
                 assert cage is not None
@@ -153,11 +137,17 @@ class ScenePrepare:
 
         return self.bake_objects
 
+    def _evaluate_object(self, obj: UBK_TargetObject) -> bpy.types.Object:
+        evaluate_obj = EvaluateObject(obj.object)
+        self.evaluate_objects[obj.uuid] = evaluate_obj
+        return evaluate_obj.evaluate()
+
     def __exit__(self, exc_type, exc_value, traceback):
         LOG.debug("Clean Scene Preparation")
         for vo in self.visibility_override:
             vo.revert_visibility()
 
+        return
         for uuid, o in self.evaluate_objects.items():
             bake_object = self.bake_objects.get(uuid)
             if bake_object is not None:
@@ -172,7 +162,7 @@ class ScenePrepare:
 
             o.clean()
 
-        for uuid, o in self.evaluated_cages.items():
+        for uuid, o in self.evaluate_cages.items():
             o.clean()
 
     @classmethod
