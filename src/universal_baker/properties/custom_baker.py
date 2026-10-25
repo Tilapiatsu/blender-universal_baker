@@ -17,9 +17,7 @@ system to make sure they produce the desired result
 
 class UBK_CustomBaker(PropertyGroup):
     asset_id: StringProperty(name="Asset ID")
-
     asset_version: IntProperty(name="Asset Version", default=1)
-
     parameters: CollectionProperty(type=UBK_ParameterValue)
 
 

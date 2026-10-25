@@ -6,9 +6,10 @@ from typing import TYPE_CHECKING
 
 import bpy
 
+
 if TYPE_CHECKING:
     from ..bakers.base import BakerBase
-    from ..properties.custom_baker import UBK_CustomBaker
+    from ..parameters_definition.baker_settings import UBK_BakerSettings
     from ..properties.object import UBK_TargetObject
     from ..runtime.color_management_info import ColorManagementInfo
     from .output_context import OutputContext
@@ -41,7 +42,7 @@ class BakeTask(OutputTask):
     has_multiple_targets: bool = False
 
     @property
-    def baker_settings(self) -> UBK_CustomBaker | None:
+    def baker_settings(self) -> UBK_BakerSettings | None:
         from ..core.controller import BakeController
 
         baker = BakeController.get_baker_from_uuid(self.baker_uuid)
@@ -49,7 +50,7 @@ class BakeTask(OutputTask):
         if baker is None:
             return None
 
-        return baker.custom_baker
+        return baker.baker_settings
 
     @property
     def target(self) -> UBK_TargetObject:

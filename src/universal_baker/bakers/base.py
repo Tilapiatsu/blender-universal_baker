@@ -286,10 +286,6 @@ class BakerBase(ABC):
             LOG.error("Bake Settings not found")
             return
 
-        snapshot = ParameterService.snapshot(definition, state)
-
-        LOG.debug("Applying baker parameters")
-
         materials = ctx.baker_materials
 
         if materials is None:
@@ -298,6 +294,7 @@ class BakerBase(ABC):
 
         objects = ctx.baker_material_objects
 
+        LOG.debug("Applying baker parameters")
         for o in objects:
             object_materials = materials.get(o.name)
 
@@ -309,11 +306,11 @@ class BakerBase(ABC):
                 object=o,
                 materials=object_materials.materials,
                 scene=ctx.scene,
+                ui_prop=getattr(ctx.task.baker_settings, self.settings_name),
             )
 
-            ParameterApplier.apply(
+            ParameterApplier.apply_baker(
                 definition,
-                snapshot,
                 parameter_context,
             )
 
