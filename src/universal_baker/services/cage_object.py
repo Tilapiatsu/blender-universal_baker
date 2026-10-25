@@ -50,7 +50,7 @@ class CageObjectService:
                     settings_cage.cage_object_generated.data.vertices
                 ):
                     LOG.debug("Retrieve Generated Cage")
-                    cls._ensure_modifiers(target, settings_cage)
+                    cls._ensure_modifiers(target, settings_cage.cage_object_generated, True)
                     cls._ensure_cage_transform(settings_cage.cage_object_generated, target.object)
                     cage = settings_cage.cage_object_generated
                 else:
@@ -77,11 +77,11 @@ class CageObjectService:
         cage = bpy.data.objects.get(cage_name)
 
         if cage is not None and cage.data == target.object.data:
-            cls._ensure_modifiers(target, cage)
+            cls._ensure_modifiers(target, cage, True)
         else:
             cage = target.object.copy()
             cage.name = cage_name
-            cls._ensure_modifiers(target, cage)
+            cls._ensure_modifiers(target, cage, True)
 
         return cage
 
@@ -91,13 +91,13 @@ class CageObjectService:
         skew_target = bpy.data.objects.get(skew_target_name)
 
         if skew_target is not None and skew_target.data == target.target_skew.data:
-            cls._ensure_modifiers(target, skew_target)
+            cls._ensure_modifiers(target, skew_target, False)
             return skew_target
 
         skew_target = target.object.copy()
         skew_target.name = skew_target_name
 
-        cls._ensure_modifiers(target, skew_target)
+        cls._ensure_modifiers(target, skew_target, False)
         return skew_target
 
     @classmethod
@@ -105,6 +105,7 @@ class CageObjectService:
         cls,
         target: UBK_TargetObject,
         obj: bpy.types.Object,
+        is_cage: bool,
     ) -> bpy.types.Modifier:
         cls._ensure_vertex_group(target.object)
 
@@ -124,10 +125,14 @@ class CageObjectService:
                 skew_image=target.settings_cage.skew_image,
                 precision=target.settings_cage.skew_precision,
                 offset=target.settings_cage.cage_extrusion,
+                is_cage=is_cage,
             )
-            target.target_skew = setup.target
-            target.settings_cage.cage_object_generated = setup.cage
-            # setup.cleanup()
+            if is_cage:
+                target.settings_cage.cage_object_generated = setup.cage
+            else:
+                target.target_skew = setup.target
+
+            setup.cleanup()
 
             return modifier
 
@@ -190,7 +195,7 @@ class CageObjectService:
                 target.uv_layer,
                 target.settings_cage.skew_image,
                 target.settings_cage.skew_precision,
-                target.settings_cage.offset,
+                target.settings_cage.cage_extrusion,
             )
             snapshot = ParameterService.snapshot_asset(definition, cage_info)
 

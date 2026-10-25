@@ -25,12 +25,12 @@ class ScenePrepare:
     asset_setups: list[AssetSetup]
 
     def __init__(self) -> None:
-        self.target_objects = []
-        self.bake_objects = {}
-        self.evaluate_objects = {}
-        self.evaluate_cages = {}
-        self.visibility_override = []
-        self.asset_setups = []
+        self.target_objects: list[UBK_TargetObject] = []
+        self.bake_objects: dict[str, BakeObjects] = {}
+        self.evaluate_objects: dict[str, EvaluateObject] = {}
+        self.evaluate_cages: dict[str, EvaluateObject] = {}
+        self.visibility_override: list[VisibilityOverride] = []
+        self.asset_setups: list[AssetSetup] = []
 
     def add_target_object(self, target_object: UBK_TargetObject):
         self.target_objects.append(target_object)
@@ -59,8 +59,6 @@ class ScenePrepare:
                 vo.set_visibility()
                 self.visibility_override.append(vo)
 
-            evaluated_obj = self._evaluate_object(obj)
-
             if obj.have_source:
                 if obj.settings_cage.cage_object is None:
                     message = "Cage Object Missing"
@@ -71,31 +69,20 @@ class ScenePrepare:
                 cage = obj.settings_cage.cage_object
 
                 if obj.settings_cage.is_cage_generated:
+                    cage = CageObjectService.acquire(obj)
                     if obj.settings_cage.is_skew_correction_enabled:
-                        asset = AssetExtrenal(filepath=CAGE_SKEW_REMESHER_ASSET_PATH)
-                        setup = AssetExternalCageSkewRemesherSetup.prepare(
-                            asset_remesher=asset,
-                            target_object=evaluated_obj,
-                            uv_map=obj.uv_layer,
-                            skew_image=obj.settings_cage.skew_image,
-                            precision=obj.settings_cage.skew_precision,
-                            offset=obj.settings_cage.cage_extrusion,
-                        )
-                        self.asset_setups.append(setup)
-
-                        evaluated_obj = setup.target
-                        cage = setup.cage
+                        evaluate_obj = EvaluateObject(obj.target_skew)
+                        self.evaluate_objects[obj.uuid] = evaluate_obj
+                        evaluated_obj = evaluate_obj.evaluate()
+                        cage = self._evaluate_cage(obj)
 
                     else:
-                        cage = CageObjectService.acquire(
-                            obj,
-                        )
+                        evaluated_obj = self._evaluate_object(obj)
 
                 # Custom Cage
                 elif obj.settings_cage.cage_object is not None:
-                    evaluate_cage = EvaluateObject(obj.settings_cage.cage_object)
-                    self.evaluate_cages[obj.uuid] = evaluate_cage
-                    cage = evaluate_cage.evaluate()
+                    evaluated_obj = self._evaluate_object(obj)
+                    cage = self._evaluate_cage(obj)
 
                 assert cage is not None
 
@@ -104,6 +91,7 @@ class ScenePrepare:
                 self.visibility_override.append(vo)
 
             else:
+                evaluated_obj = self._evaluate_object(obj)
                 cage = None
 
             bake_object = BakeObjects(
@@ -138,6 +126,11 @@ class ScenePrepare:
         evaluate_obj = EvaluateObject(obj.object)
         self.evaluate_objects[obj.uuid] = evaluate_obj
         return evaluate_obj.evaluate()
+
+    def _evaluate_cage(self, obj: UBK_TargetObject) -> bpy.types.Object:
+        evaluate_cage = EvaluateObject(obj.settings_cage.cage_object)
+        self.evaluate_cages[obj.uuid] = evaluate_cage
+        return evaluate_cage.evaluate()
 
     def __exit__(self, exc_type, exc_value, traceback):
         LOG.debug("Clean Scene Preparation")

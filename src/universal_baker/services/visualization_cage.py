@@ -5,12 +5,12 @@ from typing import TYPE_CHECKING
 
 import bpy
 import gpu
+from mathutils import Color
 from gpu_extras.batch import batch_for_shader
 
 from ..constant import BAKE_CLIPPING_PREVIEW_ASSET_PATH, BAKE_PORTAL_PREVIEW_ASSET_PATH, LOG, UBK_SUBFOLDER_SKEW
 from ..core.registry_baker import registry_baker
 from ..enum.visualization import BakeVisualizationMode
-from ..properties.settings_cage import UBK_CageSettings
 from ..resources.asset_external import AssetExtrenal
 from ..runtime.bake_objects import BakeObjects
 from ..runtime.runtime_visualization_cage import (
@@ -472,6 +472,8 @@ class CageVisualizationService:
                 cls._set_skew_image_active()
                 cls._display_skew_image()
                 cls._enter_mode(cage, "TEXTURE_PAINT")
+                bpy.context.tool_settings.image_paint.brush.color = Color((1, 1, 1))
+                bpy.context.tool_settings.image_paint.brush.secondary_color = Color((0, 0, 0))
 
             return True
 
@@ -502,11 +504,13 @@ class CageVisualizationService:
     # ---------------------------------------------------------
     # Skew
     # ---------------------------------------------------------
+    @staticmethod
+    def _get_skew_image_name(target: UBK_TargetObject) -> str:
+        return f"{target.object.name}_SKEW_IMAGE" if target.object is not None else "UNKOWN_SKEW_IMAGE"
 
     @classmethod
     def _acquire_skew_image(cls, target_object: UBK_TargetObject):
-        runtime = cls._ensure_runtime()
-        image_name = runtime.skew_image_name
+        image_name = cls._get_skew_image_name(target_object)
 
         image = bpy.data.images.get(image_name)
 

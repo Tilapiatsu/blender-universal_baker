@@ -80,6 +80,8 @@ class ParameterApplier:
                     value = cls.clamp_value(value, parameter.soft_min, parameter.soft_max)
                 elif parameter.min_value is not None and parameter.max_value is not None:
                     value = cls.clamp_value(value, parameter.min_value, parameter.max_value)
+            else:
+                continue
 
             bindings = definition.get_bindings(parameter_id)
 
@@ -133,6 +135,8 @@ class ParameterApplier:
                     value = cls.clamp_value(value, parameter.soft_min, parameter.soft_max)
                 elif parameter.min_value is not None and parameter.max_value is not None:
                     value = cls.clamp_value(value, parameter.min_value, parameter.max_value)
+            else:
+                continue
 
             bindings = definition.get_bindings(parameter_id)
 

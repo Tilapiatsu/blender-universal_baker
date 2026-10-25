@@ -37,8 +37,7 @@ class AssetExternalSetupBase:
         result = obj
         if copy:
             result = cls._duplicate_object(obj)
-
-        setup.temporary_objects.append(result)
+            setup.temporary_objects.append(result)
 
         cls._copy_material(prototype, result, setup)
         cls._copy_modifiers(prototype, result)
@@ -499,6 +498,7 @@ class AssetExternalCageSkewRemesherSetup(AssetExternalSetupBase):
         skew_image: bpy.types.Image,
         precision: float,
         offset: float,
+        is_cage: bool,
         copy: bool = False,
     ) -> AssetSetup:
         with LOG.scope(LOG_SCOPE):
@@ -510,9 +510,8 @@ class AssetExternalCageSkewRemesherSetup(AssetExternalSetupBase):
 
             try:
                 setup.target = cls._prepare_skew_object(target_object, prototype_remesher, setup, copy)
-                setup.cage = cls._prepare_skew_object(target_object, prototype_remesher, setup, copy)
 
-                cls._apply_cage_skew_parameters(setup, uv_map, skew_image, precision, offset)
+                cls._apply_cage_skew_parameters(setup, uv_map, skew_image, precision, offset if is_cage else 0)
 
                 return setup
 
@@ -551,30 +550,13 @@ class AssetExternalCageSkewRemesherSetup(AssetExternalSetupBase):
             return
 
         # NOTE: Applying to Target
-        target_info = cls._get_cage_skew_info(uv_map, skew_image, precision, 0)
+        target_info = cls._get_cage_skew_info(uv_map, skew_image, precision, offset)
         snapshot = ParameterService.snapshot_asset(definition, target_info)
 
         LOG.debug("Applying Target Skew parameters")
 
         parameter_context = ParameterContext(
             object=setup.target,
-            scene=bpy.context.scene,
-        )
-
-        ParameterApplier.apply(
-            definition,
-            snapshot,
-            parameter_context,
-        )
-
-        # NOTE: Applying to Cage
-        cage_info = cls._get_cage_skew_info(uv_map, skew_image, precision, offset)
-        snapshot = ParameterService.snapshot_asset(definition, cage_info)
-
-        LOG.debug("Applying Target Skew parameters")
-
-        parameter_context = ParameterContext(
-            object=setup.cage,
             scene=bpy.context.scene,
         )
 

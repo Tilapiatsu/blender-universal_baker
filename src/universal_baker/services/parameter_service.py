@@ -16,6 +16,9 @@ class ParameterServiceError(RuntimeError):
     pass
 
 
+INVALID = "UBK_INVALID"
+
+
 class ParameterService:
     @classmethod
     def snapshot(cls, definition: LocalDefinition | CustomBakerDefinition, state: UBK_CustomBaker) -> ParameterSnapshot:
@@ -53,8 +56,8 @@ class ParameterService:
         snapshot: dict[str, Any] = {}
 
         for parameter in definition.parameters:
-            value = getattr(state, parameter.identifier, None)
-            if value is None:
+            value = getattr(state, parameter.identifier, INVALID)
+            if value == INVALID:
                 raise ParameterServiceError(f"Parameter '{parameter.identifier}' not in props.")
             snapshot[parameter.identifier] = value
 
@@ -69,8 +72,8 @@ class ParameterService:
         snapshot: dict[str, Any] = {}
 
         for parameter in definition.parameters:
-            value = getattr(prop, parameter.identifier, None)
-            if value is None:
+            value = getattr(prop, parameter.identifier, INVALID)
+            if value is INVALID:
                 raise ParameterServiceError(f"Parameter '{parameter.identifier}' not in props.")
             snapshot[parameter.identifier] = value
 
