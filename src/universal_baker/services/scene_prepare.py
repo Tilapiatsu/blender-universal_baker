@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import bpy
 
-from ..constant import CAGE_SKEW_REMESHER_ASSET_PATH, LOG, UBK_SKEW_ATTRIBUTE_NAME
+from ..constant import CAGE_SKEW_REMESHER_ASSET_PATH, LOG
 from ..properties.object import UBK_TargetObject
 from ..properties.settings_cage import UBK_CageSettings
 from ..resources.asset_external import AssetExtrenal
@@ -11,7 +11,6 @@ from ..runtime.bake_objects import BakeObjects
 from ..services.asset_external_setup import AssetExternalCageSkewRemesherSetup
 from .cage_object import CageObjectService
 from .cage_skew import CustomCagePair
-from .cdt_remesher import CDTRemesher
 from .evaluate_mesh import EvaluateObject
 from .visibility_override import VisibilityOverride
 
@@ -89,8 +88,7 @@ class ScenePrepare:
 
                     else:
                         cage = CageObjectService.acquire(
-                            evaluated_obj,
-                            obj.settings_cage,
+                            obj,
                         )
 
                 # Custom Cage

@@ -35,4 +35,5 @@ class CageSkewInfo(AssetInfo):
     skew_image: bpy.types.Image
     precision: float
     offset: float
+    offset_group: str
     optimize_resample: bool

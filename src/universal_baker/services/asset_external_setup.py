@@ -4,7 +4,7 @@ from contextlib import contextmanager
 
 import bpy
 
-from ..constant import CAGE_SCENE_OFFSET, LOG
+from ..constant import CAGE_SCENE_OFFSET, LOG, OFFSET_VERTEX_GROUP_NAME
 from ..core.registry_definition import registry_definition
 from ..parameter.parameter_applier import ParameterApplier
 from ..parameter.parameter_context import ParameterContext
@@ -31,16 +31,19 @@ class AssetExternalSetupBase:
         obj: bpy.types.Object,
         prototype: bpy.types.Object,
         setup: AssetSetup,
+        copy: bool = True,
     ) -> bpy.types.Object:
         LOG.debug(f"Prepare setup for {obj.name}")
-        duplicate = cls._duplicate_object(obj)
+        result = obj
+        if copy:
+            result = cls._duplicate_object(obj)
 
-        setup.temporary_objects.append(duplicate)
+        setup.temporary_objects.append(result)
 
-        cls._copy_material(prototype, duplicate, setup)
-        cls._copy_modifiers(prototype, duplicate)
+        cls._copy_material(prototype, result, setup)
+        cls._copy_modifiers(prototype, result)
 
-        return duplicate
+        return result
 
     @contextmanager
     @staticmethod
@@ -496,6 +499,7 @@ class AssetExternalCageSkewRemesherSetup(AssetExternalSetupBase):
         skew_image: bpy.types.Image,
         precision: float,
         offset: float,
+        copy: bool = False,
     ) -> AssetSetup:
         with LOG.scope(LOG_SCOPE):
             prototype_remesher = AssetExternalService.load_prototype(asset_remesher)
@@ -505,8 +509,8 @@ class AssetExternalCageSkewRemesherSetup(AssetExternalSetupBase):
             setup.temporary_objects.append(prototype_remesher)
 
             try:
-                setup.target = cls._prepare_skew_object(target_object, prototype_remesher, setup, "_TARGET")
-                setup.cage = cls._prepare_skew_object(target_object, prototype_remesher, setup, "_CAGE")
+                setup.target = cls._prepare_skew_object(target_object, prototype_remesher, setup, copy)
+                setup.cage = cls._prepare_skew_object(target_object, prototype_remesher, setup, copy)
 
                 cls._apply_cage_skew_parameters(setup, uv_map, skew_image, precision, offset)
 
@@ -527,12 +531,10 @@ class AssetExternalCageSkewRemesherSetup(AssetExternalSetupBase):
         obj: bpy.types.Object,
         prototype: bpy.types.Object,
         setup: AssetSetup,
-        suffix: str = "_TARGET",
+        copy: bool = False,
     ) -> bpy.types.Object:
-        duplicate = cls._prepare_object(obj, prototype, setup)
-        duplicate.name += "_SKEW_REMESHED" + suffix
-
-        return duplicate
+        result = cls._prepare_object(obj, prototype, setup, copy)
+        return result
 
     @classmethod
     def _apply_cage_skew_parameters(
@@ -596,6 +598,7 @@ class AssetExternalCageSkewRemesherSetup(AssetExternalSetupBase):
             skew_image=image,
             precision=precision,
             offset=offset,
+            offset_group=OFFSET_VERTEX_GROUP_NAME,
             optimize_resample=optimize_resample,
         )
         return cage_info

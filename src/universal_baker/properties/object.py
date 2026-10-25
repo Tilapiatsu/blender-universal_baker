@@ -43,6 +43,10 @@ class UBK_TargetObject(PropertyGroup):
         name="Target",
         type=bpy.types.Object,
     )
+    target_skew: PointerProperty(
+        name="skew_target",
+        type=bpy.types.Object,
+    )
 
     image: PointerProperty(type=bpy.types.Image)
 
@@ -54,6 +58,13 @@ class UBK_TargetObject(PropertyGroup):
     )
 
     settings_cage: PointerProperty(type=UBK_CageSettings)
+
+    @property
+    def target_object(self) -> bpy.types.Object:
+        if self.settings_cage.is_skew_correction_enabled:
+            return self.target_skew
+        else:
+            return self.object
 
     @property
     def source_object_list(self) -> list[bpy.types.Object]:
@@ -71,7 +82,7 @@ class UBK_TargetObject(PropertyGroup):
 
         from ..services.cage_object import CageObjectService
 
-        self.settings_cage.cage_object_generated = CageObjectService.acquire(self.object, self.settings_cage)
+        self.settings_cage.cage_object_generated = CageObjectService.acquire(self)
 
 
 classes = (

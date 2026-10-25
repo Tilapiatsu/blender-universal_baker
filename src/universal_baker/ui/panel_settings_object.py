@@ -111,7 +111,6 @@ class UBK_UL_CageSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
                 subrow = subrow.split(align=True, factor=0.8)
                 subrow.prop(visualization, "skew_edit", toggle=True)
                 subrow.operator("ubk.skew_correction_remove", text="", icon="TRASH")
-                col.prop(cage_settings, "skew_intensity")
                 col.prop(cage_settings, "skew_precision")
             else:
                 subrow.prop(visualization, "skew_edit", toggle=True)

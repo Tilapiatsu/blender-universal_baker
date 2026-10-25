@@ -103,13 +103,6 @@ class UBK_CageSettings(PropertyGroup):
     )
     skew_image: PointerProperty(name="Skew Image", type=Image)
 
-    skew_intensity: FloatProperty(
-        name="Skew Intensity",
-        description="Blend between normal and cage projection",
-        default=1.0,
-        min=0.0,
-        max=1.0,
-    )
     skew_precision: FloatProperty(
         name="Skew Precision",
         description="The distance between each bake projection is recalculate to prerform the skew correction",

@@ -158,12 +158,15 @@ def update_active_target(self, context):
 
     target = BakeController.active_target_object(context)
 
-    if target is None or not target.have_source:
-        CageVisualizationService.disable()
+    if target is None:
         return
 
     bpy.ops.object.select_all(action="DESELECT")
     target.object.select_set(True)
+
+    if not target.have_source:
+        CageVisualizationService.disable()
+        return
 
     preview_bake = project.visualization.preview_bake
 
@@ -309,9 +312,6 @@ class CageVisualizationService:
 
             runtime = cls._ensure_runtime()
 
-            # -----------------------------------------------------
-            # Acquire cage
-            # -----------------------------------------------------
             cage = cls._acquire_cage(target)
 
             if cage is None:
@@ -458,15 +458,15 @@ class CageVisualizationService:
     @classmethod
     def enable_skew_edit(cls, target: UBK_TargetObject, preview_bake: bool = False) -> bool:
         with LOG.scope("Skew Edit"):
+            if not target.settings_cage.is_skew_correction_enabled:
+                cls._acquire_skew_image(target)
+
             if cls.enable(target, CageEditMode.SKEW, preview_bake):
                 runtime = cls._ensure_runtime()
                 cage = bpy.data.objects.get(runtime.cage_name)
 
                 if cage is None:
                     return False
-
-                if not target.settings_cage.is_skew_correction_enabled:
-                    cls._acquire_skew_image(target)
 
                 cls._link_skew_image_to_material(cage)
                 cls._set_skew_image_active()
@@ -745,7 +745,7 @@ class CageVisualizationService:
 
         from .cage_object import CageObjectService
 
-        return CageObjectService.acquire(target.object, target.settings_cage)
+        return CageObjectService.acquire(target)
 
     # ---------------------------------------------------------
     # State Capture
