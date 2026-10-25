@@ -23,7 +23,6 @@ from ..services.artifact_service import ArtifactService
 from ..services.bake_material import BakeMaterialService
 from ..services.image_bake import ImageServiceBake
 from ..services.material import MaterialService
-from ..services.parameter_service import ParameterService
 from ..services.renderer import RendererService
 from ..services.visibility_override import VisibilityOverride
 
