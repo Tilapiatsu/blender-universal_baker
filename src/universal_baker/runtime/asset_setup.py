@@ -44,11 +44,14 @@ class AssetSetup:
 
             # Objects first.
             for obj in list(self.temporary_objects):
-                if obj is None:
-                    continue
+                try:
+                    if obj is None:
+                        continue
 
-                if obj.name in bpy.data.objects:
-                    ObjectRemoval.remove_object(obj)
+                    if obj.name in bpy.data.objects:
+                        ObjectRemoval.remove_object(obj)
+                except ReferenceError:
+                    continue
 
             self.temporary_objects.clear()
 

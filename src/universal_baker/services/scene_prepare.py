@@ -6,6 +6,7 @@ from ..constant import CAGE_SKEW_REMESHER_ASSET_PATH, LOG, UBK_SKEW_ATTRIBUTE_NA
 from ..properties.object import UBK_TargetObject
 from ..properties.settings_cage import UBK_CageSettings
 from ..resources.asset_external import AssetExtrenal
+from ..runtime.asset_setup import AssetSetup
 from ..runtime.bake_objects import BakeObjects
 from ..services.asset_external_setup import AssetExternalCageSkewRemesherSetup
 from .cage_object import CageObjectService
@@ -21,6 +22,8 @@ class ScenePrepare:
     evaluate_objects: dict[str, EvaluateObject]
     evaluate_cages: dict[str, EvaluateObject]
     visibility_override: list[VisibilityOverride]
+    temporary_objects: list[bpy.types.Object]
+    asset_setups: list[AssetSetup]
 
     def __init__(self) -> None:
         self.target_objects = []
@@ -28,6 +31,7 @@ class ScenePrepare:
         self.evaluate_objects = {}
         self.evaluate_cages = {}
         self.visibility_override = []
+        self.asset_setups = []
 
     def add_target_object(self, target_object: UBK_TargetObject):
         self.target_objects.append(target_object)
@@ -78,15 +82,10 @@ class ScenePrepare:
                             precision=obj.settings_cage.skew_precision,
                             offset=obj.settings_cage.cage_extrusion,
                         )
+                        self.asset_setups.append(setup)
 
-                        # ISSUE: Target and Cage doesn't get evaluated properly for some reason
-                        evaluate_obj = EvaluateObject(setup.target)
-                        self.evaluate_objects[obj.uuid] = evaluate_obj
-                        evaluated_obj = evaluate_obj.evaluate()
-
-                        evaluate_cage = EvaluateObject(setup.cage)
-                        self.evaluate_cages[obj.uuid] = evaluate_cage
-                        cage = evaluate_cage.evaluate()
+                        evaluated_obj = setup.target
+                        cage = setup.cage
 
                     else:
                         cage = CageObjectService.acquire(
@@ -147,7 +146,6 @@ class ScenePrepare:
         for vo in self.visibility_override:
             vo.revert_visibility()
 
-        return
         for uuid, o in self.evaluate_objects.items():
             bake_object = self.bake_objects.get(uuid)
             if bake_object is not None:
@@ -164,6 +162,9 @@ class ScenePrepare:
 
         for uuid, o in self.evaluate_cages.items():
             o.clean()
+
+        for s in self.asset_setups:
+            s.cleanup()
 
     @classmethod
     def get_skew_cage(

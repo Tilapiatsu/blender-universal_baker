@@ -51,11 +51,14 @@ class NodeRemoval:
         new_count = count
         remaining = []
         for node in nodes:
-            if node.users == 0:
-                bpy.data.node_groups.remove(node)
-                new_count -= 1
-            else:
-                remaining.append(node)
+            try:
+                if node.users == 0:
+                    bpy.data.node_groups.remove(node)
+                    new_count -= 1
+                else:
+                    remaining.append(node)
+            except ReferenceError:
+                continue
 
         if new_count == 0 or new_count == count:
             return
