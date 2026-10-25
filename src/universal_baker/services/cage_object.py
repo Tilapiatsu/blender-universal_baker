@@ -67,9 +67,7 @@ class CageObjectService:
 
     @staticmethod
     def _ensure_cage_transform(cage: bpy.types.Object, target: bpy.types.Object) -> None:
-        cage.location = target.location
-        cage.rotation_euler = target.rotation_euler
-        cage.scale = target.scale
+        cage.matrix_world = target.matrix_world.copy()
 
     @classmethod
     def _get_or_create_cage(cls, target: UBK_TargetObject) -> bpy.types.Object:
