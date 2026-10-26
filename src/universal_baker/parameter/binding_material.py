@@ -41,6 +41,7 @@ class MaterialSocketBinding(ParameterBinding):
             node = material.node_tree.nodes.get(self.node_name)
 
             if node is None:
+                LOG.error(f"Node {self.node_name} not found")
                 continue
                 raise ParameterBindingError(f"Node '{self.node_name}' not found in material '{material.name}'.")
 

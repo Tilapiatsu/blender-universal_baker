@@ -427,12 +427,14 @@ class AssetExternalCageClippingSetup(AssetExternalSetupBase):
                         clipping_mat = bpy.data.materials.new("UBK_TMP_Clipping_Preview")
 
                     slot.material = clipping_mat
+                    slot.link = "OBJECT"
+
                     if clipping_mat not in setup.temporary_materials:
                         setup.temporary_materials.append(clipping_mat)
                     if clipping_mat not in source_materials:
                         source_materials.append(clipping_mat)
 
-            source_materials = [m for m in source.data.materials if m is not None]
+            source_materials = [m.material for m in source.material_slots if m.material is not None]
 
             # Add node to source node_tree
             for m in source_materials:
@@ -455,6 +457,7 @@ class AssetExternalCageClippingSetup(AssetExternalSetupBase):
 
     @classmethod
     def _add_node_to_material(cls, material: bpy.types.Material, node: bpy.types.NodeTree):
+        LOG.debug(f"Add node {node.name} to material {material.name}")
         material.use_nodes = True
         node_tree = material.node_tree
 

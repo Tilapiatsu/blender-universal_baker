@@ -265,7 +265,8 @@ class CageVisualizationRuntime:
             materials = []
 
             for source in setup.sources:
-                source_materials = [m for m in source.data.materials if m is not None]
+                source_materials = [m.material for m in source.material_slots if m.material is not None]
+
                 materials = list(set(materials + source_materials))
 
             parameter_context = ParameterContext(
@@ -274,11 +275,7 @@ class CageVisualizationRuntime:
                 materials=materials,
             )
 
-            ParameterApplier.apply(
-                definition,
-                snapshot,
-                parameter_context,
-            )
+            ParameterApplier.apply(definition, snapshot, parameter_context)
 
         finally:
             self._updating_parameters = False
