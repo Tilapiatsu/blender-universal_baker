@@ -358,6 +358,7 @@ class AssetExternalCageClippingSetup(AssetExternalSetupBase):
         max_ray_distance: float,
     ) -> AssetSetup:
         with LOG.scope(LOG_SCOPE):
+            # ISSUE: Investigate why cage clipping is extremely slow -> it wasn't the case before
             prototype_clipping = AssetExternalService.load_prototype(asset_clipping)
 
             setup = AssetSetup()
