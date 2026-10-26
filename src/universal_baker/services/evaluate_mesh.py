@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from contextlib import contextmanager
 
 import bpy
 
@@ -99,13 +100,13 @@ class EvaluateObject(Evaluate):
 
         if self.needs_evaluation:
             self.visibility_override.set_visibility()
-            with LOG.scope(LOG_SCOPE):
+            with LOG.scope(LOG_SCOPE), self._ensure_in_scene():
                 LOG.debug(f"Evaluate Object {self.obj.name}")
                 depsgraph = bpy.context.evaluated_depsgraph_get()
 
                 self.evaluated_mesh = self.obj.evaluated_get(depsgraph)
                 self.mesh = bpy.data.meshes.new_from_object(self.evaluated_mesh)
-                self.evaluated_obj = bpy.data.objects.new(name=f"{self.obj.name}_UBK_EVALUATED", object_data=self.mesh)
+                self.evaluated_obj = bpy.data.objects.new(name=f"{self.obj.name}_EVALUATED", object_data=self.mesh)
 
                 self.evaluated_obj.matrix_world = self.obj.matrix_world.copy()
 
@@ -116,7 +117,20 @@ class EvaluateObject(Evaluate):
 
         return self.evaluated_obj
 
-    def clean(self) -> bool:
+    @contextmanager
+    def _ensure_in_scene(self):
+        linked = False
+        if self.obj.name not in bpy.context.scene.collection.objects:
+            bpy.context.scene.collection.objects.link(self.obj)
+            linked = True
+        try:
+            yield
+
+        finally:
+            if linked:
+                bpy.context.scene.collection.objects.unlink(self.obj)
+
+    def cleanup(self) -> bool:
         if self.obj is None:
             return False
 
@@ -139,4 +153,4 @@ class EvaluateObject(Evaluate):
         return self.evaluate()
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self.clean()
+        self.cleanup()

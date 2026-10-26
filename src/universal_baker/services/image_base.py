@@ -285,6 +285,7 @@ class ImageServiceBase:
     # https://blender.stackexchange.com/questions/274964/how-to-add-udim-tiles-to-an-image-and-fill-them-via-python
     @classmethod
     def add_udim_tiles(cls, resource: ImageResource, tiles: tuple[tuple[int, int], ...]) -> None:
+        LOG.debug(f"Add tiles to ressource : {tiles}")
         context = bpy.context
         areas = context.screen.areas
         image = resource.image

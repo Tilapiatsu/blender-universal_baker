@@ -75,8 +75,11 @@ class CageObjectService:
         cage = bpy.data.objects.get(cage_name)
 
         if cage is not None and cage.data == target.object.data:
+            LOG.debug("Cage found : Retreived")
             cls._ensure_modifiers(target, cage, True)
+
         else:
+            LOG.debug("Create Cage")
             cage = target.object.copy()
             cage.name = cage_name
             cls._ensure_modifiers(target, cage, True)
@@ -89,13 +92,16 @@ class CageObjectService:
         skew_target = bpy.data.objects.get(skew_target_name)
 
         if skew_target is not None and skew_target.data == target.target_skew.data:
+            LOG.debug("Skew Target found : Retreived")
             cls._ensure_modifiers(target, skew_target, False)
-            return skew_target
 
-        skew_target = target.object.copy()
-        skew_target.name = skew_target_name
+        else:
+            LOG.debug("Create Skew Target")
 
-        cls._ensure_modifiers(target, skew_target, False)
+            skew_target = target.object.copy()
+            skew_target.name = skew_target_name
+            cls._ensure_modifiers(target, skew_target, False)
+
         return skew_target
 
     @classmethod
@@ -110,11 +116,13 @@ class CageObjectService:
         modifier = None
 
         for m in obj.modifiers:
-            if m.type == cls.MODIFIER_TYPE and m.name == cls.MODIFIER_NAME and m.node_group.name == cls.NODE_GROUP_NAME:
+            if m.type == cls.MODIFIER_TYPE and m.name == cls.MODIFIER_NAME and cls.NODE_GROUP_NAME in m.node_group.name:
                 modifier = m
+                LOG.debug("Modifier Found")
                 break
 
         if modifier is None:
+            LOG.debug("Create modifier from external asset")
             asset = AssetExtrenal(filepath=CAGE_SKEW_REMESHER_ASSET_PATH)
             setup = AssetExternalCageSkewRemesherSetup.prepare(
                 asset_remesher=asset,
@@ -174,7 +182,7 @@ class CageObjectService:
             )
             snapshot = ParameterService.snapshot_asset(definition, target_info)
 
-            LOG.debug("Applying Target Skew parameters")
+            LOG.debug("Applying Skew Target parameters")
 
             parameter_context = ParameterContext(
                 object=target.target_skew,
@@ -197,7 +205,7 @@ class CageObjectService:
             )
             snapshot = ParameterService.snapshot_asset(definition, cage_info)
 
-            LOG.debug("Applying Target Skew parameters")
+            LOG.debug("Applying Cage parameters")
 
             parameter_context = ParameterContext(
                 object=target.settings_cage.cage_object_generated,
