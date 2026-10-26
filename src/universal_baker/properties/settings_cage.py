@@ -5,7 +5,7 @@ from bpy.props import EnumProperty, FloatProperty, PointerProperty, StringProper
 from bpy.types import Image, Object, PropertyGroup
 
 
-def cage_parameter_updated(self, context):
+def cage_extrusion_updated(self, context):
     from ..core.controller import BakeController
     from ..runtime.runtime_manager import RuntimeManager
 
@@ -19,12 +19,7 @@ def cage_parameter_updated(self, context):
     if runtime.active:
         runtime.request_preview_refresh()
 
-    # if context.scene.ubk_project.visualization.is_dragging:
-    #     pass
-    # else:
-    #     bpy.ops.draggableprop.subscribe("INVOKE_DEFAULT")
-    #
-    runtime.refresh_cage_preview_parameters(ui_props=self)
+    runtime.refresh_cage_preview_parameters(value=self.cage_extrusion)
 
 
 def max_ray_distance_updated(self, context):
@@ -87,7 +82,7 @@ class UBK_CageSettings(PropertyGroup):
         default=0.1,
         min=0.0,
         subtype="DISTANCE",
-        update=cage_parameter_updated,
+        update=cage_extrusion_updated,
     )
     max_ray_distance: FloatProperty(
         name="Max Ray Distance",

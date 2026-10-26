@@ -11,7 +11,7 @@ from ..constant import LOG
 from ..core.registry_definition import registry_definition
 from ..parameter.parameter_applier import ParameterApplier
 from ..parameter.parameter_context import ParameterContext
-from ..resources.asset_info import SourcesInfo
+from ..resources.asset_info import CageSkewInfo, SourcesInfo
 from ..runtime.asset_setup import AssetSetup
 from ..services.material_override import MaterialSnapshot
 from ..services.temp_collection import TempCollection
@@ -144,7 +144,7 @@ class CageVisualizationRuntime:
 
     def refresh_cage_preview_parameters(
         self,
-        ui_props: Any | None = None,
+        value: float,
         force: bool = False,
     ):
         """Make sure the UI property element binds propely to the material, modifier or geometry node element defined in
@@ -161,38 +161,55 @@ class CageVisualizationRuntime:
         try:
             self._updating_parameters = True
 
-            # ISSUE: Cage parameter is not updated properly since swicthing to external asset and Geometry node cage
-            definition = registry_definition.get_local("CAGE")
+            definition = registry_definition.get_custom("SKEW_REMESHER")
 
             if definition is None:
-                LOG.error("Definition not found")
+                LOG.error("Definition SKEW_REMESHER not found")
                 return
 
             if not self.active or self.target_uuid is None or self.cage_name is None:
                 return
-
-            from ..services.parameter_service import ParameterService
-
-            snapshot = ParameterService.snapshot_regular(definition, ui_props)
 
             cage = bpy.data.objects.get(self.cage_name)
 
             if cage is None:
                 LOG.error("Cage not found")
 
+            from ..services.parameter_service import ParameterService
+
+            source_info = CageSkewInfo(
+                uvmap=None,
+                precision=None,
+                skew_image=None,
+                offset=value,
+                offset_group=None,
+                optimize_resample=None,
+            )
+
+            snapshot = ParameterService.snapshot_asset(definition, source_info)
+
             context = ParameterContext(
                 object=cage,
                 is_dragging=bpy.context.scene.ubk_project.visualization.is_dragging,
             )
 
-            ParameterApplier.apply_regular(definition, snapshot, context)
+            setup = self.cage_asset_setup
+
+            if setup is None:
+                return
+
+            if setup.sources is None:
+                LOG.error("Source Objects are not registered properly")
+                return
+
+            ParameterApplier.apply(definition, snapshot, context)
 
             if self.cage_asset_setup is not None and self.cage_asset_setup.projection_cage is not None:
                 context = ParameterContext(
                     object=self.cage_asset_setup.projection_cage,
                     is_dragging=bpy.context.scene.ubk_project.visualization.is_dragging,
                 )
-                ParameterApplier.apply_regular(definition, snapshot, context)
+                ParameterApplier.apply(definition, snapshot, context)
 
         finally:
             self._updating_parameters = False
@@ -220,10 +237,11 @@ class CageVisualizationRuntime:
             definition = registry_definition.get_custom("BAKE_CLIPPING_PREVIEW")
 
             if definition is None:
-                LOG.error("Definition not found")
+                LOG.error("Definition BAKE_CLIPPING_PREVIEW not found")
                 return
 
             if not self.active or self.target_uuid is None or self.cage_name is None:
+                LOG.debug("Not active, no Target or not Cage")
                 return
 
             from ..services.parameter_service import ParameterService
@@ -237,6 +255,7 @@ class CageVisualizationRuntime:
 
             setup = self.cage_asset_setup
             if setup is None:
+                LOG.debug("Cage Asset Setup not found")
                 return
 
             if setup.sources is None:

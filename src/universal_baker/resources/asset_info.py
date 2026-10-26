@@ -31,9 +31,9 @@ class SourcesInfo(AssetInfo):
 
 @dataclass(slots=True, frozen=True)
 class CageSkewInfo(AssetInfo):
-    uvmap: str
-    skew_image: bpy.types.Image
-    precision: float
-    offset: float
-    offset_group: str
-    optimize_resample: bool
+    uvmap: str | None
+    skew_image: bpy.types.Image | None
+    precision: float | None
+    offset: float | None
+    offset_group: str | None
+    optimize_resample: bool | None

@@ -20,7 +20,7 @@ class DefinitionCage:
             BindingMetadata(
                 binding_type=BindingType.MODIFIER_PROPERTY,
                 modifier=CageObjectService.MODIFIER_NAME,
-                property="strength",
+                property="properties.inputs.Socket_4.value",
             ),
         )
         p = ParameterMetadata(

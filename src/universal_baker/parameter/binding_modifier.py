@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+import bpy
+
 from ..constant import LOG
 from .binding import ParameterBinding, ParameterBindingError
 from .parameter_context import ParameterContext
@@ -26,9 +28,9 @@ class ModifierPropertyBinding(ParameterBinding):
         if modifier is None:
             raise ParameterBindingError(f"Modifier '{self.modifier_name}' not found on '{obj.name}'.")
 
-        self._set_property(modifier, self.property_path, value)
+        self._set_property(modifier, self.property_path, value, modifier)
 
-    def _set_property(self, target, path: str, value: Any) -> None:
+    def _set_property(self, target, path: str, value: Any, modifier: bpy.types.Moidifier) -> None:
         parts = path.split(".")
 
         current = target
@@ -53,5 +55,9 @@ class ModifierPropertyBinding(ParameterBinding):
                 final,
                 value,
             )
+
+            if modifier.type == "NODES":
+                modifier.node_group.interface_update(bpy.context)
+
         except (TypeError, ValueError) as exc:
             raise ParameterBindingError(f"Unable to assign {value!r} to '{path}'.") from exc

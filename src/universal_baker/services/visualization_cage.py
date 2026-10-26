@@ -1102,18 +1102,13 @@ class CageVisualizationService:
 
         try:
             gpu.matrix.multiply_matrix(cage.matrix_world)
-
             runtime.surface_shader.bind()
-
             runtime.surface_batch.draw(runtime.surface_shader)
 
             if runtime.wire_batch is not None:
                 gpu.state.line_width_set(1.5)
-
                 runtime.wire_shader.bind()
-
                 runtime.wire_shader.uniform_float("color", cls.wire_color())
-
                 runtime.wire_batch.draw(runtime.wire_shader)
 
         finally:
