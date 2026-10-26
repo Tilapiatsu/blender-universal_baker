@@ -3,16 +3,16 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import bpy
-from universal_baker.parameter.parameter_applier import ParameterApplier
-from universal_baker.parameter.parameter_context import ParameterContext
-from universal_baker.services.parameter_service import ParameterService
 
 from ..constant import CAGE_SKEW_REMESHER_ASSET_PATH, LOG, OFFSET_VERTEX_GROUP_NAME
 from ..core.registry_definition import registry_definition
+from ..parameter.parameter_applier import ParameterApplier
+from ..parameter.parameter_context import ParameterContext
 from ..properties.object import UBK_TargetObject
 from ..properties.settings_cage import UBK_CageSettings
 from ..resources.asset_external import AssetExtrenal
 from ..resources.asset_info import CageSkewInfo
+from ..services.parameter_service import ParameterService
 from .asset_external_setup import AssetExternalCageSkewRemesherSetup
 
 LOG_SCOPE = "Cage Object"

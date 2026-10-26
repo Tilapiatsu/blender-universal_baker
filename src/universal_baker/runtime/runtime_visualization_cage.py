@@ -161,6 +161,7 @@ class CageVisualizationRuntime:
         try:
             self._updating_parameters = True
 
+            # ISSUE: Cage parameter is not updated properly since swicthing to external asset and Geometry node cage
             definition = registry_definition.get_local("CAGE")
 
             if definition is None:

@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING
 
 import bpy
 import gpu
-from mathutils import Color
 from gpu_extras.batch import batch_for_shader
+from mathutils import Color
 
 from ..constant import BAKE_CLIPPING_PREVIEW_ASSET_PATH, BAKE_PORTAL_PREVIEW_ASSET_PATH, LOG, UBK_SUBFOLDER_SKEW
 from ..core.registry_baker import registry_baker
