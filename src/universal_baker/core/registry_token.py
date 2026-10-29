@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Callable
+from collections.abc import Callable
+from typing import Any
 
 
 class TokenRegistry:
@@ -15,13 +16,13 @@ class TokenRegistry:
         cls._tokens.pop(name, None)
 
     @classmethod
-    def resolve(cls, token: str, context):
+    def resolve(cls, token: str, variables: dict[str, Any]):
         callback = cls._tokens.get(token)
 
         if callback is None:
             return ""
 
-        return str(callback(context))
+        return str(callback(variables))
 
     def __getitem__(self, baker_id: str) -> Callable:
         return self._tokens[baker_id]

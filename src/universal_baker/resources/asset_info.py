@@ -39,3 +39,4 @@ class CageSkewInfo(AssetInfo):
     offset: float | None
     offset_group: str | None
     optimize_resample: bool | None
+    skew: bool | None

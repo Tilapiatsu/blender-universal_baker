@@ -184,6 +184,7 @@ class CageVisualizationRuntime:
                 offset=value,
                 offset_group=None,
                 optimize_resample=None,
+                skew=None,
             )
 
             snapshot = ParameterService.snapshot_asset(definition, source_info)

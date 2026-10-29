@@ -57,6 +57,7 @@ class ScenePrepare:
                 self.visibility_override.append(vo)
 
             target = obj.target_object
+            obj.ensure_cage_object()
             cage = obj.settings_cage.cage_object
 
             if obj.have_source:
@@ -116,21 +117,10 @@ class ScenePrepare:
         for vo in self.visibility_override:
             vo.revert_visibility()
 
-        for uuid, o in self.evaluate_targets.items():
-            # bake_object = self.bake_objects.get(uuid)
-            # if bake_object is not None:
-            #     if not bake_object.is_cage_generated:
-            #         continue
-            #
-            #     cage = bake_object.cage_object
-            #
-            #     if cage is not None:
-            #         LOG.debug(f"Clean Cage Object {cage.name}")
-            #         bpy.data.objects.remove(cage)
-            #
+        for o in self.evaluate_targets.values():
             o.cleanup()
 
-        for uuid, o in self.evaluate_cages.items():
+        for o in self.evaluate_cages.values():
             o.cleanup()
 
         for s in self.asset_setups:

@@ -611,5 +611,6 @@ class AssetExternalCageSkewRemesherSetup(AssetExternalSetupBase):
             offset=offset,
             offset_group=OFFSET_VERTEX_GROUP_NAME,
             optimize_resample=optimize_resample,
+            skew=True,
         )
         return cage_info

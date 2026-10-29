@@ -12,7 +12,6 @@ from ..runtime.context_bake import BakeContext
 from ..runtime.render_settings import RenderSettings
 from ..runtime.visualization_state import SceneVisualizationState
 from .cage_skew import CustomCagePair
-from .temp_object import TempObject
 from .visibility_override import VisibilityOverride
 
 BAKE_COLLECTION_NAME = "UBK_BAKE_COLLECTION"

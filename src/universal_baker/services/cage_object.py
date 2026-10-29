@@ -179,6 +179,7 @@ class CageObjectService:
                 target.settings_cage.skew_image,
                 target.settings_cage.skew_precision,
                 0,
+                target.settings_cage.is_skew_correction_enabled,
             )
             snapshot = ParameterService.snapshot_asset(definition, target_info)
 
@@ -202,6 +203,7 @@ class CageObjectService:
                 target.settings_cage.skew_image,
                 target.settings_cage.skew_precision,
                 target.settings_cage.cage_extrusion,
+                target.settings_cage.is_skew_correction_enabled,
             )
             snapshot = ParameterService.snapshot_asset(definition, cage_info)
 
@@ -225,6 +227,7 @@ class CageObjectService:
         image: bpy.types.Image,
         precision: float,
         offset: float,
+        skew: bool,
         optimize_resample: bool = True,
     ) -> CageSkewInfo:
         cage_info = CageSkewInfo(
@@ -234,5 +237,6 @@ class CageObjectService:
             offset=offset,
             offset_group=OFFSET_VERTEX_GROUP_NAME,
             optimize_resample=optimize_resample,
+            skew=skew,
         )
         return cage_info

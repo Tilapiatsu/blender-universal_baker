@@ -15,6 +15,7 @@ from ..constant import (
     LOG,
     UBK_SUBFOLDER_SKEW,
 )
+from ..core.output_resolver import OutputResolver
 from ..core.registry_baker import registry_baker
 from ..enum.visualization import BakeVisualizationMode
 from ..resources.asset_external import AssetExtrenal
@@ -540,14 +541,15 @@ class CageVisualizationService:
             tiles = UVService.detect_udim_tiles(target_object.object, target_object.uv_layer)
 
             folder = Path("//") / UBK_SUBFOLDER_SKEW
-            folder.mkdir(parents=True, exist_ok=True)
-            # ISSUE: It look to have issue saving files with relative path on windows
+            filepath = image_name + ".<UDIM>.png"
+
+            resolved_path = OutputResolver.resolve_directory(str(folder / filepath), resolve_relative=True)
 
             resource = ImageResource.create(
                 width=1024,
                 height=1024,
                 name=image_name,
-                filepath=folder / (image_name + ".<UDIM>.png"),
+                filepath=resolved_path,
                 colorspace="Non-Color",
                 image_format_settings=ImageSettings(),
                 is_udim=True,

@@ -16,7 +16,6 @@ class CageSettings:
     extrusion_group_name: str = "UBK_EXTRUSION_GROUP"
     is_skew_correction_enabled: bool = False
     skew_map_name: str | None = None
-    skew_intensity: float = 0.0
 
     @property
     def cage_object(self) -> bpy.types.Object | None:
