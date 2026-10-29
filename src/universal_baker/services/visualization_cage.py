@@ -539,11 +539,15 @@ class CageVisualizationService:
 
             tiles = UVService.detect_udim_tiles(target_object.object, target_object.uv_layer)
 
+            folder = Path("//") / UBK_SUBFOLDER_SKEW
+            folder.mkdir(parents=True, exist_ok=True)
+            # ISSUE: It look to have issue saving files with relative path on windows
+
             resource = ImageResource.create(
                 width=1024,
                 height=1024,
                 name=image_name,
-                filepath=Path("//") / UBK_SUBFOLDER_SKEW / (image_name + ".<UDIM>.png"),
+                filepath=folder / (image_name + ".<UDIM>.png"),
                 colorspace="Non-Color",
                 image_format_settings=ImageSettings(),
                 is_udim=True,

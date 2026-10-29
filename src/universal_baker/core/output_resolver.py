@@ -31,6 +31,9 @@ class OutputResolver:
         suffix: str | None = None,
         sub_folder: str | None = None,
     ) -> OutputFile:
+        # TODO: Need to add a feature to deal / resolve relative path if the file blend is not saved yets -> Like saving
+        # files in a temporary folder
+
         relative = ""
         dir = ctx.directory_template
         if dir.startswith(r"//"):
