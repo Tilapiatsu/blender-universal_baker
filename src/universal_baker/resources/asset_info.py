@@ -21,6 +21,8 @@ class CageInfo(AssetInfo):
     cage_object: bpy.types.Object
     target_object: bpy.types.Object
     offset: tuple[float, float, float]
+    extrusion: float
+    skew_image: bpy.types.Image
 
 
 @dataclass(slots=True, frozen=True)

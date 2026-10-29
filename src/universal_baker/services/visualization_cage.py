@@ -8,7 +8,13 @@ import gpu
 from gpu_extras.batch import batch_for_shader
 from mathutils import Color
 
-from ..constant import BAKE_CLIPPING_PREVIEW_ASSET_PATH, BAKE_PORTAL_PREVIEW_ASSET_PATH, LOG, UBK_SUBFOLDER_SKEW
+from ..constant import (
+    BAKE_CLIPPING_PREVIEW_ASSET_PATH,
+    BAKE_PORTAL_PREVIEW_ASSET_PATH,
+    BAKE_PROJECTION_CAGE_PATH,
+    LOG,
+    UBK_SUBFOLDER_SKEW,
+)
 from ..core.registry_baker import registry_baker
 from ..enum.visualization import BakeVisualizationMode
 from ..resources.asset_external import AssetExtrenal
@@ -190,6 +196,7 @@ def update_active_source(self, context):
 
 def exit_weight_paint_callback(obj, mode):
     try:
+        return
         safe_obj = getattr(obj, mode)
 
         if safe_obj == "OBJECT":
@@ -318,7 +325,6 @@ class CageVisualizationService:
                 LOG.warning(f"Unable to acquire cage for {target.object.name}")
                 return False
 
-            asset_portal = AssetExtrenal(filepath=BAKE_PORTAL_PREVIEW_ASSET_PATH)
             bake_objects = BakeObjects(
                 target_object=target.object,
                 cage_object=cage,
@@ -326,10 +332,21 @@ class CageVisualizationService:
                 source_objects=target.source_object_list,
             )
 
+            # TODO: Need to disable cage subdivision in preview mode to avoid clutter
+            # TODO: Need to add an option to disable subdivision in the geometry node cage
+            # TODO: Need to properly bind Skew Precision to all the cages
+            # TODO: Need to properly bind the Skew Image to the bake portal shader
+
+            asset_portal = AssetExtrenal(filepath=BAKE_PORTAL_PREVIEW_ASSET_PATH)
+            asset_projection_cage = AssetExtrenal(filepath=BAKE_PROJECTION_CAGE_PATH)
+
             runtime.cage_asset_setup = AssetExternalCagePortalSetup.prepare(
                 asset_portal,
+                asset_projection_cage,
                 bake_objects,
                 target.uv_layer,
+                target.settings_cage.cage_extrusion,
+                target.settings_cage.skew_image,
             )
 
             if runtime.cage_asset_setup is None or runtime.cage_asset_setup.object_offset_edit is None:

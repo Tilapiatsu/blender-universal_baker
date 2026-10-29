@@ -4,7 +4,7 @@ from contextlib import contextmanager
 
 import bpy
 
-from ..constant import CAGE_SCENE_OFFSET, LOG, OFFSET_VERTEX_GROUP_NAME
+from ..constant import CAGE_NAME, CAGE_SCENE_OFFSET, LOG, OFFSET_VERTEX_GROUP_NAME
 from ..core.registry_definition import registry_definition
 from ..parameter.parameter_applier import ParameterApplier
 from ..parameter.parameter_context import ParameterContext
@@ -222,18 +222,26 @@ class AssetExternalCagePortalSetup(AssetExternalSetupBase):
     def prepare(
         cls,
         asset_portal: AssetExtrenal,
+        asset_projection_cage: AssetExtrenal,
         bake_objects: BakeObjects,
         uv_map: str,
+        extrusion: float,
+        skew_image: bpy.types.Image,
     ) -> AssetSetup:
         with LOG.scope(LOG_SCOPE):
             prototype_portal = AssetExternalService.load_prototype(asset_portal)
+            prototype_projection_cage = AssetExternalService.load_prototype(asset_projection_cage)
 
             setup = AssetSetup()
 
             setup.temporary_objects.append(prototype_portal)
 
             try:
-                projection_cage = cls._prepare_projection_cage(bake_objects.cage_object, setup)
+                projection_cage = cls._prepare_projection_cage(
+                    bake_objects.cage_object,
+                    prototype_projection_cage,
+                    setup,
+                )
 
                 setup.sources = bake_objects.source_objects
                 setup.target = bake_objects.target_object
@@ -257,7 +265,7 @@ class AssetExternalCagePortalSetup(AssetExternalSetupBase):
                 setup.object_offset_edit = cls._offset_objects(offset_objects_edit, offset)
                 setup.object_offset_preview = cls._offset_objects(offset_objects_preview, offset)
 
-                cls._apply_cage_portal_parameters(setup, uv_map, offset)
+                cls._apply_cage_portal_parameters(setup, uv_map, offset, extrusion, skew_image)
 
                 return setup
 
@@ -271,11 +279,19 @@ class AssetExternalCagePortalSetup(AssetExternalSetupBase):
                 raise RuntimeError
 
     @classmethod
-    def _prepare_projection_cage(cls, obj: bpy.types.Object, setup: AssetSetup) -> bpy.types.Object:
-        duplicate = cls._duplicate_object(obj, instance=True)
+    def _prepare_projection_cage(
+        cls,
+        obj: bpy.types.Object,
+        prototype: bpy.types.Object,
+        setup: AssetSetup,
+    ) -> bpy.types.Object:
+        duplicate = cls._prepare_object(obj, prototype, setup)
         duplicate.name += "_PROJECTION_CAGE"
 
-        setup.temporary_objects.append(duplicate)
+        for m in duplicate.modifiers:
+            if m.name == CAGE_NAME:
+                duplicate.modifiers.remove(m)
+                break
 
         duplicate.hide_viewport = True
 
@@ -287,10 +303,6 @@ class AssetExternalCagePortalSetup(AssetExternalSetupBase):
     ) -> bpy.types.Object:
         duplicate = cls._prepare_object(obj, prototype, setup)
         duplicate.name += "_PROJECTION_TARGET"
-        # TODO: Need to force smooth shading of the projection target to truely represent how the cage works during
-        # baking in blender
-        # TODO: Need to modify the position and normal attribute in geometry node to truely represent how cage works
-        # during baking
 
         return duplicate
 
@@ -305,19 +317,28 @@ class AssetExternalCagePortalSetup(AssetExternalSetupBase):
         setup: AssetSetup,
         uv_map: str,
         offset: tuple[float, float, float],
+        extrusion: float,
+        skew_image: bpy.types.Image,
     ):
         definition = registry_definition.get_custom("BAKE_PORTAL_PREVIEW")
         if definition is None:
             LOG.error("Parameter definition not found")
             return
 
-        cage_info = cls._get_cage_info(setup, uv_map, cls._negate_tuple(offset))
+        cage_info = cls._get_cage_info(setup, uv_map, cls._negate_tuple(offset), extrusion, skew_image)
         snapshot = ParameterService.snapshot_asset(definition, cage_info)
 
         LOG.debug("Applying Cage Portal parameters")
 
+        assert setup.projection_cage is not None
+
+        materials = [
+            m.material for m in setup.projection_cage.material_slots if m is not None and m.material is not None
+        ]
+
         parameter_context = ParameterContext(
             object=setup.projection_target,
+            materials=materials,
             scene=bpy.context.scene,
         )
 
@@ -333,12 +354,16 @@ class AssetExternalCagePortalSetup(AssetExternalSetupBase):
         setup: AssetSetup,
         uv_map: str,
         offset: tuple[float, float, float],
+        extrusion: float,
+        skew_image: bpy.types.Image,
     ) -> CageInfo:
         cage_info = CageInfo(
             cage_object=setup.projection_cage,
             target_object=setup.target,
             offset=offset,
             uvmap=uv_map,
+            extrusion=extrusion,
+            skew_image=skew_image,
         )
         return cage_info
 
