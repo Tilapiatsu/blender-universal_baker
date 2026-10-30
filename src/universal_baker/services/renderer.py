@@ -240,6 +240,8 @@ class RendererService:
             bake_collection.objects.link(ctx.cage)
 
         for o in ctx.task.bg_objects:
+            if o.name in bake_collection.objects:
+                continue
             bake_collection.objects.link(o)
 
         for o in ctx.sources:
