@@ -235,6 +235,7 @@ class AssetExternalCagePortalSetup(AssetExternalSetupBase):
             setup = AssetSetup()
 
             setup.temporary_objects.append(prototype_portal)
+            setup.temporary_objects.append(prototype_projection_cage)
 
             try:
                 projection_cage = cls._prepare_projection_cage(
