@@ -156,6 +156,8 @@ class ImageHandle:
 
         Creates or reloads it if necessary.
         """
+        # ISSUE: Handle is set as dirty even tough it is not, causing images to be saved on disk and loaded again.
+        # making everything pretty slow
         if self.is_dirty:
             LOG.debug("Handle is dirty")
             self.save()
