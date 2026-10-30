@@ -19,12 +19,10 @@ class BakerSettingsUI:
         item = getattr(settings, definition.settings_name, None)
 
         if item is None:
-            LOG.debug("item not found")
             return
 
         for parameter in definition.parameters:
             if not parameter.visible:
-                LOG.debug("Parameter not visible")
                 continue
 
             cls._draw_parameter(layout, parameter, item, definition)
