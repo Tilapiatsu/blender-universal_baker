@@ -142,9 +142,9 @@ class CageVisualizationRuntime:
     def request_preview_refresh(self):
         self._preview_dirty = True
 
-    def refresh_cage_preview_parameters(
+    def refresh_skew_remesher_parameters(
         self,
-        value: float,
+        source_info: CageSkewInfo,
         force: bool = False,
     ):
         """Make sure the UI property element binds propely to the material, modifier or geometry node element defined in
@@ -176,16 +176,6 @@ class CageVisualizationRuntime:
                 LOG.error("Cage not found")
 
             from ..services.parameter_service import ParameterService
-
-            source_info = CageSkewInfo(
-                uvmap=None,
-                precision=None,
-                skew_image=None,
-                offset=value,
-                offset_group=None,
-                optimize_resample=None,
-                skew=None,
-            )
 
             snapshot = ParameterService.snapshot_asset(definition, source_info)
 

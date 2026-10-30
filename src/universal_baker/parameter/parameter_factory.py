@@ -16,10 +16,6 @@ class ParameterFactoryError(RuntimeError):
     """Base error raised while creating BakerParameter objects."""
 
 
-# TODO: Need to create class Factory to register all the parameters from custom bakers ?
-# Or hard code all of them for a cleaner code ?
-
-
 class ParameterFactory:
     """
     Converts declarative ParameterMetadata into runtime

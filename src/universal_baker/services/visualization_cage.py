@@ -335,7 +335,6 @@ class CageVisualizationService:
 
             # TODO: Need to disable cage subdivision in preview mode to avoid clutter
             # TODO: Need to add an option to disable subdivision in the geometry node cage
-            # TODO: Need to properly bind Skew Precision to all the cages
             # TODO: Need to properly bind the Skew Image to the bake portal shader
 
             asset_portal = AssetExtrenal(filepath=BAKE_PORTAL_PREVIEW_ASSET_PATH)

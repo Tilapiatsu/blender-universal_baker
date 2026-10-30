@@ -4,8 +4,10 @@ import bpy
 from bpy.props import EnumProperty, FloatProperty, PointerProperty, StringProperty
 from bpy.types import Image, Object, PropertyGroup
 
+from ..resources.asset_info import CageSkewInfo
 
-def cage_extrusion_updated(self, context):
+
+def parameter_updated(self, context):
     from ..core.controller import BakeController
     from ..runtime.runtime_manager import RuntimeManager
 
@@ -19,7 +21,43 @@ def cage_extrusion_updated(self, context):
     if runtime.active:
         runtime.request_preview_refresh()
 
-    runtime.refresh_cage_preview_parameters(value=self.cage_extrusion)
+    return runtime
+
+
+def cage_extrusion_updated(self, context):
+    runtime = parameter_updated(self, context)
+    if runtime is None:
+        return
+
+    source_info = CageSkewInfo(
+        uvmap=None,
+        precision=None,
+        skew_image=None,
+        offset=self.cage_extrusion,
+        offset_group=None,
+        optimize_resample=None,
+        skew=None,
+    )
+
+    runtime.refresh_skew_remesher_parameters(source_info=source_info)
+
+
+def skew_precision_updated(self, context):
+    runtime = parameter_updated(self, context)
+    if runtime is None:
+        return
+
+    source_info = CageSkewInfo(
+        uvmap=None,
+        precision=self.skew_precision,
+        skew_image=None,
+        offset=None,
+        offset_group=None,
+        optimize_resample=None,
+        skew=None,
+    )
+
+    runtime.refresh_skew_remesher_parameters(source_info=source_info)
 
 
 def max_ray_distance_updated(self, context):
@@ -104,6 +142,7 @@ class UBK_CageSettings(PropertyGroup):
         default=0.01,
         min=0.0001,
         subtype="DISTANCE",
+        update=skew_precision_updated,
     )
 
     @property
