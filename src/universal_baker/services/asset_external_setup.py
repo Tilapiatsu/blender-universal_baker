@@ -331,10 +331,10 @@ class AssetExternalCagePortalSetup(AssetExternalSetupBase):
 
         LOG.debug("Applying Cage Portal parameters")
 
-        assert setup.projection_cage is not None
+        assert setup.projection_target is not None
 
         materials = [
-            m.material for m in setup.projection_cage.material_slots if m is not None and m.material is not None
+            m.material for m in setup.projection_target.material_slots if m is not None and m.material is not None
         ]
 
         parameter_context = ParameterContext(

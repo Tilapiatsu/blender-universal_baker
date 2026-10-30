@@ -412,7 +412,6 @@ class CageVisualizationService:
         # ISSUE: In Bake preview switching baker updates the preview properly, but selecting the selected baker again
         # disable the preview and I want to prevent that
         # ISSUE: Sometime Crash when ctrl + z in bake preview mode
-        # TODO: need to tackle the ray visibility to control an object visible from secondary ray but not primary ones
 
         with LOG.scope(LOG_SCOPE):
             from ..core.controller import BakeController

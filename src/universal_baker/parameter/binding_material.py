@@ -14,6 +14,7 @@ from .binding import (
 from .parameter_context import ParameterContext
 
 LOG_SCOPE = "Material Binding"
+INVALID = "UBK_INVALID"
 
 
 @dataclass
@@ -48,8 +49,8 @@ class MaterialSocketBinding(ParameterBinding):
             socket = node.inputs.get(self.socket_name)
 
             if socket is None:
-                socket = getattr(node, self.socket_name)
-                if socket is None:
+                socket = getattr(node, self.socket_name, INVALID)
+                if socket is INVALID:
                     raise ParameterBindingError(
                         f"Input socket '{self.socket_name}' not found on node '{self.node_name}'."
                     )
