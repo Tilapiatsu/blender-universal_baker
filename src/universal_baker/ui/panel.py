@@ -199,6 +199,7 @@ def draw_baking_settings(layout, settings_bake):
     if internal_data is None:
         layout.label(text="Add a Target object and a Map first.", icon=ICON_INFO)
     else:
+        layout.prop(settings_bake, "device")
         layout.prop(settings_bake, "use_multires")
         layout.prop(settings_bake, "margin")
         layout.prop(settings_bake, "margin_type")

@@ -48,6 +48,7 @@ class RendererService:
 
         render_settings = RenderSettings(
             use_adaptive_sampling=cycles.use_adaptive_sampling,
+            device=cycles.device,
             adaptive_threshold=cycles.adaptive_threshold,
             samples=cycles.samples,
             adaptive_min_samples=cycles.adaptive_min_samples,
@@ -103,6 +104,7 @@ class RendererService:
             bake = scene.render.bake
 
             cycles.use_adaptive_sampling = render_settings.use_adaptive_sampling
+            cycles.device = render_settings.device
             cycles.adaptive_threshold = render_settings.adaptive_threshold
             cycles.samples = render_settings.samples
             cycles.adaptive_min_samples = render_settings.adaptive_min_samples
@@ -197,6 +199,8 @@ class RendererService:
 
         scene.render.engine = "CYCLES"
         cycles = scene.cycles
+
+        cycles.device = settings_bake.devive
 
         cycles.use_adaptive_sampling = sampling_settings.adaptive_sampling
 

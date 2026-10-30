@@ -9,6 +9,8 @@ import bpy
 class RenderSettings:
     use_adaptive_sampling: bool = False
 
+    device: str = "GPU"
+
     adaptive_threshold: float = 0.01
     samples: int = 4096
     adaptive_min_samples: int = 0

@@ -13,6 +13,15 @@ class UBK_BakeSettings(UBK_Settings):
     # Bake
     # -------------------------------------------------------------------------
 
+    device: bpy.props.EnumProperty(
+        name="Device",
+        items=[
+            ("GPU", "GPU Compute", ""),
+            ("CPU", "CPU", ""),
+        ],
+        default="GPU",
+    )
+
     use_multires: bpy.props.BoolProperty(
         name="Bake From Multires",
         default=False,

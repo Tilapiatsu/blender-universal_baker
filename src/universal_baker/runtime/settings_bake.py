@@ -5,6 +5,7 @@ from dataclasses import dataclass
 
 @dataclass(slots=True)
 class BakeRenderSettings:
+    devive: str = "GPU"
     margin: int = 16
     margin_type: str = "ADJACENT_FACES"
     # supersampling: str = "1"

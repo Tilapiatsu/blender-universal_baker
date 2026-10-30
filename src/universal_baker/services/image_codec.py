@@ -141,5 +141,6 @@ class ImageCodec:
                         artifact.is_udim,
                         artifact.color_management_info,
                     )
+            tile_set.set_dirty(t.tile, False)
 
         return tile_set
