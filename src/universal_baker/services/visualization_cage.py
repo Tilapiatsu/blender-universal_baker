@@ -5,8 +5,13 @@ from typing import TYPE_CHECKING
 
 import bpy
 import gpu
+import math
 from gpu_extras.batch import batch_for_shader
 from mathutils import Color
+import numpy as np
+import time
+import tempfile
+import shutil
 
 from ..constant import (
     BAKE_CLIPPING_PREVIEW_ASSET_PATH,
@@ -24,12 +29,13 @@ from ..runtime.runtime_visualization_cage import (
     CageEditMode,
     CageVisualizationRuntime,
 )
-from ..services.asset_external_setup import AssetExternalCageClippingSetup, AssetExternalCagePortalSetup
-from ..services.material_display import DisplayMaterialService
-from ..services.material_override import MaterialOverrideService
-from ..services.temp_collection import TempCollection
-from ..services.visualization_bake import BakeVisualizationService, PreviewData
+from .asset_external_setup import AssetExternalCageClippingSetup, AssetExternalCagePortalSetup
+from .material_display import DisplayMaterialService
+from .material_override import MaterialOverrideService
+from .temp_collection import TempCollection
+from .visualization_bake import BakeVisualizationService, PreviewData
 from .visibility_override import VisibilityOverride
+from .gpu_udim_atlas import GPUUdimAtlas
 
 if TYPE_CHECKING:
     from ..properties.object import UBK_TargetObject
@@ -1016,10 +1022,11 @@ class CageVisualizationService:
             shader_info.push_constant("MAT4", "viewProjectionMatrix")
             shader_info.push_constant("VEC4", "color_skew")
             shader_info.push_constant("VEC4", "color_corrected")
-            shader_info.push_constant("VEC2", "atlas_grid")
-            shader_info.push_constant("VEC2", "tile_size")
+            shader_info.push_constant("VEC2", "atlas_resolution")
+            shader_info.push_constant("VEC2", "lookup_resolution")
 
             shader_info.sampler(0, "FLOAT_2D", "skew_image")
+            shader_info.sampler(1, "FLOAT_2D", "udim_lookup")
             shader_info.vertex_in(0, "VEC3", "position")
             shader_info.vertex_in(1, "VEC2", "uv")
             shader_info.vertex_out(vert_out)
@@ -1036,42 +1043,61 @@ class CageVisualizationService:
 
             shader_info.fragment_source(
                 """void main(){  
-                        // Find the UDIM tile.
-                        vec2 tile_coord = floor(uvInterp);
+                    vec2 tile_coord = floor(uvInterp);
+                    vec2 local_uv = fract(uvInterp);
 
-                        // Local coordinates inside that tile.
-                        vec2 local_uv = fract(uvInterp);
+                    float skew_value = 0.0;
 
-                        // Avoid filtering pixels from neighboring atlas tiles.
-                        vec2 half_texel = 0.5 / tile_size;
+                    // Check original UDIM coordinates.
+                    if (
+                        tile_coord.x >= 0.0 &&
+                        tile_coord.x < 10.0 &&
+                        tile_coord.y >= 0.0 &&
+                        tile_coord.y < lookup_resolution.y
+                    )
+                    {
+                        // Sample the center of the corresponding lookup texel.
+                        vec2 lookup_uv = (
+                            tile_coord + vec2(0.5)
+                        ) / lookup_resolution;
 
-                        local_uv = clamp(
-                            local_uv,
-                            half_texel,
-                            vec2(1.0) - half_texel
+                        vec4 tile_info = texture(
+                            udim_lookup,
+                            lookup_uv
                         );
 
-                        // Convert UDIM coordinates to atlas coordinates.
-                        vec2 atlas_uv = (tile_coord + local_uv) / atlas_grid;
-
-                        // Invalid UDIM coordinates should not sample the atlas.
-                        float skew_value = 0.0;
-
-                        if (
-                            tile_coord.x >= 0.0 &&
-                            tile_coord.x < atlas_grid.x &&
-                            tile_coord.y >= 0.0 &&
-                            tile_coord.y < atlas_grid.y
-                        )
+                        // Missing tiles have zero width and height.
+                        if (tile_info.z > 0.0 && tile_info.w > 0.0)
                         {
-                            skew_value = texture(skew_image, atlas_uv).r;
-                        }
+                            vec2 tile_origin = tile_info.xy;
+                            vec2 tile_size = tile_info.zw;
 
-                        FragColor = mix(
-                            v_color_skew,
-                            v_color_corrected,
-                            skew_value
-                        );
+                            // Clamp inside the individual tile.
+                            vec2 half_texel = 0.5 / tile_size;
+
+                            local_uv = clamp(
+                                local_uv,
+                                half_texel,
+                                vec2(1.0) - half_texel
+                            );
+
+                            // Convert local tile UV to atlas UV.
+                            vec2 atlas_uv = (
+                                tile_origin + local_uv * tile_size
+                            ) / atlas_resolution;
+
+                            skew_value = texture(
+                                skew_image,
+                                atlas_uv
+                            ).r;
+                        }
+                    }
+
+                    FragColor = mix(
+                        v_color_skew,
+                        v_color_corrected,
+                        skew_value
+                    );
                 }"""
             )
 
@@ -1167,157 +1193,36 @@ class CageVisualizationService:
         cls._register_draw_handler()
 
     @classmethod
-    def _update_skew_texture(cls, runtime, image: bpy.types.Image | None) -> None:
+    def _update_skew_texture(cls, runtime, image: bpy.types.Image | None, force: bool = False) -> None:
         if image is None:
             runtime.skew_texture = None
             runtime.skew_image = None
+            runtime.udim_lookup_texture = None
             runtime.skew_atlas_grid = (1, 1)
             runtime.skew_tile_size = (1, 1)
             return
 
         # Reuse the texture when the same image is already assigned.
-        if runtime.skew_image == image and runtime.skew_texture is not None:
+        if not force and runtime.skew_image == image and runtime.skew_texture is not None:
             return
 
         if image.source == "TILED":
             (
                 runtime.skew_texture,
-                runtime.skew_atlas_grid,
-                runtime.skew_tile_size,
-            ) = cls._create_udim_atlas(image)
+                runtime.udim_lookup_texture,
+                runtime.skew_atlas_size,
+                runtime.skew_lookup_size,
+                runtime.skew_tile_mapping,
+            ) = GPUUdimAtlas.create_udim_atlas(image)
 
         else:
             runtime.skew_texture = gpu.texture.from_image(image)
-            runtime.skew_atlas_grid = (1, 1)
-            runtime.skew_tile_size = tuple(image.size[:])
+            runtime.udim_lookup_texture = None
+            runtime.skew_atlas_size = tuple(image.size[:])
+            runtime.skew_lookup_size = (0, 0)
+            runtime.skew_tile_mapping = {}
 
         runtime.skew_image = image
-
-    @classmethod
-    def _create_udim_atlas(cls, image: bpy.types.Image):
-        """
-        Build a GPU texture atlas from a file-backed UDIM image.
-
-        Atlas layout:
-            - 10 columns
-            - One row for each UDIM V coordinate
-            - Missing tiles are transparent black
-
-        Returns:
-            (GPUTexture, grid_size, tile_size)
-        """
-        if image.source != "TILED":
-            raise ValueError(f"{image.name} is not a tiled image")
-
-        filepath = bpy.path.abspath(image.filepath)
-
-        if "<UDIM>" not in filepath:
-            raise ValueError(f"UDIM image path does not contain <UDIM>: {filepath}")
-
-        tiles = list(image.tiles)
-
-        if not tiles:
-            raise ValueError(f"UDIM image {image.name} has no tiles")
-
-        tile_numbers = [tile.number for tile in tiles]
-
-        # UDIM number -> tile coordinates.
-        tile_coords = {
-            number: (
-                (number - 1001) % 10,
-                (number - 1001) // 10,
-            )
-            for number in tile_numbers
-        }
-
-        max_v = max(v for _, v in tile_coords.values())
-
-        grid_width = 10
-        grid_height = max_v + 1
-
-        # Load the first available tile to determine resolution.
-        first_number = tile_numbers[0]
-        first_path = filepath.replace("<UDIM>", str(first_number))
-
-        if not Path(first_path).is_file():
-            raise FileNotFoundError(first_path)
-
-        first_image = bpy.data.images.load(
-            first_path,
-            check_existing=False,
-        )
-
-        try:
-            tile_width, tile_height = first_image.size[:]
-        finally:
-            bpy.data.images.remove(first_image)
-
-        atlas_width = tile_width * grid_width
-        atlas_height = tile_height * grid_height
-
-        # Allocate the atlas. Missing tiles remain black.
-        atlas_pixels = [0.0] * (atlas_width * atlas_height * 4)
-
-        for tile_number in tile_numbers:
-            tile_u, tile_v = tile_coords[tile_number]
-
-            tile_path = filepath.replace(
-                "<UDIM>",
-                str(tile_number),
-            )
-
-            if not Path(tile_path).is_file():
-                continue
-
-            tile_image = bpy.data.images.load(
-                tile_path,
-                check_existing=False,
-            )
-
-            try:
-                width, height = tile_image.size[:]
-
-                if (width, height) != (tile_width, tile_height):
-                    raise ValueError(f"UDIM tile {tile_number} has an inconsistent resolution: {(width, height)}")
-
-                tile_pixels = [0.0] * (tile_width * tile_height * 4)
-
-                tile_image.pixels.foreach_get(tile_pixels)
-
-                # Copy each row into its corresponding atlas location.
-                for y in range(tile_height):
-                    src_start = y * tile_width * 4
-                    src_end = src_start + tile_width * 4
-
-                    dst_start = (((tile_v * tile_height + y) * atlas_width) + tile_u * tile_width) * 4
-
-                    dst_end = dst_start + tile_width * 4
-
-                    atlas_pixels[dst_start:dst_end] = tile_pixels[src_start:src_end]
-
-            finally:
-                bpy.data.images.remove(tile_image)
-
-        buffer = gpu.types.Buffer(
-            "FLOAT",
-            (atlas_width, atlas_height, 4),
-            atlas_pixels,
-        )
-
-        texture = gpu.types.GPUTexture(
-            (atlas_width, atlas_height),
-            format="RGBA32F",
-            data=buffer,
-        )
-
-        texture.filter_mode(True)
-        texture.extend_mode("EXTEND")
-
-        return (
-            texture,
-            (grid_width, grid_height),
-            (tile_width, tile_height),
-        )
 
     # ---------------------------------------------------------
     # Draw Handler
@@ -1379,6 +1284,9 @@ class CageVisualizationService:
         if runtime.gpu_dirty:
             cls._create_gpu_resources(cage, runtime.uv_layer, runtime.skew_image)
 
+        if runtime.skew_texture_dirty:
+            cls._refresh_skew_texture()
+
         if runtime.surface_batch is None:
             return
 
@@ -1398,15 +1306,16 @@ class CageVisualizationService:
         gpu.matrix.push()
 
         try:
-            gpu.matrix.multiply_matrix(cage.matrix_world)
+            mvp_matrix = bpy.context.region_data.perspective_matrix @ cage.matrix_world
             runtime.surface_shader.bind()
             if runtime.skew_image is not None:
                 runtime.surface_shader.uniform_sampler("skew_image", runtime.skew_texture)
-            runtime.surface_shader.uniform_float("viewProjectionMatrix", bpy.context.region_data.perspective_matrix)
+            runtime.surface_shader.uniform_sampler("udim_lookup", runtime.udim_lookup_texture)
+            runtime.surface_shader.uniform_float("viewProjectionMatrix", mvp_matrix)
             runtime.surface_shader.uniform_float("color_skew", cls.surface_color_skew())
             runtime.surface_shader.uniform_float("color_corrected", cls.surface_color_corrected())
-            runtime.surface_shader.uniform_float("atlas_grid", runtime.skew_atlas_grid)
-            runtime.surface_shader.uniform_float("tile_size", runtime.skew_tile_size)
+            runtime.surface_shader.uniform_float("atlas_resolution", runtime.skew_atlas_size)
+            runtime.surface_shader.uniform_float("lookup_resolution", runtime.skew_lookup_size)
 
             runtime.surface_batch.draw(runtime.surface_shader)
 
@@ -1423,6 +1332,49 @@ class CageVisualizationService:
             gpu.state.depth_mask_set(True)
             gpu.state.depth_test_set("LESS_EQUAL")
             gpu.state.blend_set("NONE")
+
+    @classmethod
+    def _refresh_skew_texture(cls):
+        runtime = cls._ensure_runtime()
+
+        if runtime.skew_image is None:
+            return
+
+        runtime.skew_texture_dirty = False
+
+        cls._update_skew_texture(
+            runtime,
+            runtime.skew_image,
+            force=True,
+        )
+
+    @classmethod
+    def _export_skew_image_temp(cls, image):
+        temp_dir = Path(tempfile.mkdtemp(prefix="ubk_skew_"))
+        temp_pattern = temp_dir / "skew.<UDIM>.png"
+        temp_image = image.copy()
+
+        try:
+            temp_image.filepath_raw = str(temp_pattern)
+            temp_image.file_format = "PNG"
+
+            temp_image.save()
+
+            return temp_dir, temp_image, str(temp_pattern)
+
+        except Exception:
+            bpy.data.images.remove(temp_image)
+            shutil.rmtree(temp_dir, ignore_errors=True)
+            raise
+
+    @classmethod
+    def _cleanup_temp_skew_image(cls, temp_dir, temp_image):
+
+        if temp_image is not None:
+            bpy.data.images.remove(temp_image)
+
+        if temp_dir is not None:
+            shutil.rmtree(temp_dir, ignore_errors=True)
 
     # ---------------------------------------------------------
     # Mode / Active Object restoration
@@ -1500,9 +1452,44 @@ class CageVisualizationService:
                 return
 
             for update in depsgraph.updates:
-                if update.id.name == cage.name:
+                updated_id = update.id
+                if updated_id.name == cage.name:
                     runtime.mark_gpu_dirty()
-                    return
+
+                elif updated_id == runtime.skew_image:
+                    runtime.skew_texture_dirty = True
+                    runtime.skew_last_update = time.monotonic()
+                    if not runtime.skew_refresh_timer_registered:
+                        runtime.skew_refresh_timer_registered = True
+
+                        bpy.app.timers.register(
+                            cls._skew_refresh_timer,
+                            first_interval=0.1,
+                        )
+
+    @classmethod
+    def _skew_refresh_timer(cls):
+        runtime = cls._runtime
+
+        if runtime is None or not runtime.active:
+            return None
+
+        # Wait until the paint stroke has stopped generating updates.
+        elapsed = time.monotonic() - runtime.skew_last_update
+
+        if elapsed < 0.4:
+            return 0.1
+
+        runtime.skew_refresh_timer_registered = False
+        runtime.skew_texture_dirty = True
+
+        # Request a viewport redraw.
+        for window in bpy.context.window_manager.windows:
+            for area in window.screen.areas:
+                if area.type == "VIEW_3D":
+                    area.tag_redraw()
+
+        return None
 
     @classmethod
     def subscribe_to(cls, obj, data_path, callback):

@@ -37,11 +37,15 @@ class CageVisualizationRuntime:
     cage_clipping_setup: AssetSetup | None = None
     uv_layer: str | None = None
 
-    skew_atlas_grid: tuple[int, int] = (1, 1)
-    skew_tile_size: tuple[int, int] = (1, 1)
-    skew_texture: gpu.types.GPUTexture | None = None
-    skew_image: bpy.types.Image | None = None
+    skew_atlas_size: tuple[int, int] = (1, 1)
+    skew_lookup_size: tuple[int, int] = (0, 0)
 
+    skew_texture: gpu.types.GPUTexture | None = None
+    udim_lookup_texture: gpu.types.GPUTexture | None = None
+    skew_image: bpy.types.Image | None = None
+    skew_texture_dirty: bool = False
+    skew_refresh_timer_registered: bool = False
+    skew_last_update: float = 0.0
     # Original object visibility.
     visibility: dict[str, VisibilityOverride] = field(default_factory=dict)
 
@@ -122,9 +126,14 @@ class CageVisualizationRuntime:
         self.cage_clipping_setup = None
 
         self.skew_texture = None
-        self.skew_atlas_grid: tuple[int, int] = (1, 1)
-        self.skew_tile_size: tuple[int, int] = (1, 1)
-
+        self.udim_lookup_texture = None
+        self.skew_atlas_size = (1, 1)
+        self.skew_lookup_size = (0, 0)
+        self.skew_tile_mapping = {}
+        self.skew_tile_size = (1, 1)
+        self.skew_texture_dirty = False
+        self.skew_refresh_timer_registered = False
+        self.skew_last_update = 0.0
         self.uv_layer = None
 
         self.visibility.clear()
