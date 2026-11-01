@@ -37,6 +37,8 @@ class CageVisualizationRuntime:
     cage_clipping_setup: AssetSetup | None = None
     uv_layer: str | None = None
 
+    skew_atlas_grid: tuple[int, int] = (1, 1)
+    skew_tile_size: tuple[int, int] = (1, 1)
     skew_texture: gpu.types.GPUTexture | None = None
     skew_image: bpy.types.Image | None = None
 
@@ -118,6 +120,11 @@ class CageVisualizationRuntime:
         self.cage_name = None
         self.cage_asset_setup = None
         self.cage_clipping_setup = None
+
+        self.skew_texture = None
+        self.skew_atlas_grid: tuple[int, int] = (1, 1)
+        self.skew_tile_size: tuple[int, int] = (1, 1)
+
         self.uv_layer = None
 
         self.visibility.clear()
