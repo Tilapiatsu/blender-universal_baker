@@ -36,7 +36,8 @@ class CageSkewInfo(AssetInfo):
     uvmap: str | None
     skew_image: bpy.types.Image | None
     precision: float | None
-    offset: float | None
+    offset: bool | None
+    offset_amount: float | None
     offset_group: str | None
     optimize_resample: bool | None
     skew: bool | None

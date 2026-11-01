@@ -527,7 +527,8 @@ class AssetExternalCageSkewRemesherSetup(AssetExternalSetupBase):
         uv_map: str,
         skew_image: bpy.types.Image,
         precision: float,
-        offset: float,
+        offset: bool,
+        offset_amount: float,
         is_cage: bool,
         copy: bool = False,
     ) -> AssetSetup:
@@ -541,7 +542,9 @@ class AssetExternalCageSkewRemesherSetup(AssetExternalSetupBase):
             try:
                 setup.target = cls._prepare_skew_object(target_object, prototype_remesher, setup, copy)
 
-                cls._apply_cage_skew_parameters(setup, uv_map, skew_image, precision, offset if is_cage else 0)
+                cls._apply_cage_skew_parameters(
+                    setup, uv_map, skew_image, precision, offset, offset_amount if is_cage else 0
+                )
 
                 return setup
 
@@ -572,7 +575,8 @@ class AssetExternalCageSkewRemesherSetup(AssetExternalSetupBase):
         uv_map: str,
         skew_image: bpy.types.Image,
         precision: float,
-        offset: float,
+        offset: bool,
+        offset_amount: float,
     ):
         definition = registry_definition.get_custom("SKEW_REMESHER")
         if definition is None:
@@ -580,7 +584,7 @@ class AssetExternalCageSkewRemesherSetup(AssetExternalSetupBase):
             return
 
         # NOTE: Applying to Target
-        target_info = cls._get_cage_skew_info(uv_map, skew_image, precision, offset)
+        target_info = cls._get_cage_skew_info(uv_map, skew_image, precision, offset, offset_amount)
         snapshot = ParameterService.snapshot_asset(definition, target_info)
 
         LOG.debug("Applying Target Skew parameters")
@@ -602,7 +606,8 @@ class AssetExternalCageSkewRemesherSetup(AssetExternalSetupBase):
         uv_map: str,
         image: bpy.types.Image,
         precision: float,
-        offset: float,
+        offset: bool,
+        offset_amount: float,
         optimize_resample: bool = True,
     ) -> CageSkewInfo:
         cage_info = CageSkewInfo(
@@ -610,6 +615,7 @@ class AssetExternalCageSkewRemesherSetup(AssetExternalSetupBase):
             skew_image=image,
             precision=precision,
             offset=offset,
+            offset_amount=offset_amount,
             offset_group=OFFSET_VERTEX_GROUP_NAME,
             optimize_resample=optimize_resample,
             skew=True,

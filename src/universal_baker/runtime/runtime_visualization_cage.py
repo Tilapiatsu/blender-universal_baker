@@ -3,9 +3,9 @@ from __future__ import annotations
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Any
 
 import bpy
+import gpu
 
 from ..constant import LOG
 from ..core.registry_definition import registry_definition
@@ -35,6 +35,10 @@ class CageVisualizationRuntime:
     cage_name: str | None = None
     cage_asset_setup: AssetSetup | None = None
     cage_clipping_setup: AssetSetup | None = None
+    uv_layer: str | None = None
+
+    skew_texture: gpu.types.GPUTexture | None = None
+    skew_image: bpy.types.Image | None = None
 
     # Original object visibility.
     visibility: dict[str, VisibilityOverride] = field(default_factory=dict)
@@ -91,6 +95,7 @@ class CageVisualizationRuntime:
         target_name: str,
         cage_name: str,
         cage_edit_mode: CageEditMode,
+        uv_layer: str,
     ) -> None:
         self.active = True
         self.target_uuid = target_uuid
@@ -98,6 +103,7 @@ class CageVisualizationRuntime:
         self.cage_name = cage_name
         self.gpu_dirty = True
         self.cage_edit_mode = cage_edit_mode
+        self.uv_layer = uv_layer
 
     def mark_gpu_dirty(self) -> None:
         self.gpu_dirty = True
@@ -112,6 +118,7 @@ class CageVisualizationRuntime:
         self.cage_name = None
         self.cage_asset_setup = None
         self.cage_clipping_setup = None
+        self.uv_layer = None
 
         self.visibility.clear()
         self.skew_material_snapshots = []
@@ -317,11 +324,13 @@ class VisualizationSuspension:
         self.target_uuid: str | None = None
         self.target_name: str | None = None
         self.cage_name: str | None = None
+        self.uv_layer: str | None = None
 
     def capture(self):
         self.was_enabled = self.runtime.active
         self.target_uuid = self.runtime.target_uuid
         self.cage_name = self.runtime.cage_name
+        self.uv_layer = self.runtime.uv_layer
 
     def restore(self):
         if not self.was_enabled or self.target_uuid is None:

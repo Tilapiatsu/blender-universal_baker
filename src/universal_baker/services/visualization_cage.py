@@ -252,8 +252,16 @@ class CageVisualizationService:
     MSGBUS_OWNER = object()
 
     @classmethod
-    def surface_color(cls) -> tuple[float, float, float, float]:
+    def surface_color_skew(cls) -> tuple[float, float, float, float]:
         return (cls._cage_color[0], cls._cage_color[1], cls._cage_color[2], cls._cage_color[3] * 0.8)
+
+    @classmethod
+    def surface_color_corrected(cls) -> tuple[float, float, float, float]:
+        return (cls._cage_color[2], cls._cage_color[0], cls._cage_color[1], cls._cage_color[3] * 0.8)
+
+    @classmethod
+    def surface_color_error(cls) -> tuple[float, float, float, float]:
+        return (1.0, 0, 0, 0.9)
 
     @classmethod
     def wire_color(cls) -> tuple[float, float, float, float]:
@@ -360,6 +368,7 @@ class CageVisualizationService:
                 target_name=target.object.name,
                 cage_name=cage.name,
                 cage_edit_mode=cage_edit_mode,
+                uv_layer=target.uv_layer,
             )
 
             try:
@@ -375,7 +384,8 @@ class CageVisualizationService:
                     + bake_objects.source_objects
                 )
                 cls._configure_visibility()
-                cls._create_gpu_resources(cage)
+                cls._configure_cage(target, cage_edit_mode)
+                cls._create_gpu_resources(cage, target.uv_layer, target.settings_cage.skew_image)
                 cls._register_draw_handler()
                 cls._register_depsgraph_handler(cage)
 
@@ -404,6 +414,12 @@ class CageVisualizationService:
     @classmethod
     def _disable_cage_edit(cls):
         pass
+
+    @classmethod
+    def _configure_cage(cls, target: UBK_TargetObject, cage_edit_mode: CageEditMode) -> None:
+        from .cage_object import CageObjectService
+
+        CageObjectService._apply_modifier_parameters(target, cage_edit_mode)
 
     @classmethod
     def enable_bake_preview(cls, target: UBK_TargetObject) -> None:
@@ -649,6 +665,7 @@ class CageVisualizationService:
             LOG.debug("Disabling Cage Visualization")
 
             try:
+                cls._revert_cage_configuration()
                 if disable_bake_preview:
                     cls.disable_bake_preview()
                 cls._remove_depsgraph_handler()
@@ -669,6 +686,26 @@ class CageVisualizationService:
                     set_edit_cage(False)
                     set_edit_skew(False)
                     set_bake_preview(False)
+
+    @classmethod
+    def _revert_cage_configuration(cls) -> None:
+        runtime = cls._runtime
+        if runtime is None or not runtime.active:
+            return
+
+        if runtime.target_uuid is None:
+            return
+
+        from ..core.controller import BakeController
+
+        target = BakeController.get_target_object_from_uuid(runtime.target_uuid)
+
+        if target is None:
+            return
+
+        from .cage_object import CageObjectService
+
+        CageObjectService._apply_modifier_parameters(target, CageEditMode.NONE)
 
     @classmethod
     def disable_bake_preview(
@@ -949,10 +986,7 @@ class CageVisualizationService:
     # ---------------------------------------------------------
 
     @classmethod
-    def _create_gpu_resources(
-        cls,
-        cage: bpy.types.Object,
-    ) -> None:
+    def _create_gpu_resources(cls, cage: bpy.types.Object, uv_layer: str, skew_image: bpy.types.Image) -> None:
         runtime = cls._ensure_runtime()
 
         # Release the previous batches first.
@@ -971,35 +1005,77 @@ class CageVisualizationService:
 
             evaluated_mesh.calc_loop_triangles()
 
-            runtime.surface_shader = gpu.shader.from_builtin("SMOOTH_COLOR")
+            # Create the shader to draw the texture.
+            vert_out = gpu.types.GPUStageInterfaceInfo("cage_shader")
+            vert_out.smooth("VEC2", "uvInterp")
+            vert_out.smooth("VEC4", "v_color_skew")
+            vert_out.smooth("VEC4", "v_color_corrected")
+            vert_out.smooth("VEC4", "v_color_error")
 
+            shader_info = gpu.types.GPUShaderCreateInfo()
+            shader_info.push_constant("MAT4", "viewProjectionMatrix")
+            shader_info.push_constant("VEC4", "color_skew")
+            shader_info.push_constant("VEC4", "color_corrected")
+
+            shader_info.sampler(0, "FLOAT_2D", "skew_image")
+            shader_info.vertex_in(0, "VEC3", "position")
+            shader_info.vertex_in(1, "VEC2", "uv")
+            shader_info.vertex_out(vert_out)
+            shader_info.fragment_out(0, "VEC4", "FragColor")
+
+            shader_info.vertex_source(
+                """void main(){  
+                    uvInterp = uv;  
+                    v_color_skew = color_skew;
+                    v_color_corrected = color_corrected;
+                    gl_Position = viewProjectionMatrix * vec4(position, 1.0);
+                }"""
+            )
+
+            shader_info.fragment_source(
+                """void main(){  
+                    FragColor = mix(v_color_skew, v_color_corrected, texture(skew_image, uvInterp));
+                }"""
+            )
+
+            runtime.surface_shader = gpu.shader.create_from_info(shader_info)
+
+            del vert_out
+            del shader_info
+
+            # runtime.surface_shader = gpu.shader.from_builtin("SMOOTH_COLOR")
+            # runtime.surface_shader = gpu.shader.from_builtin("IMAGE_SCENE_LINEAR_TO_REC709_SRGB")
             runtime.wire_shader = gpu.shader.from_builtin("UNIFORM_COLOR")
 
             surface_positions = []
             surface_colors = []
+            surface_uvs = []
 
             for triangle in evaluated_mesh.loop_triangles:
-                for vertex_index in triangle.vertices:
-                    surface_positions.append(evaluated_mesh.vertices[vertex_index].co[:])
-                    surface_colors.append(cls.surface_color())
+                for loop_index in triangle.loops:
+                    loop = evaluated_mesh.loops[loop_index]
+                    surface_positions.append(evaluated_mesh.vertices[loop.vertex_index].co)
+                    surface_uvs.append(evaluated_mesh.uv_layers[uv_layer].data[loop_index].uv)
+                    surface_colors.append(cls.surface_color_skew())
 
             runtime.surface_batch = batch_for_shader(
                 runtime.surface_shader,
                 "TRIS",
                 {
-                    "pos": surface_positions,
-                    "color": surface_colors,
+                    "position": surface_positions,
+                    "uv": surface_uvs,
+                    # "color": surface_colors,
                 },
             )
-
             wire_positions = []
 
             for edge in evaluated_mesh.edges:
                 wire_positions.append(evaluated_mesh.vertices[edge.vertices[0]].co[:])
-
                 wire_positions.append(evaluated_mesh.vertices[edge.vertices[1]].co[:])
 
             runtime.wire_batch = batch_for_shader(runtime.wire_shader, "LINES", {"pos": wire_positions})
+
+            cls._update_skew_texture(runtime, skew_image)
 
         finally:
             if evaluated_mesh is not None:
@@ -1037,7 +1113,7 @@ class CageVisualizationService:
         runtime = cls._ensure_runtime()
         cage = bpy.data.objects.get(runtime.cage_name)
 
-        if cage is None:
+        if cage is None or runtime.uv_layer is None:
             return
 
         cls._remove_draw_handler()
@@ -1045,8 +1121,18 @@ class CageVisualizationService:
 
         cls._update_cage_color()
 
-        cls._create_gpu_resources(cage)
+        cls._create_gpu_resources(cage, runtime.uv_layer, runtime.skew_image)
         cls._register_draw_handler()
+
+    @classmethod
+    def _update_skew_texture(cls, runtime, image: bpy.types.Image | None) -> None:
+        if image is None:
+            runtime.skew_texture = None
+            runtime.skew_image = None
+            return
+
+        runtime.skew_texture = gpu.texture.from_image(image)
+        runtime.skew_image = image
 
     # ---------------------------------------------------------
     # Draw Handler
@@ -1101,12 +1187,12 @@ class CageVisualizationService:
 
         cage = bpy.data.objects.get(runtime.cage_name) if runtime.cage_name else None
 
-        if cage is None:
+        if cage is None or runtime.uv_layer is None:
             return
 
         # The cage's modifiers / evaluated geometry changed.
         if runtime.gpu_dirty:
-            cls._create_gpu_resources(cage)
+            cls._create_gpu_resources(cage, runtime.uv_layer, runtime.skew_image)
 
         if runtime.surface_batch is None:
             return
@@ -1116,14 +1202,24 @@ class CageVisualizationService:
         # IMPORTANT:
         # Use the depth buffer so the cage behaves like a real
         # surface instead of being drawn through everything.
-        gpu.state.depth_test_set("LESS_EQUAL")
-        gpu.state.depth_mask_set(False)
+        if runtime.cage_edit_mode is None or runtime.cage_edit_mode == CageEditMode.EDIT:
+            gpu.state.depth_test_set("LESS_EQUAL")
+            gpu.state.depth_mask_set(False)
+        else:
+            gpu.state.depth_test_set("ALWAYS")
+            gpu.state.depth_mask_set(False)
+            gpu.state.face_culling_set("BACK")
 
         gpu.matrix.push()
 
         try:
             gpu.matrix.multiply_matrix(cage.matrix_world)
             runtime.surface_shader.bind()
+            if runtime.skew_image is not None:
+                runtime.surface_shader.uniform_sampler("skew_image", runtime.skew_texture)
+            runtime.surface_shader.uniform_float("viewProjectionMatrix", bpy.context.region_data.perspective_matrix)
+            runtime.surface_shader.uniform_float("color_skew", cls.surface_color_skew())
+            runtime.surface_shader.uniform_float("color_corrected", cls.surface_color_corrected())
             runtime.surface_batch.draw(runtime.surface_shader)
 
             if runtime.wire_batch is not None:

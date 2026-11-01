@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from enum import Enum, auto
 
 import bpy
+from universal_baker.runtime.runtime_visualization_cage import CageEditMode
 
 from ..constant import CAGE_SKEW_REMESHER_ASSET_PATH, LOG, OFFSET_VERTEX_GROUP_NAME
 from ..core.registry_definition import registry_definition
@@ -130,7 +132,8 @@ class CageObjectService:
                 uv_map=target.uv_layer,
                 skew_image=target.settings_cage.skew_image,
                 precision=target.settings_cage.skew_precision,
-                offset=target.settings_cage.cage_extrusion,
+                offset=True,
+                offset_amount=target.settings_cage.cage_extrusion,
                 is_cage=is_cage,
             )
             if is_cage:
@@ -166,6 +169,7 @@ class CageObjectService:
     def _apply_modifier_parameters(
         cls,
         target: UBK_TargetObject,
+        edit_mode: CageEditMode = CageEditMode.NONE,
     ):
         definition = registry_definition.get_custom("SKEW_REMESHER")
         if definition is None:
@@ -178,8 +182,9 @@ class CageObjectService:
                 target.uv_layer,
                 target.settings_cage.skew_image,
                 target.settings_cage.skew_precision,
+                False,
                 0,
-                target.settings_cage.is_skew_correction_enabled,
+                target.settings_cage.is_skew_correction_enabled if edit_mode == CageEditMode.NONE else False,
             )
             snapshot = ParameterService.snapshot_asset(definition, target_info)
 
@@ -202,8 +207,9 @@ class CageObjectService:
                 target.uv_layer,
                 target.settings_cage.skew_image,
                 target.settings_cage.skew_precision,
+                edit_mode != CageEditMode.SKEW,
                 target.settings_cage.cage_extrusion,
-                target.settings_cage.is_skew_correction_enabled,
+                target.settings_cage.is_skew_correction_enabled if edit_mode == CageEditMode.NONE else False,
             )
             snapshot = ParameterService.snapshot_asset(definition, cage_info)
 
@@ -226,7 +232,8 @@ class CageObjectService:
         uv_map: str,
         image: bpy.types.Image,
         precision: float,
-        offset: float,
+        offset: bool,
+        offset_amount: float,
         skew: bool,
         optimize_resample: bool = True,
     ) -> CageSkewInfo:
@@ -235,6 +242,7 @@ class CageObjectService:
             skew_image=image,
             precision=precision,
             offset=offset,
+            offset_amount=offset_amount,
             offset_group=OFFSET_VERTEX_GROUP_NAME,
             optimize_resample=optimize_resample,
             skew=skew,
