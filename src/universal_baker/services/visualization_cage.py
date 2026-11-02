@@ -1208,21 +1208,30 @@ class CageVisualizationService:
         if not force and runtime.skew_image == image and runtime.skew_texture is not None:
             return
 
-        if image.source == "TILED":
-            (
-                runtime.skew_texture,
-                runtime.udim_lookup_texture,
-                runtime.skew_atlas_size,
-                runtime.skew_lookup_size,
-                runtime.skew_tile_mapping,
-            ) = GPUUdimAtlas.create_udim_atlas(image)
+        temp_data = None
 
-        else:
-            runtime.skew_texture = gpu.texture.from_image(image)
-            runtime.udim_lookup_texture = None
-            runtime.skew_atlas_size = tuple(image.size[:])
-            runtime.skew_lookup_size = (0, 0)
-            runtime.skew_tile_mapping = {}
+        try:
+            if image.source == "TILED":
+                temp_data = cls._export_skew_image_temp(image)
+                (
+                    runtime.skew_texture,
+                    runtime.udim_lookup_texture,
+                    runtime.skew_atlas_size,
+                    runtime.skew_lookup_size,
+                    runtime.skew_tile_mapping,
+                ) = GPUUdimAtlas.create_udim_atlas(temp_data[1])
+
+            else:
+                runtime.skew_texture = gpu.texture.from_image(image)
+                runtime.udim_lookup_texture = None
+                runtime.skew_atlas_size = tuple(image.size[:])
+                runtime.skew_lookup_size = (0, 0)
+                runtime.skew_tile_mapping = {}
+
+        finally:
+            # Always clean up, even if atlas construction fails.
+            if temp_data is not None:
+                cls._cleanup_temp_skew_image(temp_data[0], temp_data[1])
 
         runtime.skew_image = image
 
@@ -1356,6 +1365,7 @@ class CageVisualizationService:
 
     @classmethod
     def _export_skew_image_temp(cls, image):
+        image.pack()
         temp_dir = Path(tempfile.mkdtemp(prefix="ubk_skew_"))
         temp_pattern = temp_dir / "skew.<UDIM>.png"
         temp_image = image.copy()
