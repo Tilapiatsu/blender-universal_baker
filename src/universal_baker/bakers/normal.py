@@ -23,7 +23,7 @@ class NormalBaker(BakerBase):
     icon = "TEXTURE"
     blender_bake_type = "NORMAL"
     accumulator_id = "ALPHA_OVER"
-    clear_preview_material: bool = False
+    clear_preview_material: bool = True
     bake_colorspace: ImageColorSpace = ImageColorSpace.NON_COLOR
     image_colorspace: ImageColorSpace = ImageColorSpace.NON_COLOR
     color_management_info = ColorManagementInfo(
@@ -173,7 +173,54 @@ class NormalBaker(BakerBase):
     ):
         return super().prepare_execution(bake_objects)
 
-    def configure_preview_material(self, material): ...
+    def configure_preview_material(self, material):
+        # TODO: Need to bind the same bake settings :
+        # Space: Tangent / Object
+        # R
+        # G
+        # B
+        material.use_nodes = True
+        nodes = material.node_tree.nodes
+        nodes.clear()
+
+        output = nodes.new("ShaderNodeOutputMaterial")
+        normal = nodes.new("ShaderNodeNewGeometry")
+        add = nodes.new("ShaderNodeVectorMath")
+        multiply = nodes.new("ShaderNodeVectorMath")
+        value = nodes.new("ShaderNodeValue")
+
+        add.operation = "ADD"
+        multiply.operation = "MULTIPLY"
+        add.inputs[1].default_value[0] = 1.0
+        add.inputs[1].default_value[1] = 1.0
+        add.inputs[1].default_value[2] = 1.0
+        value.outputs[0].default_value = 0.5
+
+        material.node_tree.links.new(
+            normal.outputs["Normal"],
+            add.inputs[0],
+        )
+
+        material.node_tree.links.new(
+            add.outputs["Vector"],
+            multiply.inputs[0],
+        )
+
+        material.node_tree.links.new(
+            value.outputs[0],
+            multiply.inputs[1],
+        )
+
+        material.node_tree.links.new(
+            multiply.outputs["Vector"],
+            output.inputs["Surface"],
+        )
+
+        multiply.location.x = output.location.x - 200
+        add.location.x = multiply.location.x - 200
+        normal.location.x = add.location.x - 200
+        value.location.x = add.location.x
+        value.location.y = add.location.y - 200
 
     def get_visibility_overrides(self, ctx: BakeContext) -> list[VisibilityOverride]:
         """Set Visibility."""
