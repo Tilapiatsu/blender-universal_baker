@@ -39,6 +39,7 @@ class CageVisualizationRuntime:
 
     skew_atlas_size: tuple[int, int] = (1, 1)
     skew_lookup_size: tuple[int, int] = (0, 0)
+    skew_tile_mapping: dict[int, tuple[int, int, int, int]] = field(default_factory=dict)
 
     skew_texture: gpu.types.GPUTexture | None = None
     udim_lookup_texture: gpu.types.GPUTexture | None = None
@@ -130,7 +131,6 @@ class CageVisualizationRuntime:
         self.skew_atlas_size = (1, 1)
         self.skew_lookup_size = (0, 0)
         self.skew_tile_mapping = {}
-        self.skew_tile_size = (1, 1)
         self.skew_texture_dirty = False
         self.skew_refresh_timer_registered = False
         self.skew_last_update = 0.0

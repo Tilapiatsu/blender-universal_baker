@@ -1,17 +1,17 @@
 from __future__ import annotations
 
+import math
+import shutil
+import tempfile
+import time
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 import bpy
 import gpu
-import math
+import numpy as np
 from gpu_extras.batch import batch_for_shader
 from mathutils import Color
-import numpy as np
-import time
-import tempfile
-import shutil
 
 from ..constant import (
     BAKE_CLIPPING_PREVIEW_ASSET_PATH,
@@ -30,12 +30,12 @@ from ..runtime.runtime_visualization_cage import (
     CageVisualizationRuntime,
 )
 from .asset_external_setup import AssetExternalCageClippingSetup, AssetExternalCagePortalSetup
+from .gpu_udim_atlas import GPUUdimAtlas
 from .material_display import DisplayMaterialService
 from .material_override import MaterialOverrideService
 from .temp_collection import TempCollection
-from .visualization_bake import BakeVisualizationService, PreviewData
 from .visibility_override import VisibilityOverride
-from .gpu_udim_atlas import GPUUdimAtlas
+from .visualization_bake import BakeVisualizationService, PreviewData
 
 if TYPE_CHECKING:
     from ..properties.object import UBK_TargetObject
@@ -1106,8 +1106,6 @@ class CageVisualizationService:
             del vert_out
             del shader_info
 
-            # runtime.surface_shader = gpu.shader.from_builtin("SMOOTH_COLOR")
-            # runtime.surface_shader = gpu.shader.from_builtin("IMAGE_SCENE_LINEAR_TO_REC709_SRGB")
             runtime.wire_shader = gpu.shader.from_builtin("UNIFORM_COLOR")
 
             surface_positions = []
@@ -1127,7 +1125,6 @@ class CageVisualizationService:
                 {
                     "position": surface_positions,
                     "uv": surface_uvs,
-                    # "color": surface_colors,
                 },
             )
             wire_positions = []
@@ -1159,10 +1156,12 @@ class CageVisualizationService:
 
         cls._release_gpu_batches()
 
-        runtime.skew_texture = None
         runtime.skew_image = None
-        runtime.skew_atlas_grid = (1, 1)
-        runtime.skew_tile_size = (1, 1)
+        runtime.skew_texture = None
+        runtime.udim_lookup_texture = None
+        runtime.skew_atlas_size = (1, 1)
+        runtime.skew_lookup_size = (0, 0)
+        runtime.skew_tile_mapping = {}
 
         runtime.surface_shader = None
         runtime.wire_shader = None
@@ -1177,7 +1176,6 @@ class CageVisualizationService:
 
     @classmethod
     def _refresh_cage_color(cls) -> None:
-
         runtime = cls._ensure_runtime()
         cage = bpy.data.objects.get(runtime.cage_name)
 
@@ -1185,7 +1183,7 @@ class CageVisualizationService:
             return
 
         cls._remove_draw_handler()
-        cls._release_gpu_resources()
+        # cls._release_gpu_resources()
 
         cls._update_cage_color()
 
@@ -1193,13 +1191,17 @@ class CageVisualizationService:
         cls._register_draw_handler()
 
     @classmethod
-    def _update_skew_texture(cls, runtime, image: bpy.types.Image | None, force: bool = False) -> None:
+    def _update_skew_texture(
+        cls,
+        runtime: CageVisualizationRuntime,
+        image: bpy.types.Image | None,
+        force: bool = False,
+    ) -> None:
         if image is None:
             runtime.skew_texture = None
             runtime.skew_image = None
             runtime.udim_lookup_texture = None
-            runtime.skew_atlas_grid = (1, 1)
-            runtime.skew_tile_size = (1, 1)
+            runtime.skew_tile_mapping = {}
             return
 
         # Reuse the texture when the same image is already assigned.
@@ -1306,6 +1308,7 @@ class CageVisualizationService:
         gpu.matrix.push()
 
         try:
+            gpu.matrix.multiply_matrix(cage.matrix_world)
             mvp_matrix = bpy.context.region_data.perspective_matrix @ cage.matrix_world
             runtime.surface_shader.bind()
             if runtime.skew_image is not None:
@@ -1320,6 +1323,8 @@ class CageVisualizationService:
             runtime.surface_batch.draw(runtime.surface_shader)
 
             if runtime.wire_batch is not None:
+                gpu.state.depth_test_set("LESS_EQUAL")
+                gpu.state.depth_mask_set(False)
                 gpu.state.line_width_set(1.5)
                 runtime.wire_shader.bind()
                 runtime.wire_shader.uniform_float("color", cls.wire_color())
@@ -1340,6 +1345,7 @@ class CageVisualizationService:
         if runtime.skew_image is None:
             return
 
+        # runtime.skew_image.pack()
         runtime.skew_texture_dirty = False
 
         cls._update_skew_texture(
