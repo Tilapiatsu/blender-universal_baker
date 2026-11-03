@@ -202,7 +202,6 @@ def update_active_source(self, context):
 
 def exit_weight_paint_callback(obj, mode):
     try:
-        return
         safe_obj = getattr(obj, mode)
 
         if safe_obj == "OBJECT":
@@ -492,6 +491,9 @@ class CageVisualizationService:
                 target.settings_cage.max_ray_distance,
             )
 
+            if runtime.skew_image is not None:
+                cls._link_skew_image_to_material(cage)
+
     @classmethod
     def enable_skew_edit(cls, target: UBK_TargetObject, preview_bake: bool = False) -> bool:
         with LOG.scope("Skew Edit"):
@@ -644,6 +646,11 @@ class CageVisualizationService:
             try:
                 bpy.ops.object.mode_set(mode=mode)
                 cage.hide_set(True)
+                runtime = cls._ensure_runtime()
+                if runtime is None:
+                    return
+                # bpy.context.scene.tool_settings.image_paint.mode = "IMAGE"
+                # bpy.context.scene.tool_settings.image_paint.canvas = runtime.skew_image
 
             except RuntimeError as exc:
                 LOG.warning(f"Unable to enter Texture Paint mode for cage {cage.name}: {exc}")
@@ -1325,7 +1332,7 @@ class CageVisualizationService:
             gpu.matrix.multiply_matrix(cage.matrix_world)
             mvp_matrix = bpy.context.region_data.perspective_matrix @ cage.matrix_world
             runtime.surface_shader.bind()
-            if runtime.skew_image is not None:
+            if runtime.skew_image is not None and runtime.cage_edit_mode == CageEditMode.SKEW:
                 runtime.surface_shader.uniform_sampler("skew_image", runtime.skew_texture)
                 runtime.surface_shader.uniform_sampler("udim_lookup", runtime.udim_lookup_texture)
             runtime.surface_shader.uniform_float("viewProjectionMatrix", mvp_matrix)
