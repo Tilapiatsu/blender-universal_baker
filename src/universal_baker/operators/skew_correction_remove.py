@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import bpy
+from universal_baker.services.visualization_cage import CageVisualizationService
 
 from ..constant import LOG
 from ..core.controller import BakeController
@@ -30,6 +31,8 @@ class UBK_OT_SkewCorrectionRemove(UBK_OT_Base):
             return {"CANCELLED"}
 
         self.info(f"Skew image '{skew_image_name}' removed.")
+
+        CageVisualizationService.disable()
 
         return {"FINISHED"}
 

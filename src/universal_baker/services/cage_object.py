@@ -48,14 +48,17 @@ class CageObjectService:
             if not settings_cage.is_cage_generated:
                 return settings_cage.cage_object_custom
             else:
-                if settings_cage.cage_object_generated is not None and len(target.object.data.vertices) == len(
-                    settings_cage.cage_object_generated.data.vertices
+                if (
+                    settings_cage.cage_object_generated is not None
+                    and target.object.data == settings_cage.cage_object_generated.data
                 ):
                     LOG.debug("Retrieve Generated Cage")
                     cls._ensure_modifiers(target, settings_cage.cage_object_generated, True)
                     cls._ensure_cage_transform(settings_cage.cage_object_generated, target.object)
                     cage = settings_cage.cage_object_generated
                 else:
+                    if settings_cage.cage_object_generated is not None:
+                        bpy.data.objects.remove(settings_cage.cage_object_generated)
                     LOG.debug("Generated new Cage")
                     cage = cls._get_or_create_cage(target)
                     cls._ensure_cage_transform(cage, target.object)

@@ -10,7 +10,7 @@
   - [ ] operator to match source and target by binding box
   - [X] Bake from source with Cage
   - [X] Cage Automatic Creation
-  - [ ] Allow user to choose the color of the cage in the preferences
+  - [X] Allow user to choose the color of the cage in the UI
   - [ ] Export generated cage ?
   - [X] Cage Shader
   - [X] Cage distance painting
@@ -21,7 +21,7 @@
 inputing 10% of the resulution for exemple
 - [ ] add ability to load a scene as background before baker ( usefull for AO )
 - [ ] add feature to apply background color per baker
-- [ ] add bake from multires ? For Normal only
+- [ ] add bake from multires ? For Normal, displacement
 - [ ] Bake Skew Correction map
 - [ ] Bake Decal ?
 - [ ] Map Denoising ?
@@ -59,7 +59,7 @@ inputing 10% of the resulution for exemple
   - [ ] add option to have curvature using two Channel : [One for concave and one for convex](https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSZwnsY3ePkCHIu-GvNyl-Kr7-27NMkMm-btlTj02CAiINIVGu0Ovo-lp5V&s=10)
 - [ ] Cavity
 - [ ] Edge
-- [ ] Normal
+- [X] Normal
   - [ ] add option to add a bevel shader in the normal map ?
 - [ ] Normal World Space
 - [ ] Position

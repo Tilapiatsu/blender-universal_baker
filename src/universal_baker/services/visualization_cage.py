@@ -1327,7 +1327,7 @@ class CageVisualizationService:
             runtime.surface_shader.bind()
             if runtime.skew_image is not None:
                 runtime.surface_shader.uniform_sampler("skew_image", runtime.skew_texture)
-            runtime.surface_shader.uniform_sampler("udim_lookup", runtime.udim_lookup_texture)
+                runtime.surface_shader.uniform_sampler("udim_lookup", runtime.udim_lookup_texture)
             runtime.surface_shader.uniform_float("viewProjectionMatrix", mvp_matrix)
             runtime.surface_shader.uniform_float("color_skew", cls.surface_color_skew())
             runtime.surface_shader.uniform_float("color_corrected", cls.surface_color_corrected())
