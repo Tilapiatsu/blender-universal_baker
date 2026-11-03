@@ -4,12 +4,11 @@ import math
 import shutil
 import tempfile
 import time
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import TYPE_CHECKING
 
 import bpy
 import gpu
-import numpy as np
 from gpu_extras.batch import batch_for_shader
 from mathutils import Color
 
@@ -560,10 +559,16 @@ class CageVisualizationService:
 
             tiles = UVService.detect_udim_tiles(target_object.object, target_object.uv_layer)
 
-            folder = Path("//") / UBK_SUBFOLDER_SKEW
+            folder = PurePosixPath("//") / UBK_SUBFOLDER_SKEW
+
             filepath = image_name + ".<UDIM>.png"
 
-            resolved_path = OutputResolver.resolve_directory(str(folder / filepath), resolve_relative=True)
+            fullpath = str(folder / filepath)
+
+            resolved_path = OutputResolver.resolve_directory(
+                fullpath,
+                resolve_relative=True,
+            )
 
             resource = ImageResource.create(
                 width=1024,

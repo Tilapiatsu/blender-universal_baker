@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 import tempfile
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 import bpy
@@ -83,11 +83,14 @@ class OutputResolver:
         if str(path).startswith("//"):
             result = Path(str(path).replace("//", str(relative_to) + "/"))
 
+        elif str(path).startswith("\\\\"):
+            result = Path(str(path).replace("\\\\", str(relative_to) + "\\"))
+
         return result
 
     @staticmethod
     def blend_file_path() -> Path:
-        return Path(bpy.path.abspath("//"))
+        return Path(str(PurePosixPath(bpy.path.abspath("//"))))
 
     @staticmethod
     def tempdir() -> Path:
