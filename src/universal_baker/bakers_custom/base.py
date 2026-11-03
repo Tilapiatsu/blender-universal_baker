@@ -121,6 +121,9 @@ class CustomBaker(BakerBase):
                 if hasattr(node, "node_tree"):
                     new_node.node_tree = node.node_tree
 
+                if hasattr(node, "operation"):
+                    new_node.operation = node.operation
+
                 node_mapping[node] = new_node
 
             for link in src_tree.links:
@@ -171,7 +174,7 @@ class CustomBaker(BakerBase):
         if self.asset_path is None:
             return
 
-        LOG.info(f"Registering Building Custom Baker : {self.id}")
+        LOG.info(f"Registering Custom Baker : {self.id}")
         self.register_property_class()
         registry_baker.register(self)
 

@@ -1,11 +1,13 @@
 from . import (
     ambient_occlusion,
     curvature,
+    normal_world_space,
 )
 
 modules = (
     ambient_occlusion,
     curvature,
+    normal_world_space,
 )
 
 
