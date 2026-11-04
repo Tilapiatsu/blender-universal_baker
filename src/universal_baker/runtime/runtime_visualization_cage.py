@@ -218,13 +218,6 @@ class CageVisualizationRuntime:
 
             ParameterApplier.apply(definition, snapshot, context)
 
-            if self.cage_asset_setup is not None and self.cage_asset_setup.projection_cage is not None:
-                context = ParameterContext(
-                    object=self.cage_asset_setup.projection_cage,
-                    is_dragging=bpy.context.scene.ubk_project.visualization.is_dragging,
-                )
-                ParameterApplier.apply(definition, snapshot, context)
-
         finally:
             self._updating_parameters = False
             self._preview_dirty = False

@@ -1,10 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import Enum, auto
 
 import bpy
-from universal_baker.runtime.runtime_visualization_cage import CageEditMode
 
 from ..constant import CAGE_SKEW_REMESHER_ASSET_PATH, LOG, OFFSET_VERTEX_GROUP_NAME
 from ..core.registry_definition import registry_definition
@@ -14,6 +12,7 @@ from ..properties.object import UBK_TargetObject
 from ..properties.settings_cage import UBK_CageSettings
 from ..resources.asset_external import AssetExtrenal
 from ..resources.asset_info import CageSkewInfo
+from ..runtime.runtime_visualization_cage import CageEditMode
 from ..services.parameter_service import ParameterService
 from .asset_external_setup import AssetExternalCageSkewRemesherSetup
 
