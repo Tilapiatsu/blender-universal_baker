@@ -36,6 +36,28 @@ class Curvature(CustomBaker):
             BindingMetadata(
                 binding_type=BindingType.MATERIAL_SOCKET,
                 material="UBK_Curvature",
+                node="SN_VectorLerp",
+                socket_input="Factor",
+            ),
+        )
+        p = ParameterMetadata(
+            identifier="SplitChannels",
+            name="Split Channels",
+            default=False,
+            description="Compute convex and concave areas in two distinct channels.",
+            type=ParameterType.BOOL,
+            category="Curvature",
+            order=0,
+            visible=True,
+            bindings=b,
+        )
+
+        parameters += (p,)
+
+        b: tuple[BindingMetadata, ...] = (
+            BindingMetadata(
+                binding_type=BindingType.MATERIAL_SOCKET,
+                material="UBK_Curvature",
                 node="SN_Curvature",
                 socket_input="GlobalContrast",
             ),
@@ -50,8 +72,8 @@ class Curvature(CustomBaker):
             soft_max=5.0,
             min_value=-5.0,
             max_value=5.0,
-            category="Ambient Occlusion",
-            order=2,
+            category="Curvature",
+            order=1,
             visible=True,
             bindings=b,
         )
@@ -76,8 +98,8 @@ class Curvature(CustomBaker):
             soft_max=0.999,
             min_value=0.0,
             max_value=0.999,
-            category="Ambient Occlusion",
-            order=3,
+            category="Curvature",
+            order=2,
             visible=True,
             bindings=b,
         )
@@ -102,8 +124,8 @@ class Curvature(CustomBaker):
             soft_max=10.0,
             min_value=0.001,
             max_value=10.0,
-            category="Ambient Occlusion",
-            order=4,
+            category="Curvature",
+            order=3,
             visible=True,
             bindings=b,
         )
