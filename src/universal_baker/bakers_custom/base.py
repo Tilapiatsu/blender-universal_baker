@@ -107,13 +107,23 @@ class CustomBaker(BakerBase):
                 new_node.location = node.location
                 new_node.width = node.width
                 new_node.name = node.name
+                if node.type == "MENU_SWITCH":
+                    new_node.data_type = node.data_type
 
                 for i, input_sock in enumerate(node.inputs):
                     if i < len(new_node.inputs) and not input_sock.is_linked:
                         try:
-                            new_node.inputs[i].default_value = input_sock.default_value
-                        except AttributeError:
-                            pass
+                            new_input = new_node.inputs[i]
+                            if node.type == "MENU_SWITCH":
+                                for j, item in enumerate(node.enum_items):
+                                    if j >= len(new_node.enum_items):
+                                        new_node.enum_items.new(item.name)
+                                    else:
+                                        new_node.enum_items[j].name = item.name
+
+                            new_input.default_value = input_sock.default_value
+                        except AttributeError as e:
+                            LOG.error(str(e))
 
                 if hasattr(node, "image") and hasattr(new_node, "image"):
                     new_node.image = node.image

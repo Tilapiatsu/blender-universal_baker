@@ -4,7 +4,7 @@ from ..core.registry_baker import registry_baker
 from ..enum.image_colorspace import ImageColorSpace
 from ..enum.view_transform import DisplayDevice, ViewTransform
 from ..parameter.metadata import BindingMetadata, BindingType, ParameterMetadata
-from ..parameter.parameter import ParameterType
+from ..parameter.parameter import ParameterType, ParameterOption
 from ..runtime.color_management_info import ColorManagementInfo
 from .base import CustomBaker
 
@@ -36,17 +36,38 @@ class Curvature(CustomBaker):
             BindingMetadata(
                 binding_type=BindingType.MATERIAL_SOCKET,
                 material="UBK_Curvature",
-                node="SN_VectorLerp",
-                socket_input="Factor",
+                node="Menu Switch",
+                socket_input="Menu",
             ),
         )
+
+        options = (
+            ParameterOption(
+                identifier="SINGLE_CHANNEL",
+                label="Single Channel",
+            ),
+            ParameterOption(
+                identifier="SPLITTED_CHANNELS",
+                label="Splitted Channels",
+            ),
+            ParameterOption(
+                identifier="CONVEX",
+                label="Convex",
+            ),
+            ParameterOption(
+                identifier="CONCAVE",
+                label="Concave",
+            ),
+        )
+
         p = ParameterMetadata(
-            identifier="SplitChannels",
-            name="Split Channels",
-            default=False,
-            description="Compute convex and concave areas in two distinct channels.",
-            type=ParameterType.BOOL,
+            identifier="Mode",
+            name="Mode",
+            default="SINGLE_CHANNEL",
+            description="How to Combine convex and concave areas in channels.",
+            type=ParameterType.ENUM,
             category="Curvature",
+            options=options,
             order=0,
             visible=True,
             bindings=b,

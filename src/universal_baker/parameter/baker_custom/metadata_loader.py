@@ -318,8 +318,8 @@ class MetadataLoader:
             if not isinstance(raw_option, dict):
                 raise MetadataValidationError(f"{option_location} must be an object.")
 
-            identifier = cls._required_string(raw_option, "id", option_location)
-            name = cls._required_string(raw_option, "name", option_location)
+            identifier = cls._required_string(raw_option, "identifier", option_location)
+            name = cls._required_string(raw_option, "label", option_location)
             description = cls._optional_string(raw_option, "description", "")
 
             options.append(
