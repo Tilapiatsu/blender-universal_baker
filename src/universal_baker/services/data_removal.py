@@ -64,3 +64,12 @@ class NodeRemoval:
             return
         else:
             cls.remove_nodes(remaining, new_count)
+
+
+class LibraryRemoval:
+    @classmethod
+    def remove_library(cls, library: bpy.types.Library):
+        if library is None:
+            return
+
+        bpy.data.libraries.remove(library)

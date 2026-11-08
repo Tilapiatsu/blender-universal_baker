@@ -33,9 +33,9 @@ class ParameterApplier:
 
     @staticmethod
     def clamp_value(
-        value: float | int,
-        minimum: float | int,
-        maximum: float | int,
+        value: float,
+        minimum: float,
+        maximum: float,
     ) -> float | int:
         return max(
             minimum,

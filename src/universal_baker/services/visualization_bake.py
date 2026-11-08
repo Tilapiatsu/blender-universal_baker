@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 import bpy
@@ -90,23 +90,29 @@ def update_visualization(self, context):
             data = None
             match BakeVisualizationService.mode():
                 case BakeVisualizationMode.PREVIEW:
-                    data = PreviewData(producer, bake_group.uuid, baker.uuid)
+                    data = PreviewData(
+                        producer=producer,
+                        bake_group_uuid=bake_group.uuid,
+                        producer_uuid=baker.uuid,
+                        bake_targets=bake_group.bake_targets,
+                    )
                 case BakeVisualizationMode.DISPLAY:
                     data = DisplayData(
-                        bake_group.uuid,
-                        baker.accumulated_uuid,
-                        [o.object for o in bake_group.target_objects],
-                        producer,
+                        bake_group_uuid=bake_group.uuid,
+                        accumulated_uuid=baker.accumulated_uuid,
+                        objects=[o.object for o in bake_group.target_objects],
+                        producer=producer,
                     )
                 case BakeVisualizationMode.PREVIEW_CAGE:
                     if BakeVisualizationService.projection_target() is None:
                         return
                     data = PreviewData(
-                        producer,
-                        bake_group.uuid,
-                        baker.uuid,
+                        producer=producer,
+                        bake_group_uuid=bake_group.uuid,
+                        producer_uuid=baker.uuid,
                         mode=BakeVisualizationMode.PREVIEW_CAGE,
                         projection_target=BakeVisualizationService.projection_target(),
+                        bake_targets=bake_group.bake_targets,
                     )
                 case _:
                     return
@@ -131,7 +137,12 @@ def update_visualization(self, context):
             viz.enabled_display = False
             viz.mode = "PREVIEW"
 
-            data = PreviewData(producer, bake_group.uuid, baker.uuid)
+            data = PreviewData(
+                producer=producer,
+                bake_group_uuid=bake_group.uuid,
+                producer_uuid=baker.uuid,
+                bake_targets=bake_group.bake_targets,
+            )
 
             BakeVisualizationService.enable_preview(data)
 
@@ -154,12 +165,13 @@ def update_visualization(self, context):
 
 @dataclass(slots=True, frozen=True)
 class PreviewData:
-    producer: BakerBase | PackerBase
+    producer: BakerBase
     bake_group_uuid: str
     producer_uuid: str
     accumulated_uuid: str | None = None
     mode: BakeVisualizationMode = BakeVisualizationMode.PREVIEW
     projection_target: bpy.types.Object | None = None
+    bake_targets: list[bpy.types.Object] = field(default_factory=list)
 
 
 @dataclass(slots=True, frozen=True)
@@ -167,9 +179,10 @@ class DisplayData:
     bake_group_uuid: str
     accumulated_uuid: str
     objects: list[bpy.types.Object]
-    producer: BakerBase | PackerBase
+    producer: BakerBase
     producer_uuid: str | None = None
     mode: BakeVisualizationMode = BakeVisualizationMode.DISPLAY
+    # bake_group_objects: list[bpy.types.Object] = field(default_factory=list)
 
 
 class BakeVisualizationService:
@@ -379,7 +392,10 @@ class BakeVisualizationService:
             producer_uuid=data.producer_uuid,
             accumulated_uuid=data.accumulated_uuid,
             objects=[o.name for o in data.objects] if isinstance(data, DisplayData) else [],
-            projection_target=data.projection_target if isinstance(data, PreviewData) else None,
+            projection_target=data.projection_target.name
+            if isinstance(data, PreviewData) and data.projection_target is not None
+            else None,
+            bake_targets=[o.name for o in data.bake_targets] if isinstance(data, PreviewData) else [],
         )
 
         cls._capture_state(data)
@@ -405,8 +421,6 @@ class BakeVisualizationService:
             cls._create_temp_collection()
 
             if data.producer.clear_preview_material:
-                material = PreviewMaterialService.get_or_create()
-                data.producer.configure_preview_material(material)
                 if PreviewData.projection_target is None and data.mode == BakeVisualizationMode.PREVIEW_CAGE:
                     raise RuntimeError("Cage Projection Target is None")
                 elif data.projection_target is not None and data.mode == BakeVisualizationMode.PREVIEW_CAGE:
@@ -414,7 +428,14 @@ class BakeVisualizationService:
                 else:
                     mat_override_objects = bpy.context.scene.objects
 
-                cls._runtime.set_material_snapshots(MaterialOverrideService.apply(mat_override_objects, material))
+                source_material = bpy.data.materials.new(name="UBK_SOURCE_MATERIAL")
+                data.producer.configure_preview(source_material, data.bake_targets)
+
+                snapshots = MaterialOverrideService.apply(mat_override_objects, source_material, inject=True)
+
+                snapshots[0].temporary_material_names.append(source_material.name)
+
+                cls._runtime.set_material_snapshots(snapshots)
 
             cls._runtime.set_active_producer(data.producer)
 

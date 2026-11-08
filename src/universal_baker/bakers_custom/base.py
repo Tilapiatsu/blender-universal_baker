@@ -5,9 +5,10 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from universal_baker.constant import LOG
+import bpy
 
 from ..bakers.base import BakerBase
+from ..constant import LOG
 from ..core.registry_baker import registry_baker
 from ..core.registry_definition import registry_definition
 from ..parameter.baker_custom.metadata_loader import MetadataLoader as metadata_loader_custom
@@ -16,6 +17,8 @@ from ..runtime.asset_setup import BakerExecution
 from ..runtime.bake_objects import BakeObjects
 from ..runtime.context_bake import BakeContext
 from ..services.asset_external_setup import AssetExternalBakeSetup
+from ..services.material_injection import MaterialInjectionService
+from ..services.modifier_injection import ModifierInjectionService
 from ..services.visibility_override import VisibilityOverride
 
 if TYPE_CHECKING:
@@ -91,6 +94,23 @@ class CustomBaker(BakerBase):
     def invalidate_previous_output(self, ctx: BakeContext) -> None:
         super().invalidate_previous_output(ctx)
 
+    def configure_preview(self, material: bpy.types.Material, objects: list[bpy.types.Object]):
+        assert self.asset_path is not None
+        asset = AssetExtrenal(filepath=self.asset_path)
+
+        with AssetExternalBakeSetup.get_prototype_data(asset) as prototype_data:
+            prototype = prototype_data.obj
+            prototype_material = prototype_data.material
+
+            material.use_nodes = True
+            material.node_tree.nodes.clear()
+            material.node_tree.nodes.new("ShaderNodeOutputMaterial")
+
+            MaterialInjectionService.copy(source_material=prototype_material, target_material=material)
+
+            for o in objects:
+                ModifierInjectionService.inject(source=prototype, target=o)
+
     def configure_preview_material(self, material):
         assert self.asset_path is not None
         asset = AssetExtrenal(filepath=self.asset_path)
@@ -98,7 +118,9 @@ class CustomBaker(BakerBase):
         dst_tree = material.node_tree
         dst_tree.nodes.clear()
 
-        with AssetExternalBakeSetup.get_prototype_material(asset) as prototype_material:
+        with AssetExternalBakeSetup.get_prototype_data(asset) as prototype_data:
+            prototype_material = prototype_data.material
+
             src_tree = prototype_material.node_tree
             node_mapping = {}
 
@@ -107,6 +129,7 @@ class CustomBaker(BakerBase):
                 new_node.location = node.location
                 new_node.width = node.width
                 new_node.name = node.name
+
                 if node.type == "MENU_SWITCH":
                     new_node.data_type = node.data_type
 
@@ -121,7 +144,9 @@ class CustomBaker(BakerBase):
                                     else:
                                         new_node.enum_items[j].name = item.name
 
-                            new_input.default_value = input_sock.default_value
+                            if hasattr(new_input, "default_value"):
+                                new_input.default_value = input_sock.default_value
+
                         except AttributeError as e:
                             LOG.error(str(e))
 
@@ -148,6 +173,19 @@ class CustomBaker(BakerBase):
                         continue
 
                     dst_tree.links.new(from_node.outputs[from_sock_idx], to_node.inputs[to_sock_idx])
+
+    def configure_preview_modifier(self, objects: list[bpy.types.Object]):
+        assert self.asset_path is not None
+        asset = AssetExtrenal(filepath=self.asset_path)
+
+        with AssetExternalBakeSetup.get_prototype_data(asset) as prototype_data:
+            prototype_material = prototype_data.material
+
+        for o in objects:
+            continue
+
+    def prepare_custom_collection(self, ctx: BakeContext) -> bpy.types.Collection | None:
+        return super().prepare_custom_collection(ctx)
 
     def get_visibility_overrides(self, ctx: BakeContext) -> list[VisibilityOverride]:
         """Set Visibility."""

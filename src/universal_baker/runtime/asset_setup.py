@@ -6,7 +6,7 @@ import bpy
 
 from ..constant import LOG
 from ..services.bake_material import BakeMaterialSetup
-from ..services.data_removal import MaterialRemoval, ObjectRemoval
+from ..services.data_removal import MaterialRemoval, ObjectRemoval, LibraryRemoval
 from ..services.object_offset import ObjectOffset
 
 LOG_SCOPE = "Asset Setup"
@@ -27,6 +27,7 @@ class AssetSetup:
     temporary_materials: list[bpy.types.Material] = field(default_factory=list)
     temporary_node_group: list[bpy.types.NodeTree] = field(default_factory=list)
     temporary_modifiers: list[tuple[bpy.types.Object, str]] = field(default_factory=list)
+    temporary_libraries: list[bpy.types.Library] = field(default_factory=list)
     material_setup: BakeMaterialSetup | None = None
     object_offset_edit: ObjectOffset | None = None
     object_offset_preview: ObjectOffset | None = None
@@ -35,6 +36,7 @@ class AssetSetup:
         """
         Remove all temporary Blender datablocks created by this setup.
         """
+        # TODO: Need to clean imported library -> Visible in the blend file after importing the prototype
         with LOG.scope(LOG_SCOPE):
             LOG.debug("Cleaning up AssetSetup")
 
@@ -63,6 +65,10 @@ class AssetSetup:
                 if material.name in bpy.data.materials:
                     LOG.debug(f"Remove Temporary Material: {material.name}")
                     MaterialRemoval.remove_material(material)
+
+            for library in self.temporary_libraries:
+                LOG.debug(f"Remove Temporary Library: {library.name}")
+                LibraryRemoval.remove_library(library)
 
             self.temporary_materials.clear()
 

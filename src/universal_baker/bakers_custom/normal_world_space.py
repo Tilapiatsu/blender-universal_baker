@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import bpy
+
 from ..core.registry_baker import registry_baker
 from ..enum.image_colorspace import ImageColorSpace
 from ..enum.view_transform import DisplayDevice, ViewTransform
 from ..parameter.metadata import BindingMetadata, BindingType, ParameterMetadata
 from ..parameter.parameter import ParameterType
 from ..runtime.color_management_info import ColorManagementInfo
+from ..runtime.context_bake import BakeContext
 from .base import CustomBaker
 
 

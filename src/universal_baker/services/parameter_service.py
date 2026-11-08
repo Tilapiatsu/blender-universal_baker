@@ -213,6 +213,10 @@ class ParameterService:
             item.string_value = str(value)
             return
 
+        if parameter_type is ParameterType.COLLECTION:
+            item.string_value = str(value)
+            return
+
         raise ParameterServiceError(f"Unsupported parameter type: {parameter_type}")
 
     @classmethod

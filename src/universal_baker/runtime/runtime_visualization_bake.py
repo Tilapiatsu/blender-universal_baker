@@ -21,7 +21,6 @@ if TYPE_CHECKING:
     from ..packers.base import PackerBase
     from ..services.material_override import MaterialSnapshot
     from .visualization_state import SceneVisualizationState
-    from ..parameters_definition.baker_settings import UBK_BakerSettings
 
 
 class BakeVisualizationRuntime:
@@ -49,6 +48,7 @@ class BakeVisualizationRuntime:
         self._preview_dirty: bool = False
         self._updating_parameters: bool = False
         self._objects: list[str] = []
+        self._bake_targets: list[str] = []
         self._scenes: dict[
             str,
             SceneVisualizationState,
@@ -110,7 +110,11 @@ class BakeVisualizationRuntime:
 
     @property
     def objects(self) -> list[bpy.types.Object]:
-        return [bpy.data.objects[o] for o in self._objects if bpy.data.objects[o] is not None]
+        return [bpy.data.objects.get(o) for o in self._objects if bpy.data.objects.get(o) is not None]
+
+    @property
+    def bake_group_objects(self) -> list[bpy.types.Object]:
+        return [bpy.data.objects.get(o) for o in self._bake_targets if bpy.data.objects.get(o) is not None]
 
     @property
     def object_visibilities(self) -> list[VisibilityOverride]:
@@ -162,7 +166,8 @@ class BakeVisualizationRuntime:
         producer_uuid: str | None = None,
         accumulated_uuid: str | None = None,
         objects: list[str] | None = None,
-        projection_target: bpy.types.Object | None = None,
+        projection_target: str | None = None,
+        bake_targets: list[str] | None = None,
     ) -> None:
         """
         Start a new visualization session.
@@ -183,7 +188,8 @@ class BakeVisualizationRuntime:
         self._accumulated_uuid = accumulated_uuid
         self._preview_enabled = mode == BakeVisualizationMode.PREVIEW
         self._objects = objects if objects is not None else []
-        self._projection_target = projection_target.name if projection_target is not None else None
+        self._projection_target = projection_target if projection_target is not None else None
+        self._bake_targets = bake_targets if bake_targets is not None else []
 
     # ------------------------------------------------------------------
     # State registration
@@ -205,7 +211,7 @@ class BakeVisualizationRuntime:
 
     def set_material_snapshots(
         self,
-        snapshots,
+        snapshots: list[MaterialSnapshot],
     ) -> None:
         """
         Store the original material assignments.
@@ -214,7 +220,7 @@ class BakeVisualizationRuntime:
         if not self._active:
             raise RuntimeError("Cannot store material state before visualization begins")
 
-        self._material_snapshots = list(snapshots)
+        self._material_snapshots = snapshots
 
     def set_object_visibilities(self, visibilities: list[VisibilityOverride]) -> None:
         if not self._active:
@@ -503,7 +509,7 @@ class VisualizationSuspension:
         self.runtime = runtime
         self.was_enabled = False
         self.mode = None
-        self.active_producer: BakerBase | PackerBase | None = None
+        self.active_producer: BakerBase | None = None
         self.bake_group_uuid: str | None = None
         self.accumulated_uuid: str | None = None
         self.producer_uuid: str | None = None
@@ -516,6 +522,7 @@ class VisualizationSuspension:
         self.producer_uuid = self.runtime.producer_uuid
         self.accumulated_uuid = self.runtime.accumulated_uuid
         self.objects = self.runtime.objects
+        self.bake_group_objects = self.runtime.bake_group_objects
 
     def restore(self):
         if not self.was_enabled or self.mode is None:
@@ -548,7 +555,13 @@ class VisualizationSuspension:
                 if self.active_producer is None or self.bake_group_uuid is None or self.producer_uuid is None:
                     return
 
-                data = PreviewData(self.active_producer, self.bake_group_uuid, self.producer_uuid)
+                data = PreviewData(
+                    producer=self.active_producer,
+                    bake_group_uuid=self.bake_group_uuid,
+                    producer_uuid=self.producer_uuid,
+                    bake_targets=self.bake_group_objects,
+                )
+
                 BakeVisualizationService.enable_preview(data)
                 viz.refreshing = True
                 viz.enabled_display = False

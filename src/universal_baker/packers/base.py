@@ -3,6 +3,8 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
+import bpy
+
 from ..constant import ICON_PACK, LOG
 from ..enum.image_colorspace import ImageColorSpace
 from ..enum.output_stage import OutputStage

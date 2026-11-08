@@ -4,7 +4,7 @@ from ..core.registry_baker import registry_baker
 from ..enum.image_colorspace import ImageColorSpace
 from ..enum.view_transform import DisplayDevice, ViewTransform
 from ..parameter.metadata import BindingMetadata, BindingType, ParameterMetadata
-from ..parameter.parameter import ParameterType, ParameterOption
+from ..parameter.parameter import ParameterOption, ParameterType
 from ..runtime.color_management_info import ColorManagementInfo
 from .base import CustomBaker
 

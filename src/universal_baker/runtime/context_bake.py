@@ -36,6 +36,7 @@ class BakeContext(ExecutionContext):
     _target: bpy.types.Object | None = None
     _sources: list[bpy.types.Object] | None = None
     _cage: bpy.types.Object | None = None
+    _bg_objects: list[bpy.types.Object] | None = None
 
     finished: bool = False
     success: bool = False
@@ -99,6 +100,13 @@ class BakeContext(ExecutionContext):
     @sources.setter
     def sources(self, sources: list[bpy.types.Object] | None) -> None:
         self._sources = sources
+
+    @property
+    def bg_objects(self) -> list[bpy.types.Object]:
+        if self._bg_objects is None:
+            self._bg_objects = self.task.bg_objects
+
+        return self._bg_objects
 
     @property
     def selected_to_active(self) -> bool:

@@ -131,7 +131,12 @@ class BakerBase(ABC):
             material_setup.cleanup()
 
     @abstractmethod
-    def configure_preview_material(self, material):
+    def configure_preview(self, material: bpy.types.Material, objects: list[bpy.types.Object]):
+        self.configure_preview_material(material)
+        self.configure_preview_modifier(objects)
+
+    @abstractmethod
+    def configure_preview_material(self, material: bpy.types.Material):
         material.use_nodes = True
         nodes = material.node_tree.nodes
         nodes.clear()
@@ -145,6 +150,14 @@ class BakerBase(ABC):
         )
 
         output.location.x = shader.location.x + 200
+
+    @abstractmethod
+    def configure_preview_modifier(self, objects: list[bpy.types.Object]):
+        return
+
+    @abstractmethod
+    def prepare_custom_collection(self, ctx: BakeContext) -> bpy.types.Collection | None:
+        return None
 
     @abstractmethod
     def execute(self, ctx: BakeContext) -> None:

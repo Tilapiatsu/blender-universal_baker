@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING
 
 import bpy
 
-
 if TYPE_CHECKING:
     from ..bakers.base import BakerBase
     from ..parameters_definition.baker_settings import UBK_BakerSettings
@@ -56,7 +55,14 @@ class BakeTask(OutputTask):
     def target(self) -> UBK_TargetObject:
         from ..core.controller import BakeController
 
-        return BakeController.get_target_object_from_uuid(self.target_object_uuid)
+        target = BakeController.get_target_object_from_uuid(self.target_object_uuid)
+
+        if target is None:
+            raise AttributeError
+
+        assert target is not None
+
+        return target
 
     @property
     def object_name(self) -> str:

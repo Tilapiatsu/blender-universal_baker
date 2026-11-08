@@ -259,6 +259,7 @@ class MetadataLoader:
             "VECTOR",
             "SHADER",
             "IMG",
+            "COLLECTION",
         }
 
         if parameter_type not in allowed_types:

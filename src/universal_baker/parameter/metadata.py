@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import Any, Callable
+from typing import Any
 
 import bpy
 
@@ -179,6 +180,13 @@ class ParameterMetadata:
                     name=self.name,
                     description=self.description,
                     type=bpy.types.Image,
+                    update=update,
+                )
+            case ParameterType.COLLECTION:
+                return bpy.props.PointerProperty(
+                    name=self.name,
+                    description=self.description,
+                    type=bpy.types.Collection,
                     update=update,
                 )
 

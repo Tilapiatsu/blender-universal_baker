@@ -1,12 +1,8 @@
 from __future__ import annotations
+
+from collections.abc import Iterable
 from dataclasses import dataclass
 
-import bpy
-
-from typing import Iterable
-
-
-from .settings_output import OutputSettings
 from ..resources.label_buffer import LabelBuffer
 
 

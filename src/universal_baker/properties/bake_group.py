@@ -62,6 +62,26 @@ class UBK_BakeGroup(PropertyGroup):
         type=UBK_BakeSettings,
     )
 
+    @property
+    def target_objects_list(self) -> list[bpy.types.Object]:
+        return [o.object for o in self.target_objects if o.object is not None]
+
+    @property
+    def enabled_target_objects_list(self) -> list[bpy.types.Object]:
+        return [o.object for o in self.target_objects if o.enabled and o.object is not None]
+
+    @property
+    def bake_targets(self) -> list[bpy.types.Object]:
+        bake_targets = []
+
+        for target in self.target_objects:
+            if target.have_source:
+                bake_targets += target.source_object_list
+            else:
+                bake_targets.append(target.object)
+
+        return bake_targets
+
 
 classes = (UBK_BakeGroup,)
 

@@ -6,6 +6,7 @@ import bpy
 
 from ..constant import LOG
 from ..resources.asset_external import AssetExtrenal
+from ..runtime.asset_setup import AssetSetup
 
 LOG_SCOPE = "External Asset Service"
 
@@ -18,7 +19,7 @@ class AssetExternalService:
     """Load the external asset blend file and return its prototype object"""
 
     @staticmethod
-    def load_prototype(asset: AssetExtrenal) -> bpy.types.Object:
+    def load_prototype(asset: AssetExtrenal, setup: AssetSetup) -> bpy.types.Object:
 
         with LOG.scope(LOG_SCOPE):
             LOG.debug(f"Loading Prototype : {asset.filepath}")
@@ -34,6 +35,11 @@ class AssetExternalService:
                     )
 
                 data_to.objects = [asset.prototype_name]
+
+            library = bpy.data.libraries.get(filepath.name)
+
+            if library is not None:
+                setup.temporary_libraries.append(library)
 
             prototype = next(
                 (obj for obj in data_to.objects if obj is not None),

@@ -2,12 +2,14 @@ from . import (
     ambient_occlusion,
     curvature,
     normal_world_space,
+    position,
 )
 
 modules = (
     ambient_occlusion,
     curvature,
     normal_world_space,
+    position,
 )
 
 

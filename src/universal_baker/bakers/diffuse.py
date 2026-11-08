@@ -101,6 +101,15 @@ class DiffuseBaker(BakerBase):
 
         return parameters
 
+    def configure_preview(self, material: bpy.types.Material, objects: list[bpy.types.Object]):
+        return super().configure_preview(material, objects)
+
+    def configure_preview_modifier(self, objects: list[bpy.types.Object]):
+        return super().configure_preview_modifier(objects)
+
+    def prepare_custom_collection(self, ctx: BakeContext) -> bpy.types.Collection | None:
+        return super().prepare_custom_collection(ctx)
+
     def execute(self, ctx: BakeContext) -> None:
         return super().execute(ctx)
 

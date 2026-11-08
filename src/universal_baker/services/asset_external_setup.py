@@ -1,6 +1,8 @@
 from __future__ import annotations
+from universal_baker.services.modifier_injection import ModifierInjectionService
 
 from contextlib import contextmanager
+from dataclasses import dataclass
 
 import bpy
 
@@ -18,6 +20,12 @@ from ..services.parameter_service import ParameterService
 from .asset_external import AssetExternalService
 
 LOG_SCOPE = "External Asset Setup Service"
+
+
+@dataclass(slots=True, frozen=True)
+class PrototypeData:
+    obj: bpy.types.Object
+    material: bpy.types.Material
 
 
 class ExternalAssetSetupError(RuntimeError):
@@ -40,14 +48,15 @@ class AssetExternalSetupBase:
             setup.temporary_objects.append(result)
 
         cls._copy_material(prototype, result, setup)
-        cls._copy_modifiers(prototype, result)
+        ModifierInjectionService.inject(prototype, result)
 
         return result
 
     @contextmanager
     @staticmethod
     def get_prototype_material(asset: AssetExtrenal) -> bpy.types.Material:
-        prototype = AssetExternalService.load_prototype(asset)
+        setup = AssetSetup()
+        prototype = AssetExternalService.load_prototype(asset, setup)
         copy = prototype.active_material.copy()
 
         copy.use_nodes = True
@@ -62,6 +71,28 @@ class AssetExternalSetupBase:
                 bpy.data.materials.remove(m)
 
             bpy.data.objects.remove(prototype)
+            setup.cleanup()
+
+    @contextmanager
+    @staticmethod
+    def get_prototype_data(asset: AssetExtrenal) -> PrototypeData:
+        setup = AssetSetup()
+        prototype = AssetExternalService.load_prototype(asset, setup)
+        copy = prototype.active_material.copy()
+
+        copy.use_nodes = True
+
+        try:
+            yield PrototypeData(material=copy, obj=prototype)
+        finally:
+            LOG.debug("Cleanup prototype material")
+            bpy.data.materials.remove(copy)
+            prototype_materials = [s.material for s in prototype.material_slots if s.material is not None]
+            for m in prototype_materials:
+                bpy.data.materials.remove(m)
+
+            bpy.data.objects.remove(prototype)
+            setup.cleanup()
 
     @staticmethod
     def get_prototype_node(asset: AssetExtrenal, node_name: str) -> bpy.types.Node:
@@ -107,46 +138,6 @@ class AssetExternalSetupBase:
 
         setup.temporary_materials.append(material_copy)
 
-    @classmethod
-    def _copy_modifiers(cls, prototype: bpy.types.Object, obj: bpy.types.Object) -> None:
-        for source_modifier in prototype.modifiers:
-            LOG.debug(f"Copying modifier {source_modifier.name} to {obj.name}")
-            modifier = obj.modifiers.new(
-                name=source_modifier.name,
-                type=source_modifier.type,
-            )
-
-            cls._copy_rna_properties(
-                source_modifier,
-                modifier,
-            )
-
-    @staticmethod
-    def _copy_rna_properties(source, destination) -> None:
-        for prop in source.bl_rna.properties:
-            identifier = prop.identifier
-
-            if identifier in {"rna_type", "name", "type"}:
-                continue
-
-            if prop.is_readonly:
-                continue
-
-            try:
-                setattr(
-                    destination,
-                    identifier,
-                    getattr(
-                        source,
-                        identifier,
-                    ),
-                )
-
-            except (AttributeError, TypeError, ValueError):
-                # Some RNA properties cannot be copied
-                # generically. Ignore them for the MVP.
-                continue
-
     @staticmethod
     def _remove_object(obj: bpy.types.Object | None) -> None:
         if obj is None:
@@ -167,9 +158,10 @@ class AssetExternalBakeSetup(AssetExternalSetupBase):
     @classmethod
     def prepare(cls, asset: AssetExtrenal, bake_objects: BakeObjects) -> AssetSetup:
         with LOG.scope(LOG_SCOPE):
-            prototype = AssetExternalService.load_prototype(asset)
-
             setup = AssetSetup()
+
+            prototype = AssetExternalService.load_prototype(asset, setup)
+
             setup.temporary_objects.append(prototype)
             proto_materials = [s.material for s in prototype.material_slots if s.material is not None]
             for m in proto_materials:
@@ -229,10 +221,10 @@ class AssetExternalCagePortalSetup(AssetExternalSetupBase):
         skew_image: bpy.types.Image,
     ) -> AssetSetup:
         with LOG.scope(LOG_SCOPE):
-            prototype_portal = AssetExternalService.load_prototype(asset_portal)
-            prototype_projection_cage = AssetExternalService.load_prototype(asset_projection_cage)
-
             setup = AssetSetup()
+
+            prototype_portal = AssetExternalService.load_prototype(asset_portal, setup)
+            prototype_projection_cage = AssetExternalService.load_prototype(asset_projection_cage, setup)
 
             setup.temporary_objects.append(prototype_portal)
             setup.temporary_objects.append(prototype_projection_cage)
@@ -385,9 +377,9 @@ class AssetExternalCageClippingSetup(AssetExternalSetupBase):
     ) -> AssetSetup:
         with LOG.scope(LOG_SCOPE):
             # ISSUE: Investigate why cage clipping is extremely slow -> it wasn't the case before
-            prototype_clipping = AssetExternalService.load_prototype(asset_clipping)
-
             setup = AssetSetup()
+
+            prototype_clipping = AssetExternalService.load_prototype(asset_clipping, setup)
 
             setup.temporary_objects.append(prototype_clipping)
 
@@ -533,9 +525,9 @@ class AssetExternalCageSkewRemesherSetup(AssetExternalSetupBase):
         copy: bool = False,
     ) -> AssetSetup:
         with LOG.scope(LOG_SCOPE):
-            prototype_remesher = AssetExternalService.load_prototype(asset_remesher)
-
             setup = AssetSetup()
+
+            prototype_remesher = AssetExternalService.load_prototype(asset_remesher, setup)
 
             setup.temporary_objects.append(prototype_remesher)
 
@@ -552,7 +544,7 @@ class AssetExternalCageSkewRemesherSetup(AssetExternalSetupBase):
                 LOG.error("Preparation Failed")
                 setup.cleanup()
 
-                # The prototype itself was appended from the
+                # NOTE: The prototype itself was appended from the
                 # external blend and must also be removed.
                 cls._remove_object(prototype_remesher)
                 raise RuntimeError

@@ -427,11 +427,12 @@ class CageVisualizationService:
 
     @classmethod
     def enable_bake_preview(cls, target: UBK_TargetObject) -> None:
-        # ISSUE: In bake preview mode, the baker parameters are not updating the material inputs anymore :(
         # ISSUE: In bake preview mode, the proper view transform is not loaded correctly
         # ISSUE: In Bake preview switching baker updates the preview properly, but selecting the selected baker again
         # disable the preview and I want to prevent that
         # ISSUE: Sometime Crash when ctrl + z in bake preview mode
+
+        # ISSUE: Enable Bake Preview is currently broken only in Edit Cage mode. Edit Skew is fine
 
         with LOG.scope(LOG_SCOPE):
             from ..core.controller import BakeController
@@ -466,6 +467,7 @@ class CageVisualizationService:
                 producer_uuid=active_baker.uuid,
                 mode=BakeVisualizationMode.PREVIEW_CAGE,
                 projection_target=runtime.cage_asset_setup.projection_target,
+                bake_targets=bake_group.bake_targets,
             )
 
             LOG.info("Enabling Bake Preview")

@@ -1,17 +1,17 @@
 from __future__ import annotations
 
+import bpy
 import numpy as np
 
 from ..constant import LOG
-from ..logger_bake_middleware.bake_summary import BakeStatus
-from ..runtime.context_pack import PackContext
-from .base import PackerBase
-
 from ..core.registry_packer import registry_packer
-from ..resources.image_buffer import ImageBuffer
-from ..services.image_pack import ImagePackService
 from ..enum.channels import Channel
+from ..logger_bake_middleware.bake_summary import BakeStatus
+from ..resources.image_buffer import ImageBuffer
+from ..runtime.context_pack import PackContext
 from ..runtime.tile_set import TileSet
+from ..services.image_pack import ImagePackService
+from .base import PackerBase
 
 
 class PackerInternal(PackerBase):

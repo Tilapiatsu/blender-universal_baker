@@ -5,6 +5,8 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+import bpy
+
 from ..constant import LOG, get_prefs
 from ..core.registry_baker import registry_baker
 from ..core.registry_definition import registry_definition
@@ -181,6 +183,9 @@ class ExternalBaker(BakerBase):
                     asset_path=blend_file,
                     loader=metadata_loader_custom.load_definition,
                 )
+
+    def prepare_custom_collection(self, ctx: BakeContext) -> bpy.types.Collection | None:
+        return super().prepare_custom_collection(ctx)
 
 
 classes = (ExternalBaker,)
