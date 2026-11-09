@@ -75,17 +75,38 @@ class Position(CustomBaker):
             BindingMetadata(
                 binding_type=BindingType.MODIFIER_PROPERTY,
                 modifier="GN_StoreBBoxVectors",
-                property="properties.inputs.Socket_4.value",
+                property="properties.inputs.Socket_5.value",
             ),
         )
         p = ParameterMetadata(
-            identifier="Collection",
-            name="Collection",
-            default="BAKE_GROUP",
-            description="The Collection containing all the objects from the same bake group.",
-            type=ParameterType.COLLECTION,
+            identifier="BBoxMin",
+            name="BBoxMin",
+            default=(0.0, 0.0, 0.0),
+            description="Bounding Box Minimum Value.",
+            type=ParameterType.VECTOR,
             category="Position",
             order=1,
+            visible=False,
+            bindings=b,
+        )
+
+        parameters += (p,)
+
+        b: tuple[BindingMetadata, ...] = (
+            BindingMetadata(
+                binding_type=BindingType.MODIFIER_PROPERTY,
+                modifier="GN_StoreBBoxVectors",
+                property="properties.inputs.Socket_6.value",
+            ),
+        )
+        p = ParameterMetadata(
+            identifier="BBoxMax",
+            name="BBoxMax",
+            default=(1.0, 1.0, 1.0),
+            description="Bounding Box Maximum Value.",
+            type=ParameterType.VECTOR,
+            category="Position",
+            order=2,
             visible=False,
             bindings=b,
         )

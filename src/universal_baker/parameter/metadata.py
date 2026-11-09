@@ -83,11 +83,11 @@ class ParameterMetadata:
     default: Any = None
     description: str = ""
 
-    min_value: float | int | None = None
-    max_value: float | int | None = None
+    min_value: float | int | tuple[float] | None = None
+    max_value: float | int | tuple[float] | None = None
 
-    soft_min: float | int | None = None
-    soft_max: float | int | None = None
+    soft_min: float | int | tuple[float] | None = None
+    soft_max: float | int | tuple[float] | None = None
 
     unit: str = "NONE"
     subtype: str = "NONE"
@@ -140,14 +140,28 @@ class ParameterMetadata:
                     update=update,
                 )
             case ParameterType.VECTOR:
+                soft_min = self.soft_min
+                soft_max = self.soft_max
+                min_value = self.min_value
+                max_value = self.max_value
+
+                if soft_min is None:
+                    soft_min = float("-inf")
+                if soft_max is None:
+                    soft_max = float("inf")
+                if min_value is None:
+                    min_value = float("-inf")
+                if max_value is None:
+                    max_value = float("inf")
+
                 return bpy.props.FloatVectorProperty(
                     name=self.name,
                     default=self.default,
                     description=self.description,
-                    soft_min=self.soft_min,
-                    soft_max=self.soft_max,
-                    min=self.min_value,
-                    max=self.max_value,
+                    soft_min=soft_min,
+                    soft_max=soft_max,
+                    min=min_value,
+                    max=max_value,
                     unit=self.unit,
                     subtype=self.subtype,
                     update=update,

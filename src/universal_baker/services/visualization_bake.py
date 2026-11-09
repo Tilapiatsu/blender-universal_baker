@@ -421,17 +421,19 @@ class BakeVisualizationService:
             cls._create_temp_collection()
 
             if data.producer.clear_preview_material:
-                if PreviewData.projection_target is None and data.mode == BakeVisualizationMode.PREVIEW_CAGE:
-                    raise RuntimeError("Cage Projection Target is None")
-                elif data.projection_target is not None and data.mode == BakeVisualizationMode.PREVIEW_CAGE:
-                    mat_override_objects = [o for o in data.bake_targets if o != data.projection_target]
-                else:
-                    mat_override_objects = data.bake_targets
-
                 source_material = bpy.data.materials.new(name="UBK_SOURCE_MATERIAL")
                 temp_objects = data.producer.configure_preview(source_material, data.bake_targets)
 
                 cls._runtime.set_temp_objects(temp_objects)
+
+                bake_targets = cls._runtime.bake_targets if cls._runtime.bake_targets is not None else data.bake_targets
+
+                if PreviewData.projection_target is None and data.mode == BakeVisualizationMode.PREVIEW_CAGE:
+                    raise RuntimeError("Cage Projection Target is None")
+                elif data.projection_target is not None and data.mode == BakeVisualizationMode.PREVIEW_CAGE:
+                    mat_override_objects = [o for o in bake_targets if o != data.projection_target]
+                else:
+                    mat_override_objects = bake_targets
 
                 snapshots = MaterialOverrideService.apply(mat_override_objects, source_material, inject=True)
 

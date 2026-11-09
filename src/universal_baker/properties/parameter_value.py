@@ -50,6 +50,7 @@ class DRAGGABLEPROP_OT_subscribe(bpy.types.Operator):
 class UBK_ParameterValue(bpy.types.PropertyGroup):
     identifier: bpy.props.StringProperty(update=parameter_updated)
     float_value: bpy.props.FloatProperty(update=parameter_updated)
+    vectorfloat_value: bpy.props.FloatVectorProperty(update=parameter_updated)
     int_value: bpy.props.IntProperty(update=parameter_updated)
     bool_value: bpy.props.BoolProperty(update=parameter_updated)
     string_value: bpy.props.StringProperty(update=parameter_updated)

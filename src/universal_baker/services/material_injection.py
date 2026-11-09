@@ -218,7 +218,7 @@ class MaterialInjectionService:
             new_node.width = node.width
             new_node.name = node.name
 
-            if node.type == "MENU_SWITCH":
+            if node.type in ["MENU_SWITCH", "MAP_RANGE"]:
                 new_node.data_type = node.data_type
 
             for i, input_sock in enumerate(node.inputs):
@@ -245,7 +245,16 @@ class MaterialInjectionService:
                 new_node.node_tree = node.node_tree
 
             if hasattr(node, "operation"):
+                new_node.opeation = node.operation
+
+            if hasattr(node, "operation"):
                 new_node.operation = node.operation
+
+            if hasattr(node, "attribute_name"):
+                new_node.attribute_name = node.attribute_name
+
+            if hasattr(node, "attribute_type"):
+                new_node.attribute_type = node.attribute_type
 
             node_mapping[node] = new_node
 
@@ -260,4 +269,5 @@ class MaterialInjectionService:
                 if not len(from_node.outputs) or not len(to_node.inputs):
                     continue
 
+                print(f"From {from_node.type} to {to_node.type}")
                 dst_tree.links.new(from_node.outputs[from_sock_idx], to_node.inputs[to_sock_idx])
