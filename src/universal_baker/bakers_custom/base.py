@@ -19,6 +19,7 @@ from ..runtime.context_bake import BakeContext
 from ..services.asset_external_setup import AssetExternalBakeSetup
 from ..services.material_injection import MaterialInjectionService
 from ..services.modifier_injection import ModifierInjectionService
+from ..services.temp_object import TempObject
 from ..services.visibility_override import VisibilityOverride
 
 if TYPE_CHECKING:
@@ -94,7 +95,7 @@ class CustomBaker(BakerBase):
     def invalidate_previous_output(self, ctx: BakeContext) -> None:
         super().invalidate_previous_output(ctx)
 
-    def configure_preview(self, material: bpy.types.Material, objects: list[bpy.types.Object]):
+    def configure_preview(self, material: bpy.types.Material, objects: list[bpy.types.Object]) -> list[TempObject]:
         assert self.asset_path is not None
         asset = AssetExtrenal(filepath=self.asset_path)
 
@@ -108,8 +109,21 @@ class CustomBaker(BakerBase):
 
             MaterialInjectionService.copy(source_material=prototype_material, target_material=material)
 
-            for o in objects:
-                ModifierInjectionService.inject(source=prototype, target=o)
+            temp_objects: list[TempObject] = []
+            if len(prototype.modifiers):
+                for o in objects:
+                    copy = o.copy()
+                    copy.name = f"{o.name}_MODIFIER_INJECTED"
+
+                    temp_object = TempObject(new_obj=copy, recover_obj=o, cleanup=True)
+                    temp_objects.append(temp_object)
+
+                    for c in o.users_collection:
+                        c.objects.link(copy)
+
+                    ModifierInjectionService.inject(source=prototype, target=copy)
+
+        return temp_objects
 
     def configure_preview_material(self, material):
         assert self.asset_path is not None

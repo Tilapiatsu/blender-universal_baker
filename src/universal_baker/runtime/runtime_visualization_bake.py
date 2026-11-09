@@ -13,6 +13,7 @@ from ..parameter.parameter_applier import ParameterApplier
 from ..parameter.parameter_context import ParameterContext
 from ..properties.parameter_value import UBK_ParameterValue
 from ..services.temp_collection import TempCollection
+from ..services.temp_object import TempObject
 from ..services.visibility_override import VisibilityOverride
 from .image_handle import ImageHandle
 
@@ -48,7 +49,7 @@ class BakeVisualizationRuntime:
         self._preview_dirty: bool = False
         self._updating_parameters: bool = False
         self._objects: list[str] = []
-        self._bake_targets: list[str] = []
+        self._bake_group_targets: list[str] = []
         self._scenes: dict[
             str,
             SceneVisualizationState,
@@ -57,6 +58,8 @@ class BakeVisualizationRuntime:
         self._material_snapshots: list[MaterialSnapshot] = []
         self._object_visibilities: list[VisibilityOverride] = []
         self._temp_collection: TempCollection | None = None
+        self._temp_objects: list[TempObject] | None = None
+        self._bake_targets: list[bpy.types.Object] | None = None
 
     # ------------------------------------------------------------------
     # State
@@ -114,7 +117,7 @@ class BakeVisualizationRuntime:
 
     @property
     def bake_group_objects(self) -> list[bpy.types.Object]:
-        return [bpy.data.objects.get(o) for o in self._bake_targets if bpy.data.objects.get(o) is not None]
+        return [bpy.data.objects.get(o) for o in self._bake_group_targets if bpy.data.objects.get(o) is not None]
 
     @property
     def object_visibilities(self) -> list[VisibilityOverride]:
@@ -127,6 +130,37 @@ class BakeVisualizationRuntime:
     @property
     def temp_collection(self) -> TempCollection | None:
         return self._temp_collection
+
+    @property
+    def temp_objects(self) -> list[TempObject] | None:
+        return self._temp_objects
+
+    @property
+    def bake_targets(self) -> list[bpy.types.Object] | None:
+        if not self._active or self.bake_group_uuid is None or self.temp_objects is None:
+            return None
+
+        if self._bake_targets is None:
+            self._bake_targets = []
+
+            temp_obj = {o.recover_object: o.object for o in self.temp_objects}
+            from ..core.controller import BakeController
+
+            bake_group = BakeController.get_bake_group_from_uuid(self.bake_group_uuid)
+
+            if bake_group is None:
+                return None
+
+            targets = bake_group.bake_targets
+
+            for o in targets:
+                temp = temp_obj.get(o)
+                if temp is None:
+                    self._bake_targets.append(o)
+                else:
+                    self._bake_targets.append(temp)
+
+        return self._bake_targets
 
     @property
     def scenes(
@@ -167,7 +201,7 @@ class BakeVisualizationRuntime:
         accumulated_uuid: str | None = None,
         objects: list[str] | None = None,
         projection_target: str | None = None,
-        bake_targets: list[str] | None = None,
+        bake_group_targets: list[str] | None = None,
     ) -> None:
         """
         Start a new visualization session.
@@ -189,7 +223,7 @@ class BakeVisualizationRuntime:
         self._preview_enabled = mode == BakeVisualizationMode.PREVIEW
         self._objects = objects if objects is not None else []
         self._projection_target = projection_target if projection_target is not None else None
-        self._bake_targets = bake_targets if bake_targets is not None else []
+        self._bake_group_targets = bake_group_targets if bake_group_targets is not None else []
 
     # ------------------------------------------------------------------
     # State registration
@@ -230,9 +264,33 @@ class BakeVisualizationRuntime:
 
     def set_temp_collection(self, collection: TempCollection) -> None:
         if not self._active:
-            raise RuntimeError("Cannot store object_visibility before visualization begins")
+            raise RuntimeError("Cannot store temp_collection before visualization begins")
 
         self._temp_collection = collection
+
+    def set_temp_objects(self, objects: list[TempObject]) -> None:
+        if not self._active:
+            raise RuntimeError("Cannot store temp_objects before visualization begins")
+
+        self._temp_objects = objects
+
+        for o in objects:
+            self.object_visibilities.append(
+                VisibilityOverride(
+                    obj=o.recover_object,
+                    viewport=False,
+                    show=False,
+                )
+            )
+
+    def revert_temp_objects(self) -> None:
+        if self.temp_objects is None:
+            return
+
+        for o in self.temp_objects:
+            o.cleanup()
+
+        self._bake_targets = None
 
     # ------------------------------------------------------------------
     # Producer
@@ -315,6 +373,7 @@ class BakeVisualizationRuntime:
         self._objects = []
         self._object_visibilities = []
         self._temp_collection = None
+        self._temp_objects = None
 
     @contextmanager
     def suspend(self):
@@ -375,8 +434,12 @@ class BakeVisualizationRuntime:
 
         definition = registry_definition.require(self.active_producer.id)
 
-        if definition is None or self.producer_uuid is None:
+        if definition is None or self.producer_uuid is None or self.bake_group_uuid is None:
             LOG.error(f"Definition not found for {self.active_producer.id}")
+            return
+
+        if self.bake_targets is None:
+            LOG.error("No Bake targets found")
             return
 
         from ..core.controller import BakeController
@@ -392,7 +455,7 @@ class BakeVisualizationRuntime:
         if ui_props is None:
             return
 
-        for o in bpy.context.scene.objects:
+        for o in self.bake_targets:
             if o.type != "MESH":
                 continue
 

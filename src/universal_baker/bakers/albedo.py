@@ -8,6 +8,7 @@ from ..parameter.metadata import BindingMetadata, BindingType, ParameterMetadata
 from ..parameter.parameter import ParameterType
 from ..runtime.bake_objects import BakeObjects
 from ..runtime.context_bake import BakeContext
+from ..services.temp_object import TempObject
 from ..services.visibility_override import VisibilityOverride
 from .base import BakerBase
 
@@ -91,7 +92,7 @@ class AlbedoBaker(BakerBase):
 
         return parameters
 
-    def configure_preview(self, material: bpy.types.Material, objects: list[bpy.types.Object]):
+    def configure_preview(self, material: bpy.types.Material, objects: list[bpy.types.Object]) -> list[TempObject]:
         return super().configure_preview(material, objects)
 
     def configure_preview_modifier(self, objects: list[bpy.types.Object]):

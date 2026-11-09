@@ -19,11 +19,13 @@ from ..parameter.parameter_context import ParameterContext
 from ..runtime.asset_setup import AssetSetup, BakerExecution
 from ..runtime.bake_objects import BakeObjects
 from ..runtime.color_management_info import ColorManagementInfo
+from ..runtime.runtime_manager import RuntimeManager
 from ..services.artifact_service import ArtifactService
 from ..services.bake_material import BakeMaterialService
 from ..services.image_bake import ImageServiceBake
 from ..services.material import MaterialService
 from ..services.renderer import RendererService
+from ..services.temp_object import TempObject
 from ..services.visibility_override import VisibilityOverride
 
 if TYPE_CHECKING:
@@ -42,7 +44,16 @@ def update_baker_property(self, context):
     if definition is None:
         return
 
-    for o in bpy.context.scene.objects:
+    # ISSUE: Need to use Bake Targets from BakerVisualizationRuntime instead of targetting all objects
+    bake_runtime = RuntimeManager.current(context)
+
+    if bake_runtime is None:
+        return
+
+    if bake_runtime.bake_visualization.bake_targets is None:
+        return
+
+    for o in bake_runtime.bake_visualization.bake_targets:
         if o.type != "MESH":
             continue
 
@@ -131,9 +142,10 @@ class BakerBase(ABC):
             material_setup.cleanup()
 
     @abstractmethod
-    def configure_preview(self, material: bpy.types.Material, objects: list[bpy.types.Object]):
+    def configure_preview(self, material: bpy.types.Material, objects: list[bpy.types.Object]) -> list[TempObject]:
         self.configure_preview_material(material)
-        self.configure_preview_modifier(objects)
+        temp_objects = self.configure_preview_modifier(objects)
+        return temp_objects
 
     @abstractmethod
     def configure_preview_material(self, material: bpy.types.Material):
@@ -152,8 +164,9 @@ class BakerBase(ABC):
         output.location.x = shader.location.x + 200
 
     @abstractmethod
-    def configure_preview_modifier(self, objects: list[bpy.types.Object]):
-        return
+    def configure_preview_modifier(self, objects: list[bpy.types.Object]) -> list[TempObject]:
+        temp_objects: list[TempObject] = []
+        return temp_objects
 
     @abstractmethod
     def prepare_custom_collection(self, ctx: BakeContext) -> bpy.types.Collection | None:

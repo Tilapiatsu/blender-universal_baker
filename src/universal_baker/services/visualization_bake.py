@@ -295,6 +295,7 @@ class BakeVisualizationService:
 
             MaterialOverrideService.restore(cls._runtime.material_snapshots)
             ViewportService.restore(cls._runtime)
+            cls._runtime.revert_temp_objects()
 
         finally:
             cls._runtime.clear()
@@ -395,7 +396,7 @@ class BakeVisualizationService:
             projection_target=data.projection_target.name
             if isinstance(data, PreviewData) and data.projection_target is not None
             else None,
-            bake_targets=[o.name for o in data.bake_targets] if isinstance(data, PreviewData) else [],
+            bake_group_targets=[o.name for o in data.bake_targets] if isinstance(data, PreviewData) else [],
         )
 
         cls._capture_state(data)
@@ -416,7 +417,6 @@ class BakeVisualizationService:
 
         if isinstance(data, PreviewData):
             cls._runtime.set_object_visibilities(cls._prepare_objects_preview_visibility())
-            cls._set_object_visibility()
             cls._runtime.set_temp_collection(cls._prepare_temp_collection())
             cls._create_temp_collection()
 
@@ -424,12 +424,14 @@ class BakeVisualizationService:
                 if PreviewData.projection_target is None and data.mode == BakeVisualizationMode.PREVIEW_CAGE:
                     raise RuntimeError("Cage Projection Target is None")
                 elif data.projection_target is not None and data.mode == BakeVisualizationMode.PREVIEW_CAGE:
-                    mat_override_objects = [o for o in bpy.context.scene.objects if o != data.projection_target]
+                    mat_override_objects = [o for o in data.bake_targets if o != data.projection_target]
                 else:
-                    mat_override_objects = bpy.context.scene.objects
+                    mat_override_objects = data.bake_targets
 
                 source_material = bpy.data.materials.new(name="UBK_SOURCE_MATERIAL")
-                data.producer.configure_preview(source_material, data.bake_targets)
+                temp_objects = data.producer.configure_preview(source_material, data.bake_targets)
+
+                cls._runtime.set_temp_objects(temp_objects)
 
                 snapshots = MaterialOverrideService.apply(mat_override_objects, source_material, inject=True)
 
@@ -437,8 +439,8 @@ class BakeVisualizationService:
 
                 cls._runtime.set_material_snapshots(snapshots)
 
+            cls._set_object_visibility()
             cls._runtime.set_active_producer(data.producer)
-
             cls._runtime.refresh_baker_settings()
 
         else:
@@ -494,6 +496,7 @@ class BakeVisualizationService:
         from ..core.controller import BakeController
 
         overrides = []
+        overriden_objects = []
         bake_group = BakeController.active_bake_group(bpy.context)
         if bake_group is None:
             raise RuntimeError("No active Bake Group")
@@ -511,10 +514,13 @@ class BakeVisualizationService:
                     visible_volume_scatter=True,
                     visible_shadow=True,
                 )
+                overrides.append(visibility_override)
+                overriden_objects.append(target.object)
                 continue
 
             visibility_override = VisibilityOverride(target.object, viewport=False)
             overrides.append(visibility_override)
+            overriden_objects.append(target.object)
 
             for source in target.source_object_list:
                 visibility_override = VisibilityOverride(
@@ -529,6 +535,19 @@ class BakeVisualizationService:
                     visible_shadow=True,
                 )
                 overrides.append(visibility_override)
+                overriden_objects.append(source)
+
+        for o in bpy.context.scene.objects:
+            if o in overriden_objects:
+                continue
+
+            visibility_override = VisibilityOverride(
+                obj=o,
+                viewport=False,
+                show=False,
+            )
+
+            overrides.append(visibility_override)
 
         return overrides
 
