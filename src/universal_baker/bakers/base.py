@@ -3,6 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Generator
 from contextlib import ExitStack, contextmanager
+from sys import activate_stack_trampoline
 from typing import TYPE_CHECKING, Any
 
 import bpy
@@ -44,7 +45,6 @@ def update_baker_property(self, context):
     if definition is None:
         return
 
-    # ISSUE: Need to use Bake Targets from BakerVisualizationRuntime instead of targetting all objects
     bake_runtime = RuntimeManager.current(context)
 
     if bake_runtime is None:
@@ -52,6 +52,17 @@ def update_baker_property(self, context):
 
     if bake_runtime.bake_visualization.bake_targets is None:
         return
+
+    from ..core.controller import BakeController
+    from ..core.registry_baker import registry_baker
+
+    active_baker = BakeController.active_baker(context)
+    active_bake_group = BakeController.active_bake_group(context)
+
+    if active_bake_group is None or active_baker is None:
+        return
+
+    baker = registry_baker[active_baker.baker]
 
     for o in bake_runtime.bake_visualization.bake_targets:
         if o.type != "MESH":
@@ -64,6 +75,8 @@ def update_baker_property(self, context):
             materials=materials,
             ui_prop=self,
             is_dragging=bpy.context.scene.ubk_project.visualization.is_dragging,
+            value_function=baker.parameter_value,
+            bake_targets=active_bake_group.bake_targets,
         )
 
         ParameterApplier.apply_baker(definition, context)
@@ -109,7 +122,6 @@ class BakerBase(ABC):
     def settings_name(self) -> str:
         return f"{self.name.lower().replace(' ', '_')}_settings"
 
-    @abstractmethod
     @contextmanager
     def prepare_execution(
         self,
@@ -141,13 +153,11 @@ class BakerBase(ABC):
 
             material_setup.cleanup()
 
-    @abstractmethod
     def configure_preview(self, material: bpy.types.Material, objects: list[bpy.types.Object]) -> list[TempObject]:
         self.configure_preview_material(material)
         temp_objects = self.configure_preview_modifier(objects)
         return temp_objects
 
-    @abstractmethod
     def configure_preview_material(self, material: bpy.types.Material):
         material.use_nodes = True
         nodes = material.node_tree.nodes
@@ -163,16 +173,13 @@ class BakerBase(ABC):
 
         output.location.x = shader.location.x + 200
 
-    @abstractmethod
     def configure_preview_modifier(self, objects: list[bpy.types.Object]) -> list[TempObject]:
         temp_objects: list[TempObject] = []
         return temp_objects
 
-    @abstractmethod
-    def prepare_custom_collection(self, ctx: BakeContext) -> bpy.types.Collection | None:
+    def parameter_value(self, value_name: str, context: ParameterContext) -> Any:
         return None
 
-    @abstractmethod
     def execute(self, ctx: BakeContext) -> None:
         """Prepare, bake and cleanup all at once."""
         with LOG.scope(LOG_SCOPE):
@@ -196,7 +203,6 @@ class BakerBase(ABC):
             finally:
                 self.cleanup(ctx)
 
-    @abstractmethod
     def invalidate_previous_output(self, ctx: BakeContext):
         if not ctx.session.output_invalidated:
             LOG.debug("Invalidate Previous Output ...")
@@ -207,7 +213,6 @@ class BakerBase(ABC):
 
             ctx.session.output_invalidated = True
 
-    @abstractmethod
     def prepare(self, ctx: BakeContext) -> None:
         """Prepare Blender before baking."""
         LOG.debug("Preparing Scene ...")
@@ -218,25 +223,21 @@ class BakerBase(ABC):
 
         self.apply_parameters(ctx)
 
-    @abstractmethod
     def get_visibility_overrides(self, ctx: BakeContext) -> list[VisibilityOverride]:
         """Get Visibility."""
         l: list[VisibilityOverride] = []
         return l
 
-    @abstractmethod
     def bake(self, ctx: BakeContext) -> None:
         """Execute the bake."""
         LOG.debug("Baking ...")
         RendererService.execute(ctx)
 
-    @abstractmethod
     def cleanup(self, ctx: BakeContext) -> None:
         LOG.debug("Restoring ...")
         """Restore Blender."""
         ctx.image.reset()
 
-    @abstractmethod
     def update_baker(self, ctx: BakeContext) -> None:
         LOG.debug("Update Baker ...")
         from ..core.controller import BakeController
@@ -264,7 +265,6 @@ class BakerBase(ABC):
         if not ctx.task.has_multiple_targets:
             baker.accumulated_image = ctx.image.image
 
-    @abstractmethod
     def create_artifact(self, ctx: BakeContext) -> None:
         LOG.debug("Creating Artifact ...")
 
@@ -294,7 +294,6 @@ class BakerBase(ABC):
         ctx.task.result.set_tileset(ctx.output.tileset, clear=True)
         ctx.output.set_dirty(False)
 
-    @abstractmethod
     def export_file(self, ctx: BakeContext) -> None:
         """Save Bake to disk."""
         LOG.debug("Saving File to Disk ...")
@@ -332,6 +331,8 @@ class BakerBase(ABC):
                 materials=object_materials.materials,
                 scene=ctx.scene,
                 ui_prop=getattr(ctx.task.baker_settings, self.settings_name),
+                value_function=self.parameter_value,
+                bake_targets=ctx.task.bake_group.bake_targets if ctx.task.bake_group is not None else [],
             )
 
             ParameterApplier.apply_baker(

@@ -1,14 +1,11 @@
 from __future__ import annotations
 
-import bpy
-
 from ..core.registry_baker import registry_baker
 from ..enum.image_colorspace import ImageColorSpace
 from ..enum.view_transform import DisplayDevice, ViewTransform
 from ..parameter.metadata import BindingMetadata, BindingType, ParameterMetadata
-from ..parameter.parameter import ParameterType
+from ..parameter.parameter import ParameterSource, ParameterType
 from ..runtime.color_management_info import ColorManagementInfo
-from ..runtime.context_bake import BakeContext
 from .base import CustomBaker
 
 
@@ -46,6 +43,7 @@ class NormalWorldSpace(CustomBaker):
         p = ParameterMetadata(
             identifier="invert_x",
             name="Invert X",
+            source=ParameterSource.UI,
             default=False,
             description="Invert X Channel.",
             type=ParameterType.BOOL,
@@ -69,6 +67,7 @@ class NormalWorldSpace(CustomBaker):
         p = ParameterMetadata(
             identifier="invert_y",
             name="Invert Y",
+            source=ParameterSource.UI,
             default=False,
             description="Invert Y Channel.",
             type=ParameterType.BOOL,
@@ -92,6 +91,7 @@ class NormalWorldSpace(CustomBaker):
         p = ParameterMetadata(
             identifier="invert_z",
             name="Invert Z",
+            source=ParameterSource.UI,
             default=False,
             description="Invert Z Channel.",
             type=ParameterType.BOOL,

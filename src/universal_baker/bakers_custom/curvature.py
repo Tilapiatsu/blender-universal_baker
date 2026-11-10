@@ -4,7 +4,7 @@ from ..core.registry_baker import registry_baker
 from ..enum.image_colorspace import ImageColorSpace
 from ..enum.view_transform import DisplayDevice, ViewTransform
 from ..parameter.metadata import BindingMetadata, BindingType, ParameterMetadata
-from ..parameter.parameter import ParameterOption, ParameterType
+from ..parameter.parameter import ParameterOption, ParameterSource, ParameterType
 from ..runtime.color_management_info import ColorManagementInfo
 from .base import CustomBaker
 
@@ -63,6 +63,7 @@ class Curvature(CustomBaker):
         p = ParameterMetadata(
             identifier="Mode",
             name="Mode",
+            source=ParameterSource.UI,
             default="SINGLE_CHANNEL",
             description="How to Combine convex and concave areas in channels.",
             type=ParameterType.ENUM,
@@ -86,6 +87,7 @@ class Curvature(CustomBaker):
         p = ParameterMetadata(
             identifier="GlobalContrast",
             name="Global Contrast",
+            source=ParameterSource.UI,
             default=1.0,
             description="Ambient Occlusion Global Contrast.",
             type=ParameterType.FLOAT,
@@ -112,6 +114,7 @@ class Curvature(CustomBaker):
         p = ParameterMetadata(
             identifier="FineContrast",
             name="Fine Contrast",
+            source=ParameterSource.UI,
             default=0.9,
             description="Ambient Occlusion Fine Contrast.",
             type=ParameterType.FLOAT,
@@ -138,6 +141,7 @@ class Curvature(CustomBaker):
         p = ParameterMetadata(
             identifier="Gamma",
             name="Gamma",
+            source=ParameterSource.UI,
             default=1.0,
             description="Ambient Occlusion Gamma.",
             type=ParameterType.FLOAT,

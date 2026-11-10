@@ -4,6 +4,7 @@ from typing import Any
 
 from .metadata import (
     ParameterMetadata,
+    ParameterSource,
 )
 from .parameter import (
     Parameter,
@@ -241,6 +242,7 @@ class ParameterFactory:
             name=metadata.name,
             parameter_type=parameter_type,
             default=default,
+            parameter_source=ParameterSource(metadata.source),
             description=metadata.description,
             min_value=metadata.min_value,
             max_value=metadata.max_value,

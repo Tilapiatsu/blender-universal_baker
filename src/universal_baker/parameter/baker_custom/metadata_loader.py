@@ -11,11 +11,13 @@ from ..metadata import (
     CURRENT_METADATA_VERSION,
     METADATA_TEXT_NAME,
     BindingMetadata,
+    BindingType,
     CustomBakerMetadata,
     MetadataNotFoundError,
     MetadataParseError,
     MetadataValidationError,
     ParameterMetadata,
+    ParameterSource,
 )
 from ..parameter import ParameterOption, ParameterType
 from .definition import CustomBakerDefinition
@@ -247,6 +249,7 @@ class MetadataLoader:
 
         identifier = cls._required_string(data, "id", location)
         name = cls._required_string(data, "name", location)
+        source = cls._required_string(data, "source", location)
         parameter_type = cls._required_string(data, "type", location).upper()
 
         allowed_types = {
@@ -291,6 +294,7 @@ class MetadataLoader:
             identifier=identifier,
             name=name,
             type=ParameterType(parameter_type),
+            source=ParameterSource(source),
             default=default,
             description=description,
             min_value=min_value,
@@ -371,7 +375,7 @@ class MetadataLoader:
 
             bindings.append(
                 BindingMetadata(
-                    binding_type=binding_type,
+                    binding_type=BindingType(binding_type),
                     material=cls._optional_string(raw_binding, "material", None),
                     node=cls._optional_string(raw_binding, "node", None),
                     socket_input=cls._optional_string(raw_binding, "socket_input", None),

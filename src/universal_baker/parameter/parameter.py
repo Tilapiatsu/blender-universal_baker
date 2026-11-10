@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from typing import Any, TypeAlias
 
 ParameterSnapshot: TypeAlias = dict[str, Any]
 
 
-class ParameterType(str, Enum):
+class ParameterType(StrEnum):
     FLOAT = "FLOAT"
     INT = "INT"
     BOOL = "BOOL"
@@ -18,6 +18,11 @@ class ParameterType(str, Enum):
     SHADER = "SHADER"
     IMG = "IMG"
     COLLECTION = "COLLECTION"
+
+
+class ParameterSource(StrEnum):
+    UI = "UI"
+    FUNCTION = "FUNCTION"
 
 
 @dataclass(frozen=True)
@@ -44,16 +49,17 @@ class Parameter:
     name: str
 
     parameter_type: ParameterType
+    parameter_source: ParameterSource
 
     description: str = ""
 
     default: Any = None
 
-    min_value: float | int | None = None
-    max_value: float | int | None = None
+    min_value: float | int | tuple[float, float, float] | None = None
+    max_value: float | int | tuple[float, float, float] | None = None
 
-    soft_min: float | int | None = None
-    soft_max: float | int | None = None
+    soft_min: float | int | tuple[float, float, float] | None = None
+    soft_max: float | int | tuple[float, float, float] | None = None
 
     unit: str | None = None
 

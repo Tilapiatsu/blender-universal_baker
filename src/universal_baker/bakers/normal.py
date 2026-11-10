@@ -1,17 +1,11 @@
 from __future__ import annotations
 
-import bpy
-
 from ..core.registry_baker import registry_baker
 from ..enum.image_colorspace import ImageColorSpace
 from ..enum.view_transform import DisplayDevice, ViewTransform
 from ..parameter.metadata import BindingMetadata, BindingType, ParameterMetadata
-from ..parameter.parameter import ParameterOption, ParameterType
-from ..runtime.bake_objects import BakeObjects
+from ..parameter.parameter import ParameterOption, ParameterSource, ParameterType
 from ..runtime.color_management_info import ColorManagementInfo
-from ..runtime.context_bake import BakeContext
-from ..services.temp_object import TempObject
-from ..services.visibility_override import VisibilityOverride
 from .base import BakerBase
 
 
@@ -59,6 +53,7 @@ class NormalBaker(BakerBase):
         p = ParameterMetadata(
             identifier="normal_space",
             name="Space",
+            source=ParameterSource.UI,
             default="TANGENT",
             description="Choose Normal Space for Baking.",
             type=ParameterType.ENUM,
@@ -106,6 +101,7 @@ class NormalBaker(BakerBase):
         )
         p = ParameterMetadata(
             identifier="normal_r",
+            source=ParameterSource.UI,
             name="R",
             default="POS_X",
             description="Axis to Bake in Red Channel.",
@@ -127,6 +123,7 @@ class NormalBaker(BakerBase):
         p = ParameterMetadata(
             identifier="normal_g",
             name="G",
+            source=ParameterSource.UI,
             default="POS_Y",
             description="Axis to Bake in Green Channel.",
             type=ParameterType.ENUM,
@@ -148,6 +145,7 @@ class NormalBaker(BakerBase):
         p = ParameterMetadata(
             identifier="normal_b",
             name="B",
+            source=ParameterSource.UI,
             default="POS_Z",
             description="Axis to Bake in Blue Channel.",
             type=ParameterType.ENUM,
@@ -161,27 +159,6 @@ class NormalBaker(BakerBase):
         parameters += (p,)
 
         return parameters
-
-    def configure_preview(self, material: bpy.types.Material, objects: list[bpy.types.Object]) -> list[TempObject]:
-        return super().configure_preview(material, objects)
-
-    def configure_preview_modifier(self, objects: list[bpy.types.Object]):
-        return super().configure_preview_modifier(objects)
-
-    def prepare_custom_collection(self, ctx: BakeContext) -> bpy.types.Collection | None:
-        return super().prepare_custom_collection(ctx)
-
-    def execute(self, ctx: BakeContext) -> None:
-        return super().execute(ctx)
-
-    def invalidate_previous_output(self, ctx: BakeContext) -> None:
-        super().invalidate_previous_output(ctx)
-
-    def prepare_execution(
-        self,
-        bake_objects: BakeObjects,
-    ):
-        return super().prepare_execution(bake_objects)
 
     def configure_preview_material(self, material):
         # TODO: Need to bind the same bake settings :
@@ -231,37 +208,6 @@ class NormalBaker(BakerBase):
         normal.location.x = add.location.x - 200
         value.location.x = add.location.x
         value.location.y = add.location.y - 200
-
-    def get_visibility_overrides(self, ctx: BakeContext) -> list[VisibilityOverride]:
-        """Set Visibility."""
-        l: list[VisibilityOverride] = []
-        return l
-
-    def prepare(self, ctx: BakeContext):
-        """
-        Prepare everything required before Blender's bake.
-        """
-        super().prepare(ctx)
-
-    def bake(self, ctx: BakeContext) -> None:
-        """Execute the bake."""
-        return super().bake(ctx)
-
-    def cleanup(self, ctx: BakeContext):
-        """
-        Cleanup after baking.
-        """
-        super().cleanup(ctx)
-
-    def update_baker(self, ctx: BakeContext) -> None:
-        return super().update_baker(ctx)
-
-    def create_artifact(self, ctx: BakeContext) -> None:
-        return super().create_artifact(ctx)
-
-    def export_file(self, ctx: BakeContext):
-        """Save Bake to disk."""
-        super().export_file(ctx)
 
 
 classes = (NormalBaker,)

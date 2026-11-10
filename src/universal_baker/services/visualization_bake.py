@@ -19,7 +19,6 @@ from .viewport import ViewportService
 
 if TYPE_CHECKING:
     from ..bakers.base import BakerBase
-    from ..packers.base import PackerBase
 
 TEMP_COLLECTION_NAME = "UBK_PREVIEW_VISUALIZATION"
 
@@ -215,6 +214,9 @@ class BakeVisualizationService:
     @classmethod
     def projection_target(cls) -> bpy.types.Object | None:
         cls._ensure_runtime()
+        if cls._runtime is None:
+            return
+
         return cls._runtime.projection_target
 
     # ---------------------------------------------------------

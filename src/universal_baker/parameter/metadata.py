@@ -7,7 +7,7 @@ from typing import Any
 
 import bpy
 
-from .parameter import ParameterOption, ParameterType
+from .parameter import ParameterOption, ParameterSource, ParameterType
 
 METADATA_TEXT_NAME = "UBK_BAKER_METADATA"
 
@@ -80,14 +80,15 @@ class ParameterMetadata:
     identifier: str
     name: str
     type: ParameterType
+    source: ParameterSource
     default: Any = None
     description: str = ""
 
-    min_value: float | int | tuple[float] | None = None
-    max_value: float | int | tuple[float] | None = None
+    min_value: float | int | tuple[float, float, float] | None = None
+    max_value: float | int | tuple[float, float, float] | None = None
 
-    soft_min: float | int | tuple[float] | None = None
-    soft_max: float | int | tuple[float] | None = None
+    soft_min: float | int | tuple[float, float, float] | None = None
+    soft_max: float | int | tuple[float, float, float] | None = None
 
     unit: str = "NONE"
     subtype: str = "NONE"

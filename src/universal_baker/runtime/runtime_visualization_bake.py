@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 import bpy
 
 from ..constant import LOG
+from ..core.registry_baker import registry_baker
 from ..core.registry_definition import registry_definition
 from ..enum.visualization import BakeVisualizationMode
 from ..parameter.parameter import ParameterType
@@ -445,11 +446,17 @@ class BakeVisualizationRuntime:
         from ..core.controller import BakeController
 
         baker = BakeController.get_baker_from_uuid(self.producer_uuid)
+        active_bake_group = BakeController.active_bake_group(bpy.context)
+
+        if active_bake_group is None:
+            LOG.error("No Active Baker Group")
+            return
 
         if baker is None:
             LOG.error("No Active Baker found")
             return
 
+        producer = registry_baker[baker.baker]
         ui_props = getattr(baker.baker_settings, self.active_producer.settings_name, None)
 
         if ui_props is None:
@@ -467,6 +474,8 @@ class BakeVisualizationRuntime:
                 ui_prop=ui_props,
                 scene=bpy.context.scene,
                 is_dragging=False,
+                value_function=producer.parameter_value,
+                bake_targets=active_bake_group.bake_targets,
             )
 
             ParameterApplier.apply_baker(definition, context)

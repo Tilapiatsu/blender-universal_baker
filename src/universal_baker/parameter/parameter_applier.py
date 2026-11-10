@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from universal_baker.parameter.metadata import ParameterSource
+
 from .baker_custom.definition import CustomBakerDefinition
 from .baker_local.definition import LocalDefinition
 from .parameter import ParameterSnapshot
@@ -172,7 +174,16 @@ class ParameterApplier:
         for parameter in definition.parameters:
             parameter_id = parameter.identifier
 
-            value = getattr(context.ui_prop, parameter_id, None)
+            match parameter.parameter_source:
+                case ParameterSource.UI:
+                    value = getattr(context.ui_prop, parameter_id, None)
+                case ParameterSource.FUNCTION:
+                    if context.value_function is None:
+                        value = None
+                    else:
+                        value = context.value_function(parameter_id, context)
+                case _:
+                    value = None
 
             if value is None:
                 continue

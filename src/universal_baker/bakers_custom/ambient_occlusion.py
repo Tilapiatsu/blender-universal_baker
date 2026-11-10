@@ -4,7 +4,7 @@ from ..core.registry_baker import registry_baker
 from ..enum.image_colorspace import ImageColorSpace
 from ..enum.view_transform import DisplayDevice, ViewTransform
 from ..parameter.metadata import BindingMetadata, BindingType, ParameterMetadata
-from ..parameter.parameter import ParameterType
+from ..parameter.parameter import ParameterSource, ParameterType
 from ..runtime.color_management_info import ColorManagementInfo
 from .base import CustomBaker
 
@@ -43,6 +43,7 @@ class AmbientOcclusion(CustomBaker):
         p = ParameterMetadata(
             identifier="Distance",
             name="Distance",
+            source=ParameterSource.UI,
             default=0.0,
             description="Ambient Occlusion Distance.",
             type=ParameterType.FLOAT,
@@ -69,6 +70,7 @@ class AmbientOcclusion(CustomBaker):
         p = ParameterMetadata(
             identifier="OnlyLocal",
             name="Only Local",
+            source=ParameterSource.UI,
             default=False,
             description="Compute Ambient Occlusion without considering neighboors objects.",
             type=ParameterType.BOOL,
@@ -91,6 +93,7 @@ class AmbientOcclusion(CustomBaker):
         p = ParameterMetadata(
             identifier="GlobalContrast",
             name="Global Contrast",
+            source=ParameterSource.UI,
             default=1.0,
             description="Ambient Occlusion Global Contrast.",
             type=ParameterType.FLOAT,
@@ -117,6 +120,7 @@ class AmbientOcclusion(CustomBaker):
         p = ParameterMetadata(
             identifier="FineContrast",
             name="Fine Contrast",
+            source=ParameterSource.UI,
             default=0.0,
             description="Ambient Occlusion Fine Contrast.",
             type=ParameterType.FLOAT,
@@ -143,6 +147,7 @@ class AmbientOcclusion(CustomBaker):
         p = ParameterMetadata(
             identifier="Gamma",
             name="Gamma",
+            source=ParameterSource.UI,
             default=1.0,
             description="Ambient Occlusion Gamma.",
             type=ParameterType.FLOAT,

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
@@ -21,6 +22,8 @@ class ParameterContext:
     ui_prop: UBK_ParameterValue | None = None
     scene: bpy.types.Scene | None = None
     is_dragging: bool = False
+    value_function: Callable | None = None
+    bake_targets: list[bpy.types.Objects] | None = None
 
     # Gives bindings an escape hatch for more complex assets.
     data: dict[str, Any] | None = None

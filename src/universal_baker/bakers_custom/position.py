@@ -1,14 +1,15 @@
 from __future__ import annotations
 
-import bpy
+from typing import Any
 
 from ..core.registry_baker import registry_baker
 from ..enum.image_colorspace import ImageColorSpace
 from ..enum.view_transform import DisplayDevice, ViewTransform
 from ..parameter.metadata import BindingMetadata, BindingType, ParameterMetadata
-from ..parameter.parameter import ParameterOption, ParameterType
+from ..parameter.parameter import ParameterOption, ParameterSource, ParameterType
+from ..parameter.parameter_context import ParameterContext
+from ..runtime.bounding_box import BoundingBoxService
 from ..runtime.color_management_info import ColorManagementInfo
-from ..runtime.context_bake import BakeContext
 from .base import CustomBaker
 
 
@@ -59,6 +60,7 @@ class Position(CustomBaker):
         p = ParameterMetadata(
             identifier="Normalization",
             name="Normalization",
+            source=ParameterSource.UI,
             default="BAKE_GROUP",
             options=options,
             description="How to normalize the position values.",
@@ -81,6 +83,7 @@ class Position(CustomBaker):
         p = ParameterMetadata(
             identifier="BBoxMin",
             name="BBoxMin",
+            source=ParameterSource.FUNCTION,
             default=(0.0, 0.0, 0.0),
             description="Bounding Box Minimum Value.",
             type=ParameterType.VECTOR,
@@ -102,6 +105,7 @@ class Position(CustomBaker):
         p = ParameterMetadata(
             identifier="BBoxMax",
             name="BBoxMax",
+            source=ParameterSource.FUNCTION,
             default=(1.0, 1.0, 1.0),
             description="Bounding Box Maximum Value.",
             type=ParameterType.VECTOR,
@@ -115,8 +119,19 @@ class Position(CustomBaker):
 
         return parameters
 
-    def prepare_custom_collection(self, ctx: BakeContext) -> bpy.types.Collection | None:
-        return super().prepare_custom_collection(ctx)
+    def parameter_value(self, value_name: str, context: ParameterContext) -> Any:
+        if context.bake_targets is None:
+            return None
+
+        match value_name:
+            case "BBoxMin":
+                min, max = BoundingBoxService.get_world_aabb(context.bake_targets)
+                return min
+            case "BBoxMax":
+                min, max = BoundingBoxService.get_world_aabb(context.bake_targets)
+                return max
+            case _:
+                return None
 
 
 classes = (Position,)

@@ -15,12 +15,10 @@ from ..parameter.baker_custom.metadata_loader import MetadataLoader as metadata_
 from ..resources.asset_external import AssetExtrenal
 from ..runtime.asset_setup import BakerExecution
 from ..runtime.bake_objects import BakeObjects
-from ..runtime.context_bake import BakeContext
 from ..services.asset_external_setup import AssetExternalBakeSetup
 from ..services.material_injection import MaterialInjectionService
 from ..services.modifier_injection import ModifierInjectionService
 from ..services.temp_object import TempObject
-from ..services.visibility_override import VisibilityOverride
 
 if TYPE_CHECKING:
     from ..parameter.metadata import ParameterMetadata
@@ -89,12 +87,6 @@ class CustomBaker(BakerBase):
                 obj.hide_render = render
             setup.cleanup()
 
-    def execute(self, ctx: BakeContext) -> None:
-        return super().execute(ctx)
-
-    def invalidate_previous_output(self, ctx: BakeContext) -> None:
-        super().invalidate_previous_output(ctx)
-
     def configure_preview(self, material: bpy.types.Material, objects: list[bpy.types.Object]) -> list[TempObject]:
         assert self.asset_path is not None
         asset = AssetExtrenal(filepath=self.asset_path)
@@ -128,109 +120,38 @@ class CustomBaker(BakerBase):
     def configure_preview_material(self, material):
         assert self.asset_path is not None
         asset = AssetExtrenal(filepath=self.asset_path)
-        material.use_nodes = True
-        dst_tree = material.node_tree
-        dst_tree.nodes.clear()
 
         with AssetExternalBakeSetup.get_prototype_data(asset) as prototype_data:
             prototype_material = prototype_data.material
 
-            src_tree = prototype_material.node_tree
-            node_mapping = {}
+            material.use_nodes = True
+            material.node_tree.nodes.clear()
+            material.node_tree.nodes.new("ShaderNodeOutputMaterial")
 
-            for node in src_tree.nodes:
-                new_node = dst_tree.nodes.new(type=node.bl_idname)
-                new_node.location = node.location
-                new_node.width = node.width
-                new_node.name = node.name
+            MaterialInjectionService.copy(source_material=prototype_material, target_material=material)
 
-                if node.type == "MENU_SWITCH":
-                    new_node.data_type = node.data_type
-
-                for i, input_sock in enumerate(node.inputs):
-                    if i < len(new_node.inputs) and not input_sock.is_linked:
-                        try:
-                            new_input = new_node.inputs[i]
-                            if node.type == "MENU_SWITCH":
-                                for j, item in enumerate(node.enum_items):
-                                    if j >= len(new_node.enum_items):
-                                        new_node.enum_items.new(item.name)
-                                    else:
-                                        new_node.enum_items[j].name = item.name
-
-                            if hasattr(new_input, "default_value"):
-                                new_input.default_value = input_sock.default_value
-
-                        except AttributeError as e:
-                            LOG.error(str(e))
-
-                if hasattr(node, "image") and hasattr(new_node, "image"):
-                    new_node.image = node.image
-
-                if hasattr(node, "node_tree"):
-                    new_node.node_tree = node.node_tree
-
-                if hasattr(node, "operation"):
-                    new_node.operation = node.operation
-
-                node_mapping[node] = new_node
-
-            for link in src_tree.links:
-                from_node = node_mapping.get(link.from_node)
-                to_node = node_mapping.get(link.to_node)
-
-                if from_node and to_node:
-                    from_sock_idx = list(link.from_node.outputs).index(link.from_socket)
-                    to_sock_idx = list(link.to_node.inputs).index(link.to_socket)
-
-                    if not len(from_node.outputs) or not len(to_node.inputs):
-                        continue
-
-                    dst_tree.links.new(from_node.outputs[from_sock_idx], to_node.inputs[to_sock_idx])
-
-    def configure_preview_modifier(self, objects: list[bpy.types.Object]):
+    def configure_preview_modifier(self, objects: list[bpy.types.Object]) -> list[TempObject]:
         assert self.asset_path is not None
         asset = AssetExtrenal(filepath=self.asset_path)
 
         with AssetExternalBakeSetup.get_prototype_data(asset) as prototype_data:
-            prototype_material = prototype_data.material
+            prototype = prototype_data.obj
 
-        for o in objects:
-            continue
+            temp_objects: list[TempObject] = []
+            if len(prototype.modifiers):
+                for o in objects:
+                    copy = o.copy()
+                    copy.name = f"{o.name}_MODIFIER_INJECTED"
 
-    def prepare_custom_collection(self, ctx: BakeContext) -> bpy.types.Collection | None:
-        return super().prepare_custom_collection(ctx)
+                    temp_object = TempObject(new_obj=copy, recover_obj=o, cleanup=True)
+                    temp_objects.append(temp_object)
 
-    def get_visibility_overrides(self, ctx: BakeContext) -> list[VisibilityOverride]:
-        """Set Visibility."""
-        l: list[VisibilityOverride] = []
-        return l
+                    for c in o.users_collection:
+                        c.objects.link(copy)
 
-    def prepare(self, ctx: BakeContext):
-        """
-        Prepare everything required before Blender's bake.
-        """
-        super().prepare(ctx)
+                    ModifierInjectionService.inject(source=prototype, target=copy)
 
-    def bake(self, ctx: BakeContext) -> None:
-        """Execute the bake."""
-        return super().bake(ctx)
-
-    def cleanup(self, ctx: BakeContext):
-        """
-        Cleanup after baking.
-        """
-        super().cleanup(ctx)
-
-    def update_baker(self, ctx: BakeContext) -> None:
-        return super().update_baker(ctx)
-
-    def create_artifact(self, ctx: BakeContext) -> None:
-        return super().create_artifact(ctx)
-
-    def export_file(self, ctx: BakeContext):
-        """Save Bake to disk."""
-        super().export_file(ctx)
+        return temp_objects
 
     def register_custom(self):
         if self.asset_path is None:
