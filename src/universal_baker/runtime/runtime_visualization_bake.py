@@ -1,0 +1,642 @@
+from __future__ import annotations
+
+from contextlib import contextmanager
+from typing import TYPE_CHECKING
+
+import bpy
+
+from ..constant import LOG
+from ..core.registry_baker import registry_baker
+from ..core.registry_definition import registry_definition
+from ..enum.visualization import BakeVisualizationMode
+from ..parameter.parameter import ParameterType
+from ..parameter.parameter_applier import ParameterApplier
+from ..parameter.parameter_context import ParameterContext
+from ..properties.parameter_value import UBK_ParameterValue
+from ..services.temp_collection import TempCollection
+from ..services.temp_object import TempObject
+from ..services.visibility_override import VisibilityOverride
+from .image_handle import ImageHandle
+
+if TYPE_CHECKING:
+    from ..bakers.base import BakerBase
+    from ..packers.base import PackerBase
+    from ..services.material_override import MaterialSnapshot
+    from .visualization_state import SceneVisualizationState
+
+
+class BakeVisualizationRuntime:
+    """
+    Owns the transient runtime state of Universal Baker's
+    viewport visualization system.
+
+    This class deliberately does NOT contain persistent
+    user configuration. Persistent settings live in
+    properties.visualization.
+
+    The runtime state exists only while Blender is running.
+    """
+
+    def __init__(self):
+        self._active: bool = False
+        self._mode: BakeVisualizationMode | None = None
+        self._active_producer = None
+        self._active_image_handle = None
+        self._baker_group_uuid: str | None = None
+        self._accumulated_uuid: str | None = None
+        self._producer_uuid: str | None = None
+        self._projection_target: str | None = None
+        self._preview_enabled: bool = False
+        self._preview_dirty: bool = False
+        self._updating_parameters: bool = False
+        self._objects: list[str] = []
+        self._bake_group_targets: list[str] = []
+        self._scenes: dict[
+            str,
+            SceneVisualizationState,
+        ] = {}
+
+        self._material_snapshots: list[MaterialSnapshot] = []
+        self._object_visibilities: list[VisibilityOverride] = []
+        self._temp_collection: TempCollection | None = None
+        self._temp_objects: list[TempObject] | None = None
+        self._bake_targets: list[bpy.types.Object] | None = None
+
+    # ------------------------------------------------------------------
+    # State
+    # ------------------------------------------------------------------
+
+    @property
+    def active(self) -> bool:
+        """
+        True when Universal Baker currently owns the
+        visualization state.
+        """
+        return self._active
+
+    @property
+    def mode(self) -> BakeVisualizationMode | None:
+        """
+        Current visualization mode.
+
+        Expected values:
+            None
+            "PREVIEW"
+            "DISPLAY"
+        """
+        return self._mode
+
+    @property
+    def active_producer(self):
+        """
+        Baker currently being visualized.
+        """
+        return self._active_producer
+
+    @property
+    def active_image_handle(self):
+        """
+        ImageHandle currently being visualized.
+        """
+        return self._active_image_handle
+
+    @property
+    def bake_group_uuid(self) -> str | None:
+        return self._baker_group_uuid
+
+    @property
+    def producer_uuid(self) -> str | None:
+        return self._producer_uuid
+
+    @property
+    def accumulated_uuid(self) -> str | None:
+        return self._accumulated_uuid
+
+    @property
+    def objects(self) -> list[bpy.types.Object]:
+        return [bpy.data.objects.get(o) for o in self._objects if bpy.data.objects.get(o) is not None]
+
+    @property
+    def bake_group_objects(self) -> list[bpy.types.Object]:
+        return [bpy.data.objects.get(o) for o in self._bake_group_targets if bpy.data.objects.get(o) is not None]
+
+    @property
+    def object_visibilities(self) -> list[VisibilityOverride]:
+        return self._object_visibilities
+
+    @property
+    def projection_target(self) -> bpy.types.Object | None:
+        return bpy.data.objects.get(self._projection_target) if self._projection_target is not None else None
+
+    @property
+    def temp_collection(self) -> TempCollection | None:
+        return self._temp_collection
+
+    @property
+    def temp_objects(self) -> list[TempObject] | None:
+        return self._temp_objects
+
+    @property
+    def bake_targets(self) -> list[bpy.types.Object] | None:
+        if not self._active or self.bake_group_uuid is None or self.temp_objects is None:
+            return None
+
+        if self._bake_targets is None:
+            self._bake_targets = []
+
+            temp_obj = {o.recover_object: o.object for o in self.temp_objects}
+            from ..core.controller import BakeController
+
+            bake_group = BakeController.get_bake_group_from_uuid(self.bake_group_uuid)
+
+            if bake_group is None:
+                return None
+
+            targets = bake_group.bake_targets
+
+            for o in targets:
+                temp = temp_obj.get(o)
+                if temp is None:
+                    self._bake_targets.append(o)
+                else:
+                    self._bake_targets.append(temp)
+
+        return self._bake_targets
+
+    @property
+    def scenes(
+        self,
+    ) -> dict[str, SceneVisualizationState]:
+        """
+        Saved scene states.
+
+        Exposed primarily to visualization services that need
+        to restore Blender state.
+        """
+        return self._scenes
+
+    @property
+    def material_snapshots(self):
+        """
+        Saved material assignments.
+
+        Exposed to MaterialOverrideService during restoration.
+        """
+        return self._material_snapshots
+
+    @property
+    def preview_enabled(self) -> bool:
+        return self._preview_enabled
+
+    # ------------------------------------------------------------------
+    # Activation
+    # ------------------------------------------------------------------
+
+    def begin(
+        self,
+        mode: BakeVisualizationMode,
+        producer: BakerBase | PackerBase | None = None,
+        image_handle: ImageHandle | None = None,
+        bake_group_uuid: str | None = None,
+        producer_uuid: str | None = None,
+        accumulated_uuid: str | None = None,
+        objects: list[str] | None = None,
+        projection_target: str | None = None,
+        bake_group_targets: list[str] | None = None,
+    ) -> None:
+        """
+        Start a new visualization session.
+
+        The actual Blender state should already have been captured
+        by the visualization service before calling this method.
+        """
+
+        if self._active:
+            raise RuntimeError("Visualization runtime is already active")
+
+        self._active = True
+        self._mode = mode
+        self._active_producer = producer
+        self._active_image_handle = image_handle
+        self._baker_group_uuid = bake_group_uuid
+        self._producer_uuid = producer_uuid
+        self._accumulated_uuid = accumulated_uuid
+        self._preview_enabled = mode == BakeVisualizationMode.PREVIEW
+        self._objects = objects if objects is not None else []
+        self._projection_target = projection_target if projection_target is not None else None
+        self._bake_group_targets = bake_group_targets if bake_group_targets is not None else []
+
+    # ------------------------------------------------------------------
+    # State registration
+    # ------------------------------------------------------------------
+
+    def set_scene_state(
+        self,
+        scene_name: str,
+        state: SceneVisualizationState,
+    ) -> None:
+        """
+        Store the original state of a Blender scene.
+        """
+
+        if not self._active:
+            raise RuntimeError("Cannot store visualization state before visualization begins")
+
+        self._scenes[scene_name] = state
+
+    def set_material_snapshots(
+        self,
+        snapshots: list[MaterialSnapshot],
+    ) -> None:
+        """
+        Store the original material assignments.
+        """
+
+        if not self._active:
+            raise RuntimeError("Cannot store material state before visualization begins")
+
+        self._material_snapshots = snapshots
+
+    def set_object_visibilities(self, visibilities: list[VisibilityOverride]) -> None:
+        if not self._active:
+            raise RuntimeError("Cannot store object_visibility before visualization begins")
+
+        self._object_visibilities = visibilities
+
+    def set_temp_collection(self, collection: TempCollection) -> None:
+        if not self._active:
+            raise RuntimeError("Cannot store temp_collection before visualization begins")
+
+        self._temp_collection = collection
+
+    def set_temp_objects(self, objects: list[TempObject]) -> None:
+        if not self._active:
+            raise RuntimeError("Cannot store temp_objects before visualization begins")
+
+        self._temp_objects = objects
+
+        for o in objects:
+            self.object_visibilities.append(
+                VisibilityOverride(
+                    obj=o.recover_object,
+                    viewport=False,
+                    show=False,
+                )
+            )
+
+    def revert_temp_objects(self) -> None:
+        if self.temp_objects is None:
+            return
+
+        for o in self.temp_objects:
+            o.cleanup()
+
+        self._bake_targets = None
+
+    # ------------------------------------------------------------------
+    # Producer
+    # ------------------------------------------------------------------
+
+    def set_active_producer(
+        self,
+        producer: BakerBase | PackerBase | None,
+    ) -> None:
+        """
+        Change the baker currently being visualized.
+        """
+
+        self._active_producer = producer
+
+    # ------------------------------------------------------------------
+    # Image Handle
+    # ------------------------------------------------------------------
+
+    def set_active_image_handle(
+        self,
+        image_handle: ImageHandle,
+    ) -> None:
+        """
+        Change the baker currently being visualized.
+        """
+
+        self._active_image_handle = image_handle
+
+    # ------------------------------------------------------------------
+    # Mode
+    # ------------------------------------------------------------------
+
+    def set_mode(self, mode: BakeVisualizationMode) -> None:
+        """
+        Change visualization mode.
+
+        This does not modify Blender itself. The visualization
+        service is responsible for applying the new mode.
+        """
+
+        if not self._active:
+            raise RuntimeError("Cannot change visualization mode while visualization is inactive")
+
+        self._mode = mode
+
+        self._preview_enabled = mode == BakeVisualizationMode.PREVIEW
+
+    def disable(self) -> None:
+        from ..services.visualization_bake import BakeVisualizationService
+
+        BakeVisualizationService.disable()
+
+        self._preview_enabled = False
+
+    # ------------------------------------------------------------------
+    # Reset
+    # ------------------------------------------------------------------
+
+    def clear(self) -> None:
+        """
+        Clear all runtime visualization state.
+
+        This does NOT restore Blender.
+
+        Restoration is the responsibility of
+        BakeVisualizationService.
+
+        This distinction is important because the runtime should
+        only own state, not the orchestration of restoring it.
+        """
+
+        self._active = False
+        self._mode = None
+        self._active_producer = None
+        self._active_image_handle = None
+
+        self._scenes.clear()
+        self._material_snapshots.clear()
+        self._objects = []
+        self._object_visibilities = []
+        self._temp_collection = None
+        self._temp_objects = None
+
+    @contextmanager
+    def suspend(self):
+        suspension = VisualizationSuspension(self)
+
+        suspension.capture()
+
+        try:
+            if suspension.was_enabled:
+                LOG.debug("Suspend Visualization")
+                self.disable()
+
+            yield
+
+        finally:
+            suspension.restore()
+
+    def do_suspend(self) -> VisualizationSuspension:
+        suspension = VisualizationSuspension(self)
+
+        suspension.capture()
+
+        if suspension.was_enabled:
+            LOG.debug("Suspend Visualization")
+            self.disable()
+
+        return suspension
+
+    def request_preview_refresh(self):
+        self._preview_dirty = True
+
+    def clamp_ui_prop(
+        self,
+        ui_prop: UBK_ParameterValue,
+        parameter_type: ParameterType,
+        min: float,
+        max: float,
+    ):
+        match parameter_type:
+            case ParameterType.FLOAT:
+                ui_prop.float_value = ParameterApplier.clamp_value(
+                    ui_prop.float_value,
+                    min,
+                    max,
+                )
+            case ParameterType.INT:
+                ui_prop.int_value = ParameterApplier.clamp_value(
+                    ui_prop.int_value,
+                    min,
+                    max,
+                )
+
+    def refresh_baker_settings(self):
+        LOG.debug("Refresh Baker Settings")
+        if self.active_producer is None:
+            LOG.error("No Active Producer Set")
+            return
+
+        definition = registry_definition.require(self.active_producer.id)
+
+        if definition is None or self.producer_uuid is None or self.bake_group_uuid is None:
+            LOG.error(f"Definition not found for {self.active_producer.id}")
+            return
+
+        if self.bake_targets is None:
+            LOG.error("No Bake targets found")
+            return
+
+        from ..core.controller import BakeController
+
+        baker = BakeController.get_baker_from_uuid(self.producer_uuid)
+        active_bake_group = BakeController.active_bake_group(bpy.context)
+
+        if active_bake_group is None:
+            LOG.error("No Active Baker Group")
+            return
+
+        if baker is None:
+            LOG.error("No Active Baker found")
+            return
+
+        producer = registry_baker[baker.baker]
+        ui_props = getattr(baker.baker_settings, self.active_producer.settings_name, None)
+
+        if ui_props is None:
+            return
+
+        for o in self.bake_targets:
+            if o.type != "MESH":
+                continue
+
+            materials = [s.material for s in o.material_slots if s is not None and s.material is not None]
+
+            context = ParameterContext(
+                object=o,
+                materials=materials,
+                ui_prop=ui_props,
+                scene=bpy.context.scene,
+                is_dragging=False,
+                value_function=producer.parameter_value,
+                bake_targets=active_bake_group.bake_targets,
+            )
+
+            ParameterApplier.apply_baker(definition, context)
+
+    def refresh_preview_parameters(self, ui_prop: UBK_ParameterValue | None = None, force: bool = False):
+        """Make sure the UI property element binds propely to the material, modifier or geometry node element defined in
+        the custom baker definition asset"""
+
+        if not force:
+            if not self._preview_dirty:
+                return
+
+            if self._updating_parameters:
+                return
+
+        try:
+            self._updating_parameters = True
+            producer = self.active_producer
+
+            if producer is None:
+                LOG.error("Producer not defined")
+                return
+
+            definition = registry_definition.require_custom(producer.id)
+
+            if definition is None or self.producer_uuid is None:
+                LOG.error(f"Definition not found for {producer.id}")
+                return
+
+            # NOTE: UI Clamp
+            if ui_prop is not None:
+                parameter = definition.get_parameter(ui_prop.identifier)
+                if parameter is not None:
+                    if (
+                        bpy.context.scene.ubk_project.visualization.is_dragging
+                        and parameter.soft_min is not None
+                        and parameter.soft_max is not None
+                    ):
+                        self.clamp_ui_prop(ui_prop, parameter.parameter_type, parameter.soft_min, parameter.soft_max)
+                    elif (
+                        not bpy.context.scene.ubk_project.visualization.is_dragging
+                        and parameter.min_value is not None
+                        and parameter.max_value is not None
+                    ):
+                        self.clamp_ui_prop(ui_prop, parameter.parameter_type, parameter.min_value, parameter.max_value)
+
+            if not self.preview_enabled:
+                return
+
+            from ..core.controller import BakeController
+
+            baker = BakeController.get_baker_from_uuid(self.producer_uuid)
+
+            if baker is None:
+                LOG.error("Custom Baker not Found")
+                return
+
+            from ..services.parameter_service import ParameterService
+
+            snapshot = ParameterService.snapshot(definition, baker.custom_baker)
+
+            for o in bpy.context.scene.objects:
+                if o.type != "MESH":
+                    continue
+                materials = [s.material for s in o.material_slots if s is not None and s.material is not None]
+                context = ParameterContext(
+                    object=o,
+                    materials=materials,
+                    ui_prop=ui_prop,
+                    is_dragging=bpy.context.scene.ubk_project.visualization.is_dragging,
+                )
+
+                ParameterApplier.apply(definition, snapshot, context)
+
+        finally:
+            self._updating_parameters = False
+            self._preview_dirty = False
+
+    # ------------------------------------------------------------------
+    # Debugging
+    # ------------------------------------------------------------------
+
+    def __repr__(self) -> str:
+
+        return (
+            f"{self.__class__.__name__}("
+            f"active={self._active!r}, "
+            f"mode={self._mode!r}, "
+            f"active_producer={self._active_producer!r}, "
+            f"active_image_handle={self._active_image_handle!r}, "
+            f"scenes={len(self._scenes)}, "
+            f"material_snapshots="
+            f"{len(self._material_snapshots)}"
+            f")"
+        )
+
+
+class VisualizationSuspension:
+    def __init__(
+        self,
+        runtime: BakeVisualizationRuntime,
+    ):
+        self.runtime = runtime
+        self.was_enabled = False
+        self.mode = None
+        self.active_producer: BakerBase | None = None
+        self.bake_group_uuid: str | None = None
+        self.accumulated_uuid: str | None = None
+        self.producer_uuid: str | None = None
+
+    def capture(self):
+        self.was_enabled = self.runtime._active
+        self.mode = self.runtime.mode
+        self.active_producer = self.runtime.active_producer
+        self.bake_group_uuid = self.runtime.bake_group_uuid
+        self.producer_uuid = self.runtime.producer_uuid
+        self.accumulated_uuid = self.runtime.accumulated_uuid
+        self.objects = self.runtime.objects
+        self.bake_group_objects = self.runtime.bake_group_objects
+
+    def restore(self):
+        if not self.was_enabled or self.mode is None:
+            return
+
+        LOG.debug("Restore Visualization")
+        from ..core.controller import BakeController
+        from ..services.visualization_bake import BakeVisualizationService, DisplayData, PreviewData
+
+        project = BakeController.project(bpy.context)
+        viz = project.visualization
+
+        match self.mode:
+            case BakeVisualizationMode.DISPLAY:
+                if self.active_producer is None or self.bake_group_uuid is None or self.accumulated_uuid is None:
+                    return
+
+                data = DisplayData(self.bake_group_uuid, self.accumulated_uuid, self.objects, self.active_producer)
+                # ISSUE: Render Once, Then display the rendered image. Without Leaving display, rerender the same
+                # baker, the image colorspace will  not be set properly after rebake which will shift the values...
+                BakeVisualizationService.enable_display(data)
+
+                viz.refreshing = True
+                viz.enabled_display = True
+                viz.enabled_preview = False
+                viz.mode = "DISPLAY"
+                viz.refreshing = False
+
+            case BakeVisualizationMode.PREVIEW:
+                if self.active_producer is None or self.bake_group_uuid is None or self.producer_uuid is None:
+                    return
+
+                data = PreviewData(
+                    producer=self.active_producer,
+                    bake_group_uuid=self.bake_group_uuid,
+                    producer_uuid=self.producer_uuid,
+                    bake_targets=self.bake_group_objects,
+                )
+
+                BakeVisualizationService.enable_preview(data)
+                viz.refreshing = True
+                viz.enabled_display = False
+                viz.enabled_preview = True
+                viz.mode = "PREVIEW"
+                viz.refreshing = False

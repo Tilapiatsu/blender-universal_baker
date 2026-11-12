@@ -32,31 +32,31 @@ def get_variables(
 def register():
     registry_token.register(
         "bake_group",
-        lambda ctx: ctx.variables["bake_group"],
+        lambda variables: variables["bake_group"],
     )
     registry_token.register(
         "baker",
-        lambda ctx: ctx.variables["baker"].baker if ctx.variables["baker"].baker else "",
+        lambda variables: variables["baker"].baker if variables["baker"].baker else "",
     )
     registry_token.register(
         "packer",
-        lambda ctx: ctx.variables["packer"].name if ctx.variables["packer"].name else "",
+        lambda variables: variables["packer"].name if variables["packer"].name else "",
     )
     registry_token.register(
         "image_name",
-        lambda ctx: ctx.variables["image_name"],
+        lambda variables: variables["image_name"],
     )
     registry_token.register(
         "scene",
-        lambda ctx: ctx.variables["scene"].name,
+        lambda variables: variables["scene"].name,
     )
     registry_token.register(
         "blend",
-        lambda ctx: bpy.path.basename(bpy.data.filepath).split(".")[0],
+        lambda variables: bpy.path.basename(bpy.data.filepath).split(".")[0],
     )
     registry_token.register(
         "extension",
-        lambda ctx: ctx.variables["extension"],
+        lambda variables: variables["extension"],
     )
 
 

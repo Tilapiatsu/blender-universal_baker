@@ -36,5 +36,4 @@ class UVService:
 
     @classmethod
     def tile_numbers(cls, udim_tiles: tuple[tuple[int, int], ...]) -> set[int]:
-
         return set([cls.tile_number(*t) for t in udim_tiles])

@@ -28,11 +28,15 @@ class BakeContext(ExecutionContext):
     image: ImageResource = field(default_factory=ImageResource)
     output: ImageHandle | None = None
 
-    materials: MaterialResources = field(default_factory=MaterialResources)
+    target_materials: dict[str, MaterialResources] = field(default_factory=dict)
+    sources_materials: dict[str, MaterialResources] = field(default_factory=dict)
     node_tree: bpy.types.NodeTree | None = None
     image_node: bpy.types.ShaderNodeTexImage | None = None
 
     _target: bpy.types.Object | None = None
+    _sources: list[bpy.types.Object] | None = None
+    _cage: bpy.types.Object | None = None
+    _bg_objects: list[bpy.types.Object] | None = None
 
     finished: bool = False
     success: bool = False
@@ -51,6 +55,20 @@ class BakeContext(ExecutionContext):
         return self.session.context.scene
 
     @property
+    def baker_material_objects(self) -> list[bpy.types.Object]:
+        if self.selected_to_active:
+            return self.sources
+        else:
+            return [self.target]
+
+    @property
+    def baker_materials(self):
+        if self.selected_to_active:
+            return self.sources_materials
+        else:
+            return self.target_materials
+
+    @property
     def target(self) -> bpy.types.Object:
         if self._target is None:
             self._target = self.task.target.object
@@ -62,9 +80,33 @@ class BakeContext(ExecutionContext):
         self._target = value
 
     @property
-    def sources(self) -> tuple[bpy.types.Object]:
-        # TODO : Need to fix
-        return [o.object for o in self.task.sources]
+    def cage(self) -> bpy.types.Object | None:
+        if self._cage is None:
+            self._cage = self.task.settings_cage.cage_object
+
+        return self._cage
+
+    @cage.setter
+    def cage(self, value: bpy.types.Object | None) -> None:
+        self._cage = value
+
+    @property
+    def sources(self) -> list[bpy.types.Object]:
+        if self._sources is None:
+            self._sources = self.task.sources
+
+        return self._sources
+
+    @sources.setter
+    def sources(self, sources: list[bpy.types.Object] | None) -> None:
+        self._sources = sources
+
+    @property
+    def bg_objects(self) -> list[bpy.types.Object]:
+        if self._bg_objects is None:
+            self._bg_objects = self.task.bg_objects
+
+        return self._bg_objects
 
     @property
     def selected_to_active(self) -> bool:

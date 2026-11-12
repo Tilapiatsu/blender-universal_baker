@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import bpy
 
+from ..constant import ICON_BAKE, ICON_SOURCE_OBJECT, ICON_TARGET_OBJECT
+
 
 class UBK_UL_TargetObjectList(bpy.types.UIList):
     """UIList displaying the bake target objects."""
@@ -25,24 +27,28 @@ class UBK_UL_TargetObjectList(bpy.types.UIList):
         elif self.layout_type == "GRID":
             layout.alignment = "CENTER"
 
-            layout.label(text="", icon="MESH_CUBE")
+            layout.label(text="", icon=ICON_TARGET_OBJECT)
 
-    def draw_default(self, layout, obj_settings, index: int):
+    def draw_default(self, layout, item, index: int):
         """Draw one object row."""
 
         row = layout.row(align=True)
 
-        row.prop(obj_settings, "enabled", text="")
+        row.prop(item, "enabled", text="")
 
-        obj = obj_settings.object
+        row = layout.row(align=True)
+        if not item.enabled:
+            row.enabled = False
+
+        obj = item.object
 
         if obj is not None:
-            row.prop(obj, "name", text="", emboss=False, icon="CUBE")
+            row.prop(obj, "name", text="", emboss=False, icon=ICON_TARGET_OBJECT)
 
         else:
             row.label(text="<Missing Object>", icon="ERROR")
 
-        source_objects = len(obj_settings.source_objects)
+        source_objects = len(item.source_objects)
 
         stats = row.row()
         stats.alignment = "RIGHT"
@@ -50,9 +56,11 @@ class UBK_UL_TargetObjectList(bpy.types.UIList):
         stats.enabled = False
 
         if source_objects:
-            stats.label(text=f"{source_objects}", icon="MESH_UVSPHERE")
+            stats.label(text=f"{source_objects}", icon=ICON_SOURCE_OBJECT)
         else:
             stats.label(text="no source")
+
+        row.operator("ubk.bake_target", text="", icon=ICON_BAKE).index = index
 
     def draw_filter(self, context, layout):
         """Reserved for future filtering options."""

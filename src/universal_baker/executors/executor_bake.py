@@ -1,16 +1,16 @@
 from __future__ import annotations
 
 from ..constant import LOG
+from ..core.registry_baker import registry_baker
+from ..core.registry_executor import registry_executor
+from ..logger.event import ScopeState
+from ..logger_bake_middleware.bake_summary import EventCategory
 from ..runtime.context import ExecutionContext
 from ..runtime.context_bake import BakeContext
 from ..runtime.session import ExecutionSession
 from ..runtime.task_bake import BakeTask
-from ..core.registry_baker import registry_baker
-from ..core.registry_executor import registry_executor
-from .executor_base import TaskExecutor
-from ..logger.event import ScopeState
-from ..logger_bake_middleware.bake_summary import EventCategory
 from .execution_target import ExecutionTarget
+from .executor_base import TaskExecutor
 
 
 class BakeExecutorInternal(TaskExecutor):
@@ -43,9 +43,17 @@ class BakeExecutorInternal(TaskExecutor):
                 baker=registry_baker[task.baker_id],
             )
 
+            bake_objects = session.bake_objects.get(task.target_object_uuid)
+
+            if bake_objects is None:
+                raise ValueError("Target object not found")
+
             # NOTE: Prepare the target in case of CustomBaker
-            with task.producer.prepare_execution(ctx.target) as bake_target:
+            with task.producer.prepare_execution(bake_objects) as bake_target:
                 ctx.target = bake_target.target
+                ctx.sources = bake_target.sources
+                ctx.cage = bake_target.cage
+
                 execution.execute(
                     session=session,
                     task=task,

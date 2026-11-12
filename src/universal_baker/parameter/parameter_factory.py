@@ -4,12 +4,12 @@ from typing import Any
 
 from .metadata import (
     ParameterMetadata,
+    ParameterSource,
 )
-
 from .parameter import (
-    BakerParameter,
-    BakerParameterType,
-    BakerParameterOption,
+    Parameter,
+    ParameterOption,
+    ParameterType,
 )
 
 
@@ -23,14 +23,20 @@ class ParameterFactory:
     BakerParameter objects.
     """
 
-    TYPE_MAP = {
-        "FLOAT": BakerParameterType.FLOAT,
-        "INT": BakerParameterType.INT,
-        "BOOL": BakerParameterType.BOOL,
-        "ENUM": BakerParameterType.ENUM,
+    TYPE_MAP = {  # noqa: RUF012
+        "FLOAT": ParameterType.FLOAT,
+        "INT": ParameterType.INT,
+        "BOOL": ParameterType.BOOL,
+        "ENUM": ParameterType.ENUM,
+        "STRING": ParameterType.STRING,
+        "OBJ": ParameterType.OBJ,
+        "VECTOR": ParameterType.VECTOR,
+        "SHADER": ParameterType.SHADER,
+        "IMG": ParameterType.IMG,
+        "COLLECTION": ParameterType.COLLECTION,
     }
 
-    def create(self, metadata: ParameterMetadata) -> BakerParameter:
+    def create(self, metadata: ParameterMetadata) -> Parameter:
         parameter_type = self._get_parameter_type(metadata)
 
         default = self._normalize_default(
@@ -57,7 +63,7 @@ class ParameterFactory:
     # Type
     # ------------------------------------------------------------------
 
-    def _get_parameter_type(self, metadata: ParameterMetadata) -> BakerParameterType:
+    def _get_parameter_type(self, metadata: ParameterMetadata) -> ParameterType:
         try:
             return self.TYPE_MAP[metadata.type.upper()]
 
@@ -70,10 +76,10 @@ class ParameterFactory:
     # Default
     # ------------------------------------------------------------------
 
-    def _normalize_default(self, metadata: ParameterMetadata, parameter_type: BakerParameterType) -> Any:
+    def _normalize_default(self, metadata: ParameterMetadata, parameter_type: ParameterType) -> Any:
         value = metadata.default
 
-        if parameter_type is BakerParameterType.FLOAT:
+        if parameter_type is ParameterType.FLOAT:
             if value is None:
                 return 0.0
 
@@ -86,7 +92,7 @@ class ParameterFactory:
             except (TypeError, ValueError) as exc:
                 raise ParameterFactoryError(f"Invalid FLOAT default for '{metadata.identifier}': {value!r}") from exc
 
-        if parameter_type is BakerParameterType.INT:
+        if parameter_type is ParameterType.INT:
             if value is None:
                 return 0
 
@@ -99,7 +105,7 @@ class ParameterFactory:
             except (TypeError, ValueError) as exc:
                 raise ParameterFactoryError(f"Invalid INT default for '{metadata.identifier}': {value!r}") from exc
 
-        if parameter_type is BakerParameterType.BOOL:
+        if parameter_type is ParameterType.BOOL:
             if value is None:
                 return False
 
@@ -108,7 +114,7 @@ class ParameterFactory:
 
             return value
 
-        if parameter_type is BakerParameterType.ENUM:
+        if parameter_type is ParameterType.ENUM:
             if value is None:
                 if metadata.options:
                     return metadata.options[0].identifier
@@ -120,6 +126,60 @@ class ParameterFactory:
 
             return value
 
+        if parameter_type is ParameterType.STRING:
+            if value is None:
+                return False
+
+            if not isinstance(value, str):
+                raise ParameterFactoryError(f"STRING parameter '{metadata.identifier}' requires a string default.")
+
+            return value
+
+        if parameter_type is ParameterType.OBJ:
+            if value is None:
+                return False
+
+            if not isinstance(value, str):
+                raise ParameterFactoryError(f"OBJ parameter '{metadata.identifier}' requires a string default.")
+
+            return value
+
+        if parameter_type is ParameterType.VECTOR:
+            if value is None:
+                return False
+
+            if not isinstance(value, tuple):
+                raise ParameterFactoryError(f"VECTOR parameter '{metadata.identifier}' requires a tuple default.")
+
+            return value
+
+        if parameter_type is ParameterType.SHADER:
+            if value is None:
+                return False
+
+            if not isinstance(value, str):
+                raise ParameterFactoryError(f"SHADER parameter '{metadata.identifier}' requires a string default.")
+
+            return value
+
+        if parameter_type is ParameterType.IMG:
+            if value is None:
+                return False
+
+            if not isinstance(value, str):
+                raise ParameterFactoryError(f"SHADER parameter '{metadata.identifier}' requires a string default.")
+
+            return value
+
+        if parameter_type is ParameterType.COLLECTION:
+            if value is None:
+                return False
+
+            if not isinstance(value, str):
+                raise ParameterFactoryError(f"SHADER parameter '{metadata.identifier}' requires a string default.")
+
+            return value
+
         raise ParameterFactoryError(f"Unhandled parameter type '{parameter_type}'.")
 
     # ------------------------------------------------------------------
@@ -127,14 +187,14 @@ class ParameterFactory:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _create_options(metadata: ParameterMetadata) -> tuple[BakerParameterOption, ...]:
+    def _create_options(metadata: ParameterMetadata) -> tuple[ParameterOption, ...]:
         return tuple(metadata.options)
 
     # ------------------------------------------------------------------
     # Validation
     # ------------------------------------------------------------------
 
-    def _validate(self, metadata: ParameterMetadata, default: Any, options: tuple[BakerParameterOption, ...]) -> None:
+    def _validate(self, metadata: ParameterMetadata, default: Any, options: tuple[ParameterOption, ...]) -> None:
 
         if metadata.min_value is not None and default < metadata.min_value:
             raise ParameterFactoryError(f"Default value of parameter '{metadata.identifier}' is below its minimum.")
@@ -168,20 +228,21 @@ class ParameterFactory:
         self,
         *,
         metadata: ParameterMetadata,
-        parameter_type: BakerParameterType,
+        parameter_type: ParameterType,
         default: Any,
-        options: tuple[BakerParameterOption, ...],
-    ) -> BakerParameter:
+        options: tuple[ParameterOption, ...],
+    ) -> Parameter:
         """
         This is the only method that should need adaptation if
         BakerParameter's constructor changes.
         """
 
-        return BakerParameter(
+        return Parameter(
             identifier=metadata.identifier,
             name=metadata.name,
             parameter_type=parameter_type,
             default=default,
+            parameter_source=ParameterSource(metadata.source),
             description=metadata.description,
             min_value=metadata.min_value,
             max_value=metadata.max_value,

@@ -18,7 +18,7 @@ class ImageServiceBase:
     """Manage destination images."""
 
     @classmethod
-    def init_resource(cls, image: bpy.types.Image, output_settings: OutputSettings) -> ImageResource:
+    def init_resource(cls, image: bpy.types.Image, output_settings: OutputSettings, is_udim: bool) -> ImageResource:
         with LOG.scope(LOG_SCOPE):
             LOG.debug(f"Init Image Resource : {image.name}")
             resource = ImageResource.create(
@@ -30,7 +30,7 @@ class ImageServiceBase:
                 image_format_settings=output_settings.image,
                 alpha=output_settings.image.alpha,
                 float_buffer=output_settings.image.float_buffer,
-                is_udim=len(image.tiles) > 1,
+                is_udim=is_udim,
                 create_image=False,
             )
 
@@ -53,7 +53,13 @@ class ImageServiceBase:
 
             image = bpy.data.images.get(resource.name)
 
-            if image is None or cls.is_image_settings_changed(image, resource):
+            if image is None:
+                image = cls.create(resource, task.uv_layout.udim_tiles)
+                resource.created = True
+
+            elif cls.is_image_settings_changed(image, resource):
+                LOG.debug("Image Settings has changed, recreating it")
+                bpy.data.images.remove(image)
                 image = cls.create(resource, task.uv_layout.udim_tiles)
                 resource.created = True
 
@@ -195,6 +201,8 @@ class ImageServiceBase:
             or ((image.channels == 4) != resource.image_format_settings.alpha)
             or image.filepath_raw != str(resource.filepath)
             or image.colorspace_settings.name != resource.colorspace
+            or (image.tiles is not None and len(image.tiles) >= 1) != resource.is_udim
+            or (image.tiles is not None and len(image.tiles) != len(resource.tiles))
         )
 
     @classmethod
@@ -277,6 +285,7 @@ class ImageServiceBase:
     # https://blender.stackexchange.com/questions/274964/how-to-add-udim-tiles-to-an-image-and-fill-them-via-python
     @classmethod
     def add_udim_tiles(cls, resource: ImageResource, tiles: tuple[tuple[int, int], ...]) -> None:
+        LOG.debug(f"Add tiles to ressource : {tiles}")
         context = bpy.context
         areas = context.screen.areas
         image = resource.image

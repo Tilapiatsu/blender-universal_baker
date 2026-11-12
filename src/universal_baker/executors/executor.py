@@ -1,17 +1,20 @@
 from __future__ import annotations
 
-from typing import Callable
+import traceback
+from collections.abc import Callable
+from time import perf_counter
 
 import bpy
 
 from ..constant import LOG
-from ..runtime.task_bake import BakeTask
-from ..runtime.context import ExecutionContext
-from ..runtime.session import ExecutionSession
-from ..enum.execution import Execution
-from ..runtime.job import Job
-from ..core.registry_executor import registry_executor
 from ..core.registry_execution import registry_execution
+from ..core.registry_executor import registry_executor
+from ..enum.execution import Execution
+from ..runtime.context import ExecutionContext
+from ..runtime.job import Job
+from ..runtime.runtime_manager import RuntimeManager
+from ..runtime.session import ExecutionSession
+from ..runtime.task_bake import BakeTask
 from .execution_target import ExecutionTarget
 
 
@@ -34,6 +37,7 @@ class Executor:
         self._cancel_requested = False
         self.execution = execution
         self.task_types = task_types
+        self.start: float
 
     def execute(self, context: bpy.types.Context, job: Job) -> ExecutionSession:
         """
@@ -45,12 +49,16 @@ class Executor:
             session = ExecutionSession(context=context, job=job)
             session.initialize(context)
             job.notify_started()
+            self.start = perf_counter()
 
             execution = registry_execution[self.execution]
 
             try:
                 if BakeTask in self.task_types:
-                    with session.runtime.visualization.suspend():
+                    cage_visualization = RuntimeManager.current(context).cage_visualization
+                    cage_visualization.do_suspend()
+
+                    with session.runtime.bake_visualization.suspend():
                         self.exectue_tasks(session, execution, job)
                 else:
                     self.exectue_tasks(session, execution, job)
@@ -63,24 +71,42 @@ class Executor:
     def exectue_tasks(self, session: ExecutionSession, execution: ExecutionTarget, job: Job):
         self.before_job(session)
 
-        for task in job.tasks:
-            # Filtering tasks by types
-            if type(task).__name__ not in self.task_type_names:
-                continue
+        # NOTE: scene_prepare is evaluating the target_objects and generate the cages if necessary
+        # created objects will be removed at the end
+        try:
+            with job.scene_prepare as bake_objects:
+                session.bake_objects = bake_objects
 
-            if self._cancel_requested:
-                session.cancel()
-                break
+                for task in job.tasks:
+                    # Filtering tasks by types
+                    if type(task).__name__ not in self.task_type_names:
+                        continue
 
-            executor = registry_executor[task.id]
+                    try:
+                        if self._cancel_requested:
+                            session.cancel()
+                            break
 
-            executor.execute_task(
-                session=session,
-                execution=execution,
-                task=task,
+                        executor = registry_executor[task.id]
+
+                        with LOG.scope(task.execution_scope):
+                            executor.execute_task(
+                                session=session,
+                                execution=execution,
+                                task=task,
+                            )
+                    except KeyboardInterrupt:
+                        LOG.warning("Job interrupted")
+                        break
+
+            self.after_job(session)
+
+        except Exception as exc:
+            traceback.print_exc()
+            job.notify_failed(
+                perf_counter() - self.start,
+                str(exc),
             )
-
-        self.after_job(session)
 
     def finish(self, session: ExecutionSession, context: bpy.types.Context, job: Job):
         session.cleanup()

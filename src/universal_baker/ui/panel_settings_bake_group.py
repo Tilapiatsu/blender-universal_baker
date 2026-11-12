@@ -1,11 +1,9 @@
 from __future__ import annotations
-from typing import Callable
 
 import bpy
 
 from ..core.controller import BakeController
-from .panel import bake_group_needed, UBK_PT_MainPanel
-
+from .panel import UBK_PT_MainPanel, bake_group_needed
 
 # -------------------------------------------------------------------------
 # Main Settings Panel
@@ -23,7 +21,7 @@ class UBK_UL_BakeGroupSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
         layout = self.layout
         active_bake_group = BakeController.active_bake_group(context)
 
-        layout.label(text=f"{active_bake_group.name} Settings", icon="OUTLINER")
+        layout.label(text=f"{active_bake_group.name} Group Settings", icon="OUTLINER")
 
     @bake_group_needed
     def draw(self, context):

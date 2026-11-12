@@ -14,15 +14,11 @@ LOG_SCOPE = "Scene Binding"
 class ScenePropertyBinding(ParameterBinding):
     parameter_id: str
 
-    scene_name: str
     property_path: str
 
     def apply(self, value: Any, context: ParameterContext) -> None:
 
         scene = context.scene
-
-        if scene is None:
-            raise ParameterBindingError(f"Scene '{self.scene_name}' not found.")
 
         self._set_property(scene, self.property_path, value)
 

@@ -38,10 +38,15 @@ class OutputArtifact:
         self.scene = scene
         self.data = property_group
         self.output_settings: OutputSettings = property_group.get_output_settings()
-        self.name = self.data.name
+        self.name = property_group.name
         self.bake_group = BakeGroup(self.data.bake_group_uuid)
         self.uuid = property_group.uuid
         self.color_management_info: ColorManagementInfo = property_group.get_color_management_info()
+        self.type = property_group.type
+        self.bake_group_uuid = property_group.bake_group_uuid
+        self.producer_uuid = property_group.producer_uuid
+        self.target_object_uuid = property_group.target_object_uuid
+
         self.dependencies = []
         self.dependency_mapping = []
 
@@ -54,26 +59,6 @@ class OutputArtifact:
     @property
     def is_udim(self) -> bool:
         return self.image.is_udim
-
-    @property
-    def type(self) -> str:
-        return self.data.type
-
-    @property
-    def bake_group_uuid(self) -> str:
-        return self.data.bake_group_uuid
-
-    @property
-    def producer_uuid(self) -> str:
-        return self.data.producer_uuid
-
-    @property
-    def target_object_uuid(self) -> str:
-        return self.data.target_object_uuid
-
-    @property
-    def target_object(self) -> bpy.types.Object:
-        return self.data.producer_uuid
 
     @property
     def path(self) -> Path:
@@ -96,7 +81,7 @@ class OutputArtifact:
             LOG.debug(f"Loading Image {self.name}")
             image = ImageIOService.load(self.path, self.output_settings.color, self.image.is_udim)
 
-        return ImageIOService.init_resource(image, self.output_settings)
+        return ImageIOService.init_resource(image, self.output_settings, self.image.is_udim)
 
     def init_empty_image(self) -> None:
         from ..services.image_codec import ImageCodec

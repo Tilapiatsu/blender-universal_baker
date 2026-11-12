@@ -1,16 +1,14 @@
 from __future__ import annotations
 
-from time import perf_counter
 import traceback
+from time import perf_counter
 
-
-from .execution_target import ExecutionTarget
-
-from ..enum.execution import Execution
 from ..constant import LOG
-from ..runtime.session import ExecutionSession
-from ..runtime.context import ExecutionContext
 from ..core.registry_execution import registry_execution
+from ..enum.execution import Execution
+from ..runtime.context import ExecutionContext
+from ..runtime.session import ExecutionSession
+from .execution_target import ExecutionTarget
 
 
 class ExecutorInternal(ExecutionTarget):
@@ -34,8 +32,8 @@ class ExecutorInternal(ExecutionTarget):
             ctx.succeed(f"{task.producer.name} succeeded")
             session.job.notify_task_finished(task, True, perf_counter() - start)
 
-        except KeyboardInterrupt:
-            LOG.warning("Job interrupted")
+        # except KeyboardInterrupt:
+        #     LOG.warning("Job interrupted")
 
         except Exception as exc:
             traceback.print_exc()

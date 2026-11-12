@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import numpy as np
 
-from ..constant import LOG
 from ..compositors.base import Compositor
+from ..constant import LOG
 from ..runtime.image_handle import ImageHandle
 from ..runtime.tile_set import TileSet
 
@@ -28,5 +29,7 @@ class ImageMasker:
             compositor.composite(result_buffer, mask_buffer)
 
             image.set_buffer(tile, result_buffer)
+
+            LOG.debug(f"AFTER MASK | tile={tile} alpha_pixels={np.count_nonzero(mask_buffer)}")
 
         return image

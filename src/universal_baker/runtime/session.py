@@ -2,18 +2,18 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from time import perf_counter
+from typing import TYPE_CHECKING
 
 import bpy
 
-from .runtime_manager import RuntimeManager
+from ..runtime.bake_objects import BakeObjects
 from .runtime import BakeRuntime
-
-from typing import TYPE_CHECKING
+from .runtime_manager import RuntimeManager
 
 if TYPE_CHECKING:
+    from .context import ExecutionContext
     from .job import Job
     from .task import Task
-    from .context import ExecutionContext
 
 
 class SessionContext:
@@ -37,17 +37,20 @@ class ExecutionSession:
     context: bpy.types.Context
     runtime: BakeRuntime
     current_context: ExecutionContext | None = None
+    bake_objects: dict[str, BakeObjects] = field(default_factory=dict)
     cancelled: bool = False
     start_time: float = field(default_factory=perf_counter)
     current_task: Task | None = None
     original_mode: str = "OBJECT"
-    original_active_object: bpy.types.Object | None = None
+    original_active_object_name: str | None = None
     original_selected_objects: list[bpy.types.Object] = field(default_factory=list)
 
     original_engine: str = ""
     original_samples: int = 0
     original_margin: int = 16
     original_margin_type: str = ""
+
+    output_invalidated: bool = False
 
     temporary_images: list[bpy.types.Image] = field(default_factory=list)
     temporary_materials: list[bpy.types.Material] = field(default_factory=list)
@@ -58,6 +61,7 @@ class ExecutionSession:
         self.context = context
         self.runtime = RuntimeManager.current(context)
         self.runtime.register_session(self)
+        self.output_invalidated = False
         self.temporary_images = []
         self.temporary_materials = []
         self.temporary_node_groups = []
@@ -73,7 +77,9 @@ class ExecutionSession:
 
     def capture_scene(self, context: bpy.types.Context) -> None:
         self.original_mode = context.mode
-        self.original_active_object = context.view_layer.objects.active
+        self.original_active_object_name = (
+            context.view_layer.objects.active.name if context.view_layer.objects.active is not None else None
+        )
         self.original_selected_objects = list(context.selected_objects)
 
     def capture_render_settings(self, context: bpy.types.Context) -> None:
@@ -113,11 +119,14 @@ class ExecutionSession:
             if obj.name in bpy.data.objects:
                 obj.select_set(True)
 
-        context.view_layer.objects.active = self.original_active_object
-
         try:
-            if self.original_active_object is not None and context.mode != self.original_mode:
-                bpy.ops.object.mode_set(mode=self.original_mode)
+            if self.original_active_object_name is not None:
+                active_object = bpy.data.objects.get(self.original_active_object_name)
+
+                context.view_layer.objects.active = active_object
+
+                if context.mode != self.original_mode:
+                    bpy.ops.object.mode_set(mode=self.original_mode)
 
         except RuntimeError:
             # Some modes cannot always be restored (e.g. Sculpt after deletion).

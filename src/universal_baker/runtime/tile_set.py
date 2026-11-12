@@ -54,21 +54,6 @@ class TileSet:
     def tiles(self) -> tuple[int, ...]:
         return tuple(self._tiles.keys())
 
-    # @property
-    # def is_udim(self) -> bool:
-    #     return len(self._tiles) != 0 and (len(self._tiles) > 1 or 1001 not in self.keys())
-
-    @property
-    def is_udim(self) -> bool:
-        return not (len(self._tiles) == 1 and 1001 in self.keys())
-
-    @property
-    def base_buffer(self) -> TileData | None:
-        if self.is_udim:
-            return
-
-        return self._tiles[1001]
-
     @property
     def tile_buffers(self) -> list[tuple[int, ImageBuffer]]:
         return [(tile, buffer.buffer) for tile, buffer in self.items()]

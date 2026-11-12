@@ -4,13 +4,14 @@ import bpy
 from bpy.props import (
     BoolProperty,
     CollectionProperty,
-    EnumProperty,
-    FloatProperty,
     IntProperty,
     PointerProperty,
     StringProperty,
 )
 from bpy.types import PropertyGroup
+
+from ..services.visualization_cage import update_active_source
+from .settings_cage import UBK_CageSettings
 
 
 def get_uv_layer(self, context, edit_text):
@@ -19,6 +20,8 @@ def get_uv_layer(self, context, edit_text):
 
 class UBK_SourceObject(PropertyGroup):
     """Source object property"""
+
+    uuid: StringProperty()
 
     enabled: BoolProperty(
         default=True,
@@ -40,34 +43,46 @@ class UBK_TargetObject(PropertyGroup):
         name="Target",
         type=bpy.types.Object,
     )
+    target_skew: PointerProperty(
+        name="skew_target",
+        type=bpy.types.Object,
+    )
 
     image: PointerProperty(type=bpy.types.Image)
 
     source_objects: CollectionProperty(type=UBK_SourceObject)
-    active_source_object_index: IntProperty(default=0)
-
-    cage_mode: EnumProperty(
-        name="Mode",
-        items=[
-            ("NONE", "None", "Without Cage."),
-            ("OBJECT", "Object", "Specify an object as the cage"),
-            ("AUTO", "Auto", "Automatically generate Cage by offsetting vertices along normal"),
-        ],
-        default="NONE",
-    )
-    cage_object: PointerProperty(name="Cage Object", type=bpy.types.Object)
-    cage_extrusion: FloatProperty(name="Cage Extrusion", default=0.0, min=0.0, subtype="DISTANCE")
-    max_ray_distance: FloatProperty(name="Max Ray Distance", default=0.0, min=0.0, subtype="DISTANCE")
-    extrusion_group: StringProperty(name="Extrusion Group", default="UBK_EXTRUSION_GROUP")
-    skew_map: PointerProperty(name="Skew Map", type=bpy.types.Image)
+    active_source_object_index: IntProperty(default=0, update=update_active_source)
 
     uv_layer: StringProperty(
         name="UV Map", description="UV layer used for baking", default="UVMap", search=get_uv_layer
     )
 
+    settings_cage: PointerProperty(type=UBK_CageSettings)
+
     @property
-    def use_cage(self) -> bool:
-        return self.cage_mode != "NONE"
+    def target_object(self) -> bpy.types.Object:
+        if self.settings_cage.is_skew_correction_enabled:
+            return self.target_skew
+        else:
+            return self.object
+
+    @property
+    def source_object_list(self) -> list[bpy.types.Object]:
+        object_list: list[bpy.types.Object] = [o.object for o in self.source_objects if o.enabled and o is not None]
+
+        return object_list
+
+    @property
+    def have_source(self) -> bool:
+        return len(self.source_object_list) > 0
+
+    def ensure_cage_object(self) -> None:
+        if not self.have_source or self.settings_cage.cage_mode == "OBJECT":
+            return
+
+        from ..services.cage_object import CageObjectService
+
+        self.settings_cage.cage_object_generated = CageObjectService.acquire(self)
 
 
 classes = (

@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import bpy
-from .settings_output import UBK_Output
+
 from .settings_base import UBK_Settings
+from .settings_output import UBK_Output
 
 
 class UBK_BakeSettings(UBK_Settings):
@@ -11,6 +12,15 @@ class UBK_BakeSettings(UBK_Settings):
     # -------------------------------------------------------------------------
     # Bake
     # -------------------------------------------------------------------------
+
+    device: bpy.props.EnumProperty(
+        name="Device",
+        items=[
+            ("GPU", "GPU Compute", ""),
+            ("CPU", "CPU", ""),
+        ],
+        default="GPU",
+    )
 
     use_multires: bpy.props.BoolProperty(
         name="Bake From Multires",
@@ -82,6 +92,11 @@ class UBK_BakeSettings(UBK_Settings):
     denoise: bpy.props.BoolProperty(
         name="Denoise",
         default=False,
+    )
+
+    denoise_use_gpu: bpy.props.BoolProperty(
+        name="Use GPU",
+        default=True,
     )
 
 

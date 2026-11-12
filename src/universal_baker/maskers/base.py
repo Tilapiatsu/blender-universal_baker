@@ -3,6 +3,8 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
+import numpy as np
+
 from ..constant import LOG
 from ..core.maskers import ImageMasker
 from ..core.registry_compositor import registry_compositor
@@ -70,18 +72,44 @@ class MaskerBase(ABC):
     def masking(self, ctx: MaskContext) -> None:
         """Execute the Accumulation."""
         LOG.debug("Masking ...")
-
         if ctx.inputs is None:
             LOG.error("Inputs are not defined")
             return
 
         mask = ctx.mask.mask_for_object(ctx.task.target_object_uuid)
+        if mask is None:
+            return
+
+        for tile, buffer in mask.tile_buffers:
+            alpha = buffer.pixels[..., 3]
+
+            LOG.debug(
+                f"MASK RESULT | "
+                f"target={ctx.task.target_object_uuid} "
+                f"tile={tile} "
+                f"shape={buffer.pixels.shape} "
+                f"coverage={np.count_nonzero(alpha)} "
+                f"alpha_min={alpha.min()} "
+                f"alpha_max={alpha.max()}"
+            )
 
         for input in ctx.inputs:
+            LOG.debug(
+                f"MASK INPUT | "
+                f"target={ctx.task.target_object_uuid} "
+                f"artifact={input.artifact.uuid} "
+                f"handle={id(input)} "
+                f"loaded={input.is_loaded} "
+                f"tiles={input.tiles()} "
+                f"resolution=({input.artifact.output_settings.path.width},{input.artifact.output_settings.path.height})"
+            )
+
             if not mask.contains(input.tileset):
                 LOG.debug(f"Skipping {input.artifact.name}")
                 continue
+
             ImageMasker.apply_mask(input, mask, registry_compositor[self.id])
+
             input.image()
             input.reload()
 
@@ -113,8 +141,8 @@ class MaskerBase(ABC):
             artifact_type=OutputStage.MASKED,
             name=ctx.task.output_name,
             bake_group_uuid=ctx.task.bake_group_uuid,
-            target_object_uuid="",
-            producer_uuid=ctx.task.uuid,
+            target_object_uuid="ALL",
+            producer_uuid=ctx.task.baker_uuid,
             image_layout=ctx.task.uv_layout.image_layout,
             uv_layout=ctx.task.uv_layout,
             absolute_path=ctx.task.absolute_filepath,

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from .base import UBK_OT_Base
 from ..services.project_synchronizer import ProjectSynchronizer
+from .base import UBK_OT_Base
 
 
 class UBK_OT_refresh_custom_baker_parameters(UBK_OT_Base):

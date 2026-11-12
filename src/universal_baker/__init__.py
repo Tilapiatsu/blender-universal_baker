@@ -12,33 +12,39 @@ bl_info = {
 # modules = (registration,)
 
 from . import (
+    accumulators,
+    assets,
+    bakers,
+    bakers_custom,
+    compositors,
+    executors,
+    handlers,
+    maskers,
+    operators,
+    output,
+    packers,
+    parameters_definition,
     preferences,
     properties,
-    output,
     ui,
-    operators,
-    bakers,
-    executors,
-    compositors,
-    packers,
-    accumulators,
-    maskers,
-    handlers,
 )
 
 modules = (
     preferences,
-    properties,
     output,
     ui,
     operators,
     bakers,
+    bakers_custom,
+    parameters_definition,
+    properties,
     executors,
     compositors,
     packers,
     accumulators,
     maskers,
     handlers,
+    assets,
 )
 
 

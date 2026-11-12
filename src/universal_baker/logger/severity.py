@@ -8,3 +8,4 @@ class Severity(IntEnum):
     INFO = 20
     WARNING = 30
     ERROR = 40
+    CRITICAL = 50

@@ -2,6 +2,17 @@ from __future__ import annotations
 
 import bpy
 
+from universal_baker.constant import (
+    ICON_BAKE,
+    ICON_DISPLAY,
+    ICON_DISPLAY_ENABLE,
+    ICON_INFO,
+    ICON_PACK,
+    ICON_PREVIEW,
+    ICON_PREVIEW_ENABLE,
+    ICON_TARGET_OBJECT,
+)
+
 from ..core.controller import BakeController
 
 
@@ -21,7 +32,7 @@ def bake_group_needed(func):
             layout = self.layout
             box = layout.box()
             header = box.row()
-            header.label(text="Add a Bake Group.", icon="INFO")
+            header.label(text="Add a Bake Group.", icon=ICON_INFO)
             return
 
         func(self, context)
@@ -41,7 +52,7 @@ def object_needed(func):
             layout = self.layout
             box = layout.box()
             header = box.row()
-            header.label(text="Add a Bake Group.", icon="INFO")
+            header.label(text="Add a Bake Group.", icon=ICON_INFO)
 
             return
 
@@ -51,7 +62,44 @@ def object_needed(func):
             layout = self.layout
             box = layout.box()
             header = box.row()
-            header.label(text="Add a Target Object.", icon="INFO")
+            header.label(text="Add a Target Object.", icon=ICON_INFO)
+            return
+
+        func(self, context)
+
+    return wrapper
+
+
+def source_needed(func):
+    def wrapper(self, context):
+        project = BakeController.project(context)
+        if project is None:
+            return
+
+        active_bake_group = BakeController.active_bake_group(context)
+
+        if active_bake_group is None:
+            layout = self.layout
+            box = layout.box()
+            header = box.row()
+            header.label(text="Add a Bake Group.", icon=ICON_INFO)
+
+            return
+
+        active_object = BakeController.active_target_object(context)
+
+        if active_object is None:
+            layout = self.layout
+            box = layout.box()
+            header = box.row()
+            header.label(text="Add a Target Object.", icon=ICON_INFO)
+            return
+
+        if len(active_object.source_objects) == 0:
+            layout = self.layout
+            box = layout.box()
+            header = box.row()
+            header.label(text="Add a source Object", icon=ICON_INFO)
             return
 
         func(self, context)
@@ -71,7 +119,7 @@ def baker_needed(func):
             layout = self.layout
             box = layout.box()
             header = box.row()
-            header.label(text="Add a Bake Group.", icon="INFO")
+            header.label(text="Add a Bake Group.", icon=ICON_INFO)
 
             return
 
@@ -81,7 +129,7 @@ def baker_needed(func):
             layout = self.layout
             box = layout.box()
             header = box.row()
-            header.label(text="Add a Baker.", icon="INFO")
+            header.label(text="Add a Baker.", icon=ICON_INFO)
             return
 
         func(self, context)
@@ -101,7 +149,7 @@ def packer_needed(func):
             layout = self.layout
             box = layout.box()
             header = box.row()
-            header.label(text="Add a Bake Group.", icon="INFO")
+            header.label(text="Add a Bake Group.", icon=ICON_INFO)
 
             return
 
@@ -111,7 +159,7 @@ def packer_needed(func):
             layout = self.layout
             box = layout.box()
             header = box.row()
-            header.label(text="Add a Packer.", icon="INFO")
+            header.label(text="Add a Packer.", icon=ICON_INFO)
             return
 
         func(self, context)
@@ -149,8 +197,9 @@ def draw_baking_settings(layout, settings_bake):
 
     internal_data = BakeController.get_output_node(settings_bake.internal_name)
     if internal_data is None:
-        layout.label(text="Add a Target object and a Map first.", icon="INFO")
+        layout.label(text="Add a Target object and a Map first.", icon=ICON_INFO)
     else:
+        layout.prop(settings_bake, "device")
         layout.prop(settings_bake, "use_multires")
         layout.prop(settings_bake, "margin")
         layout.prop(settings_bake, "margin_type")
@@ -169,7 +218,7 @@ def draw_sampling_settings(layout, settings_bake):
 
     internal_data = BakeController.get_output_node(settings_bake.internal_name)
     if internal_data is None:
-        layout.label(text="Add a Target object and a Map first.", icon="INFO")
+        layout.label(text="Add a Target object and a Map first.", icon=ICON_INFO)
     else:
         layout.prop(settings_bake, "adaptive_sampling")
         if settings_bake.adaptive_sampling:
@@ -178,7 +227,11 @@ def draw_sampling_settings(layout, settings_bake):
             layout.prop(settings_bake, "max_samples")
         else:
             layout.prop(settings_bake, "samples")
+
         # layout.prop(settings_bake, "denoise")
+        # if settings_bake.denoise:
+        #     layout.prop(settings_bake, "denoise_use_gpu")
+        #
 
 
 # -------------------------------------------------------------------------
@@ -241,7 +294,7 @@ class UBK_PT_TargetObjectPanel(UBK_PT_MainPanel, bpy.types.Panel):
 
     def draw_header(self, context):
         layout = self.layout
-        layout.label(text="Target Objects", icon="OUTLINER_OB_MESH")
+        layout.label(text="Target Objects", icon=ICON_TARGET_OBJECT)
 
     @bake_group_needed
     def draw_objects(self, context):
@@ -306,18 +359,26 @@ class UBK_PT_BakerPanel(UBK_PT_MainPanel, bpy.types.Panel):
                 "enabled_preview",
                 text=f"Preview {baker.image_name}",
                 toggle=1,
-                icon="VIEW_CAMERA" if project.visualization.enabled_preview else "VIEW_CAMERA_UNSELECTED",
+                icon=ICON_PREVIEW_ENABLE if project.visualization.enabled_preview else ICON_PREVIEW,
             )
-            if not baker.has_image:
-                return
+            if project.visualization.cage_edit or project.visualization.skew_edit:
+                column.enabled = False
 
-            column.prop(
-                project.visualization,
-                "enabled_display",
-                text=f"Display {baker.accumulated_image.name}",
-                toggle=1,
-                icon="HIDE_OFF" if project.visualization.enabled_display else "HIDE_ON",
-            )
+            if baker.has_image:
+                column = box.column(align=True)
+
+                column.prop(
+                    project.visualization,
+                    "enabled_display",
+                    text=f"Display {baker.accumulated_image.name}",
+                    toggle=1,
+                    icon=ICON_DISPLAY_ENABLE if project.visualization.enabled_display else ICON_DISPLAY,
+                )
+
+            box = self.layout.box()
+            box.operator(
+                "ubk.bake_group", icon=ICON_BAKE, text="Bake Selected Bakers"
+            ).index = project.active_bake_group_index
 
 
 class UBK_PT_ProcessPanel(UBK_PT_MainPanel, bpy.types.Panel):
@@ -334,10 +395,17 @@ class UBK_PT_ProcessPanel(UBK_PT_MainPanel, bpy.types.Panel):
     @bake_group_needed
     def draw(self, context):
         layout = self.layout
+        project = BakeController.project(context)
+        if project is None:
+            return
+
+        # col = layout.column()
+        # col.prop(project, "use_maskers", toggle=True)
+
         col = layout.column()
         col.scale_y = 1.6
-        col.operator("ubk.bake_all", icon="RESTRICT_RENDER_OFF")
-        col.operator("ubk.pack_all", icon="NODE_COMPOSITING")
+        col.operator("ubk.bake_all", icon=ICON_BAKE, text="Bake All")
+        col.operator("ubk.pack_all", icon=ICON_PACK)
         col.operator("ubk.bake_and_pack_all", icon="LONGDISPLAY")
 
 

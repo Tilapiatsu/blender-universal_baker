@@ -1,13 +1,16 @@
 from __future__ import annotations
 
 import math
+
 import bpy
 
-from ..runtime.label_set import LabelSet
+from ..constant import LOG
 from ..resources.image_buffer import ImageBuffer
 from ..resources.ownership import OwnershipDatas
-from ..runtime.uv_ownership_mask import UvOwnershipMask
+from ..runtime.bake_objects import BakeObjects
+from ..runtime.label_set import LabelSet
 from ..runtime.tile_set import TileSet
+from ..runtime.uv_ownership_mask import UvOwnershipMask
 from .voronoi_jfa import VoronoiJFA
 
 
@@ -18,39 +21,48 @@ class UvOwnershipService:
     def create_uv_ownership_mask(
         cls,
         ownership_datas: OwnershipDatas,
+        bake_objects: dict[str, BakeObjects],
         resolution: tuple[int, int],
         name: str,
         use_udim: bool = False,
     ) -> UvOwnershipMask:
 
+        LOG.debug("Creating UV ownership map")
+
         object_masks: dict[str, TileSet] = {}
-        for i, o in ownership_datas.items():
+
+        for object_uuid, ownership_data in ownership_datas.items():
+            LOG.debug(f"UV Ownership for {ownership_data.object_name}")
+            obj = bake_objects.get(ownership_data.object_uuid)
+            if obj is None:
+                LOG.debug(f"{ownership_data.object_name} not in bake_objects")
+                continue
+
             object_mask = cls.create_mask(
-                obj=o.blender_object,
+                mesh=obj.target_object.data,
                 resolution=resolution,
-                uv_map=o.uv_layer,
+                uv_map=ownership_data.uv_layer,
                 use_udim=use_udim,
-                name=f"{o.object_name}_mask",
+                name=f"{ownership_data.object_name}_mask",
             )
-            object_masks[o.object_uuid] = object_mask
 
-        ownership, _ = VoronoiJFA.calculate_ownership(object_masks)
+            object_masks[object_uuid] = object_mask
 
-        object_uuids = {i: o.object_uuid for i, o in ownership_datas.items()}
+        ownership, label_to_uuid = VoronoiJFA.calculate_ownership(object_masks)
 
-        uv_ownership_mask = UvOwnershipMask(
+        LOG.debug(f"JFA LABEL MAP | {label_to_uuid}")
+
+        return UvOwnershipMask(
             labels=ownership,
             resolution=resolution,
-            object_index_uuids=object_uuids,
+            label_to_uuid=label_to_uuid,
             name=name,
         )
-
-        return uv_ownership_mask
 
     @classmethod
     def create_mask(
         cls,
-        obj: bpy.types.Object,
+        mesh: bpy.types.Mesh,
         resolution: tuple[int, int],
         *,
         uv_map: str | None = None,
@@ -68,18 +80,13 @@ class UvOwnershipService:
         When use_udim is True, all UDIM tiles touched by the UVs
         are generated.
         """
-        if obj.type != "MESH":
-            raise TypeError(f"UV mask requires a mesh object, got {obj.type!r}")
-
-        mesh = obj.data
-
         if uv_map is None:
             uv_layer = mesh.uv_layers.active
         else:
             uv_layer = mesh.uv_layers.get(uv_map)
 
         if uv_layer is None:
-            raise ValueError(f"Object {obj.name!r} has no UV map {uv_map!r}")
+            raise ValueError(f"Object {mesh.name!r} has no UV map {uv_map!r}")
 
         width, height = resolution
 
@@ -102,7 +109,7 @@ class UvOwnershipService:
                 width,
                 height,
                 channels=1,
-                name=(name or f"{obj.name}_{uv_layer}_UVOwnership_{tile_number}"),
+                name=(name or f"{mesh.name}_{uv_layer}_UVOwnership_{tile_number}"),
             )
 
             for triangle in triangles:

@@ -1,20 +1,18 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import bpy
 
-from typing import TYPE_CHECKING
-
-
 if TYPE_CHECKING:
     from .settings_output import OutputSettings
-    from .tile_set import TileSet
     from .task_ownership_mask import UvOwnershipTask
+    from .tile_set import TileSet
 
 from ..constant import LOG
-from .context import ExecutionContext
 from ..properties.project import UBK_Project
+from .context import ExecutionContext
 
 
 @dataclass(slots=True)

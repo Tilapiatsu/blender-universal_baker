@@ -1,8 +1,10 @@
 from __future__ import annotations
-import bpy
-from bpy.types import PropertyGroup
-from bpy.props import BoolProperty, EnumProperty, StringProperty, PointerProperty, CollectionProperty
 
+import bpy
+from bpy.props import BoolProperty, CollectionProperty, EnumProperty, PointerProperty, StringProperty
+from bpy.types import PropertyGroup
+
+from ..parameters_definition.baker_settings import UBK_BakerSettings
 from .custom_baker import UBK_CustomBaker
 from .settings_bake import UBK_BakeSettings
 
@@ -31,6 +33,8 @@ class UBK_Baker(PropertyGroup):
         name="Enabled",
         default=True,
     )
+
+    baker_settings: bpy.props.PointerProperty(type=UBK_BakerSettings)
 
     baker: EnumProperty(
         name="Bake Type",

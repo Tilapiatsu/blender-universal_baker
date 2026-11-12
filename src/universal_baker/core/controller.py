@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 from uuid import uuid4
 
 import bpy
@@ -115,6 +115,28 @@ class BakeController:
         ProjectService.remove_source_object(context, index)
 
     # ---------------------------------------------------------
+    # Skew Correction
+    # ---------------------------------------------------------
+
+    @classmethod
+    def remove_skew_image(cls, context: bpy.types.Context):
+        target_object = cls.active_target_object(context)
+
+        if not target_object:
+            return None
+
+        if target_object.settings_cage.skew_image is None:
+            return None
+
+        skew_map_name = target_object.settings_cage.skew_image.name
+        if skew_map_name in bpy.data.images:
+            bpy.data.images.remove(target_object.settings_cage.skew_image)
+
+        target_object.settings_cage.skew_image = None
+
+        return skew_map_name
+
+    # ---------------------------------------------------------
     # Baker Operations
     # ---------------------------------------------------------
 
@@ -148,14 +170,16 @@ class BakeController:
         BakerService.remove(bake_group, bake_group.active_baker_index)
 
         if len(bake_group.bakers) == 0:
-            runtime = RuntimeManager.current(context).visualization
+            runtime = RuntimeManager.current(context).bake_visualization
             if runtime.active:
                 runtime.disable()
                 project = cls.project(context)
                 if project is None:
                     return
+                project.visualization.refreshing = True
                 project.visualization.enabled_preview = False
                 project.visualization.enabled_display = False
+                project.visualization.refreshing = False
 
     @staticmethod
     def resolve_map_uuid(project, uuid: str):
@@ -166,7 +190,7 @@ class BakeController:
 
         return None
 
-    # TODO:: Need to write get_source_object_from_uuid method
+    # TODO: Need to write get_source_object_from_uuid method
 
     @classmethod
     def get_target_object_from_uuid(cls, uuid: str) -> UBK_TargetObject | None:
@@ -240,6 +264,7 @@ class BakeController:
             return None
 
         packer = bake_group.packers.add()
+        packer.uuid = str(uuid4())
         packer.packer = packer_id
         red = packer.mappings.add()
         green = packer.mappings.add()
@@ -289,7 +314,12 @@ class BakeController:
     # ---------------------------------------------------------
 
     @classmethod
-    def validate(cls, context: bpy.types.Context) -> list[str]:
+    def validate(
+        cls,
+        context: bpy.types.Context,
+        force_bake_group: bool = False,
+        force_baker: bool = False,
+    ) -> list[str]:
         errors = []
 
         project = cls.project(context)
@@ -299,7 +329,7 @@ class BakeController:
 
             return errors
 
-        enabled_bake_groups = [g for g in project.bake_groups if g.enabled]
+        enabled_bake_groups = [g for g in project.bake_groups if g.enabled or force_bake_group]
 
         if not enabled_bake_groups:
             errors.append("Every Bake Groups is disabled.")
@@ -311,10 +341,10 @@ class BakeController:
 
                     continue
 
-            # enabled_maps = [baker for baker in obj.maps if baker.enabled]
-            #
-            # if not enabled_maps:
-            #     errors.append(f"{obj.target.name} has no enabled bake maps.")
+            enabled_maps = [baker for baker in b.bakers if baker.enabled or force_baker]
+
+            if not enabled_maps:
+                errors.append(f"{b.name} has no enabled bake maps.")
 
         return errors
 
@@ -330,6 +360,7 @@ class BakeController:
         register_packers: bool = False,
         group_index: int = -1,
         baker_index: int = -1,
+        target_index: int = -1,
         packer_index: int = -1,
     ) -> Job:
         planner = ExecutionPlanner()
@@ -340,6 +371,7 @@ class BakeController:
             register_packers=register_packers,
             group_index=group_index,
             baker_index=baker_index,
+            target_index=target_index,
             packer_index=packer_index,
         )
 
@@ -359,6 +391,18 @@ class BakeController:
 
         job = cls.create_job(context, register_bakers=True)
 
+        project = cls.project(context)
+
+        if project is None:
+            return (False, ["Project is None"])
+
+        use_maskers = project.use_maskers
+
+        task_types = [BakeTask, AccumulateTask]
+
+        if use_maskers:
+            task_types += [UvOwnershipTask, MaskBufferTask]
+
         preferences = get_prefs()
 
         if preferences.use_background_blender:
@@ -368,12 +412,7 @@ class BakeController:
 
         executor = Executor(
             execution=execution,
-            task_types=[
-                BakeTask,
-                AccumulateTask,
-                UvOwnershipTask,
-                MaskBufferTask,
-            ],
+            task_types=task_types,
         )
         executor.execute(context, job)
 
@@ -384,7 +423,7 @@ class BakeController:
 
     @classmethod
     def bake_group(cls, context: bpy.types.Context, group_index: int) -> tuple[bool, Job | list[str]]:
-        errors = cls.validate(context)
+        errors = cls.validate(context, force_bake_group=True, force_baker=True)
 
         if errors:
             return (
@@ -393,6 +432,18 @@ class BakeController:
             )
 
         job = cls.create_job(context, register_bakers=True, register_packers=True, group_index=group_index)
+
+        project = cls.project(context)
+
+        if project is None:
+            return (False, ["Project is None"])
+
+        use_maskers = project.use_maskers
+
+        task_types = [BakeTask, AccumulateTask, PackingTask]
+
+        if use_maskers:
+            task_types += [UvOwnershipTask, MaskBufferTask]
 
         preferences = get_prefs()
 
@@ -403,13 +454,7 @@ class BakeController:
 
         executor = Executor(
             execution=execution,
-            task_types=[
-                BakeTask,
-                AccumulateTask,
-                UvOwnershipTask,
-                MaskBufferTask,
-                PackingTask,
-            ],
+            task_types=task_types,
         )
         executor.execute(context, job)
 
@@ -430,6 +475,18 @@ class BakeController:
 
         job = cls.create_job(context, register_bakers=True, baker_index=baker_index)
 
+        project = cls.project(context)
+
+        if project is None:
+            return (False, ["Project is None"])
+
+        use_maskers = project.use_maskers
+
+        task_types = [BakeTask, AccumulateTask]
+
+        if use_maskers:
+            task_types += [UvOwnershipTask, MaskBufferTask]
+
         preferences = get_prefs()
 
         if preferences.use_background_blender:
@@ -439,12 +496,49 @@ class BakeController:
 
         executor = Executor(
             execution=execution,
-            task_types=[
-                BakeTask,
-                AccumulateTask,
-                UvOwnershipTask,
-                MaskBufferTask,
-            ],
+            task_types=task_types,
+        )
+        executor.execute(context, job)
+
+        return (
+            True,
+            job,
+        )
+
+    @classmethod
+    def bake_target(cls, context: bpy.types.Context, target_index: int) -> tuple[bool, Job | list[str]]:
+        errors = cls.validate(context)
+
+        if errors:
+            return (
+                False,
+                errors,
+            )
+
+        job = cls.create_job(context, register_bakers=True, target_index=target_index)
+
+        project = cls.project(context)
+
+        if project is None:
+            return (False, ["Project is None"])
+
+        use_maskers = project.use_maskers
+
+        task_types = [BakeTask, AccumulateTask]
+
+        if use_maskers:
+            task_types += [UvOwnershipTask, MaskBufferTask]
+
+        preferences = get_prefs()
+
+        if preferences.use_background_blender:
+            execution = Execution.EXTERNAL
+        else:
+            execution = Execution.INTERNAL
+
+        executor = Executor(
+            execution=execution,
+            task_types=task_types,
         )
         executor.execute(context, job)
 
@@ -459,7 +553,7 @@ class BakeController:
 
     @classmethod
     def pack_all(cls, context: bpy.types.Context) -> tuple[bool, Job | list[str]]:
-        errors = cls.validate(context)
+        errors = []
 
         if errors:
             return (
@@ -501,6 +595,18 @@ class BakeController:
 
         job = cls.create_job(context, register_bakers=True, register_packers=True)
 
+        project = cls.project(context)
+
+        if project is None:
+            return (False, ["Project is None"])
+
+        use_maskers = project.use_maskers
+
+        task_types = [BakeTask, AccumulateTask, PackingTask]
+
+        if use_maskers:
+            task_types += [UvOwnershipTask, MaskBufferTask]
+
         preferences = get_prefs()
 
         if preferences.use_background_blender:
@@ -510,13 +616,7 @@ class BakeController:
 
         executor = Executor(
             execution=execution,
-            task_types=[
-                BakeTask,
-                AccumulateTask,
-                UvOwnershipTask,
-                PackingTask,
-                MaskBufferTask,
-            ],
+            task_types=task_types,
         )
         executor.execute(context, job)
         return (
@@ -526,7 +626,7 @@ class BakeController:
 
     @classmethod
     def pack_selected(cls, context: bpy.types.Context, packer_index: int) -> tuple[bool, Job | list[str]]:
-        errors = cls.validate(context)
+        errors = []
 
         if errors:
             return (

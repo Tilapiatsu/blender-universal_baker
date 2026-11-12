@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import bpy
 
-
 DISPLAY_MATERIAL_NAME = "UBK_INTERNAL_BAKE_DISPLAY"
 
 

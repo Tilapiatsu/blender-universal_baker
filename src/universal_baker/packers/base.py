@@ -3,7 +3,9 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
-from ..constant import LOG
+import bpy
+
+from ..constant import ICON_PACK, LOG
 from ..enum.image_colorspace import ImageColorSpace
 from ..enum.output_stage import OutputStage
 from ..enum.view_transform import ViewTransform
@@ -28,13 +30,14 @@ class PackerBase(ABC):
     id: str = ""
     name: str = ""
     description: str = ""
-    icon: str = "NODE_COMPOSITING"
+    icon: str = ICON_PACK
     is_custom: bool = False
     clear_preview_material: bool = True
     viewport_render_pass: str = "COMBINED"
     image_colorspace: ImageColorSpace = ImageColorSpace.SRGB
     view_transform = SceneViewTransform(view_transform=ViewTransform.STANDARD)
     color_management_info = ColorManagementInfo()
+    settings_name: str = "packer_settings"
 
     def poll(self, task: Task) -> bool:
         """Whether this packer can execute this task."""
@@ -106,7 +109,7 @@ class PackerBase(ABC):
             artifact_type=OutputStage.PACK,
             bake_group_uuid=ctx.task.bake_group_uuid,
             name=ctx.task.output_name,
-            target_object_uuid="",
+            target_object_uuid="ALL",
             producer_uuid=ctx.task.uuid,
             dependencies=dependencies,
             image_layout=ctx.task.uv_layout.image_layout,

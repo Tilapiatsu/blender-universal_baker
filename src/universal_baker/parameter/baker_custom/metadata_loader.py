@@ -11,13 +11,15 @@ from ..metadata import (
     CURRENT_METADATA_VERSION,
     METADATA_TEXT_NAME,
     BindingMetadata,
+    BindingType,
     CustomBakerMetadata,
     MetadataNotFoundError,
     MetadataParseError,
     MetadataValidationError,
     ParameterMetadata,
+    ParameterSource,
 )
-from ..parameter import BakerParameterOption
+from ..parameter import ParameterOption, ParameterType
 from .definition import CustomBakerDefinition
 
 
@@ -247,6 +249,7 @@ class MetadataLoader:
 
         identifier = cls._required_string(data, "id", location)
         name = cls._required_string(data, "name", location)
+        source = cls._required_string(data, "source", location)
         parameter_type = cls._required_string(data, "type", location).upper()
 
         allowed_types = {
@@ -254,6 +257,12 @@ class MetadataLoader:
             "INT",
             "BOOL",
             "ENUM",
+            "STRING",
+            "OBJ",
+            "VECTOR",
+            "SHADER",
+            "IMG",
+            "COLLECTION",
         }
 
         if parameter_type not in allowed_types:
@@ -278,10 +287,14 @@ class MetadataLoader:
         options = cls._parse_options(data.get("options", []), location)
         bindings = cls._parse_bindings(data.get("bindings", []), location)
 
+        if parameter_type == "VECTOR" and default is not None:
+            default = tuple(default)
+
         return ParameterMetadata(
             identifier=identifier,
             name=name,
-            type=parameter_type,
+            type=ParameterType(parameter_type),
+            source=ParameterSource(source),
             default=default,
             description=description,
             min_value=min_value,
@@ -297,7 +310,7 @@ class MetadataLoader:
         )
 
     @classmethod
-    def _parse_options(cls, raw_options: Any, location: str) -> list[BakerParameterOption]:
+    def _parse_options(cls, raw_options: Any, location: str) -> list[ParameterOption]:
 
         if not isinstance(raw_options, list):
             raise MetadataValidationError(f"{location}.options must be an array.")
@@ -310,12 +323,12 @@ class MetadataLoader:
             if not isinstance(raw_option, dict):
                 raise MetadataValidationError(f"{option_location} must be an object.")
 
-            identifier = cls._required_string(raw_option, "id", option_location)
-            name = cls._required_string(raw_option, "name", option_location)
+            identifier = cls._required_string(raw_option, "identifier", option_location)
+            name = cls._required_string(raw_option, "label", option_location)
             description = cls._optional_string(raw_option, "description", "")
 
             options.append(
-                BakerParameterOption(
+                ParameterOption(
                     identifier=identifier,
                     label=name,
                     description=description,
@@ -352,7 +365,8 @@ class MetadataLoader:
                 "type",
                 "material",
                 "node",
-                "socket",
+                "socket_input",
+                "socket_output",
                 "modifier",
                 "property",
             }
@@ -361,10 +375,11 @@ class MetadataLoader:
 
             bindings.append(
                 BindingMetadata(
-                    binding_type=binding_type,
+                    binding_type=BindingType(binding_type),
                     material=cls._optional_string(raw_binding, "material", None),
                     node=cls._optional_string(raw_binding, "node", None),
-                    socket=cls._optional_string(raw_binding, "socket", None),
+                    socket_input=cls._optional_string(raw_binding, "socket_input", None),
+                    socket_output=cls._optional_string(raw_binding, "socket_output", None),
                     modifier=cls._optional_string(raw_binding, "modifier", None),
                     property=cls._optional_string(raw_binding, "property", None),
                     extra=extra,

@@ -1,0 +1,1557 @@
+from __future__ import annotations
+
+import math
+import shutil
+import tempfile
+import time
+from pathlib import Path, PurePosixPath
+from typing import TYPE_CHECKING
+
+import bpy
+import gpu
+from gpu_extras.batch import batch_for_shader
+from mathutils import Color
+
+from ..constant import (
+    BAKE_CLIPPING_PREVIEW_ASSET_PATH,
+    BAKE_PORTAL_PREVIEW_ASSET_PATH,
+    BAKE_PROJECTION_CAGE_PATH,
+    LOG,
+    UBK_SUBFOLDER_SKEW,
+)
+from ..core.output_resolver import OutputResolver
+from ..core.registry_baker import registry_baker
+from ..enum.visualization import BakeVisualizationMode
+from ..resources.asset_external import AssetExtrenal
+from ..runtime.bake_objects import BakeObjects
+from ..runtime.runtime_visualization_cage import (
+    CageEditMode,
+    CageVisualizationRuntime,
+)
+from .asset_external_setup import AssetExternalCageClippingSetup, AssetExternalCagePortalSetup
+from .gpu_udim_atlas import GPUUdimAtlas
+from .material_display import DisplayMaterialService
+from .material_override import MaterialOverrideService
+from .temp_collection import TempCollection
+from .visibility_override import VisibilityOverride
+from .visualization_bake import BakeVisualizationService, PreviewData
+
+if TYPE_CHECKING:
+    from ..properties.object import UBK_TargetObject
+
+LOG_SCOPE = "Cage Visualization"
+TEMP_COLLECTION_NAME = "UBK_CAGE_VISUALIZATION"
+
+
+def _refreshing_dec(func):
+    def wrapper(self, context):
+        if self.refreshing:
+            return
+        self.refreshing = True
+        func(self, context)
+        self.refreshing = False
+
+    return wrapper
+
+
+def set_edit_cage(value: bool):
+    from ..core.controller import BakeController
+
+    project = BakeController.project(bpy.context)
+    if project is None:
+        return
+
+    visualization = project.visualization
+
+    visualization.cage_edit = value
+
+
+def set_edit_skew(value: bool):
+    from ..core.controller import BakeController
+
+    project = BakeController.project(bpy.context)
+    if project is None:
+        return
+
+    visualization = project.visualization
+
+    visualization.skew_edit = value
+
+
+def set_bake_preview(value: bool):
+    from ..core.controller import BakeController
+
+    project = BakeController.project(bpy.context)
+    if project is None:
+        return
+
+    visualization = project.visualization
+
+    visualization.preview_bake = value
+
+
+def update_cage_color(self, context):
+    if CageVisualizationService._runtime is None or not CageVisualizationService._runtime.active:
+        return
+    CageVisualizationService._refresh_cage_color()
+
+
+@_refreshing_dec
+def update_edit_skew(self, context):
+    from ..core.controller import BakeController
+
+    target = BakeController.active_target_object(context)
+    project = BakeController.project(context)
+
+    skew_cage = project.visualization.skew_edit
+
+    if skew_cage:
+        if target is None:
+            skew_cage = False
+            return
+
+        project.visualization.cage_edit = False
+
+        if not CageVisualizationService.enable_skew_edit(target, project.visualization.preview_bake):
+            skew_cage = False
+
+    else:
+        CageVisualizationService.disable()
+
+
+@_refreshing_dec
+def update_edit_cage(self, context):
+    from ..core.controller import BakeController
+
+    target = BakeController.active_target_object(context)
+    project = BakeController.project(context)
+
+    edit_cage = project.visualization.cage_edit
+
+    if edit_cage:
+        if target is None:
+            edit_cage = False
+            return
+
+        project.visualization.skew_edit = False
+
+        if not CageVisualizationService.enable_cage_edit(target, project.visualization.preview_bake):
+            edit_cage = False
+
+    else:
+        CageVisualizationService.disable()
+
+
+@_refreshing_dec
+def update_preview_bake(self, context):
+    from ..core.controller import BakeController
+
+    target = BakeController.active_target_object(context)
+    project = BakeController.project(context)
+
+    preview_bake = project.visualization.preview_bake
+
+    if preview_bake:
+        if target is None:
+            preview_bake = False
+            return
+
+        if not CageVisualizationService.enable_bake_preview(target):
+            preview_bake = False
+
+    else:
+        CageVisualizationService.disable_bake_preview()
+
+
+def update_active_target(self, context):
+    from ..core.controller import BakeController
+
+    project = BakeController.project(context)
+
+    target = BakeController.active_target_object(context)
+
+    if target is None:
+        return
+
+    bpy.ops.object.select_all(action="DESELECT")
+    target.object.select_set(True)
+
+    if not target.have_source:
+        CageVisualizationService.disable()
+        return
+
+    preview_bake = project.visualization.preview_bake
+
+    if not CageVisualizationService.is_active():
+        return
+
+    CageVisualizationService.refresh(target, preview_bake)
+
+
+def update_active_source(self, context):
+    from ..core.controller import BakeController
+
+    source = BakeController.active_source_object(context)
+
+    if source is None:
+        return
+
+    bpy.ops.object.select_all(action="DESELECT")
+    source.object.select_set(True)
+
+
+def exit_weight_paint_callback(obj, mode):
+    try:
+        safe_obj = getattr(obj, mode)
+
+        if safe_obj == "OBJECT":
+            # ISSUE: Crash when exit weight paint in bake preview mode
+            # CageVisualizationService.disable_bake_preview()
+            CageVisualizationService.disable()
+
+            set_bake_preview(False)
+            set_edit_cage(False)
+            set_edit_skew(False)
+
+    except ReferenceError:
+        return
+
+
+class CageVisualizationError(RuntimeError):
+    """Base exception for Cage Visualization errors."""
+
+
+class CageVisualizationService:
+    """
+    Handles interactive visualization of a bake cage.
+
+    Responsibilities:
+
+        - acquire the cage
+        - capture/restore visibility
+        - show sources
+        - hide targets
+        - draw the cage through the GPU API
+        - enter weight paint mode
+        - refresh when the active target changes
+        - restore Blender state on disable
+
+    Collision detection is intentionally not part of MVP 1.
+    """
+
+    _runtime: CageVisualizationRuntime | None = None
+    _cage_color: tuple[float, float, float, float] = (
+        0.05,
+        0.65,
+        1.0,
+        0.25,
+    )
+
+    # ---------------------------------------------------------
+    # Configuration
+    # ---------------------------------------------------------
+
+    LINE_WIDTH = 2.0
+
+    MSGBUS_OWNER = object()
+
+    @classmethod
+    def surface_color_skew(cls) -> tuple[float, float, float, float]:
+        return (cls._cage_color[0], cls._cage_color[1], cls._cage_color[2], cls._cage_color[3] * 0.8)
+
+    @classmethod
+    def surface_color_corrected(cls) -> tuple[float, float, float, float]:
+        return (cls._cage_color[2], cls._cage_color[0], cls._cage_color[1], cls._cage_color[3] * 0.8)
+
+    @classmethod
+    def surface_color_error(cls) -> tuple[float, float, float, float]:
+        return (1.0, 0, 0, 0.9)
+
+    @classmethod
+    def wire_color(cls) -> tuple[float, float, float, float]:
+        return cls._cage_color
+
+    # ---------------------------------------------------------
+    # Runtime
+    # ---------------------------------------------------------
+
+    @classmethod
+    def _ensure_runtime(cls):
+        if cls._runtime is None:
+            from ..runtime.runtime_manager import RuntimeManager
+
+            runtime = RuntimeManager.current(bpy.context)
+            cls._runtime = runtime.cage_visualization
+
+        return cls._runtime
+
+    @classmethod
+    def is_active(cls) -> bool:
+        return cls._runtime is not None and cls._runtime.active
+
+    @classmethod
+    def runtime(cls) -> CageVisualizationRuntime | None:
+        return cls._runtime
+
+    # ---------------------------------------------------------
+    # Enable
+    # ---------------------------------------------------------
+    # TODO: Need to create way to enable the cage display, while dragging, and hide it after releasing
+
+    @classmethod
+    def enable(
+        cls,
+        target: UBK_TargetObject,
+        cage_edit_mode: CageEditMode,
+        preview_bake: bool = False,
+    ) -> bool:
+        """
+        Enable cage visualization for target.
+
+        Returns False if the target cannot be visualized.
+        """
+        with LOG.scope(LOG_SCOPE):
+            if cage_edit_mode == CageEditMode.NONE:
+                return False
+
+            if target is None or target.object is None:
+                LOG.warning("Cannot visualize cage: target object is missing")
+                return False
+
+            if not cls._target_uses_cage(target):
+                LOG.debug(f"Cage visualization ignored for {target.object.name}: cage disabled")
+                return False
+
+            if cls.is_active():
+                cls.disable(disable_property=False)
+
+            LOG.debug(f"Enabling Cage Visualization | {target.object.name}")
+            from ..services.visualization_bake import BakeVisualizationService
+
+            BakeVisualizationService.disable()
+
+            runtime = cls._ensure_runtime()
+
+            cage = cls._acquire_cage(target)
+
+            if cage is None:
+                LOG.warning(f"Unable to acquire cage for {target.object.name}")
+                return False
+
+            bake_objects = BakeObjects(
+                target_object=target.object,
+                cage_object=cage,
+                is_cage_generated=True,
+                source_objects=target.source_object_list,
+            )
+
+            # TODO: Need to disable cage subdivision in preview mode to avoid clutter
+            # TODO: Need to add an option to disable subdivision in the geometry node cage
+            # TODO: Need to properly bind the Skew Image to the bake portal shader
+
+            asset_portal = AssetExtrenal(filepath=BAKE_PORTAL_PREVIEW_ASSET_PATH)
+            asset_projection_cage = AssetExtrenal(filepath=BAKE_PROJECTION_CAGE_PATH)
+
+            runtime.cage_asset_setup = AssetExternalCagePortalSetup.prepare(
+                asset_portal,
+                asset_projection_cage,
+                bake_objects,
+                target.uv_layer,
+                target.settings_cage.cage_extrusion,
+                target.settings_cage.skew_image,
+            )
+
+            if runtime.cage_asset_setup is None or runtime.cage_asset_setup.object_offset_edit is None:
+                LOG.warning("Cage asset preparation failed")
+                return False
+
+            runtime.cage_asset_setup.object_offset_edit.offset()
+
+            runtime.begin(
+                target_uuid=target.uuid,
+                target_name=target.object.name,
+                cage_name=cage.name,
+                cage_edit_mode=cage_edit_mode,
+                uv_layer=target.uv_layer,
+            )
+
+            try:
+                cls._update_cage_color()
+                cls._capture_cage_state(target, cage)
+                cls._create_temporary_collection(
+                    [
+                        runtime.cage_asset_setup.target,
+                        cage,
+                        runtime.cage_asset_setup.projection_target,
+                        runtime.cage_asset_setup.projection_cage,
+                    ]
+                    + bake_objects.source_objects
+                )
+                cls._configure_visibility()
+                cls._configure_cage(target, cage_edit_mode)
+                cls._create_gpu_resources(cage, target.uv_layer, target.settings_cage.skew_image)
+                cls._register_draw_handler()
+                cls._register_depsgraph_handler(cage)
+
+                if preview_bake:
+                    cls.enable_bake_preview(target)
+
+                return True
+
+            except Exception:
+                raise CageVisualizationError("Failed to enable Cage Visualization")
+                cls.disable()
+
+                return False
+
+    @classmethod
+    def enable_cage_edit(cls, target: UBK_TargetObject, preview_bake: bool = False) -> bool:
+        if cls.enable(target, CageEditMode.EDIT, preview_bake):
+            runtime = cls._ensure_runtime()
+            cage = bpy.data.objects.get(runtime.cage_name)
+            if cage is None:
+                return False
+            cls._enter_mode(cage, "WEIGHT_PAINT")
+
+        return True
+
+    @classmethod
+    def _disable_cage_edit(cls):
+        pass
+
+    @classmethod
+    def _configure_cage(cls, target: UBK_TargetObject, cage_edit_mode: CageEditMode) -> None:
+        from .cage_object import CageObjectService
+
+        CageObjectService._apply_modifier_parameters(target, cage_edit_mode)
+
+    @classmethod
+    def enable_bake_preview(cls, target: UBK_TargetObject) -> None:
+        # ISSUE: In bake preview mode, the proper view transform is not loaded correctly
+        # ISSUE: In Bake preview switching baker updates the preview properly, but selecting the selected baker again
+        # disable the preview and I want to prevent that
+        # ISSUE: Sometime Crash when ctrl + z in bake preview mode
+
+        # ISSUE: Enable Bake Preview is currently broken only in Edit Cage mode. Edit Skew is fine
+
+        with LOG.scope(LOG_SCOPE):
+            from ..core.controller import BakeController
+
+            bake_group = BakeController.active_bake_group(bpy.context)
+
+            if bake_group is None:
+                LOG.warning("Bake Group not found")
+                return
+
+            active_baker = BakeController.active_baker(bpy.context)
+
+            if active_baker is None:
+                return
+
+            producer = registry_baker[active_baker.baker]
+
+            runtime = cls._ensure_runtime()
+            if (
+                runtime.cage_asset_setup is None
+                or runtime.cage_asset_setup.object_offset_edit is None
+                or runtime.cage_asset_setup.object_offset_preview is None
+            ):
+                raise ReferenceError("Projection Target is None")
+
+            runtime.cage_asset_setup.object_offset_edit.revert()
+            runtime.cage_asset_setup.object_offset_preview.offset()
+
+            data = PreviewData(
+                producer=producer,
+                bake_group_uuid=bake_group.uuid,
+                producer_uuid=active_baker.uuid,
+                mode=BakeVisualizationMode.PREVIEW_CAGE,
+                projection_target=runtime.cage_asset_setup.projection_target,
+                bake_targets=bake_group.bake_targets,
+            )
+
+            LOG.info("Enabling Bake Preview")
+            BakeVisualizationService.enable_preview(data)
+
+            cage = runtime.cage_asset_setup.cage
+
+            if cage is None:
+                LOG.error("Cage not found")
+                return
+
+            asset_clipping = AssetExtrenal(filepath=BAKE_CLIPPING_PREVIEW_ASSET_PATH)
+
+            bake_objects = BakeObjects(
+                target_object=target.object,
+                cage_object=cage,
+                is_cage_generated=True,
+                source_objects=target.source_object_list,
+            )
+            runtime.cage_clipping_setup = AssetExternalCageClippingSetup.prepare(
+                asset_clipping,
+                bake_objects,
+                target.settings_cage.max_ray_distance,
+            )
+
+            if runtime.skew_image is not None:
+                cls._link_skew_image_to_material(cage)
+
+    @classmethod
+    def enable_skew_edit(cls, target: UBK_TargetObject, preview_bake: bool = False) -> bool:
+        with LOG.scope("Skew Edit"):
+            if not target.settings_cage.is_skew_correction_enabled:
+                cls._acquire_skew_image(target)
+
+            if cls.enable(target, CageEditMode.SKEW, preview_bake):
+                runtime = cls._ensure_runtime()
+                cage = bpy.data.objects.get(runtime.cage_name)
+
+                if cage is None:
+                    return False
+
+                cls._link_skew_image_to_material(cage)
+                cls._set_skew_image_active()
+                cls._display_skew_image()
+                cls._enter_mode(cage, "TEXTURE_PAINT")
+                bpy.context.tool_settings.image_paint.brush.color = Color((1, 1, 1))
+                bpy.context.tool_settings.image_paint.brush.secondary_color = Color((0, 0, 0))
+
+            return True
+
+    @classmethod
+    def _disable_skew_edit(cls):
+        runtime = cls._ensure_runtime()
+
+        MaterialOverrideService.restore(runtime.skew_material_snapshots)
+
+        # NOTE: Skew image have to be packed or it wont be saved
+        # TODO: Image also have to be saved before the file is saved
+        image = bpy.data.images.get(runtime.skew_image_name)
+        if image is not None:
+            image.pack()
+            image.save()
+
+    @classmethod
+    def clear_skew_image(cls, target: UBK_TargetObject):
+        runtime = cls._ensure_runtime()
+
+        target.settings_cage.skew_image = None
+
+        image = bpy.data.images.get(runtime.skew_image_name)
+
+        if image is not None:
+            bpy.data.images.remove(image)
+
+    # ---------------------------------------------------------
+    # Skew
+    # ---------------------------------------------------------
+    @staticmethod
+    def _get_skew_image_name(target: UBK_TargetObject) -> str:
+        return f"{target.object.name}_SKEW_IMAGE" if target.object is not None else "UNKOWN_SKEW_IMAGE"
+
+    @classmethod
+    def _acquire_skew_image(cls, target_object: UBK_TargetObject):
+        image_name = cls._get_skew_image_name(target_object)
+
+        image = bpy.data.images.get(image_name)
+
+        if image is None:
+            from ..resources.image import ImageResource
+            from ..runtime.settings_image import ImageSettings
+            from ..services.uv import UVService
+            from .image_base import ImageServiceBase
+
+            tiles = UVService.detect_udim_tiles(target_object.object, target_object.uv_layer)
+
+            folder = PurePosixPath("//") / UBK_SUBFOLDER_SKEW
+
+            filepath = image_name + ".<UDIM>.png"
+
+            fullpath = str(folder / filepath)
+
+            resolved_path = OutputResolver.resolve_directory(
+                fullpath,
+                resolve_relative=True,
+            )
+
+            resource = ImageResource.create(
+                width=1024,
+                height=1024,
+                name=image_name,
+                filepath=resolved_path,
+                colorspace="Non-Color",
+                image_format_settings=ImageSettings(),
+                is_udim=True,
+            )
+
+            ImageServiceBase.create(resource, tiles)
+            ImageServiceBase.save(resource)
+
+            image = resource.image
+
+            LOG.debug(f"Skew Image not found, Creating a new one for {image_name}")
+
+        target_object.settings_cage.skew_image = image
+
+    @classmethod
+    def _link_skew_image_to_material(cls, cage: bpy.types.Object) -> bpy.types.Image:
+        runtime = cls._ensure_runtime()
+        image_name = runtime.skew_image_name
+
+        image = bpy.data.images.get(image_name)
+
+        if image is None:
+            LOG.error(f"Skew Image {image_name} is not created properly")
+            raise ReferenceError(f"Skew Image {image_name} is not created properly")
+
+        material = DisplayMaterialService.get_or_create()
+        runtime.skew_material_name = material.name
+
+        runtime.skew_material_snapshots = MaterialOverrideService.apply([cage], material)
+
+        DisplayMaterialService.set_image(material, image, colorspace="Non-Color")
+        LOG.debug(f"Image {image.name} Linked to Material {material.name}")
+
+        return image
+
+    @classmethod
+    def _set_skew_image_active(cls):
+        pass
+
+    @classmethod
+    def _display_skew_image(cls):
+        pass
+
+    @classmethod
+    def _enter_mode(
+        cls,
+        cage: bpy.types.Object,
+        mode: str,
+    ):
+        with LOG.scope(f"Enter {mode}"):
+            # The actual cage object must be active even though
+            # the GPU visualization is what the user sees.
+
+            if bpy.context.mode != "OBJECT":
+                try:
+                    bpy.ops.object.mode_set(mode="OBJECT")
+                except RuntimeError:
+                    pass
+
+            bpy.ops.object.select_all(action="DESELECT")
+
+            cage.hide_set(False)
+            cage.select_set(True)
+
+            bpy.context.view_layer.objects.active = cage
+
+            try:
+                bpy.ops.object.mode_set(mode=mode)
+                cage.hide_set(True)
+                runtime = cls._ensure_runtime()
+                if runtime is None:
+                    return
+                # bpy.context.scene.tool_settings.image_paint.mode = "IMAGE"
+                # bpy.context.scene.tool_settings.image_paint.canvas = runtime.skew_image
+
+            except RuntimeError as exc:
+                LOG.warning(f"Unable to enter Texture Paint mode for cage {cage.name}: {exc}")
+
+    # ---------------------------------------------------------
+    # Disable
+    # ---------------------------------------------------------
+
+    @classmethod
+    def disable(cls, disable_property=True, disable_bake_preview=True) -> None:
+        """
+        Disable cage visualization and restore Blender state.
+
+        This method is intentionally idempotent.
+        """
+        with LOG.scope("Disable"):
+            runtime = cls._runtime
+
+            if runtime is None or not runtime.active:
+                return
+
+            match runtime.cage_edit_mode:
+                case CageEditMode.EDIT:
+                    cls._disable_cage_edit()
+                case CageEditMode.SKEW:
+                    cls._disable_skew_edit()
+                case _:
+                    pass
+
+            LOG.debug("Disabling Cage Visualization")
+
+            try:
+                cls._revert_cage_configuration()
+                if disable_bake_preview:
+                    cls.disable_bake_preview()
+                cls._remove_depsgraph_handler()
+                cls._remove_draw_handler()
+                cls._release_gpu_resources()
+                cls._restore_mode_and_active_object()
+                cls._restore_visibility()
+                cls._cleanup_temporary_collection()
+                cls._cleanup_cage_asset_setup()
+
+            except Exception:
+                raise CageVisualizationError("Failed while restoring Cage Visualization")
+
+            finally:
+                runtime.clear()
+
+                if disable_property:
+                    set_edit_cage(False)
+                    set_edit_skew(False)
+                    set_bake_preview(False)
+
+    @classmethod
+    def _revert_cage_configuration(cls) -> None:
+        runtime = cls._runtime
+        if runtime is None or not runtime.active:
+            return
+
+        if runtime.target_uuid is None:
+            return
+
+        from ..core.controller import BakeController
+
+        target = BakeController.get_target_object_from_uuid(runtime.target_uuid)
+
+        if target is None:
+            return
+
+        from .cage_object import CageObjectService
+
+        CageObjectService._apply_modifier_parameters(target, CageEditMode.NONE)
+
+    @classmethod
+    def disable_bake_preview(
+        cls,
+    ) -> None:
+        with LOG.scope(LOG_SCOPE):
+            runtime = cls._runtime
+            if runtime is None or not runtime.active:
+                return
+
+            if (
+                runtime.cage_asset_setup is None
+                or runtime.cage_asset_setup.object_offset_edit is None
+                or runtime.cage_asset_setup.object_offset_preview is None
+            ):
+                raise ReferenceError("Projection Target is None")
+
+            runtime.cage_asset_setup.object_offset_preview.revert()
+            runtime.cage_asset_setup.object_offset_edit.offset()
+
+            BakeVisualizationService.disable()
+
+            cls._cleanup_cage_clipping_setup()
+
+    # ---------------------------------------------------------
+    # Refresh
+    # ---------------------------------------------------------
+    @classmethod
+    def refresh(cls, target: UBK_TargetObject | None, preview_bake: bool = False) -> bool:
+        """
+        Refresh the cage visualization for a new active target.
+
+        If the new target does not use a cage, visualization is
+        disabled.
+        """
+        with LOG.scope("Refresh"):
+            runtime = cls._ensure_runtime()
+            edit_mode = runtime.cage_edit_mode
+
+            if not cls.is_active():
+                if target is None:
+                    return False
+
+                return cls.enable(target, runtime.cage_edit_mode, preview_bake)
+
+            if target is None:
+                cls.disable_bake_preview()
+                cls.disable()
+                return False
+
+            if not cls._target_uses_cage(target):
+                cls.disable_bake_preview()
+                cls.disable()
+                return False
+
+            if runtime.target_uuid == target.uuid:
+                return True
+
+            LOG.debug(f"Refreshing Cage Visualization | {runtime.target_name} -> {target.object.name}")
+
+            cls.disable(disable_property=target.settings_cage.cage_mode == "OBJECT", disable_bake_preview=preview_bake)
+
+            if target.settings_cage.cage_mode == "GENERATED":
+                match edit_mode:
+                    case CageEditMode.EDIT:
+                        cls.enable_cage_edit(target, preview_bake)
+                    case CageEditMode.SKEW:
+                        cls.enable_skew_edit(target, preview_bake)
+                    case _:
+                        pass
+
+            return True
+
+    # ---------------------------------------------------------
+    # Target
+    # ---------------------------------------------------------
+
+    @classmethod
+    def _target_uses_cage(
+        cls,
+        target: UBK_TargetObject,
+    ) -> bool:
+
+        settings = target.settings_cage
+
+        if settings is None:
+            return False
+
+        return settings.cage_mode != "NONE"
+
+    @classmethod
+    def _acquire_cage(
+        cls,
+        target: UBK_TargetObject,
+    ) -> bpy.types.Object | None:
+        """
+        Delegate cage creation/retrieval entirely to CageObjectService.
+        """
+
+        from .cage_object import CageObjectService
+
+        return CageObjectService.acquire(target)
+
+    # ---------------------------------------------------------
+    # State Capture
+    # ---------------------------------------------------------
+
+    @classmethod
+    def _capture_cage_state(
+        cls,
+        target,
+        cage: bpy.types.Object,
+    ) -> None:
+        runtime = cls._ensure_runtime()
+
+        active_object = bpy.context.view_layer.objects.active
+
+        if active_object is not None:
+            runtime.active_object_name = active_object.name
+            runtime.active_object_mode = active_object.mode
+
+        runtime.target_object_names.clear()
+        runtime.source_object_names.clear()
+
+        from ..core.controller import BakeController
+
+        active_bake_group = BakeController.active_bake_group(bpy.context)
+        if active_bake_group is None:
+            raise CageVisualizationError("No active Bake group found")
+            return
+
+        target_objects = [o.object for o in active_bake_group.target_objects if o.enabled and o.object is not None]
+
+        # Capture target objects.
+        for obj in target_objects:
+            if obj is None:
+                continue
+
+            runtime.target_object_names.append(obj.name)
+
+        # Capture sources.
+        for source in target.source_object_list:
+            if source is None:
+                continue
+
+            runtime.source_object_names.append(source.name)
+
+    @classmethod
+    def _get_group_targets(
+        cls,
+        target: UBK_TargetObject,
+    ):
+
+        from ..core.controller import BakeController
+
+        group = BakeController.active_bake_group(bpy.context)
+
+        if group is None:
+            return [target]
+
+        return group.target_objects
+
+    # ---------------------------------------------------------
+    # Visibility
+    # ---------------------------------------------------------
+
+    @classmethod
+    def _configure_visibility(cls) -> None:
+        runtime = cls._ensure_runtime()
+
+        # The temporary collection is the visibility boundary for
+        # visualization objects.
+        collection = cls._get_temporary_collection()
+
+        if collection is not None:
+            collection.hide_viewport = False
+
+        # Show sources.
+        for name in runtime.source_object_names:
+            obj = bpy.data.objects.get(name)
+
+            if obj is None:
+                continue
+
+            vo = VisibilityOverride(
+                obj=obj,
+                show=True,
+                viewport=True,
+            )
+
+            runtime.visibility[obj.name] = vo
+
+            vo.set_visibility()
+
+        # Hide all target objects.
+        for name in runtime.target_object_names:
+            obj = bpy.data.objects.get(name)
+
+            if obj is None:
+                continue
+
+            vo = VisibilityOverride(
+                obj=obj,
+                show=False,
+                viewport=False,
+            )
+            runtime.visibility[obj.name] = vo
+
+            vo.set_visibility()
+
+        # Cage must be visible and selectable for weight paint.
+        if runtime.cage_name:
+            cage = bpy.data.objects.get(runtime.cage_name)
+
+            if cage is not None:
+                vo = VisibilityOverride(
+                    obj=cage,
+                    show=True,
+                    viewport=True,
+                )
+
+                runtime.visibility[cage.name] = vo
+
+                vo.set_visibility()
+
+    @classmethod
+    def _restore_visibility(cls) -> None:
+        runtime = cls._ensure_runtime()
+
+        for override in runtime.visibility.values():
+            override.revert_visibility()
+
+    # ---------------------------------------------------------
+    # Temporary Collection
+    # ---------------------------------------------------------
+    #
+    @classmethod
+    def _create_temporary_collection(cls, objects: list[bpy.types.Object]) -> bpy.types.Collection:
+        runtime = cls._ensure_runtime()
+
+        runtime.temporary_collection = TempCollection(TEMP_COLLECTION_NAME, objects=objects)
+        runtime.temporary_collection.create()
+
+        return runtime.temporary_collection.collection
+
+    @classmethod
+    def _get_temporary_collection(cls) -> bpy.types.Collection | None:
+        runtime = cls._ensure_runtime()
+
+        if not runtime.temporary_collection_name:
+            return None
+
+        return bpy.data.collections.get(runtime.temporary_collection_name)
+
+    @classmethod
+    def _cleanup_temporary_collection(cls) -> None:
+        runtime = cls._ensure_runtime()
+
+        if runtime.temporary_collection is None:
+            return
+
+        runtime.temporary_collection.cleanup()
+
+    @classmethod
+    def _cleanup_cage_asset_setup(cls):
+        runtime = cls._ensure_runtime()
+        if runtime.cage_asset_setup is not None:
+            runtime.cage_asset_setup.cleanup()
+
+    @classmethod
+    def _cleanup_cage_clipping_setup(cls):
+        runtime = cls._ensure_runtime()
+        if runtime.cage_clipping_setup is not None:
+            runtime.cage_clipping_setup.cleanup()
+
+    # ---------------------------------------------------------
+    # GPU
+    # ---------------------------------------------------------
+
+    @classmethod
+    def _create_gpu_resources(cls, cage: bpy.types.Object, uv_layer: str, skew_image: bpy.types.Image) -> None:
+        runtime = cls._ensure_runtime()
+
+        # Release the previous batches first.
+        cls._release_gpu_batches()
+
+        depsgraph = bpy.context.evaluated_depsgraph_get()
+        evaluated_cage = cage.evaluated_get(depsgraph)
+
+        evaluated_mesh = None
+
+        try:
+            evaluated_mesh = evaluated_cage.to_mesh()
+
+            if evaluated_mesh is None:
+                return
+
+            evaluated_mesh.calc_loop_triangles()
+
+            # Create the shader to draw the texture.
+            vert_out = gpu.types.GPUStageInterfaceInfo("cage_shader")
+            vert_out.smooth("VEC2", "uvInterp")
+            vert_out.smooth("VEC4", "v_color_skew")
+            vert_out.smooth("VEC4", "v_color_corrected")
+            vert_out.smooth("VEC4", "v_color_error")
+
+            shader_info = gpu.types.GPUShaderCreateInfo()
+            shader_info.push_constant("MAT4", "viewProjectionMatrix")
+            shader_info.push_constant("VEC4", "color_skew")
+            shader_info.push_constant("VEC4", "color_corrected")
+            shader_info.push_constant("VEC2", "atlas_resolution")
+            shader_info.push_constant("VEC2", "lookup_resolution")
+
+            shader_info.sampler(0, "FLOAT_2D", "skew_image")
+            shader_info.sampler(1, "FLOAT_2D", "udim_lookup")
+            shader_info.vertex_in(0, "VEC3", "position")
+            shader_info.vertex_in(1, "VEC2", "uv")
+            shader_info.vertex_out(vert_out)
+            shader_info.fragment_out(0, "VEC4", "FragColor")
+
+            shader_info.vertex_source(
+                """void main(){  
+                    uvInterp = uv;  
+                    v_color_skew = color_skew;
+                    v_color_corrected = color_corrected;
+                    gl_Position = viewProjectionMatrix * vec4(position, 1.0);
+                }"""
+            )
+
+            shader_info.fragment_source(
+                """void main(){  
+                    vec2 tile_coord = floor(uvInterp);
+                    vec2 local_uv = fract(uvInterp);
+
+                    float skew_value = 0.0;
+
+                    // Check original UDIM coordinates.
+                    if (
+                        tile_coord.x >= 0.0 &&
+                        tile_coord.x < 10.0 &&
+                        tile_coord.y >= 0.0 &&
+                        tile_coord.y < lookup_resolution.y
+                    )
+                    {
+                        // Sample the center of the corresponding lookup texel.
+                        vec2 lookup_uv = (
+                            tile_coord + vec2(0.5)
+                        ) / lookup_resolution;
+
+                        vec4 tile_info = texture(
+                            udim_lookup,
+                            lookup_uv
+                        );
+
+                        // Missing tiles have zero width and height.
+                        if (tile_info.z > 0.0 && tile_info.w > 0.0)
+                        {
+                            vec2 tile_origin = tile_info.xy;
+                            vec2 tile_size = tile_info.zw;
+
+                            // Clamp inside the individual tile.
+                            vec2 half_texel = 0.5 / tile_size;
+
+                            local_uv = clamp(
+                                local_uv,
+                                half_texel,
+                                vec2(1.0) - half_texel
+                            );
+
+                            // Convert local tile UV to atlas UV.
+                            vec2 atlas_uv = (
+                                tile_origin + local_uv * tile_size
+                            ) / atlas_resolution;
+
+                            skew_value = texture(
+                                skew_image,
+                                atlas_uv
+                            ).r;
+                        }
+                    }
+
+                    FragColor = mix(
+                        v_color_skew,
+                        v_color_corrected,
+                        skew_value
+                    );
+                }"""
+            )
+
+            runtime.surface_shader = gpu.shader.create_from_info(shader_info)
+
+            del vert_out
+            del shader_info
+
+            runtime.wire_shader = gpu.shader.from_builtin("UNIFORM_COLOR")
+
+            surface_positions = []
+            surface_colors = []
+            surface_uvs = []
+
+            for triangle in evaluated_mesh.loop_triangles:
+                for loop_index in triangle.loops:
+                    loop = evaluated_mesh.loops[loop_index]
+                    surface_positions.append(evaluated_mesh.vertices[loop.vertex_index].co)
+                    surface_uvs.append(evaluated_mesh.uv_layers[uv_layer].data[loop_index].uv)
+                    surface_colors.append(cls.surface_color_skew())
+
+            runtime.surface_batch = batch_for_shader(
+                runtime.surface_shader,
+                "TRIS",
+                {
+                    "position": surface_positions,
+                    "uv": surface_uvs,
+                },
+            )
+            wire_positions = []
+
+            for edge in evaluated_mesh.edges:
+                wire_positions.append(evaluated_mesh.vertices[edge.vertices[0]].co[:])
+                wire_positions.append(evaluated_mesh.vertices[edge.vertices[1]].co[:])
+
+            runtime.wire_batch = batch_for_shader(runtime.wire_shader, "LINES", {"pos": wire_positions})
+
+            cls._update_skew_texture(runtime, skew_image)
+
+        finally:
+            if evaluated_mesh is not None:
+                evaluated_cage.to_mesh_clear()
+
+        runtime.gpu_dirty = False
+
+    @classmethod
+    def _release_gpu_batches(cls) -> None:
+        runtime = cls._ensure_runtime()
+
+        runtime.surface_batch = None
+        runtime.wire_batch = None
+
+    @classmethod
+    def _release_gpu_resources(cls) -> None:
+        runtime = cls._ensure_runtime()
+
+        cls._release_gpu_batches()
+
+        runtime.skew_image = None
+        runtime.skew_texture = None
+        runtime.udim_lookup_texture = None
+        runtime.skew_atlas_size = (1, 1)
+        runtime.skew_lookup_size = (0, 0)
+        runtime.skew_tile_mapping = {}
+
+        runtime.surface_shader = None
+        runtime.wire_shader = None
+
+    @classmethod
+    def _update_cage_color(cls) -> None:
+        from ..core.controller import BakeController
+
+        project = BakeController.project(bpy.context)
+
+        cls._cage_color = project.visualization.cage_color
+
+    @classmethod
+    def _refresh_cage_color(cls) -> None:
+        runtime = cls._ensure_runtime()
+        cage = bpy.data.objects.get(runtime.cage_name)
+
+        if cage is None or runtime.uv_layer is None:
+            return
+
+        cls._remove_draw_handler()
+        # cls._release_gpu_resources()
+
+        cls._update_cage_color()
+
+        cls._create_gpu_resources(cage, runtime.uv_layer, runtime.skew_image)
+        cls._register_draw_handler()
+
+    @classmethod
+    def _update_skew_texture(
+        cls,
+        runtime: CageVisualizationRuntime,
+        image: bpy.types.Image | None,
+        force: bool = False,
+    ) -> None:
+        if image is None:
+            runtime.skew_texture = None
+            runtime.skew_image = None
+            runtime.udim_lookup_texture = None
+            runtime.skew_tile_mapping = {}
+            return
+
+        # Reuse the texture when the same image is already assigned.
+        if not force and runtime.skew_image == image and runtime.skew_texture is not None:
+            return
+
+        temp_data = None
+
+        try:
+            if image.source == "TILED":
+                temp_data = cls._export_skew_image_temp(image)
+                (
+                    runtime.skew_texture,
+                    runtime.udim_lookup_texture,
+                    runtime.skew_atlas_size,
+                    runtime.skew_lookup_size,
+                    runtime.skew_tile_mapping,
+                ) = GPUUdimAtlas.create_udim_atlas(temp_data[1])
+
+            else:
+                runtime.skew_texture = gpu.texture.from_image(image)
+                runtime.udim_lookup_texture = None
+                runtime.skew_atlas_size = tuple(image.size[:])
+                runtime.skew_lookup_size = (0, 0)
+                runtime.skew_tile_mapping = {}
+
+        finally:
+            # Always clean up, even if atlas construction fails.
+            if temp_data is not None:
+                cls._cleanup_temp_skew_image(temp_data[0], temp_data[1])
+
+        runtime.skew_image = image
+
+    # ---------------------------------------------------------
+    # Draw Handler
+    # ---------------------------------------------------------
+
+    @classmethod
+    def _register_draw_handler(cls) -> None:
+        with LOG.scope("Register Draw Handler"):
+            runtime = cls._ensure_runtime()
+
+            if runtime.draw_handler is not None:
+                return
+
+            runtime.draw_handler = bpy.types.SpaceView3D.draw_handler_add(
+                cls._draw,
+                (),
+                "WINDOW",
+                "POST_VIEW",
+            )
+
+    @classmethod
+    def _remove_draw_handler(cls) -> None:
+        with LOG.scope("Remove Draw Handler"):
+            runtime = cls._runtime
+
+            if runtime is None:
+                return
+
+            handler = runtime.draw_handler
+
+            if handler is None:
+                return
+
+            try:
+                bpy.types.SpaceView3D.draw_handler_remove(
+                    handler,
+                    "WINDOW",
+                )
+
+            except Exception:
+                raise CageVisualizationError("Failed to remove cage draw handler")
+
+            finally:
+                runtime.draw_handler = None
+
+    @classmethod
+    def _draw(cls) -> None:
+        runtime = cls._ensure_runtime()
+
+        if not runtime.active:
+            return
+
+        cage = bpy.data.objects.get(runtime.cage_name) if runtime.cage_name else None
+
+        if cage is None or runtime.uv_layer is None:
+            return
+
+        # The cage's modifiers / evaluated geometry changed.
+        if runtime.gpu_dirty:
+            cls._create_gpu_resources(cage, runtime.uv_layer, runtime.skew_image)
+
+        if runtime.skew_texture_dirty:
+            cls._refresh_skew_texture()
+
+        if runtime.surface_batch is None:
+            return
+
+        gpu.state.blend_set("ALPHA")
+
+        # IMPORTANT:
+        # Use the depth buffer so the cage behaves like a real
+        # surface instead of being drawn through everything.
+        if runtime.cage_edit_mode is None or runtime.cage_edit_mode == CageEditMode.EDIT:
+            gpu.state.depth_test_set("LESS_EQUAL")
+            gpu.state.depth_mask_set(False)
+        else:
+            gpu.state.depth_test_set("ALWAYS")
+            gpu.state.depth_mask_set(False)
+            gpu.state.face_culling_set("BACK")
+
+        gpu.matrix.push()
+
+        try:
+            gpu.matrix.multiply_matrix(cage.matrix_world)
+            mvp_matrix = bpy.context.region_data.perspective_matrix @ cage.matrix_world
+            runtime.surface_shader.bind()
+            if runtime.skew_image is not None and runtime.cage_edit_mode == CageEditMode.SKEW:
+                runtime.surface_shader.uniform_sampler("skew_image", runtime.skew_texture)
+                runtime.surface_shader.uniform_sampler("udim_lookup", runtime.udim_lookup_texture)
+            runtime.surface_shader.uniform_float("viewProjectionMatrix", mvp_matrix)
+            runtime.surface_shader.uniform_float("color_skew", cls.surface_color_skew())
+            runtime.surface_shader.uniform_float("color_corrected", cls.surface_color_corrected())
+            runtime.surface_shader.uniform_float("atlas_resolution", runtime.skew_atlas_size)
+            runtime.surface_shader.uniform_float("lookup_resolution", runtime.skew_lookup_size)
+
+            runtime.surface_batch.draw(runtime.surface_shader)
+
+            if runtime.wire_batch is not None:
+                gpu.state.depth_test_set("LESS_EQUAL")
+                gpu.state.depth_mask_set(False)
+                gpu.state.line_width_set(1.5)
+                runtime.wire_shader.bind()
+                runtime.wire_shader.uniform_float("color", cls.wire_color())
+                runtime.wire_batch.draw(runtime.wire_shader)
+
+        finally:
+            gpu.matrix.pop()
+
+            gpu.state.line_width_set(1.0)
+            gpu.state.depth_mask_set(True)
+            gpu.state.depth_test_set("LESS_EQUAL")
+            gpu.state.blend_set("NONE")
+
+    @classmethod
+    def _refresh_skew_texture(cls):
+        runtime = cls._ensure_runtime()
+
+        if runtime.skew_image is None:
+            return
+
+        # runtime.skew_image.pack()
+        runtime.skew_texture_dirty = False
+
+        cls._update_skew_texture(
+            runtime,
+            runtime.skew_image,
+            force=True,
+        )
+
+    @classmethod
+    def _export_skew_image_temp(cls, image):
+        image.pack()
+        temp_dir = Path(tempfile.mkdtemp(prefix="ubk_skew_"))
+        temp_pattern = temp_dir / "skew.<UDIM>.png"
+        temp_image = image.copy()
+
+        try:
+            temp_image.filepath_raw = str(temp_pattern)
+            temp_image.file_format = "PNG"
+
+            temp_image.save()
+
+            return temp_dir, temp_image, str(temp_pattern)
+
+        except Exception:
+            bpy.data.images.remove(temp_image)
+            shutil.rmtree(temp_dir, ignore_errors=True)
+            raise
+
+    @classmethod
+    def _cleanup_temp_skew_image(cls, temp_dir, temp_image):
+
+        if temp_image is not None:
+            bpy.data.images.remove(temp_image)
+
+        if temp_dir is not None:
+            shutil.rmtree(temp_dir, ignore_errors=True)
+
+    # ---------------------------------------------------------
+    # Mode / Active Object restoration
+    # ---------------------------------------------------------
+
+    @classmethod
+    def _restore_mode_and_active_object(cls) -> None:
+        with LOG.scope("Restore mode and active object"):
+            runtime = cls._runtime
+
+            if runtime is None:
+                return
+
+            try:
+                # Always leave Weight Paint first.
+                if bpy.context.mode != "OBJECT":
+                    bpy.ops.object.mode_set(mode="OBJECT")
+
+            except RuntimeError:
+                pass
+
+            # Restore selection.
+            bpy.ops.object.select_all(action="DESELECT")
+
+            active_name = runtime.active_object_name
+
+            if active_name is None:
+                bpy.context.view_layer.objects.active = None
+                return
+
+            obj = bpy.data.objects.get(active_name)
+
+            if obj is None:
+                bpy.context.view_layer.objects.active = None
+                return
+
+            obj.select_set(True)
+            bpy.context.view_layer.objects.active = obj
+
+            # Restore the previous mode where possible.
+            previous_mode = runtime.active_object_mode
+
+            if previous_mode != "OBJECT" and previous_mode in {
+                "EDIT_MESH",
+                "SCULPT",
+                "VERTEX_PAINT",
+                "WEIGHT_PAINT",
+                "TEXTURE_PAINT",
+            }:
+                try:
+                    bpy.ops.object.mode_set(mode=previous_mode)
+                except RuntimeError:
+                    LOG.debug(f"Unable to restore mode {previous_mode}")
+
+    @classmethod
+    def depsgraph_update_post(cls, scene, depsgraph) -> None:
+        with LOG.scope(LOG_SCOPE):
+            runtime = cls._ensure_runtime()
+
+            if not runtime.active:
+                LOG.warning("Runtime is not active")
+                cls._remove_depsgraph_handler()
+                return
+
+            if runtime.cage_name is None:
+                LOG.warning("Cage is unknown")
+                cls._remove_depsgraph_handler()
+                return
+
+            cage = bpy.data.objects.get(runtime.cage_name)
+
+            if cage is None:
+                LOG.warning("Cage is None")
+                cls.disable()
+                return
+
+            for update in depsgraph.updates:
+                updated_id = update.id
+                if updated_id.name == cage.name:
+                    runtime.mark_gpu_dirty()
+
+                elif updated_id == runtime.skew_image:
+                    runtime.skew_texture_dirty = True
+                    runtime.skew_last_update = time.monotonic()
+                    if not runtime.skew_refresh_timer_registered:
+                        runtime.skew_refresh_timer_registered = True
+
+                        bpy.app.timers.register(
+                            cls._skew_refresh_timer,
+                            first_interval=0.1,
+                        )
+
+    @classmethod
+    def _skew_refresh_timer(cls):
+        runtime = cls._runtime
+
+        if runtime is None or not runtime.active:
+            return None
+
+        # Wait until the paint stroke has stopped generating updates.
+        elapsed = time.monotonic() - runtime.skew_last_update
+
+        if elapsed < 0.4:
+            return 0.1
+
+        runtime.skew_refresh_timer_registered = False
+        runtime.skew_texture_dirty = True
+
+        # Request a viewport redraw.
+        for window in bpy.context.window_manager.windows:
+            for area in window.screen.areas:
+                if area.type == "VIEW_3D":
+                    area.tag_redraw()
+
+        return None
+
+    @classmethod
+    def subscribe_to(cls, obj, data_path, callback):
+        # Get a rna subscription link from the object
+        subscribe_to = obj.path_resolve(data_path, False)
+
+        # Effectively subscribe to the rna path from the object
+        bpy.msgbus.subscribe_rna(
+            key=subscribe_to,
+            owner=cls.MSGBUS_OWNER,
+            args=(
+                obj,
+                data_path,
+            ),
+            notify=callback,
+        )
+
+    # NOTE: https://blender.stackexchange.com/questions/21408/know-when-edit-mode-is-entered-by-script-python
+    @classmethod
+    def _register_depsgraph_handler(cls, cage: bpy.types.Object) -> None:
+        if cls.depsgraph_update_post not in bpy.app.handlers.depsgraph_update_post:
+            LOG.debug("Registering depsgraph handler")
+            cls.subscribe_to(cage, "mode", exit_weight_paint_callback)
+            bpy.app.handlers.depsgraph_update_post.append(cls.depsgraph_update_post)
+
+    @classmethod
+    def _remove_depsgraph_handler(cls) -> None:
+        LOG.debug("Clear Message Bus on Cage")
+        bpy.msgbus.clear_by_owner(cls.MSGBUS_OWNER)
+
+        handler = cls.depsgraph_update_post
+
+        if handler in bpy.app.handlers.depsgraph_update_post:
+            LOG.debug("Unregistering depsgraph handler")
+            bpy.app.handlers.depsgraph_update_post.remove(handler)

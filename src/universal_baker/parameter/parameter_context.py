@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
 import bpy
-from ..properties.baker_parameter import UBK_BakerParameterValue
+
+from ..properties.parameter_value import UBK_ParameterValue
 
 
 @dataclass
@@ -17,9 +19,11 @@ class ParameterContext:
 
     object: bpy.types.Object
     materials: list[bpy.types.Material] | None = None
-    ui_prop: UBK_BakerParameterValue | None = None
+    ui_prop: UBK_ParameterValue | None = None
     scene: bpy.types.Scene | None = None
     is_dragging: bool = False
+    value_function: Callable | None = None
+    bake_targets: list[bpy.types.Objects] | None = None
 
     # Gives bindings an escape hatch for more complex assets.
     data: dict[str, Any] | None = None

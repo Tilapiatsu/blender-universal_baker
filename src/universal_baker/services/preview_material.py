@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import bpy
 
+from ..services.data_removal import MaterialRemoval
 
 PREVIEW_MATERIAL_NAME = "UBK_INTERNAL_PREVIEW"
 
@@ -28,4 +29,10 @@ class PreviewMaterialService:
         if material is None:
             return
 
-        bpy.data.materials.remove(material)
+        MaterialRemoval.remove_material(material)
+
+    def __enter__(self):
+        return self.get_or_create()
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.clear()

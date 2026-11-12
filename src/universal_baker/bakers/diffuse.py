@@ -1,13 +1,11 @@
 from __future__ import annotations
 
-import bpy
-
 from ..core.registry_baker import registry_baker
 from ..enum.image_colorspace import ImageColorSpace
 from ..enum.view_transform import DisplayDevice, ViewTransform
-from ..parameter.metadata import BindingMetadata, ParameterMetadata
+from ..parameter.metadata import BindingMetadata, BindingType, ParameterMetadata
+from ..parameter.parameter import ParameterSource, ParameterType
 from ..runtime.color_management_info import ColorManagementInfo
-from ..runtime.context_bake import BakeContext
 from .base import BakerBase
 
 
@@ -38,17 +36,17 @@ class DiffuseBaker(BakerBase):
 
         b: tuple[BindingMetadata, ...] = (
             BindingMetadata(
-                binding_type="SCENE_PROPERTY",
-                scene=bpy.context.scene.name,
+                binding_type=BindingType.SCENE_PROPERTY,
                 property="render.bake.use_pass_direct",
             ),
         )
         p = ParameterMetadata(
             identifier="contribution_direct",
             name="Direct",
+            source=ParameterSource.UI,
             default=True,
             description="Add Direct Lighting Contribution",
-            type="BOOL",
+            type=ParameterType.BOOL,
             category="Contribution",
             order=0,
             visible=True,
@@ -59,17 +57,17 @@ class DiffuseBaker(BakerBase):
 
         b: tuple[BindingMetadata, ...] = (
             BindingMetadata(
-                binding_type="SCENE_PROPERTY",
-                scene=bpy.context.scene.name,
+                binding_type=BindingType.SCENE_PROPERTY,
                 property="render.bake.use_pass_indirect",
             ),
         )
         p = ParameterMetadata(
             identifier="contribution_indirect",
             name="Indirect",
+            source=ParameterSource.UI,
             default=True,
             description="Add Indirect Lighting Contribution",
-            type="BOOL",
+            type=ParameterType.BOOL,
             category="Contribution",
             order=1,
             visible=True,
@@ -80,17 +78,17 @@ class DiffuseBaker(BakerBase):
 
         b: tuple[BindingMetadata, ...] = (
             BindingMetadata(
-                binding_type="SCENE_PROPERTY",
-                scene=bpy.context.scene.name,
+                binding_type=BindingType.SCENE_PROPERTY,
                 property="render.bake.use_pass_color",
             ),
         )
         p = ParameterMetadata(
             identifier="contribution_color",
             name="Color",
+            source=ParameterSource.UI,
             default=True,
             description="Color the pass",
-            type="BOOL",
+            type=ParameterType.BOOL,
             category="Contribution",
             order=2,
             visible=True,
@@ -100,40 +98,6 @@ class DiffuseBaker(BakerBase):
         parameters += (p,)
 
         return parameters
-
-    def execute(self, ctx: BakeContext) -> None:
-        return super().execute(ctx)
-
-    def prepare_execution(self, target):
-        return super().prepare_execution(target)
-
-    def configure_preview_material(self, material): ...
-
-    def prepare(self, ctx: BakeContext):
-        """
-        Prepare everything required before Blender's bake.
-        """
-        super().prepare(ctx)
-
-    def bake(self, ctx: BakeContext) -> None:
-        """Execute the bake."""
-        return super().bake(ctx)
-
-    def cleanup(self, ctx: BakeContext):
-        """
-        Cleanup after baking.
-        """
-        super().cleanup(ctx)
-
-    def update_baker(self, ctx: BakeContext) -> None:
-        return super().update_baker(ctx)
-
-    def create_artifact(self, ctx: BakeContext) -> None:
-        return super().create_artifact(ctx)
-
-    def export_file(self, ctx: BakeContext):
-        """Save Bake to disk."""
-        super().export_file(ctx)
 
 
 classes = (DiffuseBaker,)

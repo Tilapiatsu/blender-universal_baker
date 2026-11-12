@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from .base import AccumulatorBase
-
-from ..runtime.context_accumulate import AccumulateContext
-from ..services.image_bake import ImageServiceBake
+from ..constant import ICON_PACK
 from ..core.registry_accumulator import registry_accumulator
+from ..runtime.context_accumulate import AccumulateContext
+from .base import AccumulatorBase
 
 
 class MaxAccumulator(AccumulatorBase):
@@ -13,10 +12,13 @@ class MaxAccumulator(AccumulatorBase):
     id = "MAX"
     name = "Maximum"
     description = "Accumulate image keeping the brightest pixel"
-    icon = "NODE_COMPOSITING"
+    icon = ICON_PACK
 
     def execute(self, ctx: AccumulateContext) -> None:
         return super().execute(ctx)
+
+    def invalidate_previous_output(self, ctx: AccumulateContext) -> None:
+        super().invalidate_previous_output(ctx)
 
     def prepare(self, ctx: AccumulateContext):
         """

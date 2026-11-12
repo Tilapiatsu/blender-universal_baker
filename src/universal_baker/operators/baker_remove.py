@@ -8,7 +8,7 @@ from .base import UBK_OT_Base
 
 
 class UBK_OT_BakerRemove(UBK_OT_Base):
-    """Remove the active baker map."""
+    """Remove the active bakerr."""
 
     bl_idname = "ubk.remove_baker"
     bl_label = "Remove Baker"
@@ -29,13 +29,13 @@ class UBK_OT_BakerRemove(UBK_OT_Base):
         baker = BakeController.active_baker(context)
 
         if baker is None:
-            self.warning("No bake map selected.")
+            self.warning("No baker selected.")
 
             return {"CANCELLED"}
 
         BakeController.remove_baker(context)
 
-        self.info("Bake map removed.")
+        self.info("Baker removed.")
 
         return {"FINISHED"}
 

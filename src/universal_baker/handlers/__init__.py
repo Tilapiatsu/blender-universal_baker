@@ -1,8 +1,8 @@
 from . import (
-    handlers,
+    visualization,
 )
 
-modules = (handlers,)
+modules = (visualization,)
 
 
 def register():

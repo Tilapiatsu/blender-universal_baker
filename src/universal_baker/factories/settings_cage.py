@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from ..properties.settings_cage import UBK_CageSettings
 from ..runtime.settings_cage import (
     CageSettings,
 )
@@ -7,19 +8,24 @@ from ..runtime.settings_cage import (
 
 class CageSettingsResolver:
     @classmethod
-    def resolve(cls, global_settings, override_settings=None) -> CageSettings:
+    def resolve(
+        cls,
+        global_settings: UBK_CageSettings,
+        override_settings: UBK_CageSettings | None = None,
+    ) -> CageSettings:
 
-        if override_settings is None:
-            settings = global_settings
-
-        elif override_settings.inherit:
+        if override_settings is None or override_settings.inherit:
             settings = global_settings
 
         else:
             settings = override_settings
 
         return CageSettings(
-            mode=settings.mode,
-            extrusion=settings.extrusion,
+            cage_object_name=settings.cage_object.name if settings.cage_object is not None else None,
+            mode=settings.cage_mode,
+            cage_extrusion=settings.cage_extrusion,
             max_ray_distance=settings.max_ray_distance,
+            extrusion_group_name=settings.extrusion_group,
+            is_skew_correction_enabled=settings.is_skew_correction_enabled,
+            skew_map_name=settings.skew_image.name if settings.skew_image is not None else None,
         )

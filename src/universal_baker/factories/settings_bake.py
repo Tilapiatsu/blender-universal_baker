@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from ..runtime.settings_bake import (
-    BakeSettings,
     BakeRenderSettings,
+    BakeSettings,
     SamplingSettings,
 )
 
@@ -19,6 +19,7 @@ class BakeSettingsResolver:
 
         return BakeSettings(
             bake=BakeRenderSettings(
+                devive=settings.device,
                 margin=settings.margin,
                 margin_type=settings.margin_type,
             ),

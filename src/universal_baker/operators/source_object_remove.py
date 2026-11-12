@@ -14,11 +14,9 @@ class UBK_OT_SourceObjectRemove(UBK_OT_Base):
 
     @classmethod
     def poll(cls, context):
-        """Only enable the button when an object exists."""
-        bake_group = BakeController.active_bake_group(context)
-        if bake_group is None:
-            return False
-        return bool(bake_group.target_objects)
+        """Only enable the button when an source object exists."""
+        source_object = BakeController.active_source_object(context)
+        return source_object is not None
 
     def execute(self, context):
         target_object = BakeController.active_target_object(context)

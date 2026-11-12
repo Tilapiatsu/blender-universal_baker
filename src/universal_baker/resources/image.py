@@ -11,7 +11,9 @@ from ..runtime.settings_image import ImageSettings
 from ..runtime.tile_set import TileSet
 
 if TYPE_CHECKING:
+    from ..runtime.color_management_info import ColorManagementInfo
     from ..runtime.output_artifact import OutputArtifact
+    from ..runtime.settings_output import OutputSettings
 
 LOG_SCOPE = "Image Resource"
 
@@ -87,7 +89,7 @@ class ImageResource:
         is_udim: bool = False,
         create_image: bool = True,
     ) -> ImageResource:
-        image = bpy.data.images[name]
+        image = bpy.data.images.get(name)
 
         if create_image or image is None:
             image = bpy.data.images.new(
@@ -108,6 +110,8 @@ class ImageResource:
             image.colorspace_settings.name = colorspace
             image.alpha_mode = "STRAIGHT" if alpha else "NONE"
             image.use_view_as_render = True
+
+        image.source = "TILED" if is_udim else "FILE"
 
         return cls(
             _image=name,
@@ -176,7 +180,7 @@ class ImageResource:
 
     @property
     def tile_numbers(self) -> set[int]:
-        tile_number = set([t.number for t in self.tiles])
+        tile_number = {t.number for t in self.tiles}
         return tile_number
 
     def reload(self) -> None:
@@ -197,7 +201,7 @@ class ImageResource:
         if self.image is None:
             return
 
-        bpy.data.Image.remove(self.image)
+        bpy.data.images.remove(self.image)
 
     def scale(self, width: int, height: int) -> None:
         if self.image is None:
@@ -277,6 +281,74 @@ class ImageResource:
                 bpy.data.images.remove(image)
 
         image = artifact.load_image()
+
+        return image
+
+    @classmethod
+    def from_filepath(
+        cls,
+        name: str,
+        filepath: Path,
+        output_settings: OutputSettings,
+        color_management_info: ColorManagementInfo,
+        is_udim: bool,
+    ) -> ImageResource | None:
+        from ..services.image_io import ImageIOService
+
+        LOG.debug("Create Resource from Filepath")
+
+        image = None
+
+        if name in bpy.data.images and bpy.data.images[name].filepath_raw == str(filepath):
+            image = bpy.data.images[name]
+
+        if image is None:
+            if not filepath.exists or not filepath.is_file():
+                LOG.error(f"Invalid Path {filepath}, It is not a file or it does not exists")
+                return None
+
+            image = ImageIOService.load(filepath, output_settings.color, is_udim)
+
+        return ImageIOService.init_resource(image, output_settings, is_udim)
+
+        return image
+
+    @classmethod
+    def from_tileset(
+        cls,
+        tileset: TileSet,
+        name: str,
+        filepath: Path,
+        output_settings: OutputSettings,
+        color_management_info: ColorManagementInfo,
+        is_udim: bool,
+    ) -> ImageResource:
+        from ..services.image_codec import ImageCodec
+        from ..services.image_io import ImageIOService
+
+        LOG.debug("Create Resource from Tileset")
+
+        for tile in tileset.tiles:
+            tilepath = Path(str(filepath).replace("<UDIM>", str(tile)))
+            buffer = tileset[tile]
+
+            ImageCodec.save(
+                tilepath,
+                buffer,
+                output_settings,
+                is_udim,
+                color_management_info,
+            )
+
+        image = bpy.data.images.get(name)
+
+        if image is None:
+            LOG.debug(f"Loading Image {name}")
+            image = ImageIOService.load(filepath, output_settings.color, is_udim)
+        else:
+            image.filepath = str(filepath)
+
+        return ImageIOService.init_resource(image, output_settings, is_udim)
 
         return image
 

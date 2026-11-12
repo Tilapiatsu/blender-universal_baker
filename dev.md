@@ -4,17 +4,24 @@
 
 - [X] Baker based on custom Shader
 - [ ] Bake from source ( selected to active )
-  - [ ] Cherry pick the list of sources for each target object
+  - [X] Cherry pick the list of sources for each target object
   - [ ] option to match source and target by name ?
   - [ ] option to load collection instead of objects -> updating objects in the collection change the setup ?
   - [ ] operator to match source and target by binding box
-  - [ ] Bake from source with Cage
-  - [ ] Cage Automatic Creation
-  - [ ] Cage Shader
-  - [ ] Cage distance painting
+  - [X] Bake from source with Cage
+  - [X] Cage Automatic Creation
+  - [X] Allow user to choose the color of the cage in the UI
+  - [ ] Export generated cage ?
+  - [X] Cage Shader
+  - [X] Cage distance painting
+  - [X] Investigate live preview of bake with Ray Portal shader : It could help display the projection error or missed rays
+  - [ ] add adaptive cage -> The cage vertex group is automatically generated to an optimal result ( maybe using
+  occlusion ?)
+- [ ] Add a percentage slider to increase or shrink the output resolution. It would help rendering preview easily by
+inputing 10% of the resulution for exemple
 - [ ] add ability to load a scene as background before baker ( usefull for AO )
 - [ ] add feature to apply background color per baker
-- [ ] add bake from multires ? For Normal only
+- [ ] add bake from multires ? For Normal, displacement
 - [ ] Bake Skew Correction map
 - [ ] Bake Decal ?
 - [ ] Map Denoising ?
@@ -28,6 +35,10 @@
 - [ ] Every Adder ( Bake Group, Baker, Packer ) need to have a name collision prevention mechanism
 - [ ] add check for target objects without UV -> Skip the mesh and raise a warning or block the execution of the bake ?
 - [ ] add dynamic description to get and explain the registered tokens and transforms for filename
+- [ ] add a debug option in the preference who allow to:
+  - [ ] display uuid in the using
+  - [ ] register the logger with debug severity
+  - [ ] save UvOwnership mask to disk
 - [ ] Bake to Vertex Color
   - [ ] Being able to bake to vertex color -> add a "bake target" enum [["Image", "Color Attribute"]]
   - [ ] Adapt the planner to prevent creation of ownership task, accumulation map
@@ -37,6 +48,7 @@
 - [ ] Preset System
 - [ ] Bake external : Run another blender instance -> perform the bake -> import the result in current blender instance
 - [ ] Bake network : Investigate the use of [Flamenco](https://flamenco.blender.org/) ?
+- [ ] Create Feature to see normal map as normal in a shader
 
 ## Baker
 
@@ -44,12 +56,11 @@
 - [X] Ambient Occlusion
 - [X] Albedo
 - [X] Curvature
-  - [ ] add option to have curvature using two Channel : [One for concave and one for convex](https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSZwnsY3ePkCHIu-GvNyl-Kr7-27NMkMm-btlTj02CAiINIVGu0Ovo-lp5V&s=10)
-- [ ] Cavity
-- [ ] Edge
-- [ ] Normal
-- [ ] Normal World Space
-- [ ] Position
+  - [X] add option to have curvature using two Channel : [One for concave and one for convex](https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSZwnsY3ePkCHIu-GvNyl-Kr7-27NMkMm-btlTj02CAiINIVGu0Ovo-lp5V&s=10)
+- [X] Normal
+  - [ ] add option to add a bevel shader in the normal map ?
+- [X] Normal World Space
+- [X] Position
 - [ ] Thickness
 - [ ] ID
 - [ ] Mask
@@ -61,8 +72,10 @@
 - [ ] Vertex Color Channel
 - [ ] Wireframe ?
 - [ ] Custom Shader ? -> Is it different than albedo
+- [ ] AOV Baking ?
 
 ## QOL
 
 - [ ] force disable render visibility on all objects except the target objects before baking and recover after ?
+- [ ] Select the target/source object when selected from the UIList
 - [ ] add an option to match render visibility to viewport visibility to prevent rendering hidden objects ?

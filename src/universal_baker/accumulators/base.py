@@ -3,12 +3,14 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
-from ..constant import LOG
+from ..constant import ICON_BAKE, LOG
 from ..core.accumulator import ImageAccumulator
 from ..core.registry_compositor import registry_compositor
 from ..enum.output_stage import OutputStage
 from ..logger_bake_middleware.bake_summary import BakeStatus, EventCategory
+from ..resources.image import ImageResource
 from ..runtime.color_management_info import ColorManagementInfo
+from ..runtime.tile_set import TileSet
 from ..services.artifact_service import ArtifactService
 
 if TYPE_CHECKING:
@@ -28,7 +30,7 @@ class AccumulatorBase(ABC):
     id: str = ""
     name: str = ""
     description: str = ""
-    icon: str = "RENDER_STILL"
+    icon: str = ICON_BAKE
     color_management_info = ColorManagementInfo()
 
     def poll(self, task: Task) -> bool:
@@ -41,12 +43,23 @@ class AccumulatorBase(ABC):
         with LOG.scope(LOG_SCOPE):
             LOG.info(f"{str(ctx.task)}")
 
-            self.prepare(ctx)
-            self.create_artifact(ctx)
-            self.accumulate(ctx)
-            self.update_baker(ctx)
-            self.export_file(ctx)
-            self.cleanup(ctx)
+            try:
+                self.invalidate_previous_output(ctx)
+                self.prepare(ctx)
+                self.accumulate(ctx)
+                self.update_baker(ctx)
+                self.create_artifact(ctx)
+                self.export_file(ctx)
+            finally:
+                self.cleanup(ctx)
+
+    @abstractmethod
+    def invalidate_previous_output(self, ctx: AccumulateContext):
+        LOG.debug("Invalidate Previous Output ...")
+        ctx.session.runtime.outputs.invalidate(
+            ctx.task.bake_group_uuid,
+            ctx.task.id,
+        )
 
     @abstractmethod
     def prepare(self, ctx: AccumulateContext) -> None:
@@ -71,22 +84,24 @@ class AccumulatorBase(ABC):
         """Execute the Accumulation."""
         LOG.debug("Accumulating ...")
 
-        if ctx.output is None:
-            LOG.error("Output is not defined")
-            return
-
         if ctx.inputs is None:
             LOG.error("Inputs are not defined")
             return
 
-        accumulator = ImageAccumulator(ctx.output)
+        result = TileSet()
+        accumulator = ImageAccumulator(result)
 
         for image in ctx.inputs:
             accumulator.accumulate(image, registry_compositor[self.id])
 
-        ctx.output = accumulator.result()
-
-        ctx.image = ctx.output.image()
+        ctx.image = ImageResource.from_tileset(
+            result,
+            ctx.task.output_name,
+            ctx.task.absolute_filepath,
+            ctx.output_settings,
+            ctx.task.color_management_info,
+            ctx.task.uv_layout.image_layout.value == "UDIM",
+        )
 
     @abstractmethod
     def cleanup(self, ctx: AccumulateContext) -> None:
@@ -117,7 +132,7 @@ class AccumulatorBase(ABC):
             artifact_type=OutputStage.ACCUMULATED,
             name=ctx.task.output_name,
             bake_group_uuid=ctx.task.bake_group_uuid,
-            target_object_uuid="",
+            target_object_uuid="ALL",
             producer_uuid=ctx.task.uuid,
             image_layout=ctx.task.uv_layout.image_layout,
             uv_layout=ctx.task.uv_layout,

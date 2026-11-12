@@ -8,24 +8,32 @@ import bpy
 
 if TYPE_CHECKING:
     from ..bakers.base import BakerBase
-    from ..properties.bake_group import UBK_BakeGroup
-    from ..properties.custom_baker import UBK_CustomBaker
+    from ..parameters_definition.baker_settings import UBK_BakerSettings
     from ..properties.object import UBK_TargetObject
+    from ..runtime.color_management_info import ColorManagementInfo
+    from .output_context import OutputContext
 
-from ..constant import LOG
+from ..constant import LOG, UBK_SUBFOLDER_OBJECT_BUFFER
 from ..core.output_resolver import OutputResolver
 from ..logger.event import ScopeState
 from ..logger_bake_middleware.bake_summary import BakeStatus, EventCategory
 from ..runtime.settings_bake import BakeSettings
-from .task import Task
+from ..runtime.settings_cage import CageSettings
+from .task import OutputTask
 
 
 @dataclass(slots=True, frozen=True)
-class BakeTask(Task):
+class BakeTask(OutputTask):
+    output_context: OutputContext
+    color_management_info: ColorManagementInfo
+
+    baker_uuid: str
     target_object_uuid: str
-    sources: tuple[bpy.types.Object]
+    sources: list[bpy.types.Object]
+    bg_objects: list[bpy.types.Object]
     producer: BakerBase
     settings: BakeSettings
+    settings_cage: CageSettings
     image_name: str
     uv_layer: str
     id: str = "BAKE"
@@ -33,27 +41,28 @@ class BakeTask(Task):
     has_multiple_targets: bool = False
 
     @property
-    def bake_group(self) -> UBK_BakeGroup | None:
+    def baker_settings(self) -> UBK_BakerSettings | None:
         from ..core.controller import BakeController
 
-        return BakeController.get_bake_group_from_uuid(self.bake_group_uuid)
-
-    @property
-    def baker_settings(self) -> UBK_CustomBaker | None:
-        from ..core.controller import BakeController
-
-        baker = BakeController.get_baker_from_uuid(self.uuid)
+        baker = BakeController.get_baker_from_uuid(self.baker_uuid)
 
         if baker is None:
             return None
 
-        return baker.custom_baker
+        return baker.baker_settings
 
     @property
     def target(self) -> UBK_TargetObject:
         from ..core.controller import BakeController
 
-        return BakeController.get_target_object_from_uuid(self.target_object_uuid)
+        target = BakeController.get_target_object_from_uuid(self.target_object_uuid)
+
+        if target is None:
+            raise AttributeError
+
+        assert target is not None
+
+        return target
 
     @property
     def object_name(self) -> str:
@@ -81,10 +90,14 @@ class BakeTask(Task):
             self.output_context,
             self.uv_layout.image_layout,
             self.object_name if self.has_multiple_targets else None,
-            "object_buffers" if self.has_multiple_targets else None,
+            UBK_SUBFOLDER_OBJECT_BUFFER if self.has_multiple_targets else None,
         )
 
         return file_output.absolute_path
+
+    @property
+    def use_cage(self) -> bool:
+        return len(self.sources) > 0
 
     def __repr__(self) -> str:
         result = f"BAKER_{self.baker_id} | {self.object_name:100} "

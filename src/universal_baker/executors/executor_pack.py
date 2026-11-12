@@ -1,15 +1,15 @@
 from __future__ import annotations
 
 from ..constant import LOG
+from ..core.registry_executor import registry_executor
+from ..logger.event import ScopeState
+from ..logger_bake_middleware.bake_summary import EventCategory
 from ..runtime.context import ExecutionContext
 from ..runtime.context_pack import PackContext
 from ..runtime.session import ExecutionSession
 from ..runtime.task_pack import PackingTask
-from ..core.registry_executor import registry_executor
-from .executor_base import TaskExecutor
-from ..logger.event import ScopeState
-from ..logger_bake_middleware.bake_summary import EventCategory
 from .execution_target import ExecutionTarget
+from .executor_base import TaskExecutor
 
 
 class PackExecutorInternal(TaskExecutor):

@@ -6,18 +6,17 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..accumulators.base import AccumulatorBase
-    from ..properties.bake_group import UBK_BakeGroup
 
 from ..constant import LOG
 from ..core.output_resolver import OutputResolver
 from ..logger.event import ScopeState
 from ..logger_bake_middleware.bake_summary import BakeStatus, EventCategory
 from ..runtime.settings_accumulate import AccumulateSettings
-from .task import Task
+from .task import OutputTask
 
 
 @dataclass(slots=True, frozen=True)
-class AccumulateTask(Task):
+class AccumulateTask(OutputTask):
     baker_name: str
     baker_uuid: str
     producer: AccumulatorBase
@@ -25,12 +24,6 @@ class AccumulateTask(Task):
     image_name: str
 
     id: str = "ACCUMULATE"
-
-    @property
-    def bake_group(self) -> UBK_BakeGroup | None:
-        from ..core.controller import BakeController
-
-        return BakeController.get_bake_group_from_uuid(self.bake_group_uuid)
 
     @property
     def accumulator_id(self) -> str:

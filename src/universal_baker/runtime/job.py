@@ -4,10 +4,11 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from uuid import uuid4
 
-
 from ..constant import LOG
-from .task import Task
 from ..logger.severity import Severity
+from ..logger_bake_middleware.bake_summary import BakeStatus, EventCategory
+from ..services.scene_prepare import ScenePrepare
+from .task import Task
 
 
 class JobStatus(Enum):
@@ -24,12 +25,22 @@ class JobStatus(Enum):
 class Job:
     """A job contains every bake task."""
 
-    tasks: list[Task] = field(default_factory=list)
-    uid: str = field(default_factory=lambda: str(uuid4()))
-    status: JobStatus = JobStatus.WAITING
-    current_task: int = 0
-    progress: float = 0.0
-    errors: list[str] = field(default_factory=list)
+    scene_prepare: ScenePrepare
+    tasks: list[Task]
+    uuid: str
+    status: JobStatus
+    current_task: int
+    progress: float
+    errors: list[str]
+
+    def __init__(self) -> None:
+        self.scene_prepare = ScenePrepare()
+        self.tasks = []
+        self.uuid = str(uuid4())
+        self.status = JobStatus.WAITING
+        self.current_task = 0
+        self.progress = 0.0
+        self.errors = []
 
     @property
     def total_tasks(self) -> int:
@@ -45,6 +56,7 @@ class Job:
         LOG.info("Job Started")
 
     def notify_finished(self) -> None:
+        # TODO: Find a way to maske LOG.middleware.get() return object with typehint
         stats = LOG.middleware.get("StatisticsMiddleware")
         if stats is not None:
             if stats.warning > 0 or stats.error > 0:
@@ -95,6 +107,23 @@ class Job:
     def notify_task_failed(self, task: Task, time_elapsed: float, error: str) -> None:
         task.notify_failed(time_elapsed, error)
 
+    def notify_failed(self, time_elapsed: float, error: str) -> None:
+        with LOG.scope("Execution"):
+            LOG.error(
+                message="Job Execution failed",
+                scope_duration=time_elapsed,
+                data={
+                    "status": BakeStatus.FAIL,
+                },
+            )
+            LOG.error(
+                message=error,
+                category=EventCategory.INIT,
+                data={
+                    "status": BakeStatus.FAIL,
+                },
+            )
+
     def __repr__(self) -> str:
         return self.job_summary()
 
@@ -107,7 +136,7 @@ Bake Job
 """
 
         for index, task in enumerate(self.tasks):
-            result += f"{index + 1:03d} | {str(task)}\n"
+            result += f"{index + 1:03d} | {task!s}\n"
 
         result += "-" * 100 + "\n"
 

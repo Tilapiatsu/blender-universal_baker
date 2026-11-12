@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-import numpy as np
-import bpy
-from ..constant import LOG
-
 from dataclasses import dataclass
+
+import bpy
+import numpy as np
+
+from ..constant import LOG
 
 
 @dataclass(slots=True)
@@ -42,9 +43,9 @@ class ImageBuffer:
         """Create an Empty Buffer"""
 
         if channels > 1:
-            shape = (width, height, channels)
+            shape = (height, width, channels)
         else:
-            shape = (width, height)
+            shape = (height, width)
 
         pixels = np.zeros(shape, dtype=np.float32)
 
@@ -70,7 +71,7 @@ class ImageBuffer:
         else:
             channels = array.shape[-1]
 
-        return cls(width=shape[0], height=shape[1], pixels=array, channels=channels, name=name)
+        return cls(width=shape[1], height=shape[0], pixels=array, channels=channels, name=name)
 
     @classmethod
     def copy(cls): ...

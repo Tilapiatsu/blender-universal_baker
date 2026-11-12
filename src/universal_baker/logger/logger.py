@@ -4,9 +4,9 @@ from contextlib import contextmanager
 
 from .dispatcher import Dispatcher
 from .event import LogEvent
-from .severity import Severity
 from .middleware.dispatcher import MiddlewareDispatcher
 from .middleware.scope_manager import ScopeManager
+from .severity import Severity
 
 
 class Logger:
@@ -33,8 +33,11 @@ class Logger:
         self.dispatcher.dispatch(event)
 
     @contextmanager
-    def scope(self, name: str, **metadata):
-        with self.scope_manager.scope(name, **metadata):
+    def scope(self, name: str | None, **metadata):
+        if name is not None:
+            with self.scope_manager.scope(name, **metadata):
+                yield
+        else:
             yield
 
     def debug(self, message: str, **kwargs) -> None:
@@ -48,6 +51,9 @@ class Logger:
 
     def error(self, message: str, **kwargs) -> None:
         self.log(Severity.ERROR, message, **kwargs)
+
+    def critical(self, message: str, **kwargs) -> None:
+        self.log(Severity.CRITICAL, message, **kwargs)
 
     def separator(self, severity: Severity, **kwargs) -> None:
         self.log(severity, "=" * 100, **kwargs)

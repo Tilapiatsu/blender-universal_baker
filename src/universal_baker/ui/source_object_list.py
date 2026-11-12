@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import bpy
 
+from ..constant import ICON_SOURCE_OBJECT, ICON_TARGET_OBJECT
+
 
 class UBK_UL_SourceObjectList(bpy.types.UIList):
     """UIList displaying the bake source objects."""
@@ -25,19 +27,23 @@ class UBK_UL_SourceObjectList(bpy.types.UIList):
         elif self.layout_type == "GRID":
             layout.alignment = "CENTER"
 
-            layout.label(text="", icon="MESH_CUBE")
+            layout.label(text="", icon=ICON_TARGET_OBJECT)
 
-    def draw_default(self, layout, obj_settings, index: int):
+    def draw_default(self, layout, item, index: int):
         """Draw one object row."""
 
         row = layout.row(align=True)
 
-        row.prop(obj_settings, "enabled", text="")
+        row.prop(item, "enabled", text="")
 
-        obj = obj_settings.object
+        row = layout.row(align=True)
+        if not item.enabled:
+            row.enabled = False
+
+        obj = item.object
 
         if obj is not None:
-            row.prop(obj, "name", text="", emboss=False, icon="MESH_UVSPHERE")
+            row.prop(obj, "name", text="", emboss=False, icon=ICON_SOURCE_OBJECT)
 
         else:
             row.label(text="<Missing Object>", icon="ERROR")

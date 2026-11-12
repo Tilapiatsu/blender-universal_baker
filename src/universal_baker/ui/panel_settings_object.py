@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import bpy
 
+from ..constant import ICON_CAGE_OBJECT, ICON_INFO, ICON_TARGET_OBJECT
 from ..core.controller import BakeController
-from .panel import UBK_PT_MainPanel, object_needed
+from .panel import UBK_PT_MainPanel, object_needed, source_needed
 
 # -------------------------------------------------------------------------
 # Main Settings Panel
@@ -21,7 +22,11 @@ class UBK_UL_TargetObjectSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
         layout = self.layout
         active_object = BakeController.active_target_object(context)
 
-        layout.label(text=f"{active_object.object.name} Settings", icon="OBJECT_DATAMODE")
+        if active_object is None:
+            layout.label(text="Add an Object First", icon=ICON_INFO)
+            return
+
+        layout.label(text=f"{active_object.object.name} Sources", icon=ICON_TARGET_OBJECT)
 
     @object_needed
     def draw(self, context):
@@ -29,10 +34,15 @@ class UBK_UL_TargetObjectSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
         box = layout.box()
 
         active_object = BakeController.active_target_object(context)
+        if active_object is None:
+            return
+
+        col = box.column(align=True)
+        col.enabled = False
+        col.label(text=active_object.uuid)
 
         box.prop(active_object, "uv_layer")
 
-        box.separator()
         box.label(text="Source Objects :")
         box.template_list(
             "UBK_UL_SourceObjectList",
@@ -47,8 +57,87 @@ class UBK_UL_TargetObjectSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
         row.operator("ubk.add_source_object", text="Add Selected", icon="ADD")
         row.operator("ubk.remove_source_object", text="", icon="REMOVE")
 
+        row.separator()
 
-classes = (UBK_UL_TargetObjectSettingsPanel,)
+
+class UBK_UL_CageSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
+    bl_idname = "UBK_PT_cage_settings_panel"
+    bl_label = ""
+    bl_parent_id = "UBK_PT_TargetObjectPanel"
+    bl_options = {"DEFAULT_CLOSED"}
+
+    def draw_header(self, context):
+        layout = self.layout
+
+        active_object = BakeController.active_target_object(context)
+
+        if active_object is None:
+            layout.label(text="Cage Settings : Add a Target Object First", icon=ICON_INFO)
+            return
+
+        if len(active_object.source_objects) == 0:
+            layout.label(text="Cage Settings : Add a Source Object First", icon=ICON_INFO)
+            return
+
+        layout.label(text=f"{active_object.object.name} Cage Settings", icon=ICON_CAGE_OBJECT)
+
+    @source_needed
+    def draw(self, context):
+        layout = self.layout
+        box = layout.box()
+
+        active_object = BakeController.active_target_object(context)
+
+        if active_object is None:
+            return
+
+        cage_settings = active_object.settings_cage
+
+        row = box.row(align=True)
+        row.prop(cage_settings, "cage_mode", expand=1, text="Mode :")
+
+        col = box.column(align=True)
+        if cage_settings.cage_mode == "OBJECT":
+            col.prop(cage_settings, "cage_object_custom")
+        elif cage_settings.cage_mode == "GENERATED":
+            project = BakeController.project(context)
+            visualization = project.visualization
+
+            active_bake_group = BakeController.active_bake_group(context)
+            row = col.split(align=True, factor=0.8)
+            subrow = row.split(align=True, factor=0.5)
+            subrow.prop(visualization, "cage_edit", toggle=True)
+            if cage_settings.is_skew_correction_enabled:
+                subrow = subrow.split(align=True, factor=0.8)
+                subrow.prop(visualization, "skew_edit", toggle=True)
+                subrow.operator("ubk.skew_correction_remove", text="", icon="TRASH")
+                col.prop(cage_settings, "skew_precision")
+            else:
+                subrow.prop(visualization, "skew_edit", toggle=True)
+
+            row.prop(visualization, "cage_color", text="")
+            row = col.column(align=True)
+
+            if (
+                not (visualization.cage_edit or visualization.skew_edit)
+                or active_bake_group is None
+                or len(active_bake_group.bakers) == 0
+            ):
+                row.enabled = False
+            row.prop(visualization, "preview_bake", toggle=True)
+
+        col = box.column(align=True)
+        if cage_settings.cage_mode == "GENERATED":
+            col.prop(cage_settings, "cage_extrusion")
+
+        col = box.column(align=True)
+        col.prop(cage_settings, "max_ray_distance")
+
+
+classes = (
+    UBK_UL_TargetObjectSettingsPanel,
+    UBK_UL_CageSettingsPanel,
+)
 
 
 def register():

@@ -1,8 +1,9 @@
 from __future__ import annotations
-from enum import Enum, auto
 
-from ..logger.middleware.base import BaseMiddleware
+from enum import Enum, StrEnum, auto
+
 from ..logger.event import LogEvent
+from ..logger.middleware.base import BaseMiddleware
 
 
 class BakeStatus(Enum):
@@ -10,12 +11,14 @@ class BakeStatus(Enum):
     FAIL = auto()
 
 
-class EventCategory(Enum):
-    OWNERSHIP = auto()
-    BAKE = auto()
-    PACK = auto()
-    ACCUMULATE = auto()
-    MASK = auto()
+class EventCategory(StrEnum):
+    INIT = "INIT"
+    EVALUATE_MESHES = "EVALUATE_MESHES"
+    OWNERSHIP = "OWNERSHIP"
+    BAKE = "BAKE"
+    PACK = "PACK"
+    ACCUMULATE = "ACCUMULATE"
+    MASK = "MASK"
 
 
 class BakeSummaryMiddleware(BaseMiddleware):

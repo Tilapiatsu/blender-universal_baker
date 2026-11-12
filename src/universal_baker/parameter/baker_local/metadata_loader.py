@@ -1,27 +1,35 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from abc import ABC, abstractmethod
+from typing import ClassVar, Protocol
 
-from ..baker_local.definition import LocalBakerDefinition
-from ..metadata import LocalBakerMetadata
+from ..baker_local.definition import LocalDefinition
+from ..metadata import LocalMetadata, ParameterMetadata
 
-if TYPE_CHECKING:
-    from ...bakers.base import BakerBase
+
+class DefinitionObject(Protocol):
+    id: str
+    name: str
+    description: str
+
+    @property
+    @abstractmethod
+    def parameters(self) -> tuple[ParameterMetadata, ...]: ...
 
 
 class MetadataLoader:
     @classmethod
-    def load(cls, baker: BakerBase) -> LocalBakerMetadata:
+    def load(cls, definition_object: DefinitionObject) -> LocalMetadata:
 
-        return LocalBakerMetadata(
-            id=baker.id,
-            name=baker.name,
-            description=baker.description,
-            parameters=baker.parameters,
+        return LocalMetadata(
+            id=definition_object.id,
+            name=definition_object.name,
+            description=definition_object.description,
+            parameters=definition_object.parameters,
         )
 
     @classmethod
-    def load_definition(cls, baker: BakerBase) -> LocalBakerDefinition:
-        metadata = cls.load(baker)
+    def load_definition(cls, definition_object: DefinitionObject) -> LocalDefinition:
+        metadata = cls.load(definition_object)
 
-        return LocalBakerDefinition.from_metadata(metadata)
+        return LocalDefinition.from_metadata(metadata)

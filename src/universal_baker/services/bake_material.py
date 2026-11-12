@@ -79,7 +79,7 @@ class BakeMaterialSetup:
 
             for index, material in enumerate(assignment.materials):
                 LOG.debug(f"Restoring Material: {material.name if material is not None else 'EMPTY'}")
-                if material == None:
+                if material is None:
                     obj.data.materials.clear()
                     continue
                 obj.material_slots[index].material = material
@@ -142,13 +142,16 @@ class BakeMaterialService:
             current.append(material)
 
     @classmethod
-    def prepare(cls, objects: list[bpy.types.Object]) -> BakeMaterialSetup:
+    def prepare(cls, targets: list[bpy.types.Object], sources: list[bpy.types.Object]) -> BakeMaterialSetup:
         with LOG.scope(LOG_SCOPE):
             LOG.debug("Preparing bake materials")
             setup = BakeMaterialSetup()
 
             try:
-                for obj in objects:
+                for obj in targets:
+                    cls._prepare_object(obj, setup)
+
+                for obj in sources:
                     cls._prepare_object(obj, setup)
 
                 return setup
@@ -186,6 +189,7 @@ class BakeMaterialService:
             if material_name is None:
                 material = cls._create_bake_material(obj, slot)
                 material_name = material.name
+                setup.temporary_materials.append(material)
 
             if material_name not in bpy.data.materials:
                 LOG.error(f"Material {material_name} not found")

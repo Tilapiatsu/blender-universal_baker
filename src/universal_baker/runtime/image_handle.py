@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-import bpy
-
-from dataclasses import dataclass, field
 from collections.abc import Iterator
+from dataclasses import dataclass, field
+from os import path
+
+import bpy
 
 from ..constant import LOG
 from ..resources.image import ImageResource
@@ -155,6 +156,8 @@ class ImageHandle:
 
         Creates or reloads it if necessary.
         """
+        # ISSUE: Handle is set as dirty even tough it is not, causing images to be saved on disk and loaded again.
+        # making everything pretty slow
         if self.is_dirty:
             LOG.debug("Handle is dirty")
             self.save()
@@ -178,6 +181,19 @@ class ImageHandle:
                 output_settings=self._output_settings,
             )
 
+            if self._resource.image is None:
+                image = ImageResource.from_filepath(
+                    name=self._artifact.name,
+                    filepath=self._artifact.image.path,
+                    output_settings=self._artifact.output_settings,
+                    color_management_info=self._artifact.color_management_info,
+                    is_udim=self._artifact.is_udim,
+                )
+                if image is None:
+                    return
+
+                self._resource = image
+
             self._resource.reload()
 
     def reload(self):
@@ -188,7 +204,7 @@ class ImageHandle:
         self._ensure_loaded()
         self._resource.reload()
 
-    def invalidate(self):
+    def clear_cache(self):
         """
         Free runtime cache.
         """
@@ -200,9 +216,9 @@ class ImageHandle:
 
     def _ensure_loaded(self):
         if not self._tiles.is_empty:
-            LOG.warning("TileSet is already loaded")
             return
 
+        LOG.warning("Reloading TileSet")
         if self._resource.is_valid:
             tiles = self._resource.get_tileset()
             if tiles is not None:

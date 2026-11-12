@@ -3,7 +3,7 @@ from __future__ import annotations
 import bpy
 
 from ..constant import BAKE_IMAGE_NODE_LABEL, BAKE_IMAGE_NODE_NAME, BAKE_MATERIAL_NAME, LOG
-from ..resources.material import MaterialResource
+from ..resources.material import MaterialResource, MaterialResources
 from ..runtime.context_bake import BakeContext
 
 LOG_SCOPE = "Material Service"
@@ -13,47 +13,45 @@ class MaterialService:
     """Manage temporary material modifications during baking."""
 
     @classmethod
+    def prepare(cls, ctx: BakeContext) -> None:
+        with LOG.scope(LOG_SCOPE):
+            cls.prepare_target(ctx)
+
+            if ctx.selected_to_active:
+                cls.prepare_sources(ctx)
+
+    @classmethod
+    def prepare_sources(cls, ctx: BakeContext) -> None:
+        for o in ctx.sources:
+            resources = MaterialResources()
+            ctx.sources_materials[o.name] = resources
+            cls.init_material_resources(o, resources.resources)
+
+            for resource in resources.resources.values():
+                cls.ensure_nodes(resource)
+                resource.mark_prepared()
+
+    @classmethod
     def prepare_target(cls, ctx: BakeContext) -> None:
         """
         Prepare the target object's active material for baking.
         """
-        with LOG.scope(LOG_SCOPE):
-            cls.init_material_resources(ctx)
-            resources = ctx.materials
+        resources = MaterialResources()
+        ctx.target_materials[ctx.target.name] = resources
+        cls.init_material_resources(ctx.target, resources.resources)
 
-            for resource in resources.resources.values():
-                cls.ensure_nodes(resource)
-                cls.ensure_image_node(resource)
-                cls.assign_image(resource, ctx)
-                cls.activate_image_node(resource)
+        for resource in resources.resources.values():
+            cls.ensure_nodes(resource)
+            cls.ensure_image_node(resource)
+            cls.assign_image(resource, ctx)
+            cls.activate_image_node(resource)
 
-                resource.mark_prepared()
-
-    # @classmethod
-    # def restore_target(cls, ctx: BakeContext) -> None:
-    #     """
-    #     Restore the material to its original state.
-    #     """
-    #     resources = ctx.materials
-    #
-    #     for resource in resources.resources.values():
-    #         if not resource.prepared:
-    #             return
-    #
-    #         cls.restore_active_node(resource)
-    #         cls.remove_temporary_nodes(resource)
-    #
-    #         resource.mark_restored()
-    #
-    #     if resources.material_overrides is not None:
-    #         MaterialOverrideService.restore(resources.material_overrides)
+            resource.mark_prepared()
 
     @classmethod
-    def init_material_resources(cls, ctx: BakeContext) -> None:
+    def init_material_resources(cls, obj: bpy.types.Object, resources: dict[int, MaterialResource]) -> None:
         """Create all material ressources for each material slots"""
-        obj = ctx.target
 
-        resources = ctx.materials.resources
         if not obj.material_slots:
             LOG.debug(f"{obj.name} have no Material Slots")
             resources.clear()
@@ -64,17 +62,6 @@ class MaterialService:
                 LOG.debug(f"Store {slot.material.name if slot.material is not None else 'EMPTY'} for index {idx}")
                 resources[idx] = MaterialResource()
                 cls._store_material_info(resources[idx], obj, idx, slot.material)
-
-    @classmethod
-    def acquire(cls, ctx: BakeContext) -> bpy.types.Material:
-        """
-        Acquire the material used for baking and assign it to the proper object.
-        """
-        obj = ctx.target
-
-        material = cls._create_bake_material(obj)
-
-        return material
 
     @classmethod
     def ensure_nodes(cls, resource: MaterialResource) -> None:
@@ -175,19 +162,6 @@ class MaterialService:
         tree.nodes.remove(resource.image_node)
 
         resource.image_node = None
-
-    @classmethod
-    def _create_bake_material(cls, obj: bpy.types.Object) -> bpy.types.Material:
-        name = f"{obj.name}_{BAKE_MATERIAL_NAME}_{str(len(obj.material_slots)).zfill(2)}"
-
-        if name in bpy.data.materials:
-            LOG.debug(f"Reuse Existing Bake Material {name}")
-            material = bpy.data.materials[name]
-        else:
-            LOG.debug(f"Create Bake Material {name}")
-            material = bpy.data.materials.new(name=name)
-
-        return material
 
     @classmethod
     def _assign_material_to_slot(cls, obj: bpy.types.Object, material: bpy.types.Material, slot: int | None) -> None:

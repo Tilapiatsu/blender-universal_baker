@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
+from enum import StrEnum
 from typing import Any
-from .parameter import BakerParameterOption
 
+import bpy
+
+from .parameter import ParameterOption, ParameterSource, ParameterType
 
 METADATA_TEXT_NAME = "UBK_BAKER_METADATA"
 
@@ -26,6 +30,14 @@ class MetadataValidationError(MetadataError):
     """The metadata has an invalid structure or value."""
 
 
+class BindingType(StrEnum):
+    MATERIAL_SOCKET = "MATERIAL_SOCKET"
+    SHADER_INSERT = "SHADER_INSERT"
+    MODIFIER_PROPERTY = "MODIFIER_PROPERTY"
+    GEOMETRY_NODE_INPUT = "GEOMETRY_NODE_INPUT"
+    SCENE_PROPERTY = "SCENE_PROPERTY"
+
+
 @dataclass(frozen=True)
 class BindingMetadata:
     """
@@ -35,18 +47,18 @@ class BindingMetadata:
     Blender or ParameterBinding.
     """
 
-    binding_type: str
+    binding_type: BindingType
 
     # Material socket binding
     material: str | None = None
     node: str | None = None
-    socket: str | None = None
+    socket_input: str | None = None
+    socket_output: str | None = None
 
     # Modifier property binding
     modifier: str | None = None
 
     # Scene property Binding
-    scene: str | None = None
     property: str | None = None
 
     # Additional binding-specific information can be kept
@@ -67,26 +79,139 @@ class ParameterMetadata:
 
     identifier: str
     name: str
-    type: str
+    type: ParameterType
+    source: ParameterSource
     default: Any = None
     description: str = ""
 
-    min_value: float | int | None = None
-    max_value: float | int | None = None
+    min_value: float | int | tuple[float, float, float] | None = None
+    max_value: float | int | tuple[float, float, float] | None = None
 
-    soft_min: float | int | None = None
-    soft_max: float | int | None = None
+    soft_min: float | int | tuple[float, float, float] | None = None
+    soft_max: float | int | tuple[float, float, float] | None = None
 
-    unit: str | None = None
+    unit: str = "NONE"
+    subtype: str = "NONE"
     category: str | None = None
     order: int = 0
     visible: bool = True
-    options: tuple[BakerParameterOption, ...] = ()
+    options: tuple[ParameterOption, ...] = ()
     bindings: tuple[BindingMetadata, ...] = ()
+
+    def blender_property(self, update: Callable | None = None):
+        match self.type:
+            case ParameterType.FLOAT:
+                return bpy.props.FloatProperty(
+                    name=self.name,
+                    default=self.default,
+                    description=self.description,
+                    soft_min=self.soft_min,
+                    soft_max=self.soft_max,
+                    min=self.min_value,
+                    max=self.max_value,
+                    unit=self.unit,
+                    subtype=self.subtype,
+                    update=update,
+                )
+            case ParameterType.BOOL:
+                return bpy.props.BoolProperty(
+                    name=self.name,
+                    default=self.default,
+                    description=self.description,
+                    update=update,
+                )
+            case ParameterType.INT:
+                return bpy.props.IntProperty(
+                    name=self.name,
+                    default=self.default,
+                    description=self.description,
+                    soft_min=self.soft_min,
+                    soft_max=self.soft_max,
+                    min=self.min_value,
+                    max=self.max_value,
+                    unit=self.unit,
+                    subtype=self.subtype,
+                    update=update,
+                )
+            case ParameterType.STRING:
+                return bpy.props.StringProperty(
+                    name=self.name,
+                    default=self.default,
+                    description=self.description,
+                    update=update,
+                )
+            case ParameterType.VECTOR:
+                soft_min = self.soft_min
+                soft_max = self.soft_max
+                min_value = self.min_value
+                max_value = self.max_value
+
+                if soft_min is None:
+                    soft_min = float("-inf")
+                if soft_max is None:
+                    soft_max = float("inf")
+                if min_value is None:
+                    min_value = float("-inf")
+                if max_value is None:
+                    max_value = float("inf")
+
+                return bpy.props.FloatVectorProperty(
+                    name=self.name,
+                    default=self.default,
+                    description=self.description,
+                    soft_min=soft_min,
+                    soft_max=soft_max,
+                    min=min_value,
+                    max=max_value,
+                    unit=self.unit,
+                    subtype=self.subtype,
+                    update=update,
+                )
+            case ParameterType.OBJ:
+                return bpy.props.PointerProperty(
+                    name=self.name,
+                    description=self.description,
+                    type=bpy.types.Object,
+                    update=update,
+                )
+            case ParameterType.SHADER:
+                return bpy.props.StringProperty(
+                    name=self.name,
+                    default=self.default,
+                    description=self.description,
+                    update=update,
+                )
+            case ParameterType.ENUM:
+                items = [(o.identifier, o.label, o.description) for o in self.options]
+                return bpy.props.EnumProperty(
+                    name=self.name,
+                    default=self.default,
+                    description=self.description,
+                    items=items,
+                    update=update,
+                )
+            case ParameterType.IMG:
+                return bpy.props.PointerProperty(
+                    name=self.name,
+                    description=self.description,
+                    type=bpy.types.Image,
+                    update=update,
+                )
+            case ParameterType.COLLECTION:
+                return bpy.props.PointerProperty(
+                    name=self.name,
+                    description=self.description,
+                    type=bpy.types.Collection,
+                    update=update,
+                )
 
 
 @dataclass(frozen=True)
-class LocalBakerMetadata:
+class MetadataBase: ...
+
+
+@dataclass(frozen=True)
+class LocalMetadata(MetadataBase):
     """
     Complete metadata description of a Local Baker asset.
     """
@@ -101,7 +226,7 @@ class LocalBakerMetadata:
 
 
 @dataclass(frozen=True)
-class CustomBakerMetadata:
+class CustomBakerMetadata(MetadataBase):
     """
     Complete metadata description of a Custom Baker asset.
     """

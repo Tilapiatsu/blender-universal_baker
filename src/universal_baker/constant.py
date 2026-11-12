@@ -1,30 +1,63 @@
+from __future__ import annotations
+
+from pathlib import Path
+
 import bpy
 
 from .logger import Logger
-
+from .logger.middleware.statistics import StatisticsMiddleware
 from .logger.severity import Severity
 from .logger.sinks.console import ConsoleSink
-from .logger.middleware.statistics import StatisticsMiddleware
+from .logger.sinks.file import FileSink
 from .logger_bake_middleware.bake_summary import BakeSummaryMiddleware
 from .resources.scene_view_transform import SceneViewTransform
 
 LOG = Logger("Universal Baker")
 LOG.dispatcher.add_sink(ConsoleSink(level=Severity.DEBUG))
+LOG.dispatcher.add_sink(FileSink(filename="UniversalBaker.log", level=Severity.DEBUG))
 LOG.middleware.add(BakeSummaryMiddleware())
 LOG.middleware.add(StatisticsMiddleware())
 
 BAKE_IMAGE_NODE_NAME = "UBK_BakeImage"
 BAKE_IMAGE_NODE_LABEL = "Universal Baker"
 BAKE_MATERIAL_NAME = "UBK_BakeMaterial"
+OFFSET_VERTEX_GROUP_NAME = "UBK_OFFSET"
 INTERNAL_DATA_NAME = "UBK_INTERNAL_DO_NOT_TOUCH"
+
 PROTOTYPE_NAME = "UBK_PROTOTYPE"
+CAGE_NAME = "UBK_CAGE"
+UBK_SUBFOLDER = ".ubk"
+UBK_SUBFOLDER_OBJECT_BUFFER = f"{UBK_SUBFOLDER}/object_buffers"
+UBK_SUBFOLDER_MASK = f"{UBK_SUBFOLDER}/masks"
+UBK_SUBFOLDER_SKEW = f"{UBK_SUBFOLDER}/skew"
 SAFE_CHR = "_"
 ADDON_PACKAGE = __package__
-
 
 DISPLAY_VIEW_TRANSFORM = SceneViewTransform()
 PREVIEW_VIEW_TRANSFORM = SceneViewTransform()
 BAKE_VIEW_TRANSFORM = SceneViewTransform()
+
+ASSET_PATH = Path(__file__).parent.resolve() / "assets"
+BAKE_PORTAL_PREVIEW_ASSET_PATH = ASSET_PATH / "Bake Portal Preview.blend"
+BAKE_CLIPPING_PREVIEW_ASSET_PATH = ASSET_PATH / "Bake Clipping Preview.blend"
+BAKE_PROJECTION_CAGE_PATH = ASSET_PATH / "Bake Projection Cage.blend"
+CAGE_SKEW_REMESHER_ASSET_PATH = ASSET_PATH / "Skew Remesher.blend"
+CAGE_SCENE_OFFSET = -1000
+UBK_SKEW_ATTRIBUTE_NAME = "UBK_SKEW_INTENSITY"
+
+ICON_INFO = "INFO"
+ICON_PREVIEW = "VIEW_CAMERA_UNSELECTED"
+ICON_PREVIEW_ENABLE = "VIEW_CAMERA"
+ICON_DISPLAY = "HIDE_ON"
+ICON_DISPLAY_ENABLE = "HIDE_OFF"
+ICON_BAKE = "RESTRICT_RENDER_OFF"
+ICON_PACK = "NODE_COMPOSITING"
+ICON_TARGET_OBJECT = "MESH_CUBE"
+ICON_SOURCE_OBJECT = "MESH_UVSPHERE"
+ICON_CAGE_OBJECT = "CUBE"
+
+
+assert ADDON_PACKAGE is not None
 
 
 def get_prefs():

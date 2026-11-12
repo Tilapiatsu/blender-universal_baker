@@ -2,31 +2,32 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Generator
-from contextlib import contextmanager
-from pathlib import Path
+from contextlib import ExitStack, contextmanager
+from sys import activate_stack_trampoline
 from typing import TYPE_CHECKING, Any
 
 import bpy
 
-from ..constant import LOG, get_prefs
+from ..constant import ICON_BAKE, LOG
+from ..core.property_class_factory import ClassFactory
 from ..core.registry_baker import registry_baker
 from ..core.registry_definition import registry_definition
 from ..enum.image_colorspace import ImageColorSpace
 from ..enum.output_stage import OutputStage
-from ..enum.view_transform import ViewTransform
-from ..parameter.baker_custom.metadata_loader import MetadataLoader as metadata_loader_custom
 from ..parameter.baker_local.metadata_loader import MetadataLoader as metadata_loader_local
 from ..parameter.parameter_applier import ParameterApplier
 from ..parameter.parameter_context import ParameterContext
-from ..resources.scene_view_transform import SceneViewTransform
-from ..runtime.baker_setup import BakerExecution, BakerSetup
+from ..runtime.asset_setup import AssetSetup, BakerExecution
+from ..runtime.bake_objects import BakeObjects
 from ..runtime.color_management_info import ColorManagementInfo
+from ..runtime.runtime_manager import RuntimeManager
 from ..services.artifact_service import ArtifactService
 from ..services.bake_material import BakeMaterialService
 from ..services.image_bake import ImageServiceBake
 from ..services.material import MaterialService
-from ..services.parameter_service import ParameterService
 from ..services.renderer import RendererService
+from ..services.temp_object import TempObject
+from ..services.visibility_override import VisibilityOverride
 
 if TYPE_CHECKING:
     from ..parameter.metadata import ParameterMetadata
@@ -34,6 +35,51 @@ if TYPE_CHECKING:
     from ..runtime.task import Task
 
 LOG_SCOPE = "Baking"
+
+
+def update_baker_property(self, context):
+    # TODO: Need to optimize, and make sure only the modified property is updated -> Currently all the properties are
+    # updated when one properties is modified
+    definition = registry_definition.require(self.name)
+
+    if definition is None:
+        return
+
+    bake_runtime = RuntimeManager.current(context)
+
+    if bake_runtime is None:
+        return
+
+    if bake_runtime.bake_visualization.bake_targets is None:
+        return
+
+    from ..core.controller import BakeController
+    from ..core.registry_baker import registry_baker
+
+    active_baker = BakeController.active_baker(context)
+    active_bake_group = BakeController.active_bake_group(context)
+
+    if active_bake_group is None or active_baker is None:
+        return
+
+    baker = registry_baker[active_baker.baker]
+
+    for o in bake_runtime.bake_visualization.bake_targets:
+        if o.type != "MESH":
+            continue
+
+        materials = [s.material for s in o.material_slots if s is not None and s.material is not None]
+
+        context = ParameterContext(
+            object=o,
+            materials=materials,
+            ui_prop=self,
+            is_dragging=bpy.context.scene.ubk_project.visualization.is_dragging,
+            value_function=baker.parameter_value,
+            bake_targets=active_bake_group.bake_targets,
+        )
+
+        ParameterApplier.apply_baker(definition, context)
 
 
 class BakerBase(ABC):
@@ -49,12 +95,11 @@ class BakerBase(ABC):
     id: str = ""
     name: str = ""
     description: str = ""
-    icon: str = "RENDER_STILL"
+    icon: str = ICON_BAKE
     blender_bake_type = "DIFFUSE"
     accumulator_id = "ALPHA_OVER"
     is_custom: bool = False
     clear_preview_material: bool = True
-    asset_path: Path = Path()
     viewport_render_pass: str = "COMBINED"
     bake_colorspace: ImageColorSpace = ImageColorSpace.NON_COLOR
     image_colorspace: ImageColorSpace = ImageColorSpace.NON_COLOR
@@ -69,27 +114,51 @@ class BakerBase(ABC):
         parameters: tuple[ParameterMetadata, ...] = ()
         return parameters
 
-    @abstractmethod
+    @property
+    def property_class_name(self) -> str:
+        return f"UBK_{self.name.replace(' ', '')}Properties"
+
+    @property
+    def settings_name(self) -> str:
+        return f"{self.name.lower().replace(' ', '_')}_settings"
+
     @contextmanager
-    def prepare_execution(self, target: bpy.types.Object) -> Generator[BakerExecution, Any, Any]:
+    def prepare_execution(
+        self,
+        bake_objects: BakeObjects,
+    ) -> Generator[BakerExecution, Any, Any]:
 
-        material_setup = BakeMaterialService.prepare(objects=[target])
-        baker_setup = BakerSetup(material_setup=material_setup)
+        material_setup = BakeMaterialService.prepare(
+            targets=[bake_objects.target_object],
+            sources=bake_objects.source_objects,
+        )
+        baker_setup = AssetSetup(material_setup=material_setup)
 
-        hide_render = target.hide_render
-        target.hide_render = False
+        hide_render = {}
+
+        for s in bake_objects.baker_material_objects:
+            hide_render[s] = s.hide_render
+
         try:
             yield BakerExecution(
-                target=target,
+                target=bake_objects.target_object,
+                cage=bake_objects.cage_object,
+                sources=bake_objects.source_objects,
                 setup=baker_setup,
             )
 
         finally:
-            target.hide_render = hide_render
+            for obj, render in hide_render.items():
+                obj.hide_render = render
+
             material_setup.cleanup()
 
-    @abstractmethod
-    def configure_preview_material(self, material):
+    def configure_preview(self, material: bpy.types.Material, objects: list[bpy.types.Object]) -> list[TempObject]:
+        self.configure_preview_material(material)
+        temp_objects = self.configure_preview_modifier(objects)
+        return temp_objects
+
+    def configure_preview_material(self, material: bpy.types.Material):
         material.use_nodes = True
         nodes = material.node_tree.nodes
         nodes.clear()
@@ -104,48 +173,76 @@ class BakerBase(ABC):
 
         output.location.x = shader.location.x + 200
 
-    @abstractmethod
+    def configure_preview_modifier(self, objects: list[bpy.types.Object]) -> list[TempObject]:
+        temp_objects: list[TempObject] = []
+        return temp_objects
+
+    def parameter_value(self, value_name: str, context: ParameterContext) -> Any:
+        return None
+
     def execute(self, ctx: BakeContext) -> None:
         """Prepare, bake and cleanup all at once."""
         with LOG.scope(LOG_SCOPE):
             LOG.info(f"{ctx.task!s}")
 
-            self.prepare(ctx)
-            self.bake(ctx)
-            self.update_baker(ctx)
-            self.export_file(ctx)
-            self.create_artifact(ctx)
-            self.cleanup(ctx)
+            try:
+                visibility_overrides = self.get_visibility_overrides(ctx)
+                self.invalidate_previous_output(ctx)
+                self.prepare(ctx)
 
-    @abstractmethod
+                with ExitStack() as stack:
+                    for vo in visibility_overrides:
+                        stack.enter_context(vo)
+
+                    self.bake(ctx)
+
+                self.update_baker(ctx)
+                self.export_file(ctx)
+                self.create_artifact(ctx)
+
+            finally:
+                self.cleanup(ctx)
+
+    def invalidate_previous_output(self, ctx: BakeContext):
+        if not ctx.session.output_invalidated:
+            LOG.debug("Invalidate Previous Output ...")
+            ctx.session.runtime.outputs.invalidate(
+                ctx.task.bake_group_uuid,
+                ctx.task.baker_uuid,
+            )
+
+            ctx.session.output_invalidated = True
+
     def prepare(self, ctx: BakeContext) -> None:
         """Prepare Blender before baking."""
         LOG.debug("Preparing Scene ...")
 
         ctx.image = ImageServiceBake.acquire(ctx.image, ctx.task)
 
-        MaterialService.prepare_target(ctx)
+        MaterialService.prepare(ctx)
 
         self.apply_parameters(ctx)
 
-    @abstractmethod
+    def get_visibility_overrides(self, ctx: BakeContext) -> list[VisibilityOverride]:
+        """Get Visibility."""
+        l: list[VisibilityOverride] = []
+        return l
+
     def bake(self, ctx: BakeContext) -> None:
         """Execute the bake."""
         LOG.debug("Baking ...")
         RendererService.execute(ctx)
 
-    @abstractmethod
     def cleanup(self, ctx: BakeContext) -> None:
         LOG.debug("Restoring ...")
         """Restore Blender."""
         ctx.image.reset()
 
-    @abstractmethod
     def update_baker(self, ctx: BakeContext) -> None:
         LOG.debug("Update Baker ...")
         from ..core.controller import BakeController
 
-        baker = BakeController.get_baker_from_uuid(ctx.task.uuid)
+        baker = BakeController.get_baker_from_uuid(ctx.task.baker_uuid)
 
         if baker is None:
             return
@@ -168,7 +265,6 @@ class BakerBase(ABC):
         if not ctx.task.has_multiple_targets:
             baker.accumulated_image = ctx.image.image
 
-    @abstractmethod
     def create_artifact(self, ctx: BakeContext) -> None:
         LOG.debug("Creating Artifact ...")
 
@@ -179,7 +275,7 @@ class BakerBase(ABC):
             name=ctx.task.output_name,
             bake_group_uuid=ctx.task.bake_group_uuid,
             target_object_uuid=ctx.task.target_object_uuid,
-            producer_uuid=ctx.task.uuid,
+            producer_uuid=ctx.task.baker_uuid,
             image_layout=ctx.task.uv_layout.image_layout,
             uv_layout=ctx.task.uv_layout,
             absolute_path=ctx.task.absolute_filepath,
@@ -192,12 +288,12 @@ class BakerBase(ABC):
 
         ctx.output = ctx.session.runtime.outputs.get(artifact)
         if ctx.output is None:
+            LOG.debug("Output Artifact not found")
             return
 
         ctx.task.result.set_tileset(ctx.output.tileset, clear=True)
         ctx.output.set_dirty(False)
 
-    @abstractmethod
     def export_file(self, ctx: BakeContext) -> None:
         """Save Bake to disk."""
         LOG.debug("Saving File to Disk ...")
@@ -214,66 +310,59 @@ class BakerBase(ABC):
             LOG.error("Bake Settings not found")
             return
 
-        snapshot = ParameterService.snapshot(definition, state)
-
-        LOG.debug("Applying baker parameters")
-
-        materials = ctx.materials.materials
+        materials = ctx.baker_materials
 
         if materials is None:
-            LOG.error(f"Material Overries not found for {ctx.target.name}")
+            LOG.error("Material Overrides not found")
             return
 
-        parameter_context = ParameterContext(
-            object=ctx.target,
-            materials=materials,
-            scene=ctx.scene,
-        )
+        objects = ctx.baker_material_objects
 
-        ParameterApplier.apply(
-            definition,
-            snapshot,
-            parameter_context,
-        )
+        LOG.debug("Applying baker parameters")
+        for o in objects:
+            object_materials = materials.get(o.name)
+
+            if object_materials is None:
+                LOG.error(f"Material Overrides not found for {o.name}")
+                continue
+
+            parameter_context = ParameterContext(
+                object=o,
+                materials=object_materials.materials,
+                scene=ctx.scene,
+                ui_prop=getattr(ctx.task.baker_settings, self.settings_name),
+                value_function=self.parameter_value,
+                bake_targets=ctx.task.bake_group.bake_targets if ctx.task.bake_group is not None else [],
+            )
+
+            ParameterApplier.apply_baker(
+                definition,
+                parameter_context,
+            )
 
     def register_local(self):
         LOG.info(f"Registering Building Baker : {self.id}")
+        self.register_property_class()
         registry_baker.register(self)
 
         registry_definition.register_local_lazy(
             identifier=self.id,
-            baker=self,
+            definition_object=self,
             loader=metadata_loader_local.load_definition,
         )
 
-    @classmethod
-    def register_custom(cls):
-        prefs = get_prefs()
+    def register_property_class(self):
+        c = ClassFactory(self.property_class_name, None, bpy.types.PropertyGroup)
+        c.__annotations__["name"] = bpy.props.StringProperty(name="Baker ID", default=self.id)
 
-        for library in prefs.baker_libraries:
-            library_root = Path(library.path)
-            if not library_root.exists() or not library_root.is_dir():
-                LOG.warning(f"Library path is not valid : {library_root}")
-                continue
+        for p in self.parameters:
+            LOG.info(f"Registering {self.id} Property : {p.identifier}")
+            c.__annotations__[p.identifier] = p.blender_property(update_baker_property)
 
-            blend_files = [f for f in library_root.iterdir() if f.is_file() and f.suffix.lower() == ".blend"]
+        from bpy.utils import register_class
 
-            if len(blend_files) == 0:
-                LOG.warning(f"No blend file found in {library.name} library")
+        register_class(c)
 
-            LOG.info(f"Registering Library : {library.name}")
-            for blend_file in blend_files:
-                custom_baker = cls()
-                baker_name = blend_file.stem.upper().replace(" ", "_")
-                custom_baker.id += f"_{baker_name}"
-                custom_baker.asset_path = blend_file
-                custom_baker.name = blend_file.stem.capitalize()
+        from ..parameters_definition.baker_settings import UBK_BakerSettings
 
-                LOG.info(f"Registering Custom Baker : {baker_name}")
-                registry_baker.register(custom_baker)
-
-                registry_definition.register_custom_lazy(
-                    identifier=custom_baker.id,
-                    asset_path=blend_file,
-                    loader=metadata_loader_custom.load_definition,
-                )
+        UBK_BakerSettings.__annotations__[self.settings_name] = bpy.props.PointerProperty(type=c)

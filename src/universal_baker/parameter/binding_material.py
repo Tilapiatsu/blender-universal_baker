@@ -4,15 +4,17 @@ from dataclasses import dataclass
 from typing import Any
 
 import bpy
+
 from universal_baker.constant import LOG
-from .parameter_context import ParameterContext
 
 from .binding import (
     ParameterBinding,
     ParameterBindingError,
 )
+from .parameter_context import ParameterContext
 
 LOG_SCOPE = "Material Binding"
+INVALID = "UBK_INVALID"
 
 
 @dataclass
@@ -31,7 +33,7 @@ class MaterialSocketBinding(ParameterBinding):
             raise ParameterBindingError(f"Material not found for parameter '{self.parameter_id}'.")
 
         for material in materials:
-            if materials is None:
+            if material is None:
                 raise ParameterBindingError(f"Material not found for parameter '{self.parameter_id}'.")
 
             if not material.use_nodes:
@@ -40,13 +42,15 @@ class MaterialSocketBinding(ParameterBinding):
             node = material.node_tree.nodes.get(self.node_name)
 
             if node is None:
+                LOG.error(f"Node {self.node_name} not found")
+                continue
                 raise ParameterBindingError(f"Node '{self.node_name}' not found in material '{material.name}'.")
 
             socket = node.inputs.get(self.socket_name)
 
             if socket is None:
-                socket = getattr(node, self.socket_name)
-                if socket is None:
+                socket = getattr(node, self.socket_name, INVALID)
+                if socket is INVALID:
                     raise ParameterBindingError(
                         f"Input socket '{self.socket_name}' not found on node '{self.node_name}'."
                     )

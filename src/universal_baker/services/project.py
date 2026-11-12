@@ -5,6 +5,7 @@ from uuid import uuid4
 import bpy
 
 from ..constant import LOG
+from ..runtime.runtime_manager import RuntimeManager
 from .collection_bake_group import BakeGroupService
 from .collection_target_object import TargetObjectService
 
@@ -38,6 +39,16 @@ class ProjectService:
             project.active_bake_group_index,
             len(project.bake_groups) - 1,
         )
+        if len(project.bake_groups) == 0:
+            runtime = RuntimeManager.current(context).bake_visualization
+            if runtime.active:
+                runtime.disable()
+                if project is None:
+                    return
+                project.visualization.refreshing = True
+                project.visualization.enabled_preview = False
+                project.visualization.enabled_display = False
+                project.visualization.refreshing = False
 
     @staticmethod
     def add_target_object(context, obj: bpy.types.Object):
@@ -154,6 +165,7 @@ class ProjectService:
 
         item = target_object.source_objects.add()
         item.object = obj
+        item.uuid = str(uuid4())
 
         target_object.active_source_object_index = len(target_object.source_objects) - 1
         return item

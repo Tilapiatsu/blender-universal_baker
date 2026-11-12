@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import OrderedDict
+
 from ..event import LogEvent
 from .base import BaseMiddleware
 

@@ -1,15 +1,16 @@
 from __future__ import annotations
+
 from pathlib import Path
 
 import bpy
+
 from universal_baker.runtime.settings_image import ColorManagementSettings
 
 from ..constant import LOG
-from ..runtime.output_artifact import OutputArtifact
-from ..runtime.tile_set import TileSet
-
 from ..resources.image import ImageResource
 from ..resources.image_buffer import ImageBuffer
+from ..runtime.output_artifact import OutputArtifact
+from ..runtime.tile_set import TileSet
 from .image_base import ImageServiceBase
 
 LOG_SCOPE = "Image IO"
@@ -40,41 +41,6 @@ class ImageIOService(ImageServiceBase):
             return cls.read_image(image)
 
     @classmethod
-    def write(cls, resource: ImageResource, tiles: TileSet) -> None:
-        """Write buffer to Image"""
-        with LOG.scope(LOG_SCOPE):
-            if not tiles.is_udim and not resource.is_udim:
-                buffer = tiles.base_buffer
-                assert buffer is not None
-                if buffer.dirty:
-                    return
-                cls.write_single(resource, buffer.buffer)
-
-            elif tiles.is_udim and resource.is_udim:
-                cls.write_udim(resource, tiles)
-
-            else:
-                LOG.error("Buffer and Image have to be compatible : Both using UDIM or both being single image.")
-
-    @staticmethod
-    def write_single(resource: ImageResource, buffer: ImageBuffer) -> None:
-        LOG.debug(f'Write Buffer "{buffer.name}" to Image "{resource.name}"')
-
-        image = resource.image
-        assert image is not None
-
-        if image.size[0] != resource.width or image.size[1] != resource.height:
-            image.scale(buffer.width, buffer.height)
-
-        buffer.write_to_blender_image(image)
-        image.update()
-
-    @staticmethod
-    def write_udim(resource: ImageResource, tiles: TileSet) -> None:
-        for udim, buffer in tiles.items():
-            pass
-
-    @classmethod
     def export_tiles(cls, artifact: OutputArtifact, tiles: TileSet) -> None:
         for tile in tiles.keys():
             artifact.image.tile_path(tile)
@@ -92,6 +58,8 @@ class ImageIOService(ImageServiceBase):
             image = bpy.data.images.load(str(path))
             image.colorspace_settings.name = colorspace_settings.colorspace
             image.use_view_as_render = True
+
+            image.name = image.name.split(".")[0]
 
             if is_udim:
                 image.source = "TILED"

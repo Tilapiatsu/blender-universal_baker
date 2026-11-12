@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import bpy
 
-# from ..core.registry_baker import registry_baker
+from ..constant import ICON_PACK
 
 
 class UBK_UL_PackList(bpy.types.UIList):
@@ -33,24 +33,30 @@ class UBK_UL_PackList(bpy.types.UIList):
 
         row.prop(pack_item, "enabled", text="")
 
-        row.label(text=pack_item.image_name, icon="NODE_COMPOSITING")
+        row = layout.row(align=True)
+        if not pack_item.enabled:
+            row.enabled = False
+
+        row.label(text=pack_item.image_name, icon=ICON_PACK)
 
         info = row.row()
         info.alignment = "RIGHT"
         info.enabled = False
 
         if pack_item.override_settings:
-            resolution = f"{pack_item.settings.width}×{pack_item.settings.height}"
+            resolution = f"{pack_item.settings.output_settings.width}×{pack_item.settings.output_settings.height}"
 
             info.label(text=resolution, icon="IMAGE_DATA")
 
         else:
             info.label(text="Global", icon="SETTINGS")
 
+        row = layout.row(align=True)
+
         pack = row.operator(
             "ubk.pack_selected",
             text="",
-            icon="NODE_COMPOSITING",
+            icon=ICON_PACK,
         )
 
         pack.index = index
