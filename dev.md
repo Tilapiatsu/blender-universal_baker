@@ -71,6 +71,7 @@ inputing 10% of the resulution for exemple
 - [ ] Vector Displacement
 - [ ] Vertex Color Channel
 - [ ] Wireframe ?
+- [ ] UV
 - [ ] Custom Shader ? -> Is it different than albedo
 - [ ] AOV Baking ?
 

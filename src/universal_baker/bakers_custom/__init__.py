@@ -3,6 +3,7 @@ from . import (
     curvature,
     normal_world_space,
     position,
+    thickness,
 )
 
 modules = (
@@ -10,6 +11,7 @@ modules = (
     curvature,
     normal_world_space,
     position,
+    thickness,
 )
 
 

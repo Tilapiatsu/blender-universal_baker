@@ -245,9 +245,6 @@ class MaterialInjectionService:
                 new_node.node_tree = node.node_tree
 
             if hasattr(node, "operation"):
-                new_node.opeation = node.operation
-
-            if hasattr(node, "operation"):
                 new_node.operation = node.operation
 
             if hasattr(node, "attribute_name"):
@@ -255,6 +252,9 @@ class MaterialInjectionService:
 
             if hasattr(node, "attribute_type"):
                 new_node.attribute_type = node.attribute_type
+
+            if hasattr(node, "inside"):
+                new_node.inside = node.inside
 
             node_mapping[node] = new_node
 
@@ -269,5 +269,4 @@ class MaterialInjectionService:
                 if not len(from_node.outputs) or not len(to_node.inputs):
                     continue
 
-                print(f"From {from_node.type} to {to_node.type}")
                 dst_tree.links.new(from_node.outputs[from_sock_idx], to_node.inputs[to_sock_idx])
