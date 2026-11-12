@@ -61,7 +61,7 @@ inputing 10% of the resulution for exemple
   - [ ] add option to add a bevel shader in the normal map ?
 - [X] Normal World Space
 - [X] Position
-- [ ] Thickness
+- [X] Thickness
 - [ ] ID
 - [ ] Mask
 - [ ] Opacity
