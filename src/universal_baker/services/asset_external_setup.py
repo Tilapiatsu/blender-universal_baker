@@ -1,5 +1,4 @@
 from __future__ import annotations
-from universal_baker.services.modifier_injection import ModifierInjectionService
 
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -15,6 +14,7 @@ from ..resources.asset_info import CageInfo, CageSkewInfo, SourcesInfo
 from ..runtime.asset_setup import AssetSetup
 from ..runtime.bake_objects import BakeObjects
 from ..services.bake_material import BakeMaterialService
+from ..services.modifier_injection import ModifierInjectionService
 from ..services.object_offset import ObjectOffset
 from ..services.parameter_service import ParameterService
 from .asset_external import AssetExternalService
@@ -25,7 +25,7 @@ LOG_SCOPE = "External Asset Setup Service"
 @dataclass(slots=True, frozen=True)
 class PrototypeData:
     obj: bpy.types.Object
-    material: bpy.types.Material
+    material: bpy.types.Material | None
 
 
 class ExternalAssetSetupError(RuntimeError):
@@ -78,15 +78,19 @@ class AssetExternalSetupBase:
     def get_prototype_data(asset: AssetExtrenal) -> PrototypeData:
         setup = AssetSetup()
         prototype = AssetExternalService.load_prototype(asset, setup)
-        copy = prototype.active_material.copy()
-
-        copy.use_nodes = True
+        if prototype.active_material is None:
+            copy = None
+        else:
+            copy = prototype.active_material.copy()
+            copy.use_nodes = True
 
         try:
             yield PrototypeData(material=copy, obj=prototype)
         finally:
             LOG.debug("Cleanup prototype material")
-            bpy.data.materials.remove(copy)
+            if copy:
+                bpy.data.materials.remove(copy)
+
             prototype_materials = [s.material for s in prototype.material_slots if s.material is not None]
             for m in prototype_materials:
                 bpy.data.materials.remove(m)

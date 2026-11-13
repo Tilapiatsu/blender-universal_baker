@@ -95,11 +95,12 @@ class CustomBaker(BakerBase):
             prototype = prototype_data.obj
             prototype_material = prototype_data.material
 
-            material.use_nodes = True
-            material.node_tree.nodes.clear()
-            material.node_tree.nodes.new("ShaderNodeOutputMaterial")
+            if prototype_material is not None:
+                material.use_nodes = True
+                material.node_tree.nodes.clear()
+                material.node_tree.nodes.new("ShaderNodeOutputMaterial")
 
-            MaterialInjectionService.copy(source_material=prototype_material, target_material=material)
+                MaterialInjectionService.copy(source_material=prototype_material, target_material=material)
 
             temp_objects: list[TempObject] = []
             if len(prototype.modifiers):
@@ -124,11 +125,12 @@ class CustomBaker(BakerBase):
         with AssetExternalBakeSetup.get_prototype_data(asset) as prototype_data:
             prototype_material = prototype_data.material
 
-            material.use_nodes = True
-            material.node_tree.nodes.clear()
-            material.node_tree.nodes.new("ShaderNodeOutputMaterial")
+            if prototype_material is not None:
+                material.use_nodes = True
+                material.node_tree.nodes.clear()
+                material.node_tree.nodes.new("ShaderNodeOutputMaterial")
 
-            MaterialInjectionService.copy(source_material=prototype_material, target_material=material)
+                MaterialInjectionService.copy(source_material=prototype_material, target_material=material)
 
     def configure_preview_modifier(self, objects: list[bpy.types.Object]) -> list[TempObject]:
         assert self.asset_path is not None

@@ -62,7 +62,7 @@ inputing 10% of the resulution for exemple
 - [X] Normal World Space
 - [X] Position
 - [X] Thickness
-- [ ] ID
+- [X] ID
 - [ ] Mask
 - [ ] Opacity
 - [ ] Roughness
