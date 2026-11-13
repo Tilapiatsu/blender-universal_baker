@@ -64,14 +64,15 @@ inputing 10% of the resulution for exemple
 - [X] Thickness
 - [X] ID
 - [ ] Mask
+- [ ] Displacement
 - [ ] Opacity
-- [ ] Roughness
+- [X] Roughness
 - [ ] Metalness
 - [ ] Glossiness
 - [ ] Vector Displacement
 - [ ] Vertex Color Channel
 - [ ] Wireframe ?
-- [ ] UV
+- [X] UV
 - [ ] Custom Shader ? -> Is it different than albedo
 - [ ] AOV Baking ?
 

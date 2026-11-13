@@ -104,6 +104,7 @@ class BakerBase(ABC):
     bake_colorspace: ImageColorSpace = ImageColorSpace.NON_COLOR
     image_colorspace: ImageColorSpace = ImageColorSpace.NON_COLOR
     color_management_info = ColorManagementInfo()
+    previewable: bool = True
 
     def poll(self, task: Task) -> bool:
         """Whether this baker can execute this task."""

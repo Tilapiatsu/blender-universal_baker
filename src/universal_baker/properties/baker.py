@@ -33,7 +33,7 @@ class UBK_Baker(PropertyGroup):
         name="Enabled",
         default=True,
     )
-
+    previewable: bpy.props.BoolProperty(name="Previewable", default=True)
     baker_settings: bpy.props.PointerProperty(type=UBK_BakerSettings)
 
     baker: EnumProperty(

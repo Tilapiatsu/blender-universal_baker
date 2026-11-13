@@ -221,6 +221,10 @@ class ParameterService:
             item.vectorfloat_value = (value[0], value[1], value[2])
             return
 
+        if parameter_type is ParameterType.STRING:
+            item.string_value = value
+            return
+
         raise ParameterServiceError(f"Unsupported parameter type: {parameter_type}")
 
     @classmethod

@@ -5,6 +5,7 @@ from . import (
     normal_world_space,
     position,
     thickness,
+    uv,
 )
 
 modules = (
@@ -14,6 +15,7 @@ modules = (
     position,
     thickness,
     id,
+    uv,
 )
 
 

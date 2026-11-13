@@ -9,7 +9,7 @@ from ..runtime.color_management_info import ColorManagementInfo
 from .base import BakerBase
 
 
-class NormalBaker(BakerBase):
+class Normal(BakerBase):
     """Bake the Normal."""
 
     id = "NORMAL"
@@ -210,7 +210,7 @@ class NormalBaker(BakerBase):
         value.location.y = add.location.y - 200
 
 
-classes = (NormalBaker,)
+classes = (Normal,)
 
 
 def register():

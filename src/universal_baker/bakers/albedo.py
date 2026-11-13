@@ -7,8 +7,8 @@ from ..parameter.parameter import ParameterSource, ParameterType
 from .base import BakerBase
 
 
-class AlbedoBaker(BakerBase):
-    """Bake the diffuse/albedo color."""
+class Albedo(BakerBase):
+    """Bake the albedo color."""
 
     id = "ALBEDO"
     name = "Albedo"
@@ -90,7 +90,7 @@ class AlbedoBaker(BakerBase):
         return parameters
 
 
-classes = (AlbedoBaker,)
+classes = (Albedo,)
 
 
 def register():

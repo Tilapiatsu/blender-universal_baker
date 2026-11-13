@@ -9,8 +9,8 @@ from ..runtime.color_management_info import ColorManagementInfo
 from .base import BakerBase
 
 
-class DiffuseBaker(BakerBase):
-    """Bake the diffuse/albedo color."""
+class Diffuse(BakerBase):
+    """Bake the diffuse color."""
 
     id = "DIFFUSE"
     name = "Diffuse"
@@ -100,7 +100,7 @@ class DiffuseBaker(BakerBase):
         return parameters
 
 
-classes = (DiffuseBaker,)
+classes = (Diffuse,)
 
 
 def register():

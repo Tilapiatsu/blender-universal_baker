@@ -2,12 +2,14 @@ from . import (
     albedo,
     diffuse,
     normal,
+    roughness,
 )
 
 modules = (
     diffuse,
     albedo,
     normal,
+    roughness,
 )
 
 

@@ -354,13 +354,19 @@ class UBK_PT_BakerPanel(UBK_PT_MainPanel, bpy.types.Panel):
 
             column = box.column(align=True)
 
-            column.prop(
-                project.visualization,
-                "enabled_preview",
-                text=f"Preview {baker.image_name}",
-                toggle=1,
-                icon=ICON_PREVIEW_ENABLE if project.visualization.enabled_preview else ICON_PREVIEW,
-            )
+            if baker.previewable:
+                column.prop(
+                    project.visualization,
+                    "enabled_preview",
+                    text=f"Preview {baker.image_name}",
+                    toggle=1,
+                    icon=ICON_PREVIEW_ENABLE if project.visualization.enabled_preview else ICON_PREVIEW,
+                )
+            else:
+                column1 = column.column(align=True)
+                column1.label(text="This Baker Cannot be previewed")
+                column1.enabled = False
+
             if project.visualization.cage_edit or project.visualization.skew_edit:
                 column.enabled = False
 

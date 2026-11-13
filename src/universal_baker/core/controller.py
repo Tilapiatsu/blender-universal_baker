@@ -147,10 +147,15 @@ class BakeController:
         if not bake_group:
             return None
 
+        producer = registry_baker[baker_id]
+        if producer is None:
+            return None
+
         baker = bake_group.bakers.add()
         baker.baker = baker_id
-        baker.image_name = registry_baker[baker_id].name.title()
+        baker.image_name = producer.name.title()
         baker.uuid = str(uuid4())
+        baker.previewable = producer.previewable
         bake_group.active_baker_index = len(bake_group.bakers) - 1
 
         ProjectSynchronizer.synchronize_project(cls.project(context))
