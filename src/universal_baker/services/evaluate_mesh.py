@@ -94,11 +94,11 @@ class EvaluateObject(Evaluate):
     def needs_evaluation(self) -> bool:
         return super().needs_evaluation
 
-    def evaluate(self) -> bpy.types.Object | None:
+    def evaluate(self, force: bool = False) -> bpy.types.Object | None:
         if self.obj is None:
             return
 
-        if self.needs_evaluation:
+        if force or self.needs_evaluation:
             self.visibility_override.set_visibility()
             with LOG.scope(LOG_SCOPE), self._ensure_in_scene():
                 LOG.debug(f"Evaluate Object {self.obj.name}")

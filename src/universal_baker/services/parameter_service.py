@@ -225,6 +225,10 @@ class ParameterService:
             item.string_value = value
             return
 
+        if parameter_type is ParameterType.OBJ:
+            item.string_value = value
+            return
+
         raise ParameterServiceError(f"Unsupported parameter type: {parameter_type}")
 
     @classmethod

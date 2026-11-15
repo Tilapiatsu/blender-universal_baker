@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import ABC
 from collections.abc import Generator
 from contextlib import ExitStack, contextmanager
-from sys import activate_stack_trampoline
 from typing import TYPE_CHECKING, Any
 
 import bpy
@@ -19,10 +18,12 @@ from ..parameter.parameter_applier import ParameterApplier
 from ..parameter.parameter_context import ParameterContext
 from ..runtime.asset_setup import AssetSetup, BakerExecution
 from ..runtime.bake_objects import BakeObjects
+from ..runtime.bake_targets import BakeTargets
 from ..runtime.color_management_info import ColorManagementInfo
 from ..runtime.runtime_manager import RuntimeManager
 from ..services.artifact_service import ArtifactService
 from ..services.bake_material import BakeMaterialService
+from ..services.data_removal import MaterialRemoval
 from ..services.image_bake import ImageServiceBake
 from ..services.material import MaterialService
 from ..services.renderer import RendererService
@@ -65,21 +66,23 @@ def update_baker_property(self, context):
     baker = registry_baker[active_baker.baker]
 
     for o in bake_runtime.bake_visualization.bake_targets:
-        if o.type != "MESH":
-            continue
+        for obj in o.bake_targets:
+            if obj.type != "MESH":
+                continue
 
-        materials = [s.material for s in o.material_slots if s is not None and s.material is not None]
+            materials = [s.material for s in obj.material_slots if s is not None and s.material is not None]
 
-        context = ParameterContext(
-            object=o,
-            materials=materials,
-            ui_prop=self,
-            is_dragging=bpy.context.scene.ubk_project.visualization.is_dragging,
-            value_function=baker.parameter_value,
-            bake_targets=active_bake_group.bake_targets,
-        )
+            context = ParameterContext(
+                object=obj,
+                target_uuid=o.uuid,
+                materials=materials,
+                ui_prop=self,
+                is_dragging=bpy.context.scene.ubk_project.visualization.is_dragging,
+                value_function=baker.parameter_value,
+                bake_targets=bake_runtime.bake_visualization.bake_targets,
+            )
 
-        ParameterApplier.apply_baker(definition, context)
+            ParameterApplier.apply_baker(definition, context)
 
 
 class BakerBase(ABC):
@@ -154,9 +157,15 @@ class BakerBase(ABC):
 
             material_setup.cleanup()
 
-    def configure_preview(self, material: bpy.types.Material, objects: list[bpy.types.Object]) -> list[TempObject]:
+    def configure_preview(self, material: bpy.types.Material, objects: list[BakeTargets]) -> list[TempObject]:
         self.configure_preview_material(material)
-        temp_objects = self.configure_preview_modifier(objects)
+
+        targets = []
+
+        for o in objects:
+            targets += o.bake_targets
+
+        temp_objects = self.configure_preview_modifier(targets)
         return temp_objects
 
     def configure_preview_material(self, material: bpy.types.Material):
@@ -222,7 +231,16 @@ class BakerBase(ABC):
 
         MaterialService.prepare(ctx)
 
+        source_material = bpy.data.materials.new(name="UBK_SOURCE_MATERIAL")
+        ctx.temp_materials.append(source_material.name)
+
+        ctx.temp_objects = self.configure_preview(material=source_material, objects=ctx.all_bake_targets)
+
         self.apply_parameters(ctx)
+
+    def revert_temp_objects(self, ctx: BakeContext):
+        for t in ctx.temp_objects:
+            t.cleanup()
 
     def get_visibility_overrides(self, ctx: BakeContext) -> list[VisibilityOverride]:
         """Get Visibility."""
@@ -238,6 +256,15 @@ class BakerBase(ABC):
         LOG.debug("Restoring ...")
         """Restore Blender."""
         ctx.image.reset()
+        self.revert_temp_objects(ctx)
+
+        # NOTE: Remove TemporaryMaterials
+        for m in ctx.temp_materials:
+            mat = bpy.data.materials.get(m)
+            if mat is None:
+                continue
+
+            MaterialRemoval.remove_material(mat)
 
     def update_baker(self, ctx: BakeContext) -> None:
         LOG.debug("Update Baker ...")
@@ -311,35 +338,25 @@ class BakerBase(ABC):
             LOG.error("Bake Settings not found")
             return
 
-        materials = ctx.baker_materials
-
-        if materials is None:
-            LOG.error("Material Overrides not found")
-            return
-
-        objects = ctx.baker_material_objects
-
         LOG.debug("Applying baker parameters")
-        for o in objects:
-            object_materials = materials.get(o.name)
+        for o in ctx.bake_targets:
+            for bt in o.bake_targets:
+                obj_materials = [o.material for o in bt.material_slots if o.material is not None]
 
-            if object_materials is None:
-                LOG.error(f"Material Overrides not found for {o.name}")
-                continue
+                parameter_context = ParameterContext(
+                    object=bt,
+                    target_uuid=o.uuid,
+                    materials=obj_materials,
+                    scene=ctx.scene,
+                    ui_prop=getattr(ctx.task.baker_settings, self.settings_name),
+                    value_function=self.parameter_value,
+                    bake_targets=ctx.all_bake_targets,
+                )
 
-            parameter_context = ParameterContext(
-                object=o,
-                materials=object_materials.materials,
-                scene=ctx.scene,
-                ui_prop=getattr(ctx.task.baker_settings, self.settings_name),
-                value_function=self.parameter_value,
-                bake_targets=ctx.task.bake_group.bake_targets if ctx.task.bake_group is not None else [],
-            )
-
-            ParameterApplier.apply_baker(
-                definition,
-                parameter_context,
-            )
+                ParameterApplier.apply_baker(
+                    definition,
+                    parameter_context,
+                )
 
     def register_local(self):
         LOG.info(f"Registering Building Baker : {self.id}")

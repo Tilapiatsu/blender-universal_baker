@@ -103,9 +103,6 @@ class UV(CustomBaker):
         return parameters
 
     def parameter_value(self, value_name: str, context: ParameterContext) -> Any:
-        if context.bake_targets is None:
-            return None
-
         match value_name:
             case "ActiveUVMap":
                 active = getattr(context.ui_prop, "ActiveUV", None)

@@ -10,6 +10,7 @@ from bpy.props import (
 )
 from bpy.types import PropertyGroup
 
+from ..runtime.bake_targets import BakeTargets
 from ..services.visualization_bake import update_visualization
 from ..services.visualization_cage import update_active_target
 from .baker import UBK_Baker
@@ -71,14 +72,17 @@ class UBK_BakeGroup(PropertyGroup):
         return [o.object for o in self.target_objects if o.enabled and o.object is not None]
 
     @property
-    def bake_targets(self) -> list[bpy.types.Object]:
+    def bake_targets(self) -> list[BakeTargets]:
         bake_targets = []
 
         for target in self.target_objects:
-            if target.have_source:
-                bake_targets += target.source_object_list
-            else:
-                bake_targets.append(target.object)
+            bake_targets.append(
+                BakeTargets(
+                    uuid=target.uuid,
+                    target=target.object,
+                    sources=target.source_object_list,
+                )
+            )
 
         return bake_targets
 

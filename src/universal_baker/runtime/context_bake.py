@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 import bpy
 
+
 if TYPE_CHECKING:
     from ..bakers.base import BakerBase
     from .image_handle import ImageHandle
@@ -14,6 +15,8 @@ if TYPE_CHECKING:
 from ..properties.project import UBK_Project
 from ..resources.image import ImageResource
 from ..resources.material import MaterialResources
+from ..runtime.bake_targets import BakeTargets
+from ..services.temp_object import TempObject
 from .context import ExecutionContext
 from .settings_bake import BakeSettings
 
@@ -38,6 +41,10 @@ class BakeContext(ExecutionContext):
     _cage: bpy.types.Object | None = None
     _bg_objects: list[bpy.types.Object] | None = None
 
+    bake_targets: list[BakeTargets] = field(default_factory=list)
+    temp_objects: list[TempObject] = field(default_factory=list)
+    temp_materials: list[str] = field(default_factory=list)
+
     finished: bool = False
     success: bool = False
     message: str = ""
@@ -55,18 +62,15 @@ class BakeContext(ExecutionContext):
         return self.session.context.scene
 
     @property
-    def baker_material_objects(self) -> list[bpy.types.Object]:
-        if self.selected_to_active:
-            return self.sources
-        else:
-            return [self.target]
-
-    @property
     def baker_materials(self):
         if self.selected_to_active:
             return self.sources_materials
         else:
             return self.target_materials
+
+    @property
+    def all_bake_targets(self) -> list[BakeTargets]:
+        return self.task.bake_targets
 
     @property
     def target(self) -> bpy.types.Object:

@@ -67,8 +67,11 @@ class AssetSetup:
                     MaterialRemoval.remove_material(material)
 
             for library in self.temporary_libraries:
-                LOG.debug(f"Remove Temporary Library: {library.name}")
-                LibraryRemoval.remove_library(library)
+                try:
+                    LOG.debug(f"Remove Temporary Library: {library.name}")
+                    LibraryRemoval.remove_library(library)
+                except ReferenceError:
+                    continue
 
             self.temporary_materials.clear()
 

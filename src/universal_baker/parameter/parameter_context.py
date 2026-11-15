@@ -7,6 +7,7 @@ from typing import Any
 import bpy
 
 from ..properties.parameter_value import UBK_ParameterValue
+from ..runtime.bake_targets import BakeTargets
 
 
 @dataclass
@@ -18,12 +19,13 @@ class ParameterContext:
     """
 
     object: bpy.types.Object
+    target_uuid: str | None = None
     materials: list[bpy.types.Material] | None = None
     ui_prop: UBK_ParameterValue | None = None
     scene: bpy.types.Scene | None = None
     is_dragging: bool = False
     value_function: Callable | None = None
-    bake_targets: list[bpy.types.Objects] | None = None
+    bake_targets: list[BakeTargets] | None = None
 
     # Gives bindings an escape hatch for more complex assets.
     data: dict[str, Any] | None = None

@@ -15,7 +15,9 @@ from ..parameter.baker_custom.metadata_loader import MetadataLoader as metadata_
 from ..resources.asset_external import AssetExtrenal
 from ..runtime.asset_setup import BakerExecution
 from ..runtime.bake_objects import BakeObjects
+from ..runtime.bake_targets import BakeTargets
 from ..services.asset_external_setup import AssetExternalBakeSetup
+from ..services.evaluate_mesh import EvaluateObject
 from ..services.material_injection import MaterialInjectionService
 from ..services.modifier_injection import ModifierInjectionService
 from ..services.temp_object import TempObject
@@ -87,9 +89,14 @@ class CustomBaker(BakerBase):
                 obj.hide_render = render
             setup.cleanup()
 
-    def configure_preview(self, material: bpy.types.Material, objects: list[bpy.types.Object]) -> list[TempObject]:
+    def configure_preview(self, material: bpy.types.Material, objects: list[BakeTargets]) -> list[TempObject]:
         assert self.asset_path is not None
         asset = AssetExtrenal(filepath=self.asset_path)
+
+        targets = []
+
+        for o in objects:
+            targets += o.bake_targets
 
         with AssetExternalBakeSetup.get_prototype_data(asset) as prototype_data:
             prototype = prototype_data.obj
@@ -104,17 +111,17 @@ class CustomBaker(BakerBase):
 
             temp_objects: list[TempObject] = []
             if len(prototype.modifiers):
-                for o in objects:
-                    copy = o.copy()
-                    copy.name = f"{o.name}_MODIFIER_INJECTED"
+                for o in targets:
+                    evaluate_object = EvaluateObject(o)
+                    evaluated_object = evaluate_object.evaluate(force=True)
 
-                    temp_object = TempObject(new_obj=copy, recover_obj=o, cleanup=True)
+                    temp_object = TempObject(new_obj=evaluated_object, recover_obj=o, cleanup=True)
                     temp_objects.append(temp_object)
 
                     for c in o.users_collection:
-                        c.objects.link(copy)
+                        c.objects.link(evaluated_object)
 
-                    ModifierInjectionService.inject(source=prototype, target=copy)
+                    ModifierInjectionService.inject(source=prototype, target=evaluated_object)
 
         return temp_objects
 
@@ -142,16 +149,16 @@ class CustomBaker(BakerBase):
             temp_objects: list[TempObject] = []
             if len(prototype.modifiers):
                 for o in objects:
-                    copy = o.copy()
-                    copy.name = f"{o.name}_MODIFIER_INJECTED"
+                    evaluate_object = EvaluateObject(o)
+                    evaluated_object = evaluate_object.evaluate(force=True)
 
-                    temp_object = TempObject(new_obj=copy, recover_obj=o, cleanup=True)
+                    temp_object = TempObject(new_obj=evaluated_object, recover_obj=o, cleanup=True)
                     temp_objects.append(temp_object)
 
                     for c in o.users_collection:
-                        c.objects.link(copy)
+                        c.objects.link(evaluated_object)
 
-                    ModifierInjectionService.inject(source=prototype, target=copy)
+                    ModifierInjectionService.inject(source=prototype, target=evaluated_object)
 
         return temp_objects
 

@@ -1,4 +1,5 @@
 from __future__ import annotations
+from requests.packages import target
 
 from contextlib import contextmanager
 from typing import TYPE_CHECKING
@@ -16,6 +17,7 @@ from ..properties.parameter_value import UBK_ParameterValue
 from ..services.temp_collection import TempCollection
 from ..services.temp_object import TempObject
 from ..services.visibility_override import VisibilityOverride
+from .bake_targets import BakeTargets
 from .image_handle import ImageHandle
 
 if TYPE_CHECKING:
@@ -60,7 +62,7 @@ class BakeVisualizationRuntime:
         self._object_visibilities: list[VisibilityOverride] = []
         self._temp_collection: TempCollection | None = None
         self._temp_objects: list[TempObject] | None = None
-        self._bake_targets: list[bpy.types.Object] | None = None
+        self._bake_targets: list[BakeTargets] | None = None
 
     # ------------------------------------------------------------------
     # State
@@ -137,7 +139,7 @@ class BakeVisualizationRuntime:
         return self._temp_objects
 
     @property
-    def bake_targets(self) -> list[bpy.types.Object] | None:
+    def bake_targets(self) -> list[BakeTargets] | None:
         if not self._active or self.bake_group_uuid is None or self.temp_objects is None:
             return None
 
@@ -155,11 +157,29 @@ class BakeVisualizationRuntime:
             targets = bake_group.bake_targets
 
             for o in targets:
-                temp = temp_obj.get(o)
-                if temp is None:
-                    self._bake_targets.append(o)
+                if o.have_source:
+                    temps = []
+                    for s in o.sources:
+                        temp = temp_obj.get(s)
+                        if temps is not None:
+                            temps.append(temp)
+
+                    self._bake_targets.append(
+                        BakeTargets(
+                            uuid=o.uuid,
+                            target=o.target,
+                            sources=temps,
+                        )
+                    )
                 else:
-                    self._bake_targets.append(temp)
+                    temp = temp_obj.get(o.target)
+                    self._bake_targets.append(
+                        BakeTargets(
+                            uuid=o.uuid,
+                            target=temp,
+                            sources=[],
+                        )
+                    )
 
         return self._bake_targets
 
@@ -446,11 +466,6 @@ class BakeVisualizationRuntime:
         from ..core.controller import BakeController
 
         baker = BakeController.get_baker_from_uuid(self.producer_uuid)
-        active_bake_group = BakeController.active_bake_group(bpy.context)
-
-        if active_bake_group is None:
-            LOG.error("No Active Baker Group")
-            return
 
         if baker is None:
             LOG.error("No Active Baker found")
@@ -463,22 +478,24 @@ class BakeVisualizationRuntime:
             return
 
         for o in self.bake_targets:
-            if o.type != "MESH":
-                continue
+            for obj in o.bake_targets:
+                if obj.type != "MESH":
+                    continue
 
-            materials = [s.material for s in o.material_slots if s is not None and s.material is not None]
+                materials = [s.material for s in obj.material_slots if s is not None and s.material is not None]
 
-            context = ParameterContext(
-                object=o,
-                materials=materials,
-                ui_prop=ui_props,
-                scene=bpy.context.scene,
-                is_dragging=False,
-                value_function=producer.parameter_value,
-                bake_targets=active_bake_group.bake_targets,
-            )
+                context = ParameterContext(
+                    object=obj,
+                    target_uuid=o.uuid,
+                    materials=materials,
+                    ui_prop=ui_props,
+                    scene=bpy.context.scene,
+                    is_dragging=False,
+                    value_function=producer.parameter_value,
+                    bake_targets=self.bake_targets,
+                )
 
-            ParameterApplier.apply_baker(definition, context)
+                ParameterApplier.apply_baker(definition, context)
 
     def refresh_preview_parameters(self, ui_prop: UBK_ParameterValue | None = None, force: bool = False):
         """Make sure the UI property element binds propely to the material, modifier or geometry node element defined in

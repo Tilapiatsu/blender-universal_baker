@@ -387,7 +387,12 @@ class BakeVisualizationService:
         # from ..services.visualization_cage import CageVisualizationService
         #
         # CageVisualizationService.disable()
-        #
+
+        bake_targets = []
+        if isinstance(data, PreviewData):
+            for bt in data.bake_targets:
+                bake_targets += [t.name for t in bt.bake_targets]
+
         cls._runtime.begin(
             mode=data.mode,
             producer=data.producer,
@@ -398,7 +403,7 @@ class BakeVisualizationService:
             projection_target=data.projection_target.name
             if isinstance(data, PreviewData) and data.projection_target is not None
             else None,
-            bake_group_targets=[o.name for o in data.bake_targets] if isinstance(data, PreviewData) else [],
+            bake_group_targets=bake_targets,
         )
 
         cls._capture_state(data)
@@ -429,13 +434,16 @@ class BakeVisualizationService:
                 cls._runtime.set_temp_objects(temp_objects)
 
                 bake_targets = cls._runtime.bake_targets if cls._runtime.bake_targets is not None else data.bake_targets
+                bake_target_objects = []
+                for bt in bake_targets:
+                    bake_target_objects += bt.bake_targets
 
                 if PreviewData.projection_target is None and data.mode == BakeVisualizationMode.PREVIEW_CAGE:
                     raise RuntimeError("Cage Projection Target is None")
                 elif data.projection_target is not None and data.mode == BakeVisualizationMode.PREVIEW_CAGE:
-                    mat_override_objects = [o for o in bake_targets if o != data.projection_target]
+                    mat_override_objects = [o for o in bake_target_objects if o != data.projection_target]
                 else:
-                    mat_override_objects = bake_targets
+                    mat_override_objects = bake_target_objects
 
                 snapshots = MaterialOverrideService.apply(mat_override_objects, source_material, inject=True)
 

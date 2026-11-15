@@ -123,12 +123,16 @@ class Position(CustomBaker):
         if context.bake_targets is None:
             return None
 
+        targets = []
+        for o in context.bake_targets:
+            targets += o.bake_targets
+
         match value_name:
             case "BBoxMin":
-                min, max = BoundingBoxService.get_world_aabb(context.bake_targets)
+                min, _ = BoundingBoxService.get_world_aabb(targets)
                 return min
             case "BBoxMax":
-                min, max = BoundingBoxService.get_world_aabb(context.bake_targets)
+                _, max = BoundingBoxService.get_world_aabb(targets)
                 return max
             case _:
                 return None

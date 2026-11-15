@@ -17,6 +17,7 @@ from ..constant import LOG, UBK_SUBFOLDER_OBJECT_BUFFER
 from ..core.output_resolver import OutputResolver
 from ..logger.event import ScopeState
 from ..logger_bake_middleware.bake_summary import BakeStatus, EventCategory
+from ..runtime.bake_targets import BakeTargets
 from ..runtime.settings_bake import BakeSettings
 from ..runtime.settings_cage import CageSettings
 from .task import OutputTask
@@ -36,6 +37,7 @@ class BakeTask(OutputTask):
     settings_cage: CageSettings
     image_name: str
     uv_layer: str
+    bake_targets: list[BakeTargets]
     id: str = "BAKE"
 
     has_multiple_targets: bool = False

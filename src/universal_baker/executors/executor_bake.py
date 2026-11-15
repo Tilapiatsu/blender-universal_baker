@@ -5,6 +5,7 @@ from ..core.registry_baker import registry_baker
 from ..core.registry_executor import registry_executor
 from ..logger.event import ScopeState
 from ..logger_bake_middleware.bake_summary import EventCategory
+from ..runtime.bake_targets import BakeTargets
 from ..runtime.context import ExecutionContext
 from ..runtime.context_bake import BakeContext
 from ..runtime.session import ExecutionSession
@@ -53,6 +54,13 @@ class BakeExecutorInternal(TaskExecutor):
                 ctx.target = bake_target.target
                 ctx.sources = bake_target.sources
                 ctx.cage = bake_target.cage
+                ctx.bake_targets = [
+                    BakeTargets(
+                        uuid=ctx.task.target_object_uuid,
+                        target=ctx.target,
+                        sources=ctx.sources,
+                    )
+                ]
 
                 execution.execute(
                     session=session,

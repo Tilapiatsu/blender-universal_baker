@@ -18,6 +18,7 @@ from ..factories.settings_pack import PackSettingsResolver
 from ..resources.ownership import OwnershipDatas
 from ..resources.uv import UVLayout
 from ..runtime import color_management_info
+from ..runtime.bake_targets import BakeTargets
 from ..runtime.job import Job
 from ..runtime.label_set import LabelSet
 from ..runtime.settings_accumulate import AccumulateSettings
@@ -49,6 +50,7 @@ class ExecutionPlanner:
             from .controller import BakeController
 
             bg_objects = []
+            all_bake_targets = []
             # NOTE: First loop to register background Objects
             for grp_idx, group in enumerate(project.bake_groups):
                 if group_index == -1:
@@ -66,6 +68,14 @@ class ExecutionPlanner:
                         bg_objects += obj.source_object_list
                     else:
                         bg_objects.append(obj.object)
+
+                    all_bake_targets.append(
+                        BakeTargets(
+                            uuid=obj.uuid,
+                            target=obj.object,
+                            sources=obj.source_object_list,
+                        )
+                    )
 
             job = Job()
 
@@ -202,6 +212,7 @@ class ExecutionPlanner:
                             baker_uuid=baker.uuid,
                             execution_scope=obj.object.name,
                             enabled=True,
+                            bake_targets=all_bake_targets,
                             output_context=output_context,
                             color_management_info=baker_producer.color_management_info,
                             target_object_uuid=obj.uuid,

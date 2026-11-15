@@ -1,6 +1,7 @@
 from . import (
     ambient_occlusion,
     curvature,
+    displacement,
     id,
     normal_world_space,
     position,
@@ -16,6 +17,7 @@ modules = (
     thickness,
     id,
     uv,
+    displacement,
 )
 
 
