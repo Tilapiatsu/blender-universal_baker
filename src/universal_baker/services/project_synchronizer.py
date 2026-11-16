@@ -5,6 +5,8 @@ import bpy
 from ..constant import LOG
 from ..core.registry_baker import registry_baker
 from ..core.registry_definition import registry_definition
+from ..enum.image_colorspace import ImageColorSpace
+from ..enum.view_transform import DisplayDevice, ViewTransform
 from ..parameter.baker_custom.definition import CustomBakerDefinition
 from ..runtime.color_management_info import ColorManagementInfo
 from ..runtime.runtime_manager import RuntimeManager
@@ -35,11 +37,11 @@ class ProjectSynchronizer:
 
                 if isinstance(definition, CustomBakerDefinition):
                     baker_producer = registry_baker[baker.baker]
-                    baker_producer.bake_colorspace = definition.bake_colorspace
-                    baker_producer.image_colorspace = definition.image_colorspace
+                    baker_producer.bake_colorspace = ImageColorSpace(definition.bake_colorspace)
+                    baker_producer.image_colorspace = ImageColorSpace(definition.image_colorspace)
                     baker_producer.color_management_info = ColorManagementInfo(
-                        display_device=definition.display_device,
-                        view_transform=definition.view_transform,
+                        display_device=DisplayDevice(definition.display_device),
+                        view_transform=ViewTransform(definition.view_transform),
                         look=definition.look,
                         exposure=definition.exposure,
                         gamma=definition.gamma,

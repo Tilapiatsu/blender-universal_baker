@@ -356,35 +356,3 @@ class RendererService:
             skew_image=ctx.task.settings_cage.skew_map,
             uv_layer_name=ctx.task.uv_layer,
         )
-
-    @classmethod
-    def bake_skew(cls, ctx: BakeContext):
-        from ..services.bake_projection import ProjectionBakeService
-
-        tiles = ctx.task.uv_layout.udim_tiles
-
-        service = ProjectionBakeService()
-
-        tile_set = service.bake(
-            target=ctx.target,
-            cage=ctx.cage,
-            sources=ctx.sources,
-            uv_layer_name=ctx.task.uv_layer,
-            width=ctx.output_settings.path.width,
-            height=ctx.output_settings.path.height,
-            max_ray_distance=ctx.task.settings_cage.max_ray_distance,
-            depsgraph=ctx.blender_context.evaluated_depsgraph_get(),
-            tiles=tiles,
-        )
-        image = ctx.image.image
-        if image is None:
-            raise RuntimeError("Bake image has not been acquired properly.")
-
-        ctx.image = ImageResource.from_tileset(
-            tile_set,
-            ctx.image.name,
-            ctx.task.absolute_filepath,
-            ctx.task.output_context.output_settings,
-            ctx.task.color_management_info,
-            ctx.task.uv_layout.image_layout == ImageLayout.UDIM,
-        )
