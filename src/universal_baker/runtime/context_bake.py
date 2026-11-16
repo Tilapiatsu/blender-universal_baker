@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING
 
 import bpy
 
-
 if TYPE_CHECKING:
     from ..bakers.base import BakerBase
     from .image_handle import ImageHandle

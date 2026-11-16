@@ -4,6 +4,7 @@ import bpy
 
 from ..constant import ICON_BAKE
 from ..core.registry_baker import registry_baker
+from ..runtime.runtime_manager import RuntimeManager
 
 
 class UBK_UL_BakerList(bpy.types.UIList):
@@ -23,13 +24,13 @@ class UBK_UL_BakerList(bpy.types.UIList):
         bake_map = item
 
         if self.layout_type in {"DEFAULT", "COMPACT"}:
-            self.draw_default(layout, bake_map, index)
+            self.draw_default(layout, context, bake_map, index)
 
         elif self.layout_type == {"GRID"}:
             layout.alignment = "CENTER"
             layout.label(icon="TEXTURE")
 
-    def draw_default(self, layout, item, index: int):
+    def draw_default(self, layout, context, item, index: int):
 
         row = layout.row(align=True)
 
@@ -46,7 +47,15 @@ class UBK_UL_BakerList(bpy.types.UIList):
             baker = registry_baker[item.baker]
 
         if baker:
-            row.label(text=f"{baker.name}", icon=baker.icon)
+            runtime = RuntimeManager.current(context)
+            pcoll = runtime.image_preview.get(item.uuid)
+            if pcoll is None:
+                row.label(
+                    text=f"{baker.name}",
+                    icon=baker.icon,
+                )
+            else:
+                row.label(text=f"{baker.name}", icon_value=pcoll[item.accumulated_image.name].icon_id)
 
         else:
             row.label(text=item.baker, icon="QUESTION")

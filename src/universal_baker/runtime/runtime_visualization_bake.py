@@ -1,5 +1,4 @@
 from __future__ import annotations
-from requests.packages import target
 
 from contextlib import contextmanager
 from typing import TYPE_CHECKING

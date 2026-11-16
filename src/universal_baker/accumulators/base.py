@@ -41,7 +41,7 @@ class AccumulatorBase(ABC):
     def execute(self, ctx: AccumulateContext) -> None:
         """Prepare, bake and cleanup all at once."""
         with LOG.scope(LOG_SCOPE):
-            LOG.info(f"{str(ctx.task)}")
+            LOG.info(f"{ctx.task!s}")
 
             try:
                 self.invalidate_previous_output(ctx)
@@ -50,6 +50,7 @@ class AccumulatorBase(ABC):
                 self.update_baker(ctx)
                 self.create_artifact(ctx)
                 self.export_file(ctx)
+                self.update_preview_images(ctx)
             finally:
                 self.cleanup(ctx)
 
@@ -122,6 +123,20 @@ class AccumulatorBase(ABC):
 
         baker.accumulated_image = ctx.image.image
         baker.accumulated_uuid = ctx.task.uuid
+
+    def update_preview_images(self, ctx: AccumulateContext) -> None:
+        import bpy
+
+        from ..core.controller import BakeController
+        from ..runtime.runtime_manager import RuntimeManager
+
+        baker = BakeController.get_baker_from_uuid(ctx.task.baker_uuid)
+        if baker is None:
+            LOG.warning("Baker not found")
+            return
+
+        runtime = RuntimeManager.current(bpy.context)
+        runtime.image_preview.update(ctx.image.image, baker.uuid)
 
     @abstractmethod
     def create_artifact(self, ctx: AccumulateContext) -> None:

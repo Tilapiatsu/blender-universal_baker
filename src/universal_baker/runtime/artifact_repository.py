@@ -5,9 +5,8 @@ from collections import defaultdict
 import bpy
 
 from ..constant import LOG
-from .output_artifact import OutputArtifact
 from ..properties.project import UBK_Project
-
+from .output_artifact import OutputArtifact
 
 LOG_SCOPE = "Artifact Repository"
 
@@ -35,22 +34,26 @@ class ArtifactRepository:
         return self.scene.ubk_project
 
     def rebuild(self) -> None:
-        self._artifacts: dict[str, OutputArtifact] = {}
-        self._bake_group_index = defaultdict(list)
-        self._producer_index = defaultdict(list)
-        self._target_object_index = defaultdict(list)
-
         if self.project is None:
             LOG.error("Invalid Scene or Project")
             return
+        if len(self.project.artifacts) > 0:
+            self._artifacts: dict[str, OutputArtifact] = {}
+            self._bake_group_index = defaultdict(list)
+            self._producer_index = defaultdict(list)
+            self._target_object_index = defaultdict(list)
 
-        for pg in self.project.artifacts:
-            artifact = OutputArtifact(self.scene, pg)
+            for pg in self.project.artifacts:
+                LOG.debug(f"Rebuild Artifact : {pg.name} | {pg.producer_uuid}")
+                artifact = OutputArtifact(self.scene, pg)
 
-            self._artifacts[artifact.uuid] = artifact
-            self._bake_group_index[artifact.bake_group_uuid].append(artifact)
-            self._producer_index[artifact.producer_uuid].append(artifact)
-            self._target_object_index[artifact.target_object_uuid].append(artifact)
+                self._artifacts[artifact.uuid] = artifact
+                self._bake_group_index[artifact.bake_group_uuid].append(artifact)
+                self._producer_index[artifact.producer_uuid].append(artifact)
+                self._target_object_index[artifact.target_object_uuid].append(artifact)
+
+            if self.scene is not None:
+                print(f"After Rebuild {self.scene.name} :", len(self._bake_group_index), "artifact(s)")
 
     def all(self) -> list[OutputArtifact]:
         return list(self._artifacts.values())
@@ -70,9 +73,9 @@ class ArtifactRepository:
     def resolve_baker(self, bake_group_uuid: str, producer_uuid: str) -> list[OutputArtifact]:
         with LOG.scope(LOG_SCOPE):
             LOG.debug("Resolving Output")
-            return [
-                artifact for artifact in self.by_bake_group(bake_group_uuid) if artifact.producer_uuid == producer_uuid
-            ]
+            artifacts = self.by_bake_group(bake_group_uuid)
+            artifact_result = [artifact for artifact in artifacts if artifact.producer_uuid == producer_uuid]
+            return artifact_result
 
     def resolve_target_object(
         self,

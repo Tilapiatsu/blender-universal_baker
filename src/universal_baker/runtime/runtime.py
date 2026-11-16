@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 from ..runtime.runtime_visualization_cage import CageVisualizationRuntime
 from ..services.output_provider import OutputProvider
 from .artifact_repository import ArtifactRepository
+from .image_preview import ImagePreviewRuntime
 from .output_repository import OutputRepository
 from .runtime_visualization_bake import BakeVisualizationRuntime
 
@@ -26,8 +27,10 @@ class BakeRuntime:
 
     outputs: OutputRepository
     provider: OutputProvider
+    artifacts: ArtifactRepository
     bake_visualization: BakeVisualizationRuntime
     cage_visualization: CageVisualizationRuntime
+    image_preview: ImagePreviewRuntime
 
     def __init__(self, scene: Scene):
 
@@ -51,6 +54,7 @@ class BakeRuntime:
 
         self.bake_visualization = BakeVisualizationRuntime()
         self.cage_visualization = CageVisualizationRuntime()
+        self.image_preview = ImagePreviewRuntime()
 
         #
         # Future runtime objects
@@ -90,6 +94,7 @@ class BakeRuntime:
         self.preview_cache.clear()
         self.bake_visualization.clear()
         self.cage_visualization.clear()
+        self.image_preview.clear()
         self.image_cache.clear()
         self.statistics.clear()
         self.active_sessions.clear()

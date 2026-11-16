@@ -213,7 +213,6 @@ class Displacement(CustomBaker):
                 break
 
         if target is None:
-            print("object not found")
             return None
 
         match value_name:

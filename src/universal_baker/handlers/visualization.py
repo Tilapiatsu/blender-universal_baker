@@ -5,7 +5,6 @@ from bpy.app.handlers import persistent
 
 from ..core.controller import BakeController
 from ..runtime.runtime_manager import RuntimeManager
-from ..services.project_synchronizer import ProjectSynchronizer
 
 suspension_bake = None
 suspension_cage = None
@@ -13,11 +12,6 @@ visualization_mode = "NONE"
 enabled_display = False
 enabled_preview = False
 enabled_cage = False
-
-
-@persistent
-def ubk_load_post(_dummy):
-    ProjectSynchronizer.synchronize_blend_file()
 
 
 @persistent
@@ -84,9 +78,6 @@ def ubk_save_post(_dummy):
 
 
 def register():
-    if ubk_load_post not in bpy.app.handlers.depsgraph_update_post:
-        bpy.app.handlers.load_post.append(ubk_load_post)
-
     if ubk_save_pre not in bpy.app.handlers.save_pre:
         bpy.app.handlers.save_pre.append(ubk_save_pre)
 
@@ -95,9 +86,6 @@ def register():
 
 
 def unregister():
-    if ubk_load_post in bpy.app.handlers.depsgraph_update_post:
-        bpy.app.handlers.load_post.remove(ubk_load_post)
-
     if ubk_save_pre in bpy.app.handlers.save_pre:
         bpy.app.handlers.save_pre.remove(ubk_save_pre)
 

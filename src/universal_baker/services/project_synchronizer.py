@@ -1,22 +1,31 @@
 from __future__ import annotations
 
 import bpy
-from universal_baker.runtime.color_management_info import ColorManagementInfo
 
-from ..core.registry_baker import registry_baker
-from ..parameter.baker_custom.definition import CustomBakerDefinition
 from ..constant import LOG
+from ..core.registry_baker import registry_baker
 from ..core.registry_definition import registry_definition
-from ..properties.project import UBK_Project
+from ..parameter.baker_custom.definition import CustomBakerDefinition
+from ..runtime.color_management_info import ColorManagementInfo
+from ..runtime.runtime_manager import RuntimeManager
 from .parameter_service import ParameterService
 
 
 class ProjectSynchronizer:
     @staticmethod
-    def synchronize_project(project: UBK_Project) -> None:
+    def synchronize_project(scene: bpy.types.Scene) -> None:
 
+        project = scene.ubk_project
+        runtime = RuntimeManager.get(scene)
+        image_preview = runtime.image_preview
+        artifacts = runtime.artifacts
+        artifacts.rebuild()
         for bake_group in project.bake_groups:
             for baker in bake_group.bakers:
+                if baker.accumulated_image is not None:
+                    LOG.debug(f"Updating Preview for {baker.accumulated_image.name}")
+                    image_preview.update(baker.accumulated_image, baker.uuid)
+
                 LOG.debug(f"Synchronize parameter for baker : {baker.baker}")
                 definition = registry_definition.get(baker.baker)
 
@@ -40,9 +49,9 @@ class ProjectSynchronizer:
 
     @classmethod
     def synchronize_current_project(cls):
-        cls.synchronize_project(bpy.context.scene.ubk_project)
+        cls.synchronize_project(bpy.context.scene)
 
     @classmethod
     def synchronize_blend_file(cls):
         for scene in bpy.data.scenes:
-            cls.synchronize_project(scene.ubk_project)
+            cls.synchronize_project(scene)

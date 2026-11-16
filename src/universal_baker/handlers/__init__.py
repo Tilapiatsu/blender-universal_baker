@@ -1,8 +1,12 @@
 from . import (
+    runtime,
     visualization,
 )
 
-modules = (visualization,)
+modules = (
+    visualization,
+    runtime,
+)
 
 
 def register():
