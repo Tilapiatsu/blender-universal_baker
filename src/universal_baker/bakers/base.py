@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any
 
 import bpy
 
-from ..constant import ICON_BAKE, LOG
+from ..constant import ICON_BAKER, LOG
 from ..core.property_class_factory import ClassFactory
 from ..core.registry_baker import registry_baker
 from ..core.registry_definition import registry_definition
@@ -98,7 +98,7 @@ class BakerBase(ABC):
     id: str = ""
     name: str = ""
     description: str = ""
-    icon: str = ICON_BAKE
+    icon: str = ICON_BAKER
     blender_bake_type = "DIFFUSE"
     accumulator_id = "ALPHA_OVER"
     is_custom: bool = False

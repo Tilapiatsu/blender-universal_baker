@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import bpy
-from bpy.props import BoolProperty, CollectionProperty, PointerProperty
+from bpy.props import BoolProperty, CollectionProperty, EnumProperty, PointerProperty
 from bpy.types import PropertyGroup
 
+from ..constant import ICON_BAKER, ICON_PACKER, ICON_SETTINGS, ICON_TARGET_OBJECT
 from ..services.visualization_bake import update_visualization
 from ..services.visualization_cage import update_active_target
 from .artifact import UBK_Artifact
@@ -40,6 +41,16 @@ class UBK_Project(PropertyGroup):
         name="Use Maskers",
         default=True,
         description="A bit slower, but ensure that the bake results does NOT overlap with a large margin and with multiple target objects",
+    )
+    tab: EnumProperty(
+        name="Tab",
+        items=[
+            ("OBJECTS", "Objects", "", ICON_TARGET_OBJECT, 0),
+            ("BAKERS", "Bakers", "", ICON_BAKER, 1),
+            ("PACKERS", "Packers", "", ICON_PACKER, 2),
+            ("SETTINGS", "Settings", "", ICON_SETTINGS, 3),
+        ],
+        default="OBJECTS",
     )
 
 

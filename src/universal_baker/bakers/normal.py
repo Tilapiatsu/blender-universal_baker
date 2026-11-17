@@ -15,7 +15,6 @@ class Normal(BakerBase):
     id = "NORMAL"
     name = "Normal"
     description = "Bake Normal"
-    icon = "TEXTURE"
     blender_bake_type = "NORMAL"
     accumulator_id = "ALPHA_OVER"
     clear_preview_material: bool = True

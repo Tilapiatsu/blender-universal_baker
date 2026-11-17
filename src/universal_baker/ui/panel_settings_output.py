@@ -7,6 +7,7 @@ import bpy
 from ..constant import ICON_INFO
 from ..core.controller import BakeController
 from .panel import (
+    UBK_PT_MainPanel,
     draw_baking_settings,
     draw_sampling_settings,
 )
@@ -82,11 +83,19 @@ class UBK_UL_GlobalSettingsPanel:
     bl_category = "Universal Baker"
 
 
-class UBK_PT_GlobalBakerSettingsPanel(UBK_UL_GlobalSettingsPanel, bpy.types.Panel):
+class UBK_PT_GlobalBakerSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
     bl_idname = "UBK_PT_global_settings_baker_panel"
+    bl_parent_id = "UBK_PT_UniversalBakerPanel"
     bl_label = ""
     bl_category = "Universal Baker"
-    bl_options = {"DEFAULT_CLOSED"}
+
+    @classmethod
+    def poll(cls, context) -> bool:
+        project = BakeController.project(context)
+        if project is None:
+            return False
+
+        return project.tab in ["SETTINGS"]
 
     def draw_header(self, context):
         layout = self.layout

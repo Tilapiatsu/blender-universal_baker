@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 import bpy
 
-from ..constant import ICON_PACK, LOG
+from ..constant import ICON_PACKER, LOG
 from ..enum.image_colorspace import ImageColorSpace
 from ..enum.output_stage import OutputStage
 from ..enum.view_transform import ViewTransform
@@ -30,7 +30,7 @@ class PackerBase(ABC):
     id: str = ""
     name: str = ""
     description: str = ""
-    icon: str = ICON_PACK
+    icon: str = ICON_PACKER
     is_custom: bool = False
     clear_preview_material: bool = True
     viewport_render_pass: str = "COMBINED"

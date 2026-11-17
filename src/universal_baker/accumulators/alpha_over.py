@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from ..constant import ICON_PACK
+from ..constant import ICON_PACKER
 from ..core.registry_accumulator import registry_accumulator
 from ..runtime.context_accumulate import AccumulateContext
 from .base import AccumulatorBase
@@ -12,7 +12,7 @@ class AlphaOverAccumulator(AccumulatorBase):
     id = "ALPHA_OVER"
     name = "Alpha Over"
     description = "Accumulate image using their alpha channel"
-    icon = ICON_PACK
+    icon = ICON_PACKER
 
     def execute(self, ctx: AccumulateContext) -> None:
         return super().execute(ctx)

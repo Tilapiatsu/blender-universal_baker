@@ -15,7 +15,6 @@ class Diffuse(BakerBase):
     id = "DIFFUSE"
     name = "Diffuse"
     description = "Bake diffuse color"
-    icon = "TEXTURE"
     blender_bake_type = "DIFFUSE"
     accumulator_id = "ALPHA_OVER"
     clear_preview_material: bool = False

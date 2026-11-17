@@ -13,7 +13,6 @@ class Roughness(BakerBase):
     id = "ROUGHNESS"
     name = "Roughness"
     description = "Bake Roughness"
-    icon = "TEXTURE"
     blender_bake_type = "ROUGHNESS"
     accumulator_id = "ALPHA_OVER"
     clear_preview_material: bool = False

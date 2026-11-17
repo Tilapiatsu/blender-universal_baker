@@ -13,7 +13,6 @@ class Albedo(BakerBase):
     id = "ALBEDO"
     name = "Albedo"
     description = "Bake Albedo"
-    icon = "TEXTURE"
     blender_bake_type = "DIFFUSE"
     accumulator_id = "ALPHA_OVER"
     clear_preview_material: bool = False

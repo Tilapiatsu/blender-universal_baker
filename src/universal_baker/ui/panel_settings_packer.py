@@ -4,7 +4,7 @@ from collections.abc import Callable
 
 import bpy
 
-from ..constant import ICON_PACK, ICON_TARGET_OBJECT
+from ..constant import ICON_PACKER
 from ..core.controller import BakeController
 from .panel import UBK_PT_MainPanel, bake_group_needed, packer_needed
 from .panel_settings_output import (
@@ -51,11 +51,18 @@ class UBK_UL_PackerPanel(UBK_PT_MainPanel, bpy.types.Panel):
     bl_idname = "UBK_PT_packer_panel"
     bl_label = ""
     bl_parent_id = "UBK_PT_UniversalBakerPanel"
-    bl_options = {"DEFAULT_CLOSED"}
+
+    @classmethod
+    def poll(cls, context) -> bool:
+        project = BakeController.project(context)
+        if project is None:
+            return False
+
+        return project.tab in ["PACKERS"]
 
     def draw_header(self, context):
         layout = self.layout
-        layout.label(text="Packers", icon=ICON_PACK)
+        layout.label(text="Packers", icon=ICON_PACKER)
 
     @bake_group_needed
     def draw(self, context):
@@ -65,7 +72,7 @@ class UBK_UL_PackerPanel(UBK_PT_MainPanel, bpy.types.Panel):
         active_bake_group = BakeController.active_bake_group(context)
 
         box.template_list(
-            "UBK_UL_PackList", "", active_bake_group, "packers", active_bake_group, "active_packer_index", rows=5
+            "UBK_UL_PackList", "", active_bake_group, "packers", active_bake_group, "active_packer_index", rows=2
         )
 
         row = box.row(align=True)

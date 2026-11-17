@@ -4,10 +4,11 @@ import bpy
 
 from universal_baker.constant import (
     ICON_BAKE,
+    ICON_BAKER,
     ICON_DISPLAY,
     ICON_DISPLAY_ENABLE,
     ICON_INFO,
-    ICON_PACK,
+    ICON_PACKER,
     ICON_PREVIEW,
     ICON_PREVIEW_ENABLE,
     ICON_TARGET_OBJECT,
@@ -253,13 +254,26 @@ class UBK_PT_UniversalBakerPanel(UBK_PT_MainPanel, bpy.types.Panel):
     bl_label = "Universal Baker"
 
     def draw(self, context):
-        pass
+        layout = self.layout
+        project = BakeController.project(context)
+        if project is None:
+            return
+
+        layout.prop(project, "tab", expand=True)
 
 
 class UBK_PT_BakeGroupPanel(UBK_PT_MainPanel, bpy.types.Panel):
     bl_idname = "UBK_PT_BakeGroupPanel"
     bl_label = ""
     bl_parent_id = "UBK_PT_UniversalBakerPanel"
+
+    @classmethod
+    def poll(cls, context) -> bool:
+        project = BakeController.project(context)
+        if project is None:
+            return False
+
+        return project.tab in ["OBJECTS"]
 
     def draw(self, context):
         layout = self.layout
@@ -274,7 +288,7 @@ class UBK_PT_BakeGroupPanel(UBK_PT_MainPanel, bpy.types.Panel):
     def draw_bake_groups(self, context, project):
         box = self.layout.box()
         box.template_list(
-            "UBK_UL_BakeGroupList", "", project, "bake_groups", project, "active_bake_group_index", rows=5
+            "UBK_UL_BakeGroupList", "", project, "bake_groups", project, "active_bake_group_index", rows=2
         )
         row = box.row(align=True)
         row.operator("ubk.add_bake_group", text="Add group", icon="ADD")
@@ -285,6 +299,14 @@ class UBK_PT_TargetObjectPanel(UBK_PT_MainPanel, bpy.types.Panel):
     bl_idname = "UBK_PT_TargetObjectPanel"
     bl_label = ""
     bl_parent_id = "UBK_PT_UniversalBakerPanel"
+
+    @classmethod
+    def poll(cls, context) -> bool:
+        project = BakeController.project(context)
+        if project is None:
+            return False
+
+        return project.tab in ["OBJECTS"]
 
     def draw(self, context):
         layout = self.layout
@@ -311,7 +333,7 @@ class UBK_PT_TargetObjectPanel(UBK_PT_MainPanel, bpy.types.Panel):
             "target_objects",
             active_bake_group,
             "active_target_object_index",
-            rows=5,
+            rows=2,
         )
         row = box.row(align=True)
         row.operator("ubk.add_target_object", text="Add Selected", icon="ADD")
@@ -323,9 +345,17 @@ class UBK_PT_BakerPanel(UBK_PT_MainPanel, bpy.types.Panel):
     bl_label = ""
     bl_parent_id = "UBK_PT_UniversalBakerPanel"
 
+    @classmethod
+    def poll(cls, context) -> bool:
+        project = BakeController.project(context)
+        if project is None:
+            return False
+
+        return project.tab in ["BAKERS"]
+
     def draw_header(self, context):
         layout = self.layout
-        layout.label(text="Bakers", icon="TEXTURE")
+        layout.label(text="Bakers", icon=ICON_BAKER)
 
     def draw(self, context):
         self.draw_bakers(context)
@@ -336,9 +366,24 @@ class UBK_PT_BakerPanel(UBK_PT_MainPanel, bpy.types.Panel):
         active_bake_group = BakeController.active_bake_group(context)
 
         assert active_bake_group is not None
+        # box.template_list(
+        #     "UBK_UL_TargetObjectList",
+        #     "",
+        #     active_bake_group,
+        #     "target_objects",
+        #     active_bake_group,
+        #     "active_target_object_index",
+        #     rows=2,
+        # )
 
         box.template_list(
-            "UBK_UL_BakerList", "", active_bake_group, "bakers", active_bake_group, "active_baker_index", rows=5
+            "UBK_UL_BakerList",
+            "",
+            active_bake_group,
+            "bakers",
+            active_bake_group,
+            "active_baker_index",
+            rows=2,
         )
 
         row = box.row(align=True)
@@ -411,7 +456,7 @@ class UBK_PT_ProcessPanel(UBK_PT_MainPanel, bpy.types.Panel):
         col = layout.column()
         col.scale_y = 1.6
         col.operator("ubk.bake_all", icon=ICON_BAKE, text="Bake All")
-        col.operator("ubk.pack_all", icon=ICON_PACK)
+        col.operator("ubk.pack_all", icon=ICON_PACKER)
         col.operator("ubk.bake_and_pack_all", icon="LONGDISPLAY")
 
 

@@ -158,7 +158,7 @@ class BakeController:
         baker.previewable = producer.previewable
         bake_group.active_baker_index = len(bake_group.bakers) - 1
 
-        ProjectSynchronizer.synchronize_project(context.scene)
+        # ProjectSynchronizer.synchronize_project(context.scene)
 
         return baker
 

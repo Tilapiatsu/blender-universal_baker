@@ -160,8 +160,10 @@ class BakeVisualizationRuntime:
                     temps = []
                     for s in o.sources:
                         temp = temp_obj.get(s)
-                        if temps is not None:
+                        if temp is not None:
                             temps.append(temp)
+                        else:
+                            temps.append(s)
 
                     self._bake_targets.append(
                         BakeTargets(

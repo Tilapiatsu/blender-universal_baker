@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import bpy
 
-from ..constant import ICON_BAKE
+from ..constant import ICON_BAKE, ICON_BAKER
 from ..core.registry_baker import registry_baker
 from ..runtime.runtime_manager import RuntimeManager
 
@@ -28,7 +28,7 @@ class UBK_UL_BakerList(bpy.types.UIList):
 
         elif self.layout_type == {"GRID"}:
             layout.alignment = "CENTER"
-            layout.label(icon="TEXTURE")
+            layout.label(icon=ICON_BAKER)
 
     def draw_default(self, layout, context, item, index: int):
 

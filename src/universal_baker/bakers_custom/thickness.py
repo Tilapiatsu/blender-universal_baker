@@ -13,7 +13,6 @@ class Thickness(CustomBaker):
     id = "THICKNESS"
     name = "Thickness"
     description = "Thickness baker."
-    icon = "TEXTURE"
     blender_bake_type = "EMIT"
     accumulator_id = "ALPHA_OVER"
     clear_preview_material: bool = True

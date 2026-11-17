@@ -12,6 +12,9 @@ class ImagePreviewRuntime:
     _preview_coll: dict[str, previews.ImagePreviewCollection] = field(default_factory=dict)
 
     def load(self, image: bpy.types.Image, baker_uuid: str) -> None:
+        if image is None:
+            return
+
         pcoll = previews.new()
         pcoll.load(image.name, str(self._get_image_path(image)), "IMAGE")
 

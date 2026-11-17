@@ -17,7 +17,6 @@ class Position(CustomBaker):
     id = "POSITION"
     name = "Position"
     description = "Position baker."
-    icon = "TEXTURE"
     blender_bake_type = "EMIT"
     accumulator_id = "ALPHA_OVER"
     clear_preview_material: bool = True

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import bpy
 
+from ..constant import ICON_BAKER
+
 
 class UBK_UL_BakerLibraryList(bpy.types.UIList):
     """UIList displaying the baker libraries available in the preferences."""
@@ -24,7 +26,7 @@ class UBK_UL_BakerLibraryList(bpy.types.UIList):
 
         elif self.layout_type == {"GRID"}:
             layout.alignment = "CENTER"
-            layout.label(icon="TEXTURE")
+            layout.label(icon=ICON_BAKER)
 
     def draw_default(self, layout, item, index: int):
         row = layout.row()

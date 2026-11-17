@@ -13,7 +13,6 @@ class NormalWorldSpace(CustomBaker):
     id = "NORMAL_WORLD_SPACE"
     name = "Normal World Space"
     description = "Normal World Space baker."
-    icon = "TEXTURE"
     blender_bake_type = "EMIT"
     accumulator_id = "ALPHA_OVER"
     clear_preview_material: bool = True

@@ -53,7 +53,7 @@ class ArtifactRepository:
                 self._target_object_index[artifact.target_object_uuid].append(artifact)
 
             if self.scene is not None:
-                print(f"After Rebuild {self.scene.name} :", len(self._bake_group_index), "artifact(s)")
+                LOG.debug(f"After Rebuild {self.scene.name} : {len(self._bake_group_index)} artifact(s)")
 
     def all(self) -> list[OutputArtifact]:
         return list(self._artifacts.values())

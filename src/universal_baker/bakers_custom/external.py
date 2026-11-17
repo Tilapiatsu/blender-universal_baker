@@ -22,7 +22,6 @@ class ExternalBaker(BakerBase):
     id = "EXTERNAL"
     name = "EXTERNAL"
     description = "External bake defined in an external blend file."
-    icon = "TEXTURE"
     blender_bake_type = "EMIT"
     accumulator_id = "ALPHA_OVER"
     asset_path: Path

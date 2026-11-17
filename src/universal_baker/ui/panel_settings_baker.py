@@ -4,6 +4,7 @@ from collections.abc import Callable
 
 import bpy
 
+from ..constant import ICON_BAKER
 from ..core.controller import BakeController
 from ..core.registry_definition import registry_definition
 from ..parameters_definition.baker_settings import UBK_BakerSettings
@@ -58,10 +59,10 @@ class UBK_PT_BakerSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
         layout = self.layout
         active_baker = BakeController.active_baker(context)
         if active_baker is None:
-            layout.label(text="Baker Settings", icon="TEXTURE")
+            layout.label(text="Baker Settings", icon=ICON_BAKER)
             return
 
-        layout.label(text=f"{active_baker.image_name} Baker Settings", icon="TEXTURE")
+        layout.label(text=f"{active_baker.image_name} Baker Settings", icon=ICON_BAKER)
 
     @baker_needed
     def draw(self, context):

@@ -8,6 +8,7 @@ import bpy
 from ..constant import LOG
 from ..core.registry_baker import registry_baker
 from ..enum.visualization import BakeVisualizationMode
+from ..runtime.bake_targets import BakeTargets
 from ..runtime.image_handle import ImageHandle
 from ..runtime.runtime_visualization_bake import BakeVisualizationRuntime
 from ..services.visibility_override import VisibilityOverride
@@ -170,7 +171,7 @@ class PreviewData:
     accumulated_uuid: str | None = None
     mode: BakeVisualizationMode = BakeVisualizationMode.PREVIEW
     projection_target: bpy.types.Object | None = None
-    bake_targets: list[bpy.types.Object] = field(default_factory=list)
+    bake_targets: list[BakeTargets] = field(default_factory=list)
 
 
 @dataclass(slots=True, frozen=True)

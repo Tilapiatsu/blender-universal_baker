@@ -13,7 +13,6 @@ class AmbientOcclusion(CustomBaker):
     id = "AMBIENT_OCCLUSION"
     name = "Ambient Occlusion"
     description = "Ambient Occlusion baker."
-    icon = "TEXTURE"
     blender_bake_type = "EMIT"
     accumulator_id = "ALPHA_OVER"
     clear_preview_material: bool = True

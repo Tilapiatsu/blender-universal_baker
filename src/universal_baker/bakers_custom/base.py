@@ -32,7 +32,6 @@ class CustomBaker(BakerBase):
     id = "CUSTOM"
     name = "Custom"
     description = "Custom bake defined in an external blend file."
-    icon = "TEXTURE"
     blender_bake_type = "EMIT"
     accumulator_id = "ALPHA_OVER"
     is_custom: bool = True

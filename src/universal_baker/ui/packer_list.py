@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import bpy
 
-from ..constant import ICON_PACK
+from ..constant import ICON_PACKER
 
 
 class UBK_UL_PackList(bpy.types.UIList):
@@ -26,7 +26,7 @@ class UBK_UL_PackList(bpy.types.UIList):
 
         elif self.layout_type == {"GRID"}:
             layout.alignment = "CENTER"
-            layout.label(icon="TEXTURE")
+            layout.label(icon=ICON_BAKER)
 
     def draw_default(self, layout, pack_item, index: int):
         row = layout.row(align=True)
@@ -37,7 +37,7 @@ class UBK_UL_PackList(bpy.types.UIList):
         if not pack_item.enabled:
             row.enabled = False
 
-        row.label(text=pack_item.image_name, icon=ICON_PACK)
+        row.label(text=pack_item.image_name, icon=ICON_PACKER)
 
         info = row.row()
         info.alignment = "RIGHT"
@@ -56,7 +56,7 @@ class UBK_UL_PackList(bpy.types.UIList):
         pack = row.operator(
             "ubk.pack_selected",
             text="",
-            icon=ICON_PACK,
+            icon=ICON_PACKER,
         )
 
         pack.index = index

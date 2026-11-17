@@ -13,7 +13,6 @@ class Curvature(CustomBaker):
     id = "CURVATURE"
     name = "Curvature"
     description = "Curvature baker."
-    icon = "TEXTURE"
     blender_bake_type = "EMIT"
     accumulator_id = "ALPHA_OVER"
     clear_preview_material: bool = True

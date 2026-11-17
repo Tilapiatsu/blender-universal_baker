@@ -173,6 +173,16 @@ def update_active_target(self, context):
     if target is None:
         return
 
+    previous_mode = "OBJECT"
+
+    if bpy.context.mode != "OBJECT":
+        previous_mode = bpy.context.mode
+
+        try:
+            bpy.ops.object.mode_set(mode="OBJECT")
+        except RuntimeError:
+            pass
+
     bpy.ops.object.select_all(action="DESELECT")
     target.object.select_set(True)
 
@@ -186,6 +196,11 @@ def update_active_target(self, context):
         return
 
     CageVisualizationService.refresh(target, preview_bake)
+
+    try:
+        bpy.ops.object.mode_set(mode=previous_mode)
+    except RuntimeError:
+        pass
 
 
 def update_active_source(self, context):

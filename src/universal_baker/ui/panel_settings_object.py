@@ -15,7 +15,6 @@ class UBK_UL_TargetObjectSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
     bl_idname = "UBK_PT_target_object_panel"
     bl_label = ""
     bl_parent_id = "UBK_PT_TargetObjectPanel"
-    bl_options = {"DEFAULT_CLOSED"}
 
     @object_needed
     def draw_header(self, context):
@@ -51,7 +50,7 @@ class UBK_UL_TargetObjectSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
             "source_objects",
             active_object,
             "active_source_object_index",
-            rows=5,
+            rows=2,
         )
         row = box.row(align=True)
         row.operator("ubk.add_source_object", text="Add Selected", icon="ADD")
@@ -64,7 +63,14 @@ class UBK_UL_CageSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
     bl_idname = "UBK_PT_cage_settings_panel"
     bl_label = ""
     bl_parent_id = "UBK_PT_TargetObjectPanel"
-    bl_options = {"DEFAULT_CLOSED"}
+
+    @classmethod
+    def poll(cls, context) -> bool:
+        active_object = BakeController.active_target_object(context)
+        if active_object is None:
+            return False
+
+        return active_object.have_source
 
     def draw_header(self, context):
         layout = self.layout
