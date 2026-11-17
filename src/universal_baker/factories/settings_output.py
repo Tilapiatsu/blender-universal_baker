@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-import bpy
-
 from typing import TYPE_CHECKING
+
+import bpy
 
 if TYPE_CHECKING:
     from ..properties.bake_group import UBK_BakeGroup
@@ -11,11 +11,11 @@ if TYPE_CHECKING:
 
 from ..output.output_tokens import get_variables
 from ..runtime.output_context import OutputContext
-from ..runtime.settings_output import OutputSettings, PathSettings
 from ..runtime.settings_image import (
-    ImageSettings,
     ColorManagementSettings,
+    ImageSettings,
 )
+from ..runtime.settings_output import OutputSettings, PathSettings
 
 
 class OutputSettingsResolver:

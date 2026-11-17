@@ -50,12 +50,21 @@ class UBK_UL_BakerList(bpy.types.UIList):
             runtime = RuntimeManager.current(context)
             pcoll = runtime.image_preview.get(item.uuid)
             if pcoll is None:
-                row.label(
-                    text=f"{baker.name}",
+                row.prop(
+                    item,
+                    "image_name",
+                    text="",
                     icon=baker.icon,
+                    emboss=False,
                 )
             else:
-                row.label(text=f"{baker.name}", icon_value=pcoll[item.accumulated_image.name].icon_id)
+                row.prop(
+                    item,
+                    "image_name",
+                    text="",
+                    icon_value=pcoll[item.accumulated_image.name].icon_id,
+                    emboss=False,
+                )
 
         else:
             row.label(text=item.baker, icon="QUESTION")

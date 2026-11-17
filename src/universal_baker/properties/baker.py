@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import bpy
 from bpy.props import BoolProperty, CollectionProperty, EnumProperty, PointerProperty, StringProperty
 from bpy.types import PropertyGroup
@@ -7,6 +9,81 @@ from bpy.types import PropertyGroup
 from ..parameters_definition.baker_settings import UBK_BakerSettings
 from .custom_baker import UBK_CustomBaker
 from .settings_bake import UBK_BakeSettings
+
+
+def update_image_name(self, context):
+    from ..core.controller import BakeController
+    from ..output.output_tokens import get_variables
+
+    project = BakeController.project(context)
+
+    if project is None:
+        return
+
+    bake_group = BakeController.active_bake_group(context)
+
+    if bake_group is None:
+        return
+
+    template = (
+        self.settings.output_settings.filename_template
+        if self.override_settings
+        else project.settings_bake.output_settings.filename_template
+    )
+
+    from ..core.output_resolver import OutputResolver
+
+    extension = (
+        self.settings.file_format_settings.file_format
+        if self.override_settings
+        else project.settings_bake.file_format_settings.file_format
+    )
+
+    variables = get_variables(
+        bake_group_name=bake_group.name,
+        baker=self,
+        image_name=self.image_name,
+        packer=None,
+        scene=bpy.context.scene,
+        extension=extension,
+    )
+
+    filename = OutputResolver.resolve_filename(template, variables)
+
+    # ISSUE: Need to invalidate output and re-register it after rename
+
+    if self.accumulated_image is not None:
+        files = []
+        if "<UDIM>" in self.accumulated_image.filepath_raw:
+            p = Path(self.accumulated_image.filepath_raw)
+            file_pattern = p.name.replace(".<UDIM>", "").split(".")[0]
+            ext = p.suffix
+            filepath = list(p.parent.glob(f"{file_pattern}*"))
+
+            for f in filepath:
+                files.append((f.parent, file_pattern, f.stem.replace(file_pattern, ""), ext))
+
+            self.accumulated_image.filepath_raw = str(files[0][0] / (filename + ".<UDIM>" + files[0][3]))
+
+        else:
+            filepath = Path(self.accumulated_image.filepath_raw)
+            file = (filepath.parent, filepath.name, "", filepath.suffix)
+            files.append(file)
+
+            self.accumulated_image.filepath_raw = str(file[0] / (filename + file[3]))
+
+        for f in files:
+            filepath = f[0] / (f[1] + f[2] + f[3])
+            filepath.rename(filepath.with_name(filename + f[2] + f[3]))
+
+        self.accumulated_image.name = filename
+
+    from ..runtime.runtime_manager import RuntimeManager
+
+    runtime = RuntimeManager.current(context)
+    runtime.image_preview.update(self.accumulated_image, self.uuid)
+
+    runtime.artifacts.rebuild()
 
 
 def baker_items(self, context):
@@ -44,6 +121,7 @@ class UBK_Baker(PropertyGroup):
     image_name: StringProperty(
         name="Image Name",
         default="Bake",
+        update=update_image_name,
     )
 
     images: CollectionProperty(type=UBK_BakerOutput)

@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import bpy
-
 from bpy.types import PropertyGroup
+
 from ..services.internal_data import InternalDataService
 
 

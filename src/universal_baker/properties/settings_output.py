@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+from bpy.props import BoolProperty, EnumProperty, IntProperty, StringProperty
 from bpy.types import PropertyGroup
-from bpy.props import EnumProperty, StringProperty, IntProperty, BoolProperty
 
 from .settings_base import get_colorspace_items
 
