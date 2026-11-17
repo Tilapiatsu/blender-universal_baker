@@ -48,7 +48,7 @@ class UBK_UL_BakerList(bpy.types.UIList):
 
         if baker:
             runtime = RuntimeManager.current(context)
-            pcoll = runtime.image_preview.get(item.uuid)
+            pcoll = runtime.image_preview.get(item.accumulated_producer_uuid)
             if pcoll is None:
                 row.prop(
                     item,

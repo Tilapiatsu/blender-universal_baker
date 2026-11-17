@@ -99,6 +99,9 @@ class ArtifactRepository:
         )
 
     def remove(self, uuid: str) -> None:
+        if self.project is None:
+            return
+
         artifact = self._artifacts.get(uuid)
 
         if artifact is None:
@@ -120,5 +123,7 @@ class ArtifactRepository:
         ]
 
     def clear(self) -> None:
+        if self.project is None:
+            return
         self.project.artifacts.clear()
         self.rebuild()

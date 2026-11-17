@@ -26,7 +26,7 @@ class ProjectSynchronizer:
             for baker in bake_group.bakers:
                 if baker.accumulated_image is not None:
                     LOG.debug(f"Updating Preview for {baker.accumulated_image.name}")
-                    image_preview.update(baker.accumulated_image, baker.uuid)
+                    image_preview.update(baker.accumulated_image, baker.accumulated_producer_uuid)
 
                 LOG.debug(f"Synchronize parameter for baker : {baker.baker}")
                 definition = registry_definition.get(baker.baker)

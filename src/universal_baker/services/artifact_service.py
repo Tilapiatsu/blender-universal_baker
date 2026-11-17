@@ -133,8 +133,8 @@ class ArtifactService:
     @classmethod
     def remove(
         cls,
-        runtime,
-        project,
+        runtime: BakeRuntime,
+        project: UBK_Project,
         artifact_uuid,
         delete_file=False,
     ):
@@ -184,6 +184,25 @@ class ArtifactService:
 
         for artifact in artifacts:
             cls.remove(runtime, project, artifact.uuid, delete_files)
+
+    @classmethod
+    def rename_producer_filename(
+        cls,
+        runtime: BakeRuntime,
+        project: UBK_Project,
+        producer_uuid: str,
+        name: str,
+        filepath: str,
+    ):
+
+        for artifact in project.artifacts:
+            if artifact.producer_uuid != producer_uuid:
+                continue
+
+            artifact.name = name
+            artifact.absolute_path = filepath
+
+        runtime.artifacts.rebuild()
 
     @classmethod
     def validate(

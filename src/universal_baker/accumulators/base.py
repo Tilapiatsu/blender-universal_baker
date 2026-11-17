@@ -136,7 +136,7 @@ class AccumulatorBase(ABC):
             return
 
         runtime = RuntimeManager.current(bpy.context)
-        runtime.image_preview.update(ctx.image.image, baker.uuid)
+        runtime.image_preview.update(ctx.image.image, baker.accumulated_producer_uuid)
 
     @abstractmethod
     def create_artifact(self, ctx: AccumulateContext) -> None:

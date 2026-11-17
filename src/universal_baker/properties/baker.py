@@ -6,6 +6,7 @@ import bpy
 from bpy.props import BoolProperty, CollectionProperty, EnumProperty, PointerProperty, StringProperty
 from bpy.types import PropertyGroup
 
+from ..constant import LOG
 from ..parameters_definition.baker_settings import UBK_BakerSettings
 from .custom_baker import UBK_CustomBaker
 from .settings_bake import UBK_BakeSettings
@@ -50,8 +51,6 @@ def update_image_name(self, context):
 
     filename = OutputResolver.resolve_filename(template, variables)
 
-    # ISSUE: Need to invalidate output and re-register it after rename
-
     if self.accumulated_image is not None:
         files = []
         if "<UDIM>" in self.accumulated_image.filepath_raw:
@@ -81,8 +80,29 @@ def update_image_name(self, context):
     from ..runtime.runtime_manager import RuntimeManager
 
     runtime = RuntimeManager.current(context)
-    runtime.image_preview.update(self.accumulated_image, self.uuid)
+    runtime.image_preview.update(self.accumulated_image, self.accumulated_producer_uuid)
 
+    from ..services.artifact_service import ArtifactService
+
+    artifact = ArtifactService._find_property_group(
+        project,
+        bake_group.uuid,
+        self.accumulated_producer_uuid,
+        "ALL",
+    )
+    if artifact is None:
+        LOG.debug(f"Artifact Not Found for {self.image_name}")
+        return
+
+    runtime.outputs.invalidate(bake_group.uuid, self.accumulated_producer_uuid)
+    runtime.outputs.clear_materialized(artifact.uuid)
+    ArtifactService.rename_producer_filename(
+        runtime,
+        project,
+        self.accumulated_producer_uuid,
+        name=filename,
+        filepath=self.accumulated_image.filepath_raw,
+    )
     runtime.artifacts.rebuild()
 
 
