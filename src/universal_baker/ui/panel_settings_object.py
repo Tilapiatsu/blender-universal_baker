@@ -22,7 +22,7 @@ class UBK_UL_TargetObjectSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
         if project is None:
             return False
 
-        return len(project.target_objects) > 0
+        return len(project.bake_groups) > 0
 
     @object_needed
     def draw_header(self, context):
