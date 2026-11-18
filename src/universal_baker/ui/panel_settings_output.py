@@ -106,7 +106,10 @@ class UBK_PT_GlobalBakerSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
 
         box = layout.box()
         header = box.row()
-        header.label(text="Bakers and Packers inherits Gobal Settings by default.", icon=ICON_INFO)
+        header.label_multiline(
+            text="Bakers and Packers inherits Gobal Settings by default, and can be overriden case by case.",
+            icon=ICON_INFO,
+        )
 
 
 # -------------------------------------------------------------------------

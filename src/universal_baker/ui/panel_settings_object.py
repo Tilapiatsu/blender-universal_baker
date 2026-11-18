@@ -16,6 +16,14 @@ class UBK_UL_TargetObjectSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
     bl_label = ""
     bl_parent_id = "UBK_PT_TargetObjectPanel"
 
+    @classmethod
+    def poll(cls, context) -> bool:
+        project = BakeController.project(context)
+        if project is None:
+            return False
+
+        return len(project.target_objects) > 0
+
     @object_needed
     def draw_header(self, context):
         layout = self.layout
@@ -35,10 +43,6 @@ class UBK_UL_TargetObjectSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
         active_object = BakeController.active_target_object(context)
         if active_object is None:
             return
-
-        col = box.column(align=True)
-        col.enabled = False
-        col.label(text=active_object.uuid)
 
         box.prop(active_object, "uv_layer")
 

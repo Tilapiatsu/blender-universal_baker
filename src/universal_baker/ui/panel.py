@@ -270,10 +270,14 @@ class UBK_PT_UniversalBakerPanel(UBK_PT_MainPanel, bpy.types.Panel):
         row.operator("ubk.remove_bake_group", text="", icon="REMOVE")
 
         active_bake_group = BakeController.active_bake_group(context)
-        box.prop(active_bake_group, "detect_udim", toggle=1)
+
+        if active_bake_group is None:
+            return
 
         layout.separator()
-        layout.prop(project, "tab", expand=True)
+        row = layout.row(align=True)
+        row.scale_y = 1.5
+        row.prop(project, "tab", expand=True)
 
 
 class UBK_PT_BakeGroupPanel(UBK_PT_MainPanel, bpy.types.Panel):
@@ -320,7 +324,7 @@ class UBK_PT_TargetObjectPanel(UBK_PT_MainPanel, bpy.types.Panel):
         if project is None:
             return False
 
-        return project.tab in ["OBJECTS"]
+        return project.tab in ["OBJECTS"] and len(project.bake_groups) > 0
 
     def draw(self, context):
         layout = self.layout
@@ -365,7 +369,7 @@ class UBK_PT_BakerPanel(UBK_PT_MainPanel, bpy.types.Panel):
         if project is None:
             return False
 
-        return project.tab in ["BAKERS"]
+        return project.tab in ["BAKERS"] and len(project.bake_groups) > 0
 
     def draw_header(self, context):
         layout = self.layout
@@ -402,37 +406,38 @@ class UBK_PT_BakerPanel(UBK_PT_MainPanel, bpy.types.Panel):
             if baker is None:
                 return
 
-            column = box.column(align=True)
+            row = box.row(align=True)
+            row.scale_y = 1.5
 
-            if baker.previewable:
-                column.prop(
-                    project.visualization,
-                    "enabled_preview",
-                    text=f"Preview {baker.image_name}",
-                    toggle=1,
-                    icon=ICON_PREVIEW_ENABLE if project.visualization.enabled_preview else ICON_PREVIEW,
-                )
-            else:
-                column1 = column.column(align=True)
-                column1.label(text="This Baker Cannot be previewed")
-                column1.enabled = False
-
-            if project.visualization.cage_edit or project.visualization.skew_edit:
+            column = row.column(align=True)
+            column.prop(
+                project.visualization,
+                "enabled_preview",
+                text=f"Preview {baker.image_name}" if baker.previewable else "This Baker Cannot Be previewed",
+                toggle=1,
+                icon=ICON_PREVIEW_ENABLE if project.visualization.enabled_preview else ICON_PREVIEW,
+            )
+            if not baker.previewable:
                 column.enabled = False
 
-            if baker.has_image:
-                column = box.column(align=True)
+            if project.visualization.cage_edit or project.visualization.skew_edit:
+                row.enabled = False
 
-                column.prop(
-                    project.visualization,
-                    "enabled_display",
-                    text=f"Display {baker.accumulated_image.name}",
-                    toggle=1,
-                    icon=ICON_DISPLAY_ENABLE if project.visualization.enabled_display else ICON_DISPLAY,
-                )
+            column = row.column(align=True)
 
-            box = self.layout.box()
-            box.operator(
+            row.prop(
+                project.visualization,
+                "enabled_display",
+                text=f"Display {baker.accumulated_image.name}",
+                toggle=1,
+                icon=ICON_DISPLAY_ENABLE if project.visualization.enabled_display else ICON_DISPLAY,
+            )
+            if not baker.has_image:
+                column.enabled = False
+
+            column = box.column(align=True)
+            column.scale_y = 1.5
+            column.operator(
                 "ubk.bake_group", icon=ICON_BAKE, text="Bake Selected Bakers"
             ).index = project.active_bake_group_index
 

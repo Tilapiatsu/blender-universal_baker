@@ -57,6 +57,13 @@ class UBK_UL_BakeGroupList(bpy.types.UIList):
         stats.label(text=f"{enabled_bakers}/{total_bakers}", icon="RENDERLAYERS")
 
         row = layout.row(align=True)
+        row.prop(
+            active_bake_group,
+            "detect_udim",
+            text="UDIM",
+            icon="VIEW_ORTHO" if active_bake_group.detect_udim else "MESH_PLANE",
+            toggle=True,
+        )
 
         op = row.operator(
             "ubk.bake_group",

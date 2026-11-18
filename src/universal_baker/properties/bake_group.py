@@ -37,6 +37,7 @@ class UBK_BakeGroup(PropertyGroup):
 
     detect_udim: BoolProperty(
         name="Detect UDIM",
+        description="Detect UDIM for the entire bake group, and save baked imaged using the established naming convention.",
         default=False,
     )
 

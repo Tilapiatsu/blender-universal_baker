@@ -58,7 +58,7 @@ class UBK_UL_PackerPanel(UBK_PT_MainPanel, bpy.types.Panel):
         if project is None:
             return False
 
-        return project.tab in ["PACKERS"]
+        return project.tab in ["PACKERS"] and len(project.bake_groups) > 0
 
     def draw_header(self, context):
         layout = self.layout
@@ -101,10 +101,6 @@ class UBK_UL_PackerSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
 
         active_packer = BakeController.active_packer(context)
         assert active_packer is not None
-
-        col = box.column(align=True)
-        col.enabled = False
-        col.label(text=active_packer.uuid)
 
         box.prop(active_packer, "image_name")
         if len(active_packer.mappings) != 4:
