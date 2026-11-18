@@ -34,6 +34,7 @@ class UBK_UL_BakeGroupSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
 
 
 classes = (UBK_UL_BakeGroupSettingsPanel,)
+classes = ()
 
 
 def register():

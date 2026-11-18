@@ -4,6 +4,7 @@ import bpy
 
 from universal_baker.constant import (
     ICON_BAKE,
+    ICON_BAKE_GROUP,
     ICON_BAKER,
     ICON_DISPLAY,
     ICON_DISPLAY_ENABLE,
@@ -259,6 +260,19 @@ class UBK_PT_UniversalBakerPanel(UBK_PT_MainPanel, bpy.types.Panel):
         if project is None:
             return
 
+        box = self.layout.box()
+        box.label(text="Bake Groups", icon=ICON_BAKE_GROUP)
+        box.template_list(
+            "UBK_UL_BakeGroupList", "", project, "bake_groups", project, "active_bake_group_index", rows=2
+        )
+        row = box.row(align=True)
+        row.operator("ubk.add_bake_group", text="Add group", icon="ADD")
+        row.operator("ubk.remove_bake_group", text="", icon="REMOVE")
+
+        active_bake_group = BakeController.active_bake_group(context)
+        box.prop(active_bake_group, "detect_udim", toggle=1)
+
+        layout.separator()
         layout.prop(project, "tab", expand=True)
 
 
@@ -273,7 +287,7 @@ class UBK_PT_BakeGroupPanel(UBK_PT_MainPanel, bpy.types.Panel):
         if project is None:
             return False
 
-        return project.tab in ["OBJECTS"]
+        return project.tab in ["OBJECTS", "BAKERS", "PACKERS"]
 
     def draw(self, context):
         layout = self.layout
@@ -366,15 +380,6 @@ class UBK_PT_BakerPanel(UBK_PT_MainPanel, bpy.types.Panel):
         active_bake_group = BakeController.active_bake_group(context)
 
         assert active_bake_group is not None
-        # box.template_list(
-        #     "UBK_UL_TargetObjectList",
-        #     "",
-        #     active_bake_group,
-        #     "target_objects",
-        #     active_bake_group,
-        #     "active_target_object_index",
-        #     rows=2,
-        # )
 
         box.template_list(
             "UBK_UL_BakerList",
@@ -462,7 +467,7 @@ class UBK_PT_ProcessPanel(UBK_PT_MainPanel, bpy.types.Panel):
 
 classes = (
     UBK_PT_UniversalBakerPanel,
-    UBK_PT_BakeGroupPanel,
+    # UBK_PT_BakeGroupPanel,
     UBK_PT_TargetObjectPanel,
     UBK_PT_BakerPanel,
     UBK_PT_ProcessPanel,
