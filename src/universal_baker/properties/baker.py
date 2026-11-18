@@ -6,7 +6,7 @@ import bpy
 from bpy.props import BoolProperty, CollectionProperty, EnumProperty, PointerProperty, StringProperty
 from bpy.types import PropertyGroup
 
-from ..constant import LOG
+from ..constant import LOG, NAME_DICT_BAKER
 from ..parameters_definition.baker_settings import UBK_BakerSettings
 from .custom_baker import UBK_CustomBaker
 from .settings_bake import UBK_BakeSettings
@@ -15,6 +15,11 @@ from .settings_bake import UBK_BakeSettings
 def update_image_name(self, context):
     from ..core.controller import BakeController
     from ..output.output_tokens import get_variables
+
+    print(self.name)
+    NAME_DICT_BAKER.pop(self.uuid, None)
+    self.name = BakeController.get_unique_name(self.name, self.uuid, NAME_DICT_BAKER)
+    print(self.name)
 
     project = BakeController.project(context)
 

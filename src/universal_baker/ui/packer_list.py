@@ -26,7 +26,7 @@ class UBK_UL_PackList(bpy.types.UIList):
 
         elif self.layout_type == {"GRID"}:
             layout.alignment = "CENTER"
-            layout.label(icon=ICON_BAKER)
+            layout.label(icon=ICON_PACKER)
 
     def draw_default(self, layout, pack_item, index: int):
         row = layout.row(align=True)
@@ -37,7 +37,7 @@ class UBK_UL_PackList(bpy.types.UIList):
         if not pack_item.enabled:
             row.enabled = False
 
-        row.label(text=pack_item.image_name, icon=ICON_PACKER)
+        row.prop(pack_item, "image_name", icon=ICON_PACKER, text="", emboss=False)
 
         info = row.row()
         info.alignment = "RIGHT"

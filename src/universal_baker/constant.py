@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import bpy
 
@@ -58,6 +59,10 @@ ICON_BAKER = "TEXTURE"
 ICON_PACKER = "NODE_COMPOSITING"
 ICON_SETTINGS = "MODIFIER"
 ICON_BAKE_GROUP = "OUTLINER"
+
+NAME_DICT_BAKE_GROUP: dict[Any, str] = {}
+NAME_DICT_BAKER: dict[Any, str] = {}
+NAME_DICT_PACKER: dict[Any, str] = {}
 
 assert ADDON_PACKAGE is not None
 

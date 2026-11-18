@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+import re
+from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 import bpy
+from bpy_extras.io_utils import unique_name
 
-from ..constant import LOG, get_prefs
+from ..constant import NAME_DICT_BAKE_GROUP, NAME_DICT_BAKER, NAME_DICT_PACKER, get_prefs
 from ..enum.execution import Execution
 from ..executors.executor import Executor
 from ..properties.packer import UBK_Packer
@@ -23,7 +25,6 @@ from ..services.collection_source_object import SourceObjectService
 from ..services.collection_target_object import TargetObjectService
 from ..services.internal_data import InternalDataService
 from ..services.project import ProjectService
-from ..services.project_synchronizer import ProjectSynchronizer
 from .planner import ExecutionPlanner
 from .registry_baker import registry_baker
 
@@ -88,10 +89,23 @@ class BakeController:
 
     @classmethod
     def add_bake_group(cls, context: bpy.types.Context):
-        return ProjectService.add_bake_group(context)
+        item = ProjectService.add_bake_group(context)
+        item.name = cls.get_unique_name("Group", item.uuid, NAME_DICT_BAKE_GROUP)
+        return item
 
     @classmethod
     def remove_bake_group(cls, context: bpy.types.Context, index: int):
+        project = cls.project(context)
+
+        if project is None:
+            return
+
+        bake_group = project.bake_groups[index]
+
+        if bake_group is None:
+            return None
+
+        NAME_DICT_BAKE_GROUP.pop(bake_group.uuid, None)
         return ProjectService.remove_bake_group(context, index)
 
     # ---------------------------------------------------------
@@ -139,6 +153,24 @@ class BakeController:
     # ---------------------------------------------------------
     # Baker Operations
     # ---------------------------------------------------------
+    @staticmethod
+    def _unique_name_clean_func(name: str) -> str:
+        word_pattern = re.compile(r"(\.[0-9]{3})$", re.IGNORECASE)
+        name_iter = word_pattern.finditer(name)
+        name_iter_match = [w.group(1) for w in name_iter]
+
+        if len(name_iter_match) and name_iter_match[0] is not None:
+            return name.replace(name_iter_match[0], "")
+        else:
+            return name
+
+    @classmethod
+    def get_unique_name(cls, name: str, obj: Any, name_dict: dict[Any, str]) -> str:
+        print(name_dict)
+        name = unique_name(obj, name, name_dict, sep="_", clean_func=cls._unique_name_clean_func)
+        print(name_dict)
+
+        return name
 
     @classmethod
     def add_baker(cls, context: bpy.types.Context, baker_id: str = "DIFFUSE"):
@@ -153,8 +185,8 @@ class BakeController:
 
         baker = bake_group.bakers.add()
         baker.baker = baker_id
-        baker.image_name = producer.name.title()
         baker.uuid = str(uuid4())
+        baker.image_name = cls.get_unique_name(producer.name.title(), baker.uuid, NAME_DICT_BAKER)
         baker.previewable = producer.previewable
         bake_group.active_baker_index = len(bake_group.bakers) - 1
 
@@ -172,6 +204,7 @@ class BakeController:
         if not bake_group.bakers:
             return
 
+        NAME_DICT_BAKER.pop(bake_group.bakers[bake_group.active_baker_index].uuid, None)
         BakerService.remove(bake_group, bake_group.active_baker_index)
 
         if len(bake_group.bakers) == 0:
@@ -260,7 +293,7 @@ class BakeController:
     # ---------------------------------------------------------
     # Pack Operations
     # ---------------------------------------------------------
-    # TODO: every "adder" should check for name collision and and prevent it by adding a suffix like "_001"
+
     @classmethod
     def add_packer(cls, context: bpy.types.Context, packer_id: str = "INTERNAL"):
         bake_group = cls.active_bake_group(context)
@@ -270,6 +303,7 @@ class BakeController:
 
         packer = bake_group.packers.add()
         packer.uuid = str(uuid4())
+        packer.image_name = cls.get_unique_name("Channel Packing", packer.uuid, NAME_DICT_PACKER)
         packer.packer = packer_id
         red = packer.mappings.add()
         green = packer.mappings.add()
@@ -299,6 +333,8 @@ class BakeController:
 
         if not bake_group.packers:
             return
+
+        NAME_DICT_PACKER.pop(bake_group.packers[bake_group.active_packer_index].uuid, None)
 
         PackerService.remove(bake_group, bake_group.active_packer_index)
 

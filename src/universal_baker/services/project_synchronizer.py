@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import bpy
 
-from ..constant import LOG
+from ..constant import LOG, NAME_DICT_BAKE_GROUP, NAME_DICT_BAKER, NAME_DICT_PACKER
 from ..core.registry_baker import registry_baker
 from ..core.registry_definition import registry_definition
 from ..enum.image_colorspace import ImageColorSpace
@@ -23,7 +23,10 @@ class ProjectSynchronizer:
         artifacts = runtime.artifacts
         artifacts.rebuild()
         for bake_group in project.bake_groups:
+            NAME_DICT_BAKE_GROUP[bake_group.uuid] = bake_group.name
+
             for baker in bake_group.bakers:
+                NAME_DICT_BAKER[baker.uuid] = baker.image_name
                 if baker.accumulated_image is not None:
                     LOG.debug(f"Updating Preview for {baker.accumulated_image.name}")
                     image_preview.update(baker.accumulated_image, baker.accumulated_producer_uuid)
@@ -48,6 +51,9 @@ class ProjectSynchronizer:
                     )
 
                 ParameterService.synchronize(definition, baker.custom_baker)
+
+            for packer in bake_group.packers:
+                NAME_DICT_PACKER[packer.uuid] = packer.image_name
 
     @classmethod
     def synchronize_current_project(cls):

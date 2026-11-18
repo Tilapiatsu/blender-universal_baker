@@ -4,9 +4,28 @@ import bpy
 from bpy.props import BoolProperty, EnumProperty, PointerProperty, StringProperty
 from bpy.types import PropertyGroup
 
+from ..constant import NAME_DICT_PACKER
 from ..enum.channels import CHANNEL_ITEMS
 from .baker import UBK_Baker
 from .settings_pack import UBK_PackerSettings
+
+updating = False
+
+
+def update_name(self, context):
+    from ..core.controller import BakeController
+
+    global updating
+
+    if updating:
+        return
+
+    updating = True
+
+    NAME_DICT_PACKER.pop(self.uuid, None)
+    self.name = BakeController.get_unique_name(self.name, self.uuid, NAME_DICT_PACKER)
+
+    updating = False
 
 
 def get_source_bakers_items(self, context):
@@ -53,7 +72,7 @@ class UBK_Packer(PropertyGroup):
     packer: bpy.props.StringProperty(name="Packer")
     enabled: BoolProperty(name="Enabled", default=True)
     override_settings: BoolProperty(name="Override Settings", default=False)
-    image_name: StringProperty(name="Image Name", default="Channel Packing")
+    image_name: StringProperty(name="Image Name", default="Channel Packing", update=update_name)
     active_packer_index: bpy.props.IntProperty(default=0)
     mappings: bpy.props.CollectionProperty(type=UBK_ChannelMapping)
     settings: bpy.props.PointerProperty(type=UBK_PackerSettings)

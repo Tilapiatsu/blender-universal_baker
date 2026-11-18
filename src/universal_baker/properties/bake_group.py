@@ -10,6 +10,7 @@ from bpy.props import (
 )
 from bpy.types import PropertyGroup
 
+from ..constant import NAME_DICT_BAKE_GROUP
 from ..runtime.bake_targets import BakeTargets
 from ..services.visualization_bake import update_visualization
 from ..services.visualization_cage import update_active_target
@@ -17,6 +18,23 @@ from .baker import UBK_Baker
 from .object import UBK_TargetObject
 from .packer import UBK_Packer
 from .settings_bake import UBK_BakeSettings
+
+updating = False
+
+
+def update_name(self, context):
+    from ..core.controller import BakeController
+
+    global updating
+
+    if updating:
+        return
+
+    updating = True
+    NAME_DICT_BAKE_GROUP.pop(self.uuid, None)
+    self.name = BakeController.get_unique_name(self.name, self.uuid, NAME_DICT_BAKE_GROUP)
+
+    updating = False
 
 
 class UBK_BakeGroup(PropertyGroup):
@@ -36,6 +54,7 @@ class UBK_BakeGroup(PropertyGroup):
     name: StringProperty(
         name="Target",
         default="Group",
+        update=update_name,
     )
 
     detect_udim: BoolProperty(
