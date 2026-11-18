@@ -19,10 +19,11 @@ class UBK_UL_TargetObjectSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
     @classmethod
     def poll(cls, context) -> bool:
         project = BakeController.project(context)
-        if project is None:
+        active_bake_group = BakeController.active_bake_group(context)
+        if project is None or active_bake_group is None:
             return False
 
-        return len(project.bake_groups) > 0
+        return len(project.bake_groups) > 0 and len(active_bake_group.target_objects) > 0
 
     @object_needed
     def draw_header(self, context):
@@ -70,11 +71,12 @@ class UBK_UL_CageSettingsPanel(UBK_PT_MainPanel, bpy.types.Panel):
 
     @classmethod
     def poll(cls, context) -> bool:
+        active_bake_group = BakeController.active_bake_group(context)
         active_object = BakeController.active_target_object(context)
-        if active_object is None:
+        if active_bake_group is None or active_object is None:
             return False
 
-        return active_object.have_source
+        return len(active_bake_group.target_objects) > 0 and active_object.have_source
 
     def draw_header(self, context):
         layout = self.layout
