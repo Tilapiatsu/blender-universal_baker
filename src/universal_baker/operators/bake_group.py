@@ -20,11 +20,9 @@ class UBK_OT_BakeGroup(UBK_OT_Base):
 
     @classmethod
     def poll(cls, context):
-        #
-        # Let the controller decide if baking
-        # is currently possible.
-        #
-        return True
+        project = BakeController.project(context)
+
+        return len(project.bake_groups) > 0
 
     def execute(self, context):
         success, result = BakeController.bake_group(context, self.index)

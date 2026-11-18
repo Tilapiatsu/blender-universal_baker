@@ -424,11 +424,10 @@ class UBK_PT_BakerPanel(UBK_PT_MainPanel, bpy.types.Panel):
                 row.enabled = False
 
             column = row.column(align=True)
-
-            row.prop(
+            column.prop(
                 project.visualization,
                 "enabled_display",
-                text=f"Display {baker.accumulated_image.name}",
+                text=f"Display {baker.accumulated_image.name}" if baker.accumulated_image is not None else "Display",
                 toggle=1,
                 icon=ICON_DISPLAY_ENABLE if project.visualization.enabled_display else ICON_DISPLAY,
             )

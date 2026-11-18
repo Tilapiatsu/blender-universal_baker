@@ -16,12 +16,14 @@ class UBK_OT_BakeAll(UBK_OT_Base):
     bl_options = {"REGISTER"}
 
     @classmethod
-    def poll(cls, context):
-        #
-        # Let the controller decide if baking
-        # is currently possible.
-        #
-        return True
+    def poll(cls, context) -> bool:
+        project = BakeController.project(context)
+        active_bake_group = BakeController.active_bake_group(context)
+
+        if len(project.bake_groups) == 0:
+            return False
+
+        return len(active_bake_group.target_objects) > 0 and len(active_bake_group.bakers) > 0
 
     def execute(self, context):
         success, result = BakeController.bake_all(context)
