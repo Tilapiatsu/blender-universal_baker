@@ -26,6 +26,10 @@ class UBK_SourceObject(PropertyGroup):
     enabled: BoolProperty(
         default=True,
     )
+    expanded: BoolProperty(
+        name="",
+        default=True,
+    )
 
     object: PointerProperty(name="Source Object", type=bpy.types.Object)
 
@@ -36,6 +40,14 @@ class UBK_TargetObject(PropertyGroup):
     uuid: StringProperty()
 
     enabled: BoolProperty(
+        default=True,
+    )
+    expanded_bake_group: BoolProperty(
+        name="",
+        default=True,
+    )
+    expanded_target: BoolProperty(
+        name="",
         default=True,
     )
 

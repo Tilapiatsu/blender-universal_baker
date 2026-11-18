@@ -3,6 +3,7 @@ from __future__ import annotations
 import bpy
 
 from ..constant import ICON_BAKE, ICON_SOURCE_OBJECT, ICON_TARGET_OBJECT
+from .list import draw_indent, draw_source_objects
 
 
 class UBK_UL_TargetObjectList(bpy.types.UIList):
@@ -22,21 +23,25 @@ class UBK_UL_TargetObjectList(bpy.types.UIList):
         obj_settings = item
 
         if self.layout_type in {"DEFAULT", "COMPACT"}:
-            self.draw_default(layout, obj_settings, index)
+            self.draw_default(layout, obj_settings, 0, index)
 
         elif self.layout_type == "GRID":
             layout.alignment = "CENTER"
 
             layout.label(text="", icon=ICON_TARGET_OBJECT)
 
-    def draw_default(self, layout, item, index: int):
+    def draw_default(self, layout, item, indent: int, index: int):
         """Draw one object row."""
 
-        row = layout.row(align=True)
+        column = layout.column(align=True)
+        row = column.row(align=True)
+
+        if len(item.source_objects) > 0:
+            draw_indent(item, row, "expanded_target", indent)
 
         row.prop(item, "enabled", text="")
 
-        row = layout.row(align=True)
+        row = row.row(align=True)
         if not item.enabled:
             row.enabled = False
 
@@ -48,12 +53,12 @@ class UBK_UL_TargetObjectList(bpy.types.UIList):
         else:
             row.label(text="<Missing Object>", icon="ERROR")
 
-        source_objects = len(item.source_objects)
+        source_objects = len([o for o in item.source_objects if o.enabled])
 
         stats = row.row()
-        stats.alignment = "RIGHT"
 
         stats.enabled = False
+        stats.alignment = "RIGHT"
 
         if source_objects:
             stats.label(text=f"{source_objects}", icon=ICON_SOURCE_OBJECT)
@@ -61,6 +66,9 @@ class UBK_UL_TargetObjectList(bpy.types.UIList):
             stats.label(text="no source")
 
         row.operator("ubk.bake_target", text="", icon=ICON_BAKE).index = index
+
+        if item.expanded_target:
+            draw_source_objects(column, item, indent + 1)
 
     def draw_filter(self, context, layout):
         """Reserved for future filtering options."""

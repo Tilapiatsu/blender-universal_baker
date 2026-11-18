@@ -28,12 +28,15 @@ class UBK_BakeGroup(PropertyGroup):
         default=True,
     )
 
+    expanded: BoolProperty(
+        name="",
+        default=True,
+    )
+
     name: StringProperty(
         name="Target",
         default="Group",
     )
-
-    expanded: BoolProperty(default=True)
 
     detect_udim: BoolProperty(
         name="Detect UDIM",

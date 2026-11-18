@@ -3,6 +3,7 @@ from __future__ import annotations
 import bpy
 
 from ..constant import ICON_BAKE, ICON_TARGET_OBJECT
+from .list import draw_indent, draw_target_objects
 
 
 class UBK_UL_BakeGroupList(bpy.types.UIList):
@@ -22,31 +23,34 @@ class UBK_UL_BakeGroupList(bpy.types.UIList):
         obj_settings = item
 
         if self.layout_type in {"DEFAULT", "COMPACT"}:
-            self.draw_default(layout, obj_settings, index)
+            self.draw_bake_group(layout, obj_settings, 0, index)
 
         elif self.layout_type == "GRID":
             layout.alignment = "CENTER"
 
             layout.label(text="", icon=ICON_TARGET_OBJECT)
 
-    def draw_default(self, layout, active_bake_group, index: int):
+    def draw_bake_group(self, layout, item, indent: int, index: int):
         """Draw one object row."""
+        column = layout.column(align=True)
+        row = column.row(align=True)
 
-        row = layout.row(align=True)
+        if len(item.target_objects) > 0:
+            draw_indent(item, row, "expanded", indent)
 
-        row.prop(active_bake_group, "enabled", text="")
+        row.prop(item, "enabled", text="")
 
-        row = layout.row(align=True)
-        if not active_bake_group.enabled:
+        row = row.row(align=True)
+        if not item.enabled:
             row.enabled = False
 
-        row.prop(active_bake_group, "name", placeholder="Name", emboss=False, text="")
+        row.prop(item, "name", placeholder="Name", emboss=False, text="")
 
-        enabled_targets = sum(target_object.enabled for target_object in active_bake_group.target_objects)
-        total_targets = len(active_bake_group.target_objects)
+        enabled_targets = sum(target_object.enabled for target_object in item.target_objects)
+        total_targets = len(item.target_objects)
 
-        enabled_bakers = sum(baker.enabled for baker in active_bake_group.bakers)
-        total_bakers = len(active_bake_group.bakers)
+        enabled_bakers = sum(baker.enabled for baker in item.bakers)
+        total_bakers = len(item.bakers)
 
         stats = row.row()
         stats.alignment = "RIGHT"
@@ -56,14 +60,16 @@ class UBK_UL_BakeGroupList(bpy.types.UIList):
         stats.label(text=f"{enabled_targets}/{total_targets}", icon=ICON_TARGET_OBJECT)
         stats.label(text=f"{enabled_bakers}/{total_bakers}", icon="RENDERLAYERS")
 
-        row = layout.row(align=True)
+        row = row.row(align=True)
+        row.alignment = "RIGHT"
         row.prop(
-            active_bake_group,
+            item,
             "detect_udim",
             text="UDIM",
-            icon="VIEW_ORTHO" if active_bake_group.detect_udim else "MESH_PLANE",
+            icon="VIEW_ORTHO" if item.detect_udim else "MESH_PLANE",
             toggle=True,
         )
+        row = row.row(align=True)
 
         op = row.operator(
             "ubk.bake_group",
@@ -72,6 +78,9 @@ class UBK_UL_BakeGroupList(bpy.types.UIList):
         )
 
         op.index = index
+
+        if item.expanded:
+            draw_target_objects(column, item, "expanded_bake_group", indent + 1)
 
     def draw_filter(self, context, layout):
         """Reserved for future filtering options."""
