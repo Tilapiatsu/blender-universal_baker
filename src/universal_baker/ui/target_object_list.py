@@ -36,8 +36,7 @@ class UBK_UL_TargetObjectList(bpy.types.UIList):
         column = layout.column(align=True)
         row = column.row(align=True)
 
-        if len(item.source_objects) > 0:
-            draw_indent(item, row, "expanded_target", indent)
+        draw_indent(item, row, "expanded_target", indent, len(item.source_objects))
 
         row.prop(item, "enabled", text="")
 

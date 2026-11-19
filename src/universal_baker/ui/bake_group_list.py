@@ -35,8 +35,7 @@ class UBK_UL_BakeGroupList(bpy.types.UIList):
         column = layout.column(align=True)
         row = column.row(align=True)
 
-        if len(item.target_objects) > 0:
-            draw_indent(item, row, "expanded", indent)
+        draw_indent(item, row, "expanded", indent, len(item.target_objects))
 
         row.prop(item, "enabled", text="")
 
@@ -80,7 +79,7 @@ class UBK_UL_BakeGroupList(bpy.types.UIList):
         op.index = index
 
         if item.expanded:
-            draw_target_objects(column, item, "expanded_bake_group", indent + 1)
+            draw_target_objects(column, item, "expanded_bake_group", indent + 1, len(item.target_objects))
 
     def draw_filter(self, context, layout):
         """Reserved for future filtering options."""
