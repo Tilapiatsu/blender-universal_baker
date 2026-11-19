@@ -4,7 +4,23 @@ import bpy
 from bpy.props import EnumProperty, FloatProperty, PointerProperty, StringProperty
 from bpy.types import Image, Object, PropertyGroup
 
+from ..constant import LOG
 from ..resources.asset_info import CageSkewInfo
+
+updating = False
+
+
+def update_cage_object_custom(self, context):
+    from ..core.controller import BakeController
+
+    target = BakeController.active_target_object(context)
+
+    if target.object == self.cage_object_custom:
+        global updating
+        LOG.debug(f"You cannot select the same object as the target object : {target.object.name}")
+        updating = True
+        self.cage_object_custom = None
+        updating = False
 
 
 def parameter_updated(self, context):
@@ -108,10 +124,10 @@ class UBK_CageSettings(PropertyGroup):
         update=mode_updated,
     )
 
-    # TODO: Need to prevent to load the same object as the target object
     cage_object_custom: PointerProperty(
         name="Cage Object",
         type=Object,
+        update=update_cage_object_custom,
     )
     cage_object_generated: PointerProperty(
         name="Genertated Cage Object",

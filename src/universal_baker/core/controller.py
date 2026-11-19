@@ -10,6 +10,7 @@ from bpy_extras.io_utils import unique_name
 from ..constant import NAME_DICT_BAKE_GROUP, NAME_DICT_BAKER, NAME_DICT_PACKER, get_prefs
 from ..enum.execution import Execution
 from ..executors.executor import Executor
+from ..properties.object import UBK_SourceObject
 from ..properties.packer import UBK_Packer
 from ..runtime.job import Job
 from ..runtime.runtime_manager import RuntimeManager
@@ -226,7 +227,22 @@ class BakeController:
 
         return None
 
-    # TODO: Need to write get_source_object_from_uuid method
+    @classmethod
+    def get_source_object_from_uuid(cls, uuid: str) -> UBK_SourceObject | None:
+        project = cls.project(bpy.context)
+        if project is None:
+            return None
+
+        for g in project.bake_groups:
+            if not len(g.target_objects):
+                continue
+
+            for t in g.target_objects:
+                for s in t.source_objects:
+                    if s.uuid != uuid:
+                        continue
+
+                    return s
 
     @classmethod
     def get_target_object_from_uuid(cls, uuid: str) -> UBK_TargetObject | None:

@@ -36,7 +36,6 @@ class AssetSetup:
         """
         Remove all temporary Blender datablocks created by this setup.
         """
-        # TODO: Need to clean imported library -> Visible in the blend file after importing the prototype
         with LOG.scope(LOG_SCOPE):
             LOG.debug("Cleaning up AssetSetup")
 

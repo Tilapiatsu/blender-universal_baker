@@ -32,7 +32,7 @@ inputing 10% of the resulution for exemple
   - [ ] Add Operator to open .log file in text editor
   - [ ] Add Cancel, Pause, Resume Process -> does the executor need to be executed through a modal operators ?
   - [ ] Add progress bar : In 3D Viewport ? In the UI ? Both ?
-- [ ] Every Adder ( Bake Group, Baker, Packer ) need to have a name collision prevention mechanism
+- [X] Every Adder ( Bake Group, Baker, Packer ) need to have a name collision prevention mechanism
 - [ ] add check for target objects without UV -> Skip the mesh and raise a warning or block the execution of the bake ?
 - [ ] add dynamic description to get and explain the registered tokens and transforms for filename
 - [ ] add a debug option in the preference who allow to:
@@ -64,7 +64,7 @@ inputing 10% of the resulution for exemple
 - [X] Thickness
 - [X] ID
 - [ ] Mask
-- [ ] Displacement
+- [X] Displacement
 - [ ] Opacity
 - [X] Roughness
 - [ ] Metalness

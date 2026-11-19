@@ -7,6 +7,7 @@ from typing import Any
 import bpy
 
 from ...constant import LOG
+from ...services.data_removal import LibraryRemoval
 from ..metadata import (
     CURRENT_METADATA_VERSION,
     METADATA_TEXT_NAME,
@@ -44,7 +45,7 @@ class MetadataLoader:
 
         cls._validate_path(asset_path)
 
-        text = cls._load_text(METADATA_TEXT_NAME, asset_path)
+        text, library = cls._load_text(METADATA_TEXT_NAME, asset_path)
 
         try:
             raw_json = text.as_string()
@@ -53,6 +54,7 @@ class MetadataLoader:
 
         finally:
             cls._remove_text(text)
+            cls._remove_library(library)
 
     @classmethod
     def load_definition(cls, asset_path: Path) -> CustomBakerDefinition:
@@ -82,7 +84,7 @@ class MetadataLoader:
         cls,
         text_name: str,
         asset_path: Path,
-    ) -> bpy.types.Text:
+    ) -> tuple[bpy.types.Text, bpy.types.Library]:
 
         text = None
 
@@ -104,7 +106,7 @@ class MetadataLoader:
 
         for text in data_to.texts:
             if text is not None:
-                return text
+                return text, bpy.data.libraries[asset_path.name]
 
         raise MetadataNotFoundError(f"Metadata Text datablock '{text_name}' could not be loaded from '{asset_path}'.")
 
@@ -141,6 +143,10 @@ class MetadataLoader:
             text,
             do_unlink=True,
         )
+
+    @staticmethod
+    def _remove_library(library: bpy.types.Library):
+        LibraryRemoval.remove_library(library)
 
     # ------------------------------------------------------------------
     # JSON
