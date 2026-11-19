@@ -6,7 +6,7 @@ from ..constant import ICON_BAKE, ICON_SOURCE_OBJECT, ICON_TARGET_OBJECT
 def draw_target_objects(layout, bake_group, prop_name: str, indent: int):
     for target in bake_group.target_objects:
         row = layout.row()
-        draw_indent(target, row, prop_name, indent, len(bake_group.source_objects))
+        draw_indent(target, row, prop_name, indent, len(target.source_objects))
 
         row.prop(target, "enabled", text="")
         row = row.row(align=True)

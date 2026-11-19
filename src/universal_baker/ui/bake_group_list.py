@@ -79,7 +79,7 @@ class UBK_UL_BakeGroupList(bpy.types.UIList):
         op.index = index
 
         if item.expanded:
-            draw_target_objects(column, item, "expanded_bake_group", indent + 1, len(item.target_objects))
+            draw_target_objects(column, item, "expanded_bake_group", indent + 1)
 
     def draw_filter(self, context, layout):
         """Reserved for future filtering options."""
