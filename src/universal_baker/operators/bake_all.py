@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from ..constant import LOG
-
 from ..core.controller import BakeController
 from ..runtime.job import Job
 from .base import UBK_OT_Base
@@ -18,12 +17,18 @@ class UBK_OT_BakeAll(UBK_OT_Base):
     @classmethod
     def poll(cls, context) -> bool:
         project = BakeController.project(context)
-        active_bake_group = BakeController.active_bake_group(context)
 
         if len(project.bake_groups) == 0:
             return False
 
-        return len(active_bake_group.target_objects) > 0 and len(active_bake_group.bakers) > 0
+        enable = False
+
+        for bg in project.bake_groups:
+            if len([t for t in bg.target_objects if t.enabled]) > 0 and len([b for b in bg.bakers if b.enabled]) > 0:
+                enable = True
+                break
+
+        return enable
 
     def execute(self, context):
         success, result = BakeController.bake_all(context)
