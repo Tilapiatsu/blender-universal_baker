@@ -23,7 +23,7 @@ def update_name(self, context):
     updating = True
 
     NAME_DICT_PACKER.pop(self.uuid, None)
-    self.name = BakeController.get_unique_name(self.name, self.uuid, NAME_DICT_PACKER)
+    self.image_name = BakeController.get_unique_name(self.image_name, self.uuid, NAME_DICT_PACKER)
 
     updating = False
 

@@ -166,9 +166,7 @@ class BakeController:
 
     @classmethod
     def get_unique_name(cls, name: str, obj: Any, name_dict: dict[Any, str]) -> str:
-        print(name_dict)
         name = unique_name(obj, name, name_dict, sep="_", clean_func=cls._unique_name_clean_func)
-        print(name_dict)
 
         return name
 

@@ -11,15 +11,22 @@ from ..parameters_definition.baker_settings import UBK_BakerSettings
 from .custom_baker import UBK_CustomBaker
 from .settings_bake import UBK_BakeSettings
 
+updating = False
+
 
 def update_image_name(self, context):
     from ..core.controller import BakeController
     from ..output.output_tokens import get_variables
 
-    print(self.name)
-    NAME_DICT_BAKER.pop(self.uuid, None)
-    self.name = BakeController.get_unique_name(self.name, self.uuid, NAME_DICT_BAKER)
-    print(self.name)
+    global updating
+
+    if not updating:
+        updating = True
+        NAME_DICT_BAKER.pop(self.uuid, None)
+        self.image_name = BakeController.get_unique_name(self.image_name, self.uuid, NAME_DICT_BAKER)
+        updating = False
+    else:
+        return
 
     project = BakeController.project(context)
 
@@ -96,7 +103,7 @@ def update_image_name(self, context):
         "ALL",
     )
     if artifact is None:
-        LOG.debug(f"Artifact Not Found for {self.image_name}")
+        LOG.debug(f"Artifact Not Found for {self.image_name} : Skip Renaming image")
         return
 
     runtime.outputs.invalidate(bake_group.uuid, self.accumulated_producer_uuid)
