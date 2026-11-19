@@ -22,7 +22,7 @@ inputing 10% of the resulution for exemple
 - [ ] add ability to load a scene as background before baker ( usefull for AO )
 - [ ] add feature to apply background color per baker
 - [ ] add bake from multires ? For Normal, displacement
-- [ ] Bake Skew Correction map
+- [X] Bake Skew Correction map
 - [ ] Bake Decal ?
 - [ ] Map Denoising ?
 - [ ] Improve user control, feedback and reports
@@ -69,7 +69,7 @@ inputing 10% of the resulution for exemple
 - [X] Roughness
 - [ ] Metalness
 - [ ] Glossiness
-- [ ] Vector Displacement
+- [X] Vector Displacement
 - [ ] Vertex Color Channel
 - [ ] Wireframe ?
 - [X] UV

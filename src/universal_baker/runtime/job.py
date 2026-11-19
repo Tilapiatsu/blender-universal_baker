@@ -56,7 +56,7 @@ class Job:
         LOG.info("Job Started")
 
     def notify_finished(self) -> None:
-        # TODO: Find a way to maske LOG.middleware.get() return object with typehint
+        # TODO: Find a way to make LOG.middleware.get() return object with typehint
         stats = LOG.middleware.get("StatisticsMiddleware")
         if stats is not None:
             if stats.warning > 0 or stats.error > 0:

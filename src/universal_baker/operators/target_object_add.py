@@ -24,6 +24,10 @@ class UBK_OT_TargetObjectAdd(UBK_OT_Base):
             self.report({"WARNING"}, "No mesh objects were added.")
 
             return {"CANCELLED"}
+        elif None in objects:
+            self.report({"WARNING"}, "Some Object were not added properly.")
+
+            return {"CANCELLED"}
 
         self.report({"INFO"}, f"Added {len(objects)} bake target(s).")
 

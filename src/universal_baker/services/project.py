@@ -66,9 +66,14 @@ class ProjectService:
             if item.object == obj:
                 return item
 
+        if not obj.data.uv_layers:
+            LOG.error(f"Object {obj.name} have no UV Map")
+            return None
+
         item = bake_group.target_objects.add()
         item.object = obj
         item.uuid = str(uuid4())
+        item.uv_layer = obj.data.uv_layers[0].name
 
         bake_group.active_target_object_index = len(bake_group.target_objects) - 1
         return item
