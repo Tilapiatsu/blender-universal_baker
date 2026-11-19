@@ -9,8 +9,6 @@ import gpu
 
 from ..constant import LOG
 from ..core.registry_definition import registry_definition
-from ..parameter.parameter_applier import ParameterApplier
-from ..parameter.parameter_context import ParameterContext
 from ..resources.asset_info import CageSkewInfo, SourcesInfo
 from ..runtime.asset_setup import AssetSetup
 from ..services.material_override import MaterialSnapshot
@@ -198,6 +196,8 @@ class CageVisualizationRuntime:
             if cage is None:
                 LOG.error("Cage not found")
 
+            from ..parameter.parameter_applier import ParameterApplier
+            from ..parameter.parameter_context import ParameterContext
             from ..services.parameter_service import ParameterService
 
             snapshot = ParameterService.snapshot_asset(definition, source_info)

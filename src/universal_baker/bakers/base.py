@@ -10,12 +10,8 @@ import bpy
 from ..constant import ICON_BAKER, LOG
 from ..core.property_class_factory import ClassFactory
 from ..core.registry_baker import registry_baker
-from ..core.registry_definition import registry_definition
 from ..enum.image_colorspace import ImageColorSpace
 from ..enum.output_stage import OutputStage
-from ..parameter.baker_local.metadata_loader import MetadataLoader as metadata_loader_local
-from ..parameter.parameter_applier import ParameterApplier
-from ..parameter.parameter_context import ParameterContext
 from ..runtime.asset_setup import AssetSetup, BakerExecution
 from ..runtime.bake_objects import BakeObjects
 from ..runtime.bake_targets import BakeTargets
@@ -41,6 +37,9 @@ LOG_SCOPE = "Baking"
 def update_baker_property(self, context):
     # TODO: Need to optimize, and make sure only the modified property is updated -> Currently all the properties are
     # updated when one properties is modified
+
+    from ..core.registry_definition import registry_definition
+
     definition = registry_definition.require(self.name)
 
     if definition is None:
@@ -62,6 +61,9 @@ def update_baker_property(self, context):
 
     if active_bake_group is None or active_baker is None:
         return
+
+    from ..parameter.parameter_applier import ParameterApplier
+    from ..parameter.parameter_context import ParameterContext
 
     baker = registry_baker[active_baker.baker]
 
@@ -328,6 +330,8 @@ class BakerBase(ABC):
         ImageServiceBake.save(ctx.image, ctx.task.color_management_info)
 
     def apply_parameters(self, ctx: BakeContext):
+        from ..core.registry_definition import registry_definition
+
         definition = registry_definition.get(self.id)
         if definition is None:
             LOG.error("Parameter definition not found")
@@ -359,6 +363,9 @@ class BakerBase(ABC):
                 )
 
     def register_local(self):
+        from ..core.registry_definition import registry_definition
+        from ..parameter.baker_local.metadata_loader import MetadataLoader as metadata_loader_local
+
         LOG.info(f"Registering Building Baker : {self.id}")
         self.register_property_class()
         registry_baker.register(self)

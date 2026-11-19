@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import bpy
 
 from ..constant import LOG
 from .binding import ParameterBinding, ParameterBindingError
-from .parameter_context import ParameterContext
+
+if TYPE_CHECKING:
+    from .parameter_context import ParameterContext
 
 LOG_SCOPE = "Modifier Binding"
 

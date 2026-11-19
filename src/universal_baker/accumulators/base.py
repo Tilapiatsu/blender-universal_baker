@@ -37,7 +37,6 @@ class AccumulatorBase(ABC):
         """Whether this baker can execute this task."""
         return True
 
-    @abstractmethod
     def execute(self, ctx: AccumulateContext) -> None:
         """Prepare, bake and cleanup all at once."""
         with LOG.scope(LOG_SCOPE):
@@ -54,7 +53,6 @@ class AccumulatorBase(ABC):
             finally:
                 self.cleanup(ctx)
 
-    @abstractmethod
     def invalidate_previous_output(self, ctx: AccumulateContext):
         LOG.debug("Invalidate Previous Output ...")
         ctx.session.runtime.outputs.invalidate(
@@ -62,7 +60,6 @@ class AccumulatorBase(ABC):
             ctx.task.id,
         )
 
-    @abstractmethod
     def prepare(self, ctx: AccumulateContext) -> None:
         """Prepare Blender before baking."""
         LOG.debug("Preparing Scene ...")
@@ -80,7 +77,6 @@ class AccumulatorBase(ABC):
 
         ctx.inputs = inputs
 
-    @abstractmethod
     def accumulate(self, ctx: AccumulateContext) -> None:
         """Execute the Accumulation."""
         LOG.debug("Accumulating ...")
@@ -104,13 +100,11 @@ class AccumulatorBase(ABC):
             ctx.task.uv_layout.image_layout.value == "UDIM",
         )
 
-    @abstractmethod
     def cleanup(self, ctx: AccumulateContext) -> None:
         """Restore Blender."""
         LOG.debug("Restoring ...")
         ctx.image.reset()
 
-    @abstractmethod
     def update_baker(self, ctx: AccumulateContext) -> None:
         LOG.debug("Update Baker ...")
         from ..core.controller import BakeController
@@ -138,7 +132,6 @@ class AccumulatorBase(ABC):
         runtime = RuntimeManager.current(bpy.context)
         runtime.image_preview.update(ctx.image.image, baker.accumulated_producer_uuid)
 
-    @abstractmethod
     def create_artifact(self, ctx: AccumulateContext) -> None:
         LOG.debug("Creating Artifact ...")
         artifact = ArtifactService.register(
@@ -167,7 +160,6 @@ class AccumulatorBase(ABC):
 
         ctx.task.result.set_tileset(ctx.output.tileset, clear=True)
 
-    @abstractmethod
     def export_file(self, ctx: AccumulateContext) -> None:
         """Save Bake to disk."""
         LOG.debug("Saving File to Disk ...")

@@ -3,8 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 from ..constant import LOG
-from ..core.registry_definition import registry_definition
-from ..parameter.baker_custom.metadata_loader import MetadataLoader as metadata_loader_custom
 
 
 def register():
@@ -24,6 +22,9 @@ class Register:
 
     @classmethod
     def register_assets(cls):
+        from ..core.registry_definition import registry_definition
+        from ..parameter.baker_custom.metadata_loader import MetadataLoader as metadata_loader_custom
+
         files = cls.files()
         for f in files:
             id = f.stem.upper().replace(" ", "_")

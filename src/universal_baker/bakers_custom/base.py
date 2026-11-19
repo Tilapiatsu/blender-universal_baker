@@ -10,7 +10,6 @@ import bpy
 from ..bakers.base import BakerBase
 from ..constant import LOG
 from ..core.registry_baker import registry_baker
-from ..core.registry_definition import registry_definition
 from ..parameter.baker_custom.metadata_loader import MetadataLoader as metadata_loader_custom
 from ..resources.asset_external import AssetExtrenal
 from ..runtime.asset_setup import BakerExecution
@@ -164,6 +163,8 @@ class CustomBaker(BakerBase):
     def register_custom(self):
         if self.asset_path is None:
             return
+
+        from ..core.registry_definition import registry_definition
 
         LOG.info(f"Registering Custom Baker : {self.id}")
         self.register_property_class()

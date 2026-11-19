@@ -1,13 +1,14 @@
 from __future__ import annotations
 
-from typing import Any
-
-from universal_baker.parameter.metadata import ParameterSource
+from typing import TYPE_CHECKING, Any
 
 from .baker_custom.definition import CustomBakerDefinition
 from .baker_local.definition import LocalDefinition
+from .metadata import ParameterSource
 from .parameter import ParameterSnapshot
-from .parameter_context import ParameterContext
+
+if TYPE_CHECKING:
+    from .parameter_context import ParameterContext
 
 
 class ParameterApplyError(RuntimeError):

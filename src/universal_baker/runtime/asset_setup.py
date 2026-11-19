@@ -6,7 +6,7 @@ import bpy
 
 from ..constant import LOG
 from ..services.bake_material import BakeMaterialSetup
-from ..services.data_removal import MaterialRemoval, ObjectRemoval, LibraryRemoval
+from ..services.data_removal import LibraryRemoval, MaterialRemoval, ObjectRemoval
 from ..services.object_offset import ObjectOffset
 
 LOG_SCOPE = "Asset Setup"

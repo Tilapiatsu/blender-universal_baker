@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from .parameter_context import ParameterContext
+if TYPE_CHECKING:
+    from .parameter_context import ParameterContext
 
 
 class ParameterBindingError(RuntimeError):

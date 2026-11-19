@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import numpy as np
 
-from .base import Compositor
-from ..resources.image_buffer import ImageBuffer
 from ..core.registry_compositor import registry_compositor
+from ..resources.image_buffer import ImageBuffer
+from .base import Compositor
 
 
 class CompositeMax(Compositor):

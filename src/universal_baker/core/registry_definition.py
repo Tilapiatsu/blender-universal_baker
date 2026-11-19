@@ -3,10 +3,13 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from ..parameter.baker_custom.definition import CustomBakerDefinition
 from ..parameter.baker_local.definition import LocalDefinition
-from ..parameter.baker_local.metadata_loader import DefinitionObject
+
+if TYPE_CHECKING:
+    from ..parameter.baker_local.metadata_loader import DefinitionObject
 
 
 @dataclass(frozen=True)

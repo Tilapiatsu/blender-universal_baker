@@ -37,20 +37,17 @@ class MaskerBase(ABC):
         """Whether this baker can execute this task."""
         return True
 
-    @abstractmethod
     def execute(self, ctx: MaskContext) -> None:
         """Prepare, bake and cleanup all at once."""
         with LOG.scope(LOG_SCOPE):
-            LOG.info(f"{str(ctx.task)}")
+            LOG.info(f"{ctx.task!s}")
 
             self.prepare(ctx)
-            # self.create_artifact(ctx)
             self.masking(ctx)
             self.update_baker(ctx)
             self.export_file(ctx)
             self.cleanup(ctx)
 
-    @abstractmethod
     def prepare(self, ctx: MaskContext) -> None:
         """Prepare Blender before baking."""
         LOG.debug("Preparing Scene ...")
@@ -68,7 +65,6 @@ class MaskerBase(ABC):
 
         ctx.inputs = inputs
 
-    @abstractmethod
     def masking(self, ctx: MaskContext) -> None:
         """Execute the Accumulation."""
         LOG.debug("Masking ...")
@@ -113,13 +109,11 @@ class MaskerBase(ABC):
             input.image()
             input.reload()
 
-    @abstractmethod
     def cleanup(self, ctx: MaskContext) -> None:
         """Restore Blender."""
         LOG.debug("Restoring ...")
         ctx.image.reset()
 
-    @abstractmethod
     def update_baker(self, ctx: MaskContext) -> None:
         LOG.debug("Update Baker ...")
         from ..core.controller import BakeController
@@ -132,7 +126,6 @@ class MaskerBase(ABC):
 
         baker.accumulated_image = ctx.image.image
 
-    @abstractmethod
     def create_artifact(self, ctx: MaskContext) -> None:
         LOG.debug("Creating Artifact ...")
         artifact = ArtifactService.register(
@@ -162,7 +155,6 @@ class MaskerBase(ABC):
 
         ctx.task.result.set_tileset(ctx.output.tileset, clear=True)
 
-    @abstractmethod
     def export_file(self, ctx: MaskContext) -> None:
         """Save Bake to disk."""
         LOG.debug("Saving File to Disk ...")
