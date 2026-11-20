@@ -9,7 +9,7 @@ class ConsoleSink(BaseSink):
         timestamp = datetime.fromtimestamp(event.timestamp).strftime("%H:%M:%S")
 
         scope = ""
-        if event.scope:
+        if event.scope is not None:
             scope = "[" + " > ".join(event.scope) + "] "
 
         severity = self.prettify_severity(event.severity)

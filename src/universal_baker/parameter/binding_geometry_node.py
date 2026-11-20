@@ -48,8 +48,7 @@ class GeometryNodeInputBinding(ParameterBinding):
             )
 
         try:
-            with LOG.scope(LOG_SCOPE):
-                LOG.debug(f"Binding {value} to {self.socket_identifier}")
+            LOG.debug(f"Binding {value} to {self.socket_identifier}")
             socket.default_value = value
 
         except (TypeError, ValueError) as exc:

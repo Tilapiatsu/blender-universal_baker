@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from ..constant import LOG
 from ..core.registry_executor import registry_executor
-from ..logger.event import ScopeState
+from ..logger.scopes.task_scope import TaskScope
+from ..logger.scopes.task_status import ScopeState
 from ..logger_bake_middleware.bake_summary import EventCategory
 from ..runtime.context import ExecutionContext
 from ..runtime.context_pack import PackContext
@@ -22,8 +23,11 @@ class PackExecutorInternal(TaskExecutor):
     def __init__(self):
         self._cancel_requested = False
 
-    def execute_task(self, session: ExecutionSession, execution: ExecutionTarget, task: PackingTask) -> None:
-        with LOG.scope(task.producer.name):
+    def execute_task(self, session: ExecutionSession, execution: ExecutionTarget, task: PackingTask) -> TaskScope:
+        with LOG.scope(
+            task.producer.name,
+            scope_id=1,
+        ) as scope:
             LOG.info(
                 self.init_task_message(session),
                 scope_state=ScopeState.ENTER,
@@ -38,6 +42,8 @@ class PackExecutorInternal(TaskExecutor):
                 task=task,
                 context=ctx,
             )
+
+        return scope
 
     def before_job(self, session: ExecutionSession) -> None:
         """

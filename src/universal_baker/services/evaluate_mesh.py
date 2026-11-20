@@ -49,23 +49,21 @@ class EvaluateMesh(Evaluate):
 
     def evaluate(self) -> bpy.types.Mesh | None:
         if self.needs_evaluation:
-            with LOG.scope(LOG_SCOPE):
-                LOG.debug(f"Evaluate Object {self.obj.name}")
-                depsgraph = bpy.context.evaluated_depsgraph_get()
+            LOG.debug(f"Evaluate Object {self.obj.name}")
+            depsgraph = bpy.context.evaluated_depsgraph_get()
 
-                self.evaluated_obj = self.obj.evaluated_get(depsgraph)
+            self.evaluated_obj = self.obj.evaluated_get(depsgraph)
 
-                self.mesh = self.evaluated_obj.to_mesh()
+            self.mesh = self.evaluated_obj.to_mesh()
         else:
             self.mesh = self.obj.data
 
         return self.mesh
 
     def clean(self) -> None:
-        with LOG.scope(LOG_SCOPE):
-            if self.evaluated_obj is not None:
-                LOG.debug(f"Clean Evaluated Object : {self.evaluated_obj.name}")
-                self.evaluated_obj.to_mesh_clear()
+        if self.evaluated_obj is not None:
+            LOG.debug(f"Clean Evaluated Object : {self.evaluated_obj.name}")
+            self.evaluated_obj.to_mesh_clear()
 
     def __enter__(self):
         return self.evaluate()
@@ -100,17 +98,16 @@ class EvaluateObject(Evaluate):
 
         if force or self.needs_evaluation:
             self.visibility_override.set_visibility()
-            with LOG.scope(LOG_SCOPE), self._ensure_in_scene():
-                LOG.debug(f"Evaluate Object {self.obj.name}")
-                depsgraph = bpy.context.evaluated_depsgraph_get()
+            LOG.debug(f"Evaluate Object {self.obj.name}")
+            depsgraph = bpy.context.evaluated_depsgraph_get()
 
-                self.evaluated_mesh = self.obj.evaluated_get(depsgraph)
-                self.mesh = bpy.data.meshes.new_from_object(self.evaluated_mesh)
-                self.evaluated_obj = bpy.data.objects.new(name=f"{self.obj.name}_EVALUATED", object_data=self.mesh)
+            self.evaluated_mesh = self.obj.evaluated_get(depsgraph)
+            self.mesh = bpy.data.meshes.new_from_object(self.evaluated_mesh)
+            self.evaluated_obj = bpy.data.objects.new(name=f"{self.obj.name}_EVALUATED", object_data=self.mesh)
 
-                self.evaluated_obj.matrix_world = self.obj.matrix_world.copy()
+            self.evaluated_obj.matrix_world = self.obj.matrix_world.copy()
 
-                self.has_been_evaluated = True
+            self.has_been_evaluated = True
 
         else:
             self.evaluated_obj = self.obj
@@ -134,20 +131,19 @@ class EvaluateObject(Evaluate):
         if self.obj is None:
             return False
 
-        with LOG.scope(LOG_SCOPE):
-            if self.has_been_evaluated:
-                self.visibility_override.revert_visibility()
-                if self.evaluated_obj is not None and self.evaluated_obj.name in bpy.data.objects:
-                    LOG.debug(f"Clean Evaluated Object : {self.evaluated_obj.name}")
-                    bpy.data.objects.remove(self.evaluated_obj)
+        if self.has_been_evaluated:
+            self.visibility_override.revert_visibility()
+            if self.evaluated_obj is not None and self.evaluated_obj.name in bpy.data.objects:
+                LOG.debug(f"Clean Evaluated Object : {self.evaluated_obj.name}")
+                bpy.data.objects.remove(self.evaluated_obj)
 
-                if self.mesh is not None and self.mesh.name in bpy.data.meshes:
-                    LOG.debug(f"Clean Evaluated Mesh : {self.mesh.name}")
-                    bpy.data.meshes.remove(self.mesh)
+            if self.mesh is not None and self.mesh.name in bpy.data.meshes:
+                LOG.debug(f"Clean Evaluated Mesh : {self.mesh.name}")
+                bpy.data.meshes.remove(self.mesh)
 
-                return True
+            return True
 
-            return False
+        return False
 
     def __enter__(self) -> bpy.types.Object | None:
         return self.evaluate()

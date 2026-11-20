@@ -21,33 +21,30 @@ class AssetExternalService:
     @staticmethod
     def load_prototype(asset: AssetExtrenal, setup: AssetSetup) -> bpy.types.Object:
 
-        with LOG.scope(LOG_SCOPE):
-            LOG.debug(f"Loading Prototype : {asset.filepath}")
-            filepath = Path(asset.filepath)
+        LOG.debug(f"Loading Prototype : {asset.filepath}")
+        filepath = Path(asset.filepath)
 
-            if not filepath.is_file():
-                raise AssetExternalError(f"Custom baker asset does not exist: {filepath}")
+        if not filepath.is_file():
+            raise AssetExternalError(f"Custom baker asset does not exist: {filepath}")
 
-            with bpy.data.libraries.load(str(filepath), link=False) as (data_from, data_to):
-                if asset.prototype_name not in data_from.objects:
-                    raise AssetExternalError(
-                        f"Prototype object '{asset.prototype_name}' was not found in '{filepath}'."
-                    )
+        with bpy.data.libraries.load(str(filepath), link=False) as (data_from, data_to):
+            if asset.prototype_name not in data_from.objects:
+                raise AssetExternalError(f"Prototype object '{asset.prototype_name}' was not found in '{filepath}'.")
 
-                data_to.objects = [asset.prototype_name]
+            data_to.objects = [asset.prototype_name]
 
-            library = bpy.data.libraries.get(filepath.name)
+        library = bpy.data.libraries.get(filepath.name)
 
-            if library is not None:
-                setup.temporary_libraries.append(library)
+        if library is not None:
+            setup.temporary_libraries.append(library)
 
-            prototype = next(
-                (obj for obj in data_to.objects if obj is not None),
-                None,
-            )
+        prototype = next(
+            (obj for obj in data_to.objects if obj is not None),
+            None,
+        )
 
-            if prototype is None:
-                raise AssetExternalError(f"Failed to load prototype '{asset.prototype_name}'.")
+        if prototype is None:
+            raise AssetExternalError(f"Failed to load prototype '{asset.prototype_name}'.")
 
-            LOG.debug(f"Prototype {asset.prototype_name} properly loaded")
-            return prototype
+        LOG.debug(f"Prototype {asset.prototype_name} properly loaded")
+        return prototype

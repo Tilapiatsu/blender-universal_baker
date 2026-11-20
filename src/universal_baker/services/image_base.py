@@ -19,55 +19,53 @@ class ImageServiceBase:
 
     @classmethod
     def init_resource(cls, image: bpy.types.Image, output_settings: OutputSettings, is_udim: bool) -> ImageResource:
-        with LOG.scope(LOG_SCOPE):
-            LOG.debug(f"Init Image Resource : {image.name}")
-            resource = ImageResource.create(
-                width=output_settings.path.width,
-                height=output_settings.path.height,
-                name=image.name,
-                filepath=image.filepath_raw,
-                colorspace=output_settings.color.colorspace,
-                image_format_settings=output_settings.image,
-                alpha=output_settings.image.alpha,
-                float_buffer=output_settings.image.float_buffer,
-                is_udim=is_udim,
-                create_image=False,
-            )
+        LOG.debug(f"Init Image Resource : {image.name}")
+        resource = ImageResource.create(
+            width=output_settings.path.width,
+            height=output_settings.path.height,
+            name=image.name,
+            filepath=image.filepath_raw,
+            colorspace=output_settings.color.colorspace,
+            image_format_settings=output_settings.image,
+            alpha=output_settings.image.alpha,
+            float_buffer=output_settings.image.float_buffer,
+            is_udim=is_udim,
+            create_image=False,
+        )
 
-            return resource
+        return resource
 
     @classmethod
     def acquire(cls, resource: ImageResource, task: BakeTask) -> ImageResource:
         """
         Acquire the destination image for this task.
         """
-        with LOG.scope(LOG_SCOPE):
-            LOG.debug("Acquire image ...")
+        LOG.debug("Acquire image ...")
 
-            if resource.image is not None:
-                LOG.debug("Update existing Image")
-                cls.configure(resource, task)
-                return resource
-
+        if resource.image is not None:
+            LOG.debug("Update existing Image")
             cls.configure(resource, task)
-
-            image = bpy.data.images.get(resource.name)
-
-            if image is None:
-                image = cls.create(resource, task.uv_layout.udim_tiles)
-                resource.created = True
-
-            elif cls.is_image_settings_changed(image, resource):
-                LOG.debug("Image Settings has changed, recreating it")
-                bpy.data.images.remove(image)
-                image = cls.create(resource, task.uv_layout.udim_tiles)
-                resource.created = True
-
-            resource.image = image
-
-            cls.apply_settings(resource)
-
             return resource
+
+        cls.configure(resource, task)
+
+        image = bpy.data.images.get(resource.name)
+
+        if image is None:
+            image = cls.create(resource, task.uv_layout.udim_tiles)
+            resource.created = True
+
+        elif cls.is_image_settings_changed(image, resource):
+            LOG.debug("Image Settings has changed, recreating it")
+            bpy.data.images.remove(image)
+            image = cls.create(resource, task.uv_layout.udim_tiles)
+            resource.created = True
+
+        resource.image = image
+
+        cls.apply_settings(resource)
+
+        return resource
 
     @classmethod
     def save(
@@ -75,27 +73,26 @@ class ImageServiceBase:
         resource: ImageResource,
         color_management_info: ColorManagementInfo | None = None,
     ) -> None:
-        with LOG.scope("Save"):
-            LOG.debug(f'Save Image Resource "{resource.name}"')
+        LOG.debug(f'Save Image Resource "{resource.name}"')
 
-            if resource.image is None:
-                return
+        if resource.image is None:
+            return
 
-            image = resource.image
-            image.filepath_raw = str(resource.filepath)
-            image.file_format = resource.image_format_settings.file_format
+        image = resource.image
+        image.filepath_raw = str(resource.filepath)
+        image.file_format = resource.image_format_settings.file_format
 
-            if color_management_info is not None and color_management_info.apply_view_transform:
-                with ViewTransformOverride.override(bpy.context.scene, color_management_info):
-                    LOG.debug(f"Saving file as render : {resource.filepath}")
-                    image.save_render(str(resource.filepath), scene=bpy.context.scene)
-            else:
-                image.save()
-                LOG.debug(f"Saving file : {resource.filepath}")
+        if color_management_info is not None and color_management_info.apply_view_transform:
+            with ViewTransformOverride.override(bpy.context.scene, color_management_info):
+                LOG.debug(f"Saving file as render : {resource.filepath}")
+                image.save_render(str(resource.filepath), scene=bpy.context.scene)
+        else:
+            image.save()
+            LOG.debug(f"Saving file : {resource.filepath}")
 
-            image.pack()
+        image.pack()
 
-            resource.mark_saved()
+        resource.mark_saved()
 
     @classmethod
     def remove(cls, image: bpy.types.Image) -> None:
@@ -126,56 +123,54 @@ class ImageServiceBase:
         """
         Populate the resource from the Task.
         """
-        with LOG.scope("Configure"):
-            LOG.debug(f"Setting up ressource from task {task.output_name}")
+        LOG.debug(f"Setting up ressource from task {task.output_name}")
 
-            image_settings = task.output_context.output_settings.image
-            color_settings = task.output_context.output_settings.color
-            path_settings = task.output_context.output_settings.path
+        image_settings = task.output_context.output_settings.image
+        color_settings = task.output_context.output_settings.color
+        path_settings = task.output_context.output_settings.path
 
-            resource.name = task.output_name
-            resource.width = path_settings.width
-            resource.height = path_settings.height
-            resource.colorspace = (
-                color_settings.colorspace if color_settings.override_colorspace else task.producer.bake_colorspace
-            )
-            resource.image_format_settings = image_settings
-            resource.is_udim = task.uv_layout.image_layout == ImageLayout.UDIM
-            LOG.debug(f"Configure Image to {task.uv_layout.image_layout.value}")
+        resource.name = task.output_name
+        resource.width = path_settings.width
+        resource.height = path_settings.height
+        resource.colorspace = (
+            color_settings.colorspace if color_settings.override_colorspace else task.producer.bake_colorspace
+        )
+        resource.image_format_settings = image_settings
+        resource.is_udim = task.uv_layout.image_layout == ImageLayout.UDIM
+        LOG.debug(f"Configure Image to {task.uv_layout.image_layout.value}")
 
-            resource.filepath = task.absolute_filepath
+        resource.filepath = task.absolute_filepath
 
     @classmethod
     def create(cls, resource: ImageResource, tiles: tuple[tuple[int, int], ...] = ((0, 0),)) -> bpy.types.Image:
-        with LOG.scope("Create"):
-            if resource.tiles_has_changed(UVService.tile_numbers(tiles)):
-                resource.remove_image()
+        if resource.tiles_has_changed(UVService.tile_numbers(tiles)):
+            resource.remove_image()
 
-            if resource.name not in bpy.data.images:
-                LOG.debug(f"Create Image : {resource.name}")
-                image = bpy.data.images.new(
-                    name=resource.name,
-                    width=resource.width,
-                    height=resource.height,
-                    alpha=resource.image_format_settings.alpha,
-                    float_buffer=resource.image_format_settings.float_buffer,
-                    tiled=resource.is_udim,
-                )
-                image.colorspace_settings.name = resource.colorspace
+        if resource.name not in bpy.data.images:
+            LOG.debug(f"Create Image : {resource.name}")
+            image = bpy.data.images.new(
+                name=resource.name,
+                width=resource.width,
+                height=resource.height,
+                alpha=resource.image_format_settings.alpha,
+                float_buffer=resource.image_format_settings.float_buffer,
+                tiled=resource.is_udim,
+            )
+            image.colorspace_settings.name = resource.colorspace
 
-                if resource.is_udim:
-                    resource.image = image
-                    cls.add_udim_tiles(resource, tiles)
-            else:
-                LOG.debug(f"Image found : {resource.name}")
-                image = cls.find(resource.name)
-                assert image is not None
-                image.scale(resource.width, resource.height)
-                image.filepath_raw = str(resource.filepath)
-                # image.update()
-                image.pack()
+            if resource.is_udim:
+                resource.image = image
+                cls.add_udim_tiles(resource, tiles)
+        else:
+            LOG.debug(f"Image found : {resource.name}")
+            image = cls.find(resource.name)
+            assert image is not None
+            image.scale(resource.width, resource.height)
+            image.filepath_raw = str(resource.filepath)
+            # image.update()
+            image.pack()
 
-            return image
+        return image
 
     @classmethod
     def copy(cls, resource: ImageResource) -> ImageResource:

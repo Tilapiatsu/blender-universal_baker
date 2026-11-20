@@ -24,18 +24,17 @@ class EvaluatedMeshDatas:
     evaluated_mesh_datas: dict[str, EvaluatedMeshData] = field(default_factory=dict)
 
     def add_object(self, obj: UBK_TargetObject):
-        with LOG.scope(LOG_SCOPE):
-            if obj.object is None:
-                LOG.error("Object is undefined")
-                return
+        if obj.object is None:
+            LOG.error("Object is undefined")
+            return
 
-            if obj.object.type != "MESH":
-                LOG.error("Object should be a Mesh")
-                return
+        if obj.object.type != "MESH":
+            LOG.error("Object should be a Mesh")
+            return
 
-            self.evaluated_mesh_datas[obj.object.name] = EvaluatedMeshData(
-                uuid=obj.uuid, name=obj.object.name, object=obj.object, mesh=obj.object.data
-            )
+        self.evaluated_mesh_datas[obj.object.name] = EvaluatedMeshData(
+            uuid=obj.uuid, name=obj.object.name, object=obj.object, mesh=obj.object.data
+        )
 
     def set_evaluated_meshes(self, evaluated_meshes: EvaluatedMeshDatas):
         self.evaluated_mesh_datas = evaluated_meshes.evaluated_mesh_datas
@@ -48,14 +47,13 @@ class EvaluateMeshes:
         self._evaluate_meshes = {}
 
     def add_evaluated_mesh_data(self, evaluated_mesh_data: EvaluatedMeshData):
-        with LOG.scope(LOG_SCOPE):
-            if evaluated_mesh_data.object is None:
-                LOG.error("Object is undefined")
-                return
+        if evaluated_mesh_data.object is None:
+            LOG.error("Object is undefined")
+            return
 
-            if evaluated_mesh_data.object.type != "MESH":
-                LOG.error("Object should be a Mesh")
-                return
+        if evaluated_mesh_data.object.type != "MESH":
+            LOG.error("Object should be a Mesh")
+            return
 
         self._evaluate_meshes[evaluated_mesh_data.object.name] = EvaluateMesh(evaluated_mesh_data.object)
 

@@ -46,7 +46,7 @@ class ExecutionPlanner:
         target_index: int = -1,
         packer_index: int = -1,
     ) -> Job:
-        with LOG.scope("Planner"):
+        with LOG.scope("Planner", scope_id=1):
             from .controller import BakeController
 
             bg_objects = []
@@ -150,7 +150,7 @@ class ExecutionPlanner:
                         uuid=str(uuid4()),
                         name="UVOwnership",
                         enabled=True,
-                        execution_scope=None,
+                        execution_scope="Uv Ownership",
                         output_context=output_context,
                         color_management_info=color_management_info.ColorManagementInfo(),
                         bake_group_uuid=group.uuid,
@@ -267,7 +267,7 @@ class ExecutionPlanner:
 
                     task = AccumulateTask(
                         name=baker.image_name,
-                        execution_scope=None,
+                        execution_scope="Accumulation",
                         uuid=str(uuid4()),
                         enabled=True,
                         output_context=output_context,
@@ -352,7 +352,7 @@ class ExecutionPlanner:
                         name=packer.name,
                         uuid=str(uuid4()),
                         bake_group_uuid=group.uuid,
-                        execution_scope=None,
+                        execution_scope="Packing",
                         enabled=True,
                         output_context=output_context,
                         color_management_info=packer_produer.color_management_info,
@@ -368,6 +368,5 @@ class ExecutionPlanner:
                     )
                     job.add_task(task)
 
-            with LOG.scope("Planner"):
-                LOG.info(str(job))
+            # LOG.info(str(job))
             return job

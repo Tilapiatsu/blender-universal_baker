@@ -22,23 +22,21 @@ class ImageIOService(ImageServiceBase):
     @staticmethod
     def read_image(image: bpy.types.Image) -> ImageBuffer:
         """Convert ImageResource to ImageBuffer for manipulation"""
-        with LOG.scope(LOG_SCOPE):
-            LOG.debug(f'Create Buffer from Image "{image.name}"')
-            buffer = ImageBuffer.from_blender_image(image)
+        LOG.debug(f'Create Buffer from Image "{image.name}"')
+        buffer = ImageBuffer.from_blender_image(image)
 
-            return buffer
+        return buffer
 
     @classmethod
     def read(cls, resource: ImageResource) -> ImageBuffer:
         """Convert ImageResource to ImageBuffer for manipulation"""
-        with LOG.scope(LOG_SCOPE):
-            LOG.debug(f'Create Buffer from Image Resource "{resource.name}"')
-            image = resource.image
+        LOG.debug(f'Create Buffer from Image Resource "{resource.name}"')
+        image = resource.image
 
-            if image is None:
-                image = cls.create(resource)
+        if image is None:
+            image = cls.create(resource)
 
-            return cls.read_image(image)
+        return cls.read_image(image)
 
     @classmethod
     def export_tiles(cls, artifact: OutputArtifact, tiles: TileSet) -> None:
@@ -53,14 +51,13 @@ class ImageIOService(ImageServiceBase):
 
     @staticmethod
     def load(path: Path, colorspace_settings: ColorManagementSettings, is_udim: bool = False) -> bpy.types.Image:
-        with LOG.scope(LOG_SCOPE):
-            LOG.debug(f"Loading image : {str(path)}")
-            image = bpy.data.images.load(str(path))
-            image.colorspace_settings.name = colorspace_settings.colorspace
-            image.use_view_as_render = True
+        LOG.debug(f"Loading image : {str(path)}")
+        image = bpy.data.images.load(str(path))
+        image.colorspace_settings.name = colorspace_settings.colorspace
+        image.use_view_as_render = True
 
-            image.name = image.name.split(".")[0]
+        image.name = image.name.split(".")[0]
 
-            if is_udim:
-                image.source = "TILED"
-            return image
+        if is_udim:
+            image.source = "TILED"
+        return image

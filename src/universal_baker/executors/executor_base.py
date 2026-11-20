@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from abc import ABC
+from abc import ABC, abstractmethod
 
 from ..constant import LOG
+from ..logger.scopes.task_scope import TaskScope
 from ..runtime.context import ExecutionContext
 from ..runtime.session import ExecutionSession
 from .execution_target import ExecutionTarget
@@ -11,7 +12,8 @@ from .execution_target import ExecutionTarget
 class TaskExecutor(ABC):
     id: str
 
-    def execute_task(self, session: ExecutionSession, execution: ExecutionTarget, task) -> None: ...
+    @abstractmethod
+    def execute_task(self, session: ExecutionSession, execution: ExecutionTarget, task) -> TaskScope: ...
 
     def init_task_message(self, session) -> str:
         return f"{'=' * 100} Task {session.job.current_task + 1} / {session.job.total_tasks} {'=' * 100}"

@@ -84,128 +84,126 @@ class MaterialOverrideService:
         inject: bool = False,
     ) -> list[MaterialSnapshot]:
 
-        with LOG.scope(LOG_SCOPE):
-            snapshots = []
+        snapshots = []
 
-            injected_materials: dict[bpy.types.Material, bpy.types.Material] = {}
+        injected_materials: dict[bpy.types.Material, bpy.types.Material] = {}
 
-            stored_instances = []
-            for obj in objects:
-                if obj.type != "MESH":
-                    continue
+        stored_instances = []
+        for obj in objects:
+            if obj.type != "MESH":
+                continue
 
-                # NOTE: Check if the object has muliple users and prevent to register snapshot multiple times
-                # if obj.data.name in stored_instances:
-                #     continue
+            # NOTE: Check if the object has muliple users and prevent to register snapshot multiple times
+            # if obj.data.name in stored_instances:
+            #     continue
 
-                if obj.data.users > 1:
-                    stored_instances.append(obj.data.name)
+            if obj.data.users > 1:
+                stored_instances.append(obj.data.name)
 
-                material_names = [
-                    (MaterialTarget(slot.link), slot.material.name)
-                    for slot in obj.material_slots
-                    if slot.material is not None
-                ]
+            material_names = [
+                (MaterialTarget(slot.link), slot.material.name)
+                for slot in obj.material_slots
+                if slot.material is not None
+            ]
 
-                LOG.debug(f"Storing materials for {obj.name} : {material_names}")
+            LOG.debug(f"Storing materials for {obj.name} : {material_names}")
 
-                snapshot = MaterialSnapshot(
-                    object_name=obj.name,
-                    material_names=material_names,
-                )
+            snapshot = MaterialSnapshot(
+                object_name=obj.name,
+                material_names=material_names,
+            )
 
-                # NOTE: add a Material slot if missing
-                if len(obj.material_slots) == 0:
-                    obj.data.materials.append(None)
+            # NOTE: add a Material slot if missing
+            if len(obj.material_slots) == 0:
+                obj.data.materials.append(None)
 
-                for index, slot in enumerate(obj.material_slots):
-                    if inject:
-                        # NOTE: Reuse already injected node
-                        if slot.material in injected_materials:
-                            LOG.debug(f"Reuse Injected Material : {injected_materials[slot.material].name}")
-                            slot.link = target.value
-                            slot.material = injected_materials[slot.material]
-                            continue
-
-                        # NOTE: No material assigned -> Override instead of inject
-                        if slot.material is None:
-                            LOG.debug("Empty Slot : Override material")
-                            slot.link = target.value
-                            slot.material = material
-                            continue
-
-                        output_node = NodeGraphService.find_material_output(slot.material.node_tree)
-
-                        volume_node = NodeGraphService.get_input(output_node, "Volume")
-                        displacement_node = NodeGraphService.get_input(output_node, "Displacement")
-
-                        # NOTE: Bypass injection because no other material socket are used -> Override material instead
-                        if (volume_node is None and displacement_node is None) or (
-                            volume_node is not None
-                            and not volume_node.is_linked
-                            and displacement_node is not None
-                            and not displacement_node.is_linked
-                        ):
-                            LOG.debug(f"No Injection Needed : Override Material {slot.material.name}")
-                            slot.link = target.value
-                            slot.material = material
-                            continue
-
-                        # NOTE: Doing injection
-                        i_material = slot.material.copy()
-                        injected_materials[slot.material] = i_material
-
-                        snapshot.temporary_material_names.append(i_material.name)
-
-                        LOG.debug(f"Inject Material : {i_material.name} into {slot.material.name}")
-
-                        MaterialInjectionService.inject(material, i_material)
+            for index, slot in enumerate(obj.material_slots):
+                if inject:
+                    # NOTE: Reuse already injected node
+                    if slot.material in injected_materials:
+                        LOG.debug(f"Reuse Injected Material : {injected_materials[slot.material].name}")
                         slot.link = target.value
-                        slot.material = i_material
+                        slot.material = injected_materials[slot.material]
+                        continue
 
-                    # NOTE: Override
-                    else:
+                    # NOTE: No material assigned -> Override instead of inject
+                    if slot.material is None:
+                        LOG.debug("Empty Slot : Override material")
                         slot.link = target.value
                         slot.material = material
+                        continue
 
-                    LOG.debug(f"Apply material {material.name} to slot {index}")
+                    output_node = NodeGraphService.find_material_output(slot.material.node_tree)
 
-                snapshots.append(snapshot)
+                    volume_node = NodeGraphService.get_input(output_node, "Volume")
+                    displacement_node = NodeGraphService.get_input(output_node, "Displacement")
 
-            return snapshots
+                    # NOTE: Bypass injection because no other material socket are used -> Override material instead
+                    if (volume_node is None and displacement_node is None) or (
+                        volume_node is not None
+                        and not volume_node.is_linked
+                        and displacement_node is not None
+                        and not displacement_node.is_linked
+                    ):
+                        LOG.debug(f"No Injection Needed : Override Material {slot.material.name}")
+                        slot.link = target.value
+                        slot.material = material
+                        continue
+
+                    # NOTE: Doing injection
+                    i_material = slot.material.copy()
+                    injected_materials[slot.material] = i_material
+
+                    snapshot.temporary_material_names.append(i_material.name)
+
+                    LOG.debug(f"Inject Material : {i_material.name} into {slot.material.name}")
+
+                    MaterialInjectionService.inject(material, i_material)
+                    slot.link = target.value
+                    slot.material = i_material
+
+                # NOTE: Override
+                else:
+                    slot.link = target.value
+                    slot.material = material
+
+                LOG.debug(f"Apply material {material.name} to slot {index}")
+
+            snapshots.append(snapshot)
+
+        return snapshots
 
     @staticmethod
     def restore(
         snapshots: list[MaterialSnapshot],
     ):
 
-        with LOG.scope(LOG_SCOPE):
-            for snapshot in snapshots:
-                obj = snapshot.object
+        for snapshot in snapshots:
+            obj = snapshot.object
 
-                if obj is None:
-                    LOG.error(f"Object {snapshot.object_name} not found, Can't recover")
+            if obj is None:
+                LOG.error(f"Object {snapshot.object_name} not found, Can't recover")
+                continue
+
+            LOG.debug(f"Restoring materials for {obj.name}")
+
+            # NOTE: Remove all materials if the object didn't had materials at the first place
+            if not len(snapshot.material_names):
+                obj.data.materials.clear()
+
+            for index, target_material in enumerate(snapshot.target_materials):
+                if obj.material_slots is None or index >= len(obj.material_slots):
                     continue
 
-                LOG.debug(f"Restoring materials for {obj.name}")
+                target, material = target_material
 
-                # NOTE: Remove all materials if the object didn't had materials at the first place
-                if not len(snapshot.material_names):
-                    obj.data.materials.clear()
+                LOG.debug(f"Restoring material slot {index} : {material.name if material is not None else 'EMPTY'}")
+                if target_material is None:
+                    LOG.error(f"Material {snapshot.material_names[index]} not found, can't recover")
+                    continue
 
-                for index, target_material in enumerate(snapshot.target_materials):
-                    if obj.material_slots is None or index >= len(obj.material_slots):
-                        continue
+                obj.material_slots[index].link = target.value
+                obj.material_slots[index].material = material
 
-                    target, material = target_material
-
-                    LOG.debug(f"Restoring material slot {index} : {material.name if material is not None else 'EMPTY'}")
-                    if target_material is None:
-                        LOG.error(f"Material {snapshot.material_names[index]} not found, can't recover")
-                        continue
-
-                    obj.material_slots[index].link = target.value
-                    obj.material_slots[index].material = material
-
-                for m in snapshot.temporary_materials:
-                    bpy.data.materials.remove(m)
+            for m in snapshot.temporary_materials:
+                bpy.data.materials.remove(m)

@@ -55,76 +55,75 @@ class ArtifactService:
         """
         Creates or updates an artifact.
         """
-        with LOG.scope(LOG_SCOPE):
-            artifact_pg = cls._find_property_group(
-                project,
-                bake_group_uuid,
-                producer_uuid,
-                target_object_uuid,
-            )
+        artifact_pg = cls._find_property_group(
+            project,
+            bake_group_uuid,
+            producer_uuid,
+            target_object_uuid,
+        )
 
-            #
-            # Existing artifact ?
-            #
-            if artifact_pg is None:
-                LOG.debug("Creating new Artifact")
-                artifact_pg = project.artifacts.add()
-                artifact_pg.uuid = cls._generate_uuid()
-            else:
-                LOG.debug(f"Updating existing Artifact : {artifact_pg.name}")
+        #
+        # Existing artifact ?
+        #
+        if artifact_pg is None:
+            LOG.debug("Creating new Artifact")
+            artifact_pg = project.artifacts.add()
+            artifact_pg.uuid = cls._generate_uuid()
+        else:
+            LOG.debug(f"Updating existing Artifact : {artifact_pg.name}")
 
-            #
-            # Fill metadata
-            #
-            if not producer_uuid:
-                raise ValueError(f"Artifact '{name}' cannot be registered without producer_uuid")
+        #
+        # Fill metadata
+        #
+        if not producer_uuid:
+            raise ValueError(f"Artifact '{name}' cannot be registered without producer_uuid")
 
-            artifact_pg.type = artifact_type.value
-            artifact_pg.bake_group_uuid = bake_group_uuid
-            artifact_pg.producer_uuid = producer_uuid
-            artifact_pg.target_object_uuid = target_object_uuid
-            artifact_pg.checksum = checksum
-            artifact_pg.created = datetime.now().isoformat()
-            artifact_pg.name = name
-            artifact_pg.image_layout = image_layout.value
-            artifact_pg.channels = output_settings.image.alpha
-            artifact_pg.feed_from_output_settings(output_settings)
-            artifact_pg.absolute_path = str(absolute_path)
-            artifact_pg.feed_from_color_management_info(color_management_info)
-            tiles = uv_layout.tiles
+        artifact_pg.type = artifact_type.value
+        artifact_pg.bake_group_uuid = bake_group_uuid
+        artifact_pg.producer_uuid = producer_uuid
+        artifact_pg.target_object_uuid = target_object_uuid
+        artifact_pg.checksum = checksum
+        artifact_pg.created = datetime.now().isoformat()
+        artifact_pg.name = name
+        artifact_pg.image_layout = image_layout.value
+        artifact_pg.channels = output_settings.image.alpha
+        artifact_pg.feed_from_output_settings(output_settings)
+        artifact_pg.absolute_path = str(absolute_path)
+        artifact_pg.feed_from_color_management_info(color_management_info)
+        tiles = uv_layout.tiles
 
-            artifact_pg.udim_tiles.clear()
+        artifact_pg.udim_tiles.clear()
 
-            for tile in tiles:
-                tile_pg = artifact_pg.udim_tiles.add()
+        for tile in tiles:
+            tile_pg = artifact_pg.udim_tiles.add()
 
-                tile_pg.number = tile
+            tile_pg.number = tile
 
-            #
-            # Dependencies
-            #
+        #
+        # Dependencies
+        #
 
-            artifact_pg.dependencies.clear()
+        artifact_pg.dependencies.clear()
 
-            for uuid in dependencies:
-                dep = artifact_pg.dependencies.add()
+        for uuid in dependencies:
+            dep = artifact_pg.dependencies.add()
 
-                dep.artifact_uuid = uuid
+            dep.artifact_uuid = uuid
 
-            #
-            # Runtime refresh
-            #
+        #
+        # Runtime refresh
+        #
 
-            runtime.artifacts.rebuild()
+        runtime.artifacts.rebuild()
 
-            artifact = runtime.artifacts.get(artifact_pg.uuid)
+        artifact = runtime.artifacts.get(artifact_pg.uuid)
 
-            if artifact is not None:
-                LOG.debug(f"Artifact registered : {str(artifact)}")
-            else:
-                LOG.warning("Artifact Creation Failed")
+        if artifact is not None:
+            LOG.debug(f"Artifact registered : {str(artifact)}")
+        else:
+            LOG.warning("Artifact Creation Failed")
 
-            return artifact
+        return artifact
 
     # ------------------------------------------------------------------
     # Removal

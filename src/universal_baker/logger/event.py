@@ -1,30 +1,30 @@
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass, field
 from typing import Any
-from enum import Enum, auto
-import time
 
+from .scopes.task_status import ScopeState, TaskStatus
 from .severity import Severity
-
-
-class ScopeState(Enum):
-    ENTER = auto()
-    EXIT = auto()
-    UPDATE = auto()
 
 
 @dataclass(slots=True, frozen=True)
 class LogEvent:
     severity: Severity
     message: str
-    scope: tuple[str, ...]
+
+    scope_id: int | None = None
+    scope: tuple[str, ...] = field(default_factory=tuple)
+
     scope_state: ScopeState | None = None
-    scope_duration: float | None = None
+    task_status: TaskStatus | None = None
+
     progress: float | None = None
+    scope_duration: float | None = None
+    scope_metadata: dict[str, Any] = field(default_factory=dict)
+
     timestamp: float = field(default_factory=time.time)
     addon: str | None = None
     category: str | None = None
     exception: Exception | None = None
     data: dict[str, Any] = field(default_factory=dict)
-    scope: tuple[str, ...] = field(default_factory=tuple)

@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from .base import BaseMiddleware
-from ..severity import Severity
 from ..event import LogEvent
+from ..severity import Severity
+from .base import BaseMiddleware
 
 
 class IgnoreDebugMiddleware(BaseMiddleware):

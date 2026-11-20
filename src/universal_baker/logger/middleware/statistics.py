@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from .base import BaseMiddleware
 from ..severity import Severity
+from .base import BaseMiddleware
 
 
 class StatisticsMiddleware(BaseMiddleware):
@@ -14,6 +14,7 @@ class StatisticsMiddleware(BaseMiddleware):
         self.warning = 0
         self.error = 0
         self.debug = 0
+        self.critical = 0
 
     def process(self, event):
         self.total += 1
@@ -27,5 +28,7 @@ class StatisticsMiddleware(BaseMiddleware):
                 self.error += 1
             case Severity.DEBUG:
                 self.debug += 1
+            case Severity.CRITICAL:
+                self.critical += 1
 
         return event
