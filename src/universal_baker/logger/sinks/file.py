@@ -13,7 +13,7 @@ from .base import BaseSink
 
 
 class FileSink(BaseSink):
-    DEFAULT_MAX_BYTES = 1 * 512 * 512
+    DEFAULT_MAX_BYTES = 5 * 512 * 512
 
     def __init__(
         self,
