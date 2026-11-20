@@ -16,3 +16,7 @@ class BaseMiddleware(ABC):
             None     -> stop propagation
         """
         raise NotImplementedError
+
+    def close(self):
+        """Release resources owned by the sink."""
+        pass

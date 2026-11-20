@@ -57,3 +57,6 @@ class Logger:
 
     def separator(self, severity: Severity, **kwargs) -> None:
         self.log(severity, "=" * 100, **kwargs)
+
+    def close(self):
+        self.dispatcher.close()

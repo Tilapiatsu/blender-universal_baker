@@ -1,9 +1,18 @@
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass, field
+from enum import Enum, auto
 from typing import Any
 
-import time
+
+class TaskStatus(Enum):
+    PENDING = auto()
+    RUNNING = auto()
+    SUCCESS = auto()
+    WARNING = auto()
+    ERROR = auto()
+    CANCELLED = auto()
 
 
 @dataclass(slots=True)
@@ -15,6 +24,7 @@ class TaskScope:
     progress: float = 0.0
     metadata: dict[str, Any] = field(default_factory=dict)
     children: list[TaskScope] = field(default_factory=list)
+    error: Exception | None = None
 
     @property
     def duration(self) -> float | None:

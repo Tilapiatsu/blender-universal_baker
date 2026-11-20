@@ -18,3 +18,7 @@ class Dispatcher:
         for sink in self._sinks:
             if sink.accepts(event):
                 sink.write(event)
+
+    def close(self):
+        for sink in self._sinks:
+            sink.close()

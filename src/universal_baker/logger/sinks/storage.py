@@ -3,10 +3,10 @@ from __future__ import annotations
 from collections import deque
 from collections.abc import Iterator
 
-from .base import BaseSink
-from .storage_entry import StoredEvent
 from ..event import LogEvent
 from ..severity import Severity
+from .base import BaseSink
+from .storage_entry import StoredEvent
 
 
 class StorageSink(BaseSink):
