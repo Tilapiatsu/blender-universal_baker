@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from contextlib import contextmanager
-
 from .dispatcher import Dispatcher
 from .event import LogEvent
 from .middleware.dispatcher import MiddlewareDispatcher
-from .middleware.scope_manager import ScopeManager
+from .scopes.scope_manager import ScopeManager
+from .scopes.task_status import ScopeState
 from .severity import Severity
 
 
@@ -14,31 +13,57 @@ class Logger:
         self.addon = addon
         self.middleware = MiddlewareDispatcher()
         self.dispatcher = Dispatcher()
-        self.scope_manager = ScopeManager()
+        self.scope_manager = ScopeManager(emit_callback=self._emit_scope_event)
 
-    def log(self, severity: Severity, message: str, **kwargs) -> None:
+    def log(self, severity, message, **kwargs):
+        scope = self.scope_manager.current
+
+        if scope is not None:
+            kwargs.setdefault("scope", scope.path)
+            kwargs.setdefault("scope_id", scope.id)
+
         event = LogEvent(
             severity=severity,
             message=message,
             addon=self.addon,
-            scope=self.scope_manager.current_path,
             **kwargs,
         )
 
         event = self.middleware.process(event)
 
-        if event is None:
-            return
+        if event is not None:
+            self.dispatcher.dispatch(event)
+
+    def scope(self, name: str, weight: float = 1.0, **metadata):
+        return self.scope_manager.create_scope(
+            name=name,
+            weight=weight,
+            **metadata,
+        )
+
+    def progress(self, value: float):
+        scope = self.scope_manager.current
+
+        if scope is None:
+            raise RuntimeError("No active scope")
+
+        scope.set_progress(value)
+
+    def _emit_scope_event(self, scope, state: ScopeState):
+        event = LogEvent(
+            severity=Severity.INFO,
+            message=scope.name,
+            addon=self.addon,
+            scope_id=scope.id,
+            scope=scope.path,
+            scope_state=state,
+            task_status=scope.status,
+            progress=scope.progress,
+            scope_duration=scope.duration if state is ScopeState.EXIT else None,
+            scope_metadata=dict(scope.metadata),
+        )
 
         self.dispatcher.dispatch(event)
-
-    @contextmanager
-    def scope(self, name: str | None, **metadata):
-        if name is not None:
-            with self.scope_manager.scope(name, **metadata):
-                yield
-        else:
-            yield
 
     def debug(self, message: str, **kwargs) -> None:
         self.log(Severity.DEBUG, message, **kwargs)

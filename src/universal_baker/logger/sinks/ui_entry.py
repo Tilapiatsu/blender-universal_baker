@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from ..event import LogEvent
-from ..middleware.task_scope import TaskScope
+from ..scopes.task_scope import TaskScope
 
 
 @dataclass(slots=True)

@@ -49,8 +49,7 @@ class ModifierPropertyBinding(ParameterBinding):
             raise ParameterBindingError(f"Property '{path}' does not exist.")
 
         try:
-            with LOG.scope(LOG_SCOPE):
-                LOG.debug(f"Binding {value} to {final}")
+            LOG.debug(f"Binding {value} to {final}")
 
             setattr(
                 current,

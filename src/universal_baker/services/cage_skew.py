@@ -57,7 +57,7 @@ class SkewCageBuilder:
         uv_layer_name: str,
         cage_extrusion: float,
     ) -> CustomCagePair:
-        with LOG.scope(LOG_SCOPE), self._ensure_in_scene(target_object), self._ensure_in_scene(cage_object):
+        with self._ensure_in_scene(target_object), self._ensure_in_scene(cage_object):
             bpy.context.view_layer.update()
 
             depsgraph = bpy.context.evaluated_depsgraph_get()

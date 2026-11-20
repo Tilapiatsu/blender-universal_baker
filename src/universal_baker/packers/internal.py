@@ -62,8 +62,7 @@ class PackerInternal(PackerBase):
             buffers += (ctx.alpha_buffer,)
 
         if len(buffers) == 0:
-            with LOG.scope(self.id.capitalize()):
-                LOG.warning("No Image Resource Found")
+            LOG.warning("No Image Resource Found")
             return
 
         LOG.debug(f"{len(buffers)} buffer(s) found")
@@ -111,13 +110,12 @@ class PackerInternal(PackerBase):
                 )
 
         else:
-            with LOG.scope(self.id.capitalize()):
-                LOG.error(
-                    "Missing output buffer",
-                    data={
-                        "status": BakeStatus.FAIL,
-                    },
-                )
+            LOG.error(
+                "Missing output buffer",
+                data={
+                    "status": BakeStatus.FAIL,
+                },
+            )
 
     def update_pack(self, ctx: PackContext) -> None:
         return super().update_pack(ctx)

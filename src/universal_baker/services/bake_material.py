@@ -143,22 +143,21 @@ class BakeMaterialService:
 
     @classmethod
     def prepare(cls, targets: list[bpy.types.Object], sources: list[bpy.types.Object]) -> BakeMaterialSetup:
-        with LOG.scope(LOG_SCOPE):
-            LOG.debug("Preparing bake materials")
-            setup = BakeMaterialSetup()
+        LOG.debug("Preparing bake materials")
+        setup = BakeMaterialSetup()
 
-            try:
-                for obj in targets:
-                    cls._prepare_object(obj, setup)
+        try:
+            for obj in targets:
+                cls._prepare_object(obj, setup)
 
-                for obj in sources:
-                    cls._prepare_object(obj, setup)
+            for obj in sources:
+                cls._prepare_object(obj, setup)
 
-                return setup
+            return setup
 
-            except Exception:
-                setup.cleanup()
-                raise
+        except Exception:
+            setup.cleanup()
+            raise
 
     @classmethod
     def _prepare_object(

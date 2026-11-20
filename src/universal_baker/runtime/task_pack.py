@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 from ..constant import LOG
 from ..core.output_resolver import OutputResolver
 from ..enum.channels import Channel
-from ..logger.event import ScopeState
+from ..logger.scopes.task_status import ScopeState
 from ..logger_bake_middleware.bake_summary import BakeStatus, EventCategory
 from .settings_pack import PackSettings
 from .task import OutputTask
@@ -85,34 +85,32 @@ class PackingTask(OutputTask):
         return f"PACKER_{self.producer.id} | {result:50}"
 
     def notify_finished(self, time_elapsed: float) -> None:
-        with LOG.scope("Packing"):
-            LOG.info(
-                message=f"{self.__repr__()} succeeded",
-                category=EventCategory.PACK,
-                scope_state=ScopeState.EXIT,
-                scope_duration=time_elapsed,
-                data={
-                    "status": BakeStatus.SUCCESS,
-                    "image": self.image_name,
-                },
-            )
+        LOG.info(
+            message=f"{self.__repr__()} succeeded",
+            category=EventCategory.PACK,
+            scope_state=ScopeState.EXIT,
+            scope_duration=time_elapsed,
+            data={
+                "status": BakeStatus.SUCCESS,
+                "image": self.image_name,
+            },
+        )
 
     def notify_failed(self, time_elapsed: float, error: str) -> None:
-        with LOG.scope("Packing"):
-            LOG.error(
-                message=f"{self.producer.name} failed",
-                category=EventCategory.PACK,
-                scope_state=ScopeState.EXIT,
-                scope_duration=time_elapsed,
-                data={
-                    "status": BakeStatus.FAIL,
-                    "image": self.image_name,
-                },
-            )
-            LOG.error(
-                message=error,
-                category=EventCategory.BAKE,
-                data={
-                    "status": BakeStatus.FAIL,
-                },
-            )
+        LOG.error(
+            message=f"{self.producer.name} failed",
+            category=EventCategory.PACK,
+            scope_state=ScopeState.EXIT,
+            scope_duration=time_elapsed,
+            data={
+                "status": BakeStatus.FAIL,
+                "image": self.image_name,
+            },
+        )
+        LOG.error(
+            message=error,
+            category=EventCategory.BAKE,
+            data={
+                "status": BakeStatus.FAIL,
+            },
+        )

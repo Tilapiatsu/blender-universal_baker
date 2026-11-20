@@ -14,11 +14,10 @@ class MaterialService:
 
     @classmethod
     def prepare(cls, ctx: BakeContext) -> None:
-        with LOG.scope(LOG_SCOPE):
-            cls.prepare_target(ctx)
+        cls.prepare_target(ctx)
 
-            if ctx.selected_to_active:
-                cls.prepare_sources(ctx)
+        if ctx.selected_to_active:
+            cls.prepare_sources(ctx)
 
     @classmethod
     def prepare_sources(cls, ctx: BakeContext) -> None:

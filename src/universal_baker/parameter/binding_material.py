@@ -60,8 +60,7 @@ class MaterialSocketBinding(ParameterBinding):
                     setattr(node, self.socket_name, value)
             else:
                 try:
-                    with LOG.scope(LOG_SCOPE):
-                        LOG.debug(f"Binding {value} to {self.socket_name}")
+                    LOG.debug(f"Binding {value} to {self.socket_name}")
                     socket.default_value = value
 
                 except (TypeError, ValueError) as exc:
