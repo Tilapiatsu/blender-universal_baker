@@ -36,7 +36,7 @@ class AssetSetup:
         """
         Remove all temporary Blender datablocks created by this setup.
         """
-        with LOG.scope(LOG_SCOPE, scope_id=1):
+        with LOG.scope(LOG_SCOPE):
             LOG.debug("Cleaning up AssetSetup")
 
             if self.material_setup is not None:

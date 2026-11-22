@@ -5,6 +5,7 @@ from enum import Enum, auto
 from uuid import uuid4
 
 from ..constant import LOG
+from ..logger.scopes.task_scope import TaskScope
 from ..logger.severity import Severity
 from ..logger_bake_middleware.bake_summary import BakeStatus, EventCategory
 from ..services.scene_prepare import ScenePrepare
@@ -32,6 +33,7 @@ class Job:
     current_task: int
     progress: float
     errors: list[str]
+    scope: TaskScope
 
     def __init__(self) -> None:
         self.scene_prepare = ScenePrepare()
@@ -41,6 +43,7 @@ class Job:
         self.current_task = 0
         self.progress = 0.0
         self.errors = []
+        self.scope = LOG.scope("Job", channel_id="main")
 
     @property
     def total_tasks(self) -> int:

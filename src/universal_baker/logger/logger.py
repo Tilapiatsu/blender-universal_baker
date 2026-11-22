@@ -19,9 +19,12 @@ class Logger:
     def log(self, severity, message, **kwargs):
         scope = self.scope_manager.current
 
+        kwargs.setdefault("display_in_ui", False)
+
         if scope is not None:
             kwargs.setdefault("scope", scope.path)
             kwargs.setdefault("scope_id", scope.id)
+            kwargs.setdefault("ui_channel", scope.metadata.get("ui_channel"))
 
         event = LogEvent(
             severity=severity,
@@ -29,7 +32,6 @@ class Logger:
             addon=self.addon,
             **kwargs,
         )
-
         event = self.middleware.process(event)
 
         if event is not None:
@@ -50,18 +52,21 @@ class Logger:
 
         scope.set_progress(value)
 
-    def _emit_scope_event(self, scope: TaskScope, state: ScopeState):
+    def _emit_scope_event(self, scope, state: ScopeState):
         event = LogEvent(
             severity=Severity.INFO,
             message=scope.name,
             addon=self.addon,
             scope_id=scope.id,
+            parent_scope_id=scope.parent.id if scope.parent else None,
             scope=scope.path,
             scope_state=state,
             task_status=scope.status,
             progress=scope.progress,
             scope_duration=scope.duration if state is ScopeState.EXIT else None,
             scope_metadata=dict(scope.metadata),
+            display_in_ui=scope.metadata.get("display_in_ui", True),
+            ui_channel=scope.metadata.get("ui_channel"),
         )
 
         self.dispatcher.dispatch(event)

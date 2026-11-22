@@ -46,244 +46,213 @@ class ExecutionPlanner:
         target_index: int = -1,
         packer_index: int = -1,
     ) -> Job:
-        with LOG.scope("Planner", scope_id=1):
-            from .controller import BakeController
+        from .controller import BakeController
 
-            bg_objects = []
-            all_bake_targets = []
-            # NOTE: First loop to register background Objects
-            for grp_idx, group in enumerate(project.bake_groups):
-                if group_index == -1:
-                    if not group.enabled:
-                        continue
-                elif group_index >= 0 and grp_idx == group_index:
-                    pass
-                else:
+        bg_objects = []
+        all_bake_targets = []
+        # NOTE: First loop to register background Objects
+        for grp_idx, group in enumerate(project.bake_groups):
+            if group_index == -1:
+                if not group.enabled:
                     continue
+            elif group_index >= 0 and grp_idx == group_index:
+                pass
+            else:
+                continue
 
-                active_targets = [obj for obj in group.target_objects if obj.enabled and obj.object is not None]
+            active_targets = [obj for obj in group.target_objects if obj.enabled and obj.object is not None]
 
-                for obj in active_targets:
-                    if obj.have_source:
-                        bg_objects += obj.source_object_list
-                    else:
-                        bg_objects.append(obj.object)
+            for obj in active_targets:
+                if obj.have_source:
+                    bg_objects += obj.source_object_list
+                else:
+                    bg_objects.append(obj.object)
 
-                    all_bake_targets.append(
-                        BakeTargets(
-                            uuid=obj.uuid,
-                            target=obj.object,
-                            sources=obj.source_object_list,
-                        )
+                all_bake_targets.append(
+                    BakeTargets(
+                        uuid=obj.uuid,
+                        target=obj.object,
+                        sources=obj.source_object_list,
                     )
-
-            job = Job()
-
-            # NOTE: Second Loop to actually build the job
-            for grp_idx, group in enumerate(project.bake_groups):
-                if group_index == -1:
-                    if not group.enabled:
-                        continue
-                elif group_index >= 0 and grp_idx == group_index:
-                    pass
-                else:
-                    continue
-
-                active_targets = [obj for obj in group.target_objects if obj.enabled and obj.object is not None]
-                bake_targets = [
-                    obj
-                    for idx, obj in enumerate(group.target_objects)
-                    if ((target_index == -1 and obj.enabled) or target_index == idx) and obj.object is not None
-                ]
-
-                has_multiple_targets = len(active_targets) > 1
-
-                # TODO: Need to be able to load a collection as a background object ( containing lights, meshes, or anything
-                # that could affect the result ). The collection need to be plugged as a baker parameter, and will be
-                # loaded on top of everything else in the scene
-
-                # Store UDIM Uv Informations
-                object_tiles = {}
-                group_tiles = ()
-                ownership_task = None
-
-                # NOTE: Define UV Layout and Evaluated Meshes
-                for index, obj in enumerate(bake_targets):
-                    udim_tiles = ()
-                    udim_tiles = UVService.detect_udim_tiles(obj.object, obj.uv_layer)
-                    LOG.info(f"{len(udim_tiles)} udim tile(s) detected for {obj.object.name}:")
-                    LOG.info(f"{udim_tiles}")
-                    for u in udim_tiles:
-                        LOG.info(str(UVService.tile_number(u[0], u[1])))
-
-                    # using set to prevent duplication
-                    group_tiles = tuple(set(group_tiles).union(set(udim_tiles)))
-
-                    object_tiles[obj.object.name] = udim_tiles
-
-                    job.scene_prepare.add_target_object(obj)
-
-                uv_layout = UVLayout(
-                    image_layout=ImageLayout.UDIM if group.detect_udim else ImageLayout.SINGLE,
-                    udim_tiles=group_tiles,
                 )
 
-                if has_multiple_targets:
-                    ownership_datas = OwnershipDatas()
-                    for index, obj in enumerate(active_targets):
-                        ownership_datas.add(name=obj.object.name, uuid=obj.uuid, uv_layer=obj.uv_layer)
+        job = Job()
 
-                    output_context = UvOwnershipOutputContextResolver.resolve(
-                        group=group, scene=bpy.context.scene, global_settings=project.settings_bake
+        # NOTE: Second Loop to actually build the job
+        for grp_idx, group in enumerate(project.bake_groups):
+            if group_index == -1:
+                if not group.enabled:
+                    continue
+            elif group_index >= 0 and grp_idx == group_index:
+                pass
+            else:
+                continue
+
+            active_targets = [obj for obj in group.target_objects if obj.enabled and obj.object is not None]
+            bake_targets = [
+                obj
+                for idx, obj in enumerate(group.target_objects)
+                if ((target_index == -1 and obj.enabled) or target_index == idx) and obj.object is not None
+            ]
+
+            has_multiple_targets = len(active_targets) > 1
+
+            # TODO: Need to be able to load a collection as a background object ( containing lights, meshes, or anything
+            # that could affect the result ). The collection need to be plugged as a baker parameter, and will be
+            # loaded on top of everything else in the scene
+
+            # Store UDIM Uv Informations
+            object_tiles = {}
+            group_tiles = ()
+            ownership_task = None
+
+            # NOTE: Define UV Layout and Evaluated Meshes
+            for index, obj in enumerate(bake_targets):
+                udim_tiles = ()
+                udim_tiles = UVService.detect_udim_tiles(obj.object, obj.uv_layer)
+                LOG.info(f"{len(udim_tiles)} udim tile(s) detected for {obj.object.name}:")
+                LOG.info(f"{udim_tiles}")
+                for u in udim_tiles:
+                    LOG.info(str(UVService.tile_number(u[0], u[1])))
+
+                # using set to prevent duplication
+                group_tiles = tuple(set(group_tiles).union(set(udim_tiles)))
+
+                object_tiles[obj.object.name] = udim_tiles
+
+                job.scene_prepare.add_target_object(obj)
+
+            uv_layout = UVLayout(
+                image_layout=ImageLayout.UDIM if group.detect_udim else ImageLayout.SINGLE,
+                udim_tiles=group_tiles,
+            )
+
+            if has_multiple_targets:
+                ownership_datas = OwnershipDatas()
+                for index, obj in enumerate(active_targets):
+                    ownership_datas.add(name=obj.object.name, uuid=obj.uuid, uv_layer=obj.uv_layer)
+
+                output_context = UvOwnershipOutputContextResolver.resolve(
+                    group=group, scene=bpy.context.scene, global_settings=project.settings_bake
+                )
+
+                # Create UvOwnershipTask
+                ownership_mask = UvOwnershipMask(
+                    labels=LabelSet(),
+                    resolution=(
+                        output_context.output_settings.path.width,
+                        output_context.output_settings.path.height,
+                    ),
+                )
+
+                ownership_task = UvOwnershipTask(
+                    uuid=str(uuid4()),
+                    name="UVOwnership",
+                    scope=LOG.scope("UV Ownership", ui_channel="uv_ownership"),
+                    enabled=True,
+                    output_context=output_context,
+                    color_management_info=color_management_info.ColorManagementInfo(),
+                    bake_group_uuid=group.uuid,
+                    uv_layout=uv_layout,
+                    result=TileSet(),
+                    ownership_datas=ownership_datas,
+                    ownership_mask=ownership_mask,
+                )
+
+                job.add_task(ownership_task)
+
+            for bk_idx, baker in enumerate(group.bakers):
+                if not register_bakers:
+                    continue
+
+                if baker_index == -1:
+                    if not baker.enabled:
+                        continue
+                elif baker_index >= 0 and bk_idx == baker_index:
+                    pass
+                else:
+                    continue
+
+                settings = BakeSettingsResolver.resolve(
+                    project.settings_bake,
+                    baker.settings if baker.override_settings else None,
+                )
+
+                output_context = OutputContextResolver.resolve(
+                    group_name=group.name,
+                    baker=baker,
+                    scene=bpy.context.scene,
+                    global_settings=project.settings_bake,
+                    override_settings=baker.settings if baker.override_settings else None,
+                )
+
+                for trt_idx, obj in enumerate(bake_targets):
+                    if obj.object.name not in object_tiles:
+                        LOG.error(f"{obj.object.name} have invalid UV.")
+                        # TODO: need to properly deal with the case of one object doesn't have UV -> Should skip the
+                        # obj, not the entire tasks
+                        # TODO: Need to deeper test non UDIM cases
+                        continue
+
+                    obj.ensure_cage_object()
+
+                    uv_layout = UVLayout(
+                        image_layout=ImageLayout.UDIM if group.detect_udim else ImageLayout.SINGLE,
+                        udim_tiles=object_tiles[obj.object.name],
                     )
 
-                    # Create UvOwnershipTask
-                    ownership_mask = UvOwnershipMask(
-                        labels=LabelSet(),
-                        resolution=(
-                            output_context.output_settings.path.width,
-                            output_context.output_settings.path.height,
-                        ),
-                    )
+                    settings_cage = CageSettingsResolver.resolve(obj.settings_cage)
+                    baker_producer = registry_baker[baker.baker]
 
-                    ownership_task = UvOwnershipTask(
-                        uuid=str(uuid4()),
-                        name="UVOwnership",
-                        enabled=True,
-                        execution_scope="Uv Ownership",
-                        output_context=output_context,
-                        color_management_info=color_management_info.ColorManagementInfo(),
+                    task = BakeTask(
+                        name=baker.image_name,
+                        scope=LOG.scope(f"Baking {obj.object.name}", ui_channel="bake"),
                         bake_group_uuid=group.uuid,
+                        uuid=str(uuid4()),
+                        baker_uuid=baker.uuid,
+                        enabled=True,
+                        bake_targets=all_bake_targets,
+                        output_context=output_context,
+                        color_management_info=baker_producer.color_management_info,
+                        target_object_uuid=obj.uuid,
+                        sources=obj.source_object_list,
+                        bg_objects=bg_objects,
+                        producer=baker_producer,
+                        settings=settings,
+                        image_name=baker.image_name,
+                        has_multiple_targets=has_multiple_targets,
+                        uv_layer=obj.uv_layer,
                         uv_layout=uv_layout,
                         result=TileSet(),
-                        ownership_datas=ownership_datas,
-                        ownership_mask=ownership_mask,
+                        settings_cage=settings_cage,
                     )
 
-                    job.add_task(ownership_task)
+                    job.add_task(task)
 
-                for bk_idx, baker in enumerate(group.bakers):
-                    if not register_bakers:
-                        continue
+                    if len(bake_targets) > 1:
+                        assert ownership_task is not None
+                        masker_producer = registry_masker["APPLY_MASK"]
 
-                    if baker_index == -1:
-                        if not baker.enabled:
-                            continue
-                    elif baker_index >= 0 and bk_idx == baker_index:
-                        pass
-                    else:
-                        continue
-
-                    settings = BakeSettingsResolver.resolve(
-                        project.settings_bake,
-                        baker.settings if baker.override_settings else None,
-                    )
-
-                    output_context = OutputContextResolver.resolve(
-                        group_name=group.name,
-                        baker=baker,
-                        scene=bpy.context.scene,
-                        global_settings=project.settings_bake,
-                        override_settings=baker.settings if baker.override_settings else None,
-                    )
-
-                    for trt_idx, obj in enumerate(bake_targets):
-                        if obj.object.name not in object_tiles:
-                            LOG.error(f"{obj.object.name} have invalid UV.")
-                            # TODO: need to properly deal with the case of one object doesn't have UV -> Should skip the
-                            # obj, not the entire tasks
-                            # TODO: Need to deeper test non UDIM cases
-                            continue
-
-                        obj.ensure_cage_object()
-
-                        uv_layout = UVLayout(
-                            image_layout=ImageLayout.UDIM if group.detect_udim else ImageLayout.SINGLE,
-                            udim_tiles=object_tiles[obj.object.name],
-                        )
-
-                        settings_cage = CageSettingsResolver.resolve(obj.settings_cage)
-                        baker_producer = registry_baker[baker.baker]
-
-                        task = BakeTask(
-                            name=baker.image_name,
-                            bake_group_uuid=group.uuid,
+                        task = MaskBufferTask(
+                            uv_ownership_task=ownership_task,
+                            scope=LOG.scope(f"Masking {obj.object.name}", ui_channel="mask"),
                             uuid=str(uuid4()),
                             baker_uuid=baker.uuid,
-                            execution_scope=obj.object.name,
-                            enabled=True,
-                            bake_targets=all_bake_targets,
-                            output_context=output_context,
-                            color_management_info=baker_producer.color_management_info,
                             target_object_uuid=obj.uuid,
-                            sources=obj.source_object_list,
-                            bg_objects=bg_objects,
-                            producer=baker_producer,
-                            settings=settings,
-                            image_name=baker.image_name,
-                            has_multiple_targets=has_multiple_targets,
-                            uv_layer=obj.uv_layer,
+                            name="Apply Mask",
+                            enabled=True,
+                            output_context=output_context,
+                            color_management_info=masker_producer.color_management_info,
+                            bake_group_uuid=group.uuid,
                             uv_layout=uv_layout,
+                            has_multiple_targets=has_multiple_targets,
+                            producer=masker_producer,
                             result=TileSet(),
-                            settings_cage=settings_cage,
                         )
 
                         job.add_task(task)
 
-                        if len(bake_targets) > 1:
-                            assert ownership_task is not None
-                            masker_producer = registry_masker["APPLY_MASK"]
-
-                            task = MaskBufferTask(
-                                uv_ownership_task=ownership_task,
-                                uuid=str(uuid4()),
-                                baker_uuid=baker.uuid,
-                                target_object_uuid=obj.uuid,
-                                name="Apply Mask",
-                                execution_scope=obj.object.name,
-                                enabled=True,
-                                output_context=output_context,
-                                color_management_info=masker_producer.color_management_info,
-                                bake_group_uuid=group.uuid,
-                                uv_layout=uv_layout,
-                                has_multiple_targets=has_multiple_targets,
-                                producer=masker_producer,
-                                result=TileSet(),
-                            )
-
-                            job.add_task(task)
-
-                    if not has_multiple_targets:
-                        continue
-
-                    uv_layout = UVLayout(
-                        image_layout=ImageLayout.UDIM if group.detect_udim else ImageLayout.SINGLE,
-                        udim_tiles=group_tiles,
-                    )
-
-                    settings_accumulator = AccumulateSettings(baker_uuid=baker.uuid)
-
-                    accumulator_producer = registry_accumulator[registry_baker[baker.baker].accumulator_id]
-
-                    task = AccumulateTask(
-                        name=baker.image_name,
-                        execution_scope="Accumulation",
-                        uuid=str(uuid4()),
-                        enabled=True,
-                        output_context=output_context,
-                        color_management_info=accumulator_producer.color_management_info,
-                        bake_group_uuid=group.uuid,
-                        baker_name=baker.baker,
-                        baker_uuid=baker.uuid,
-                        producer=accumulator_producer,
-                        image_name=baker.image_name,
-                        settings=settings_accumulator,
-                        uv_layout=uv_layout,
-                        result=TileSet(),
-                    )
-                    job.add_task(task)
-
-                if not register_packers:
+                if not has_multiple_targets:
                     continue
 
                 uv_layout = UVLayout(
@@ -291,82 +260,112 @@ class ExecutionPlanner:
                     udim_tiles=group_tiles,
                 )
 
-                for pk_idx, packer in enumerate(group.packers):
-                    if packer_index == -1:
-                        if not packer.enabled:
-                            continue
-                    elif packer_index >= 0 and pk_idx == packer_index:
-                        pass
-                    else:
+                settings_accumulator = AccumulateSettings(baker_uuid=baker.uuid)
+
+                accumulator_producer = registry_accumulator[registry_baker[baker.baker].accumulator_id]
+
+                task = AccumulateTask(
+                    name=baker.image_name,
+                    scope=LOG.scope(f"Accumulate {baker.image_name}", ui_channel="accumulate"),
+                    uuid=str(uuid4()),
+                    enabled=True,
+                    output_context=output_context,
+                    color_management_info=accumulator_producer.color_management_info,
+                    bake_group_uuid=group.uuid,
+                    baker_name=baker.baker,
+                    baker_uuid=baker.uuid,
+                    producer=accumulator_producer,
+                    image_name=baker.image_name,
+                    settings=settings_accumulator,
+                    uv_layout=uv_layout,
+                    result=TileSet(),
+                )
+                job.add_task(task)
+
+            if not register_packers:
+                continue
+
+            uv_layout = UVLayout(
+                image_layout=ImageLayout.UDIM if group.detect_udim else ImageLayout.SINGLE,
+                udim_tiles=group_tiles,
+            )
+
+            for pk_idx, packer in enumerate(group.packers):
+                if packer_index == -1:
+                    if not packer.enabled:
                         continue
+                elif packer_index >= 0 and pk_idx == packer_index:
+                    pass
+                else:
+                    continue
 
-                    red_baker = BakeController.get_baker_from_uuid(packer.mappings[0].source_map_uuid)
-                    green_baker = BakeController.get_baker_from_uuid(packer.mappings[1].source_map_uuid)
-                    blue_baker = BakeController.get_baker_from_uuid(packer.mappings[2].source_map_uuid)
-                    alpha_baker = BakeController.get_baker_from_uuid(packer.mappings[3].source_map_uuid)
+                red_baker = BakeController.get_baker_from_uuid(packer.mappings[0].source_map_uuid)
+                green_baker = BakeController.get_baker_from_uuid(packer.mappings[1].source_map_uuid)
+                blue_baker = BakeController.get_baker_from_uuid(packer.mappings[2].source_map_uuid)
+                alpha_baker = BakeController.get_baker_from_uuid(packer.mappings[3].source_map_uuid)
 
-                    red = PackingChannel(
-                        enabled=packer.mappings[0].enabled,
-                        source_map_uuid=packer.mappings[0].source_map_uuid,
-                        source_map_name=red_baker.baker if red_baker else "NONE",
-                        source_channel=Channel(packer.mappings[0].source_channel),
-                        destination_channel=Channel(packer.mappings[0].destination_channel),
-                    )
-                    green = PackingChannel(
-                        enabled=packer.mappings[1].enabled,
-                        source_map_uuid=packer.mappings[1].source_map_uuid,
-                        source_map_name=green_baker.baker if green_baker else "NONE",
-                        source_channel=Channel(packer.mappings[1].source_channel),
-                        destination_channel=Channel(packer.mappings[1].destination_channel),
-                    )
-                    blue = PackingChannel(
-                        enabled=packer.mappings[2].enabled,
-                        source_map_uuid=packer.mappings[2].source_map_uuid,
-                        source_map_name=blue_baker.baker if blue_baker else "NONE",
-                        source_channel=Channel(packer.mappings[2].source_channel),
-                        destination_channel=Channel(packer.mappings[2].destination_channel),
-                    )
-                    alpha = PackingChannel(
-                        enabled=packer.mappings[3].enabled,
-                        source_map_uuid=packer.mappings[3].source_map_uuid,
-                        source_map_name=alpha_baker.baker if alpha_baker else "NONE",
-                        source_channel=Channel(packer.mappings[3].source_channel),
-                        destination_channel=Channel(packer.mappings[3].destination_channel),
-                    )
+                red = PackingChannel(
+                    enabled=packer.mappings[0].enabled,
+                    source_map_uuid=packer.mappings[0].source_map_uuid,
+                    source_map_name=red_baker.baker if red_baker else "NONE",
+                    source_channel=Channel(packer.mappings[0].source_channel),
+                    destination_channel=Channel(packer.mappings[0].destination_channel),
+                )
+                green = PackingChannel(
+                    enabled=packer.mappings[1].enabled,
+                    source_map_uuid=packer.mappings[1].source_map_uuid,
+                    source_map_name=green_baker.baker if green_baker else "NONE",
+                    source_channel=Channel(packer.mappings[1].source_channel),
+                    destination_channel=Channel(packer.mappings[1].destination_channel),
+                )
+                blue = PackingChannel(
+                    enabled=packer.mappings[2].enabled,
+                    source_map_uuid=packer.mappings[2].source_map_uuid,
+                    source_map_name=blue_baker.baker if blue_baker else "NONE",
+                    source_channel=Channel(packer.mappings[2].source_channel),
+                    destination_channel=Channel(packer.mappings[2].destination_channel),
+                )
+                alpha = PackingChannel(
+                    enabled=packer.mappings[3].enabled,
+                    source_map_uuid=packer.mappings[3].source_map_uuid,
+                    source_map_name=alpha_baker.baker if alpha_baker else "NONE",
+                    source_channel=Channel(packer.mappings[3].source_channel),
+                    destination_channel=Channel(packer.mappings[3].destination_channel),
+                )
 
-                    pack_settings = PackSettingsResolver.resolve(
-                        project.settings_bake,
-                        packer.settings if packer.override_settings else None,
-                    )
+                pack_settings = PackSettingsResolver.resolve(
+                    project.settings_bake,
+                    packer.settings if packer.override_settings else None,
+                )
 
-                    output_context = OutputContextResolver.resolve(
-                        group_name=group.name,
-                        scene=bpy.context.scene,
-                        global_settings=project.settings_bake,
-                        packer=packer,
-                        override_settings=packer.settings if packer.override_settings else None,
-                    )
+                output_context = OutputContextResolver.resolve(
+                    group_name=group.name,
+                    scene=bpy.context.scene,
+                    global_settings=project.settings_bake,
+                    packer=packer,
+                    override_settings=packer.settings if packer.override_settings else None,
+                )
 
-                    packer_produer = registry_packer[packer.packer]
-                    task = PackingTask(
-                        name=packer.name,
-                        uuid=str(uuid4()),
-                        bake_group_uuid=group.uuid,
-                        execution_scope="Packing",
-                        enabled=True,
-                        output_context=output_context,
-                        color_management_info=packer_produer.color_management_info,
-                        producer=packer_produer,
-                        image_name=packer.image_name,
-                        settings=pack_settings,
-                        red=red,
-                        green=green,
-                        blue=blue,
-                        alpha=alpha,
-                        uv_layout=uv_layout,
-                        result=TileSet(),
-                    )
-                    job.add_task(task)
+                packer_produer = registry_packer[packer.packer]
+                task = PackingTask(
+                    name=packer.name,
+                    scope=LOG.scope(f"Packing {packer.image_name}", ui_channel="pack"),
+                    uuid=str(uuid4()),
+                    bake_group_uuid=group.uuid,
+                    enabled=True,
+                    output_context=output_context,
+                    color_management_info=packer_produer.color_management_info,
+                    producer=packer_produer,
+                    image_name=packer.image_name,
+                    settings=pack_settings,
+                    red=red,
+                    green=green,
+                    blue=blue,
+                    alpha=alpha,
+                    uv_layout=uv_layout,
+                    result=TileSet(),
+                )
+                job.add_task(task)
 
-            # LOG.info(str(job))
-            return job
+        LOG.info(str(job))
+        return job

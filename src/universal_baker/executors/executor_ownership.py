@@ -26,7 +26,6 @@ class OwnershipMaskExecutorInternal(TaskExecutor):
     def execute_task(self, session: ExecutionSession, execution: ExecutionTarget, task: UvOwnershipTask) -> TaskScope:
         with LOG.scope(
             task.name,
-            scope_id=1,
             width=task.output_context.output_settings.path.width,
             height=task.output_context.output_settings.path.height,
         ) as scope:

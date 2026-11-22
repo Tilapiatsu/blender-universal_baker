@@ -4,6 +4,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from ..core.output_resolver import OutputResolver
+from ..logger.scopes.task_scope import TaskScope
+
 if TYPE_CHECKING:
     from ..properties.bake_group import UBK_BakeGroup
     from ..resources.uv import UVLayout
@@ -20,7 +23,7 @@ class Task:
     name: str
     enabled: bool
     bake_group_uuid: str
-    execution_scope: str
+    scope: TaskScope
 
     @property
     def bake_group(self) -> UBK_BakeGroup | None:
@@ -28,7 +31,8 @@ class Task:
 
         return BakeController.get_bake_group_from_uuid(self.bake_group_uuid)
 
-    def __repr__(self) -> str: ...
+    def __repr__(self) -> str:
+        return f"{self.name} Task"
 
     def notify_finished(self, time_elapsed: float) -> None: ...
 
@@ -45,10 +49,13 @@ class OutputTask(Task):
     result: TileSet
 
     @property
-    def output_name(self) -> str: ...
+    def output_name(self) -> str:
+        return self.name
 
     @property
-    def absolute_filepath(self) -> Path: ...
+    def absolute_filepath(self) -> Path:
+        file_output = OutputResolver.resolve(self.output_context, self.uv_layout.image_layout)
+        return file_output.absolute_path
 
 
 @dataclass(slots=True)

@@ -24,7 +24,7 @@ class AccumulateExecutorInternal(TaskExecutor):
         self._cancel_requested = False
 
     def execute_task(self, session: ExecutionSession, execution: ExecutionTarget, task: AccumulateTask) -> TaskScope:
-        with LOG.scope(task.producer.name, scope_id=1) as scope:
+        with LOG.scope(task.producer.name) as scope:
             ctx = AccumulateContext(
                 session=session,
                 task=task,

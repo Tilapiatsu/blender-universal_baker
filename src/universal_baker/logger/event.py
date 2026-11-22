@@ -13,8 +13,12 @@ class LogEvent:
     severity: Severity
     message: str
 
-    scope_id: int | None = None
     scope: tuple[str, ...] = field(default_factory=tuple)
+    scope_id: int | None = None
+    parent_scope_id: int | None = None
+
+    display_in_ui: bool = False
+    ui_channel: str | None = None
 
     scope_state: ScopeState | None = None
     task_status: TaskStatus | None = None

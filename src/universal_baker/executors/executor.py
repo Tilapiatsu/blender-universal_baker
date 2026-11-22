@@ -45,7 +45,7 @@ class Executor:
 
         Returns the ExecutionSession containing execution statistics.
         """
-        with LOG.scope(self.execution.value, scope_id=1):
+        with LOG.scope(self.execution.value.capitalize()):
             session = ExecutionSession(context=context, job=job)
             session.initialize(context)
             job.notify_started()
@@ -53,18 +53,20 @@ class Executor:
 
             execution = registry_execution[self.execution]
 
-            try:
-                if BakeTask in self.task_types:
-                    cage_visualization = RuntimeManager.current(context).cage_visualization
-                    cage_visualization.do_suspend()
+            print(job.scope)
+            with job.scope:
+                try:
+                    if BakeTask in self.task_types:
+                        cage_visualization = RuntimeManager.current(context).cage_visualization
+                        cage_visualization.do_suspend()
 
-                    with session.runtime.bake_visualization.suspend():
+                        with session.runtime.bake_visualization.suspend():
+                            self.exectue_tasks(session, execution, job)
+                    else:
                         self.exectue_tasks(session, execution, job)
-                else:
-                    self.exectue_tasks(session, execution, job)
 
-            finally:
-                self.finish(session, context, job)
+                finally:
+                    self.finish(session, context, job)
 
             return session
 
@@ -89,7 +91,7 @@ class Executor:
 
                         executor = registry_executor[task.id]
 
-                        with LOG.scope(task.execution_scope, scope_id=1):
+                        with task.scope:
                             result_scope = executor.execute_task(
                                 session=session,
                                 execution=execution,

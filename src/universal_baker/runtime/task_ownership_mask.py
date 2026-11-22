@@ -21,7 +21,7 @@ class UvOwnership:
     name: str = "UvOwnership"
 
     def execute(self, ctx: OwnershipMaskContext) -> UvOwnershipMask:
-        with LOG.scope(LOG_SCOPE, scope_id=1):
+        with LOG.scope(LOG_SCOPE):
             from ..services.uv_ownership import UvOwnershipService
 
             LOG.info("Generting UV Ownership mask")

@@ -29,7 +29,6 @@ class BakeExecutorInternal(TaskExecutor):
         with LOG.scope(
             task.baker_name,
             object=task.object_name,
-            scope_id=1,
             baker=task.producer.name,
             width=task.output_context.output_settings.path.width,
             height=task.output_context.output_settings.path.height,

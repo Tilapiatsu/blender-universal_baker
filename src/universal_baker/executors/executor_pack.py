@@ -26,7 +26,6 @@ class PackExecutorInternal(TaskExecutor):
     def execute_task(self, session: ExecutionSession, execution: ExecutionTarget, task: PackingTask) -> TaskScope:
         with LOG.scope(
             task.producer.name,
-            scope_id=1,
         ) as scope:
             LOG.info(
                 self.init_task_message(session),

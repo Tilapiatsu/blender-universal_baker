@@ -10,12 +10,14 @@ from .logger.middleware.statistics import StatisticsMiddleware
 from .logger.severity import Severity
 from .logger.sinks.console import ConsoleSink
 from .logger.sinks.file import FileSink
+from .logger.sinks.ui.sink import UISink
 from .logger_bake_middleware.bake_summary import BakeSummaryMiddleware
 from .resources.scene_view_transform import SceneViewTransform
 
 LOG = Logger("Universal Baker")
 LOG.dispatcher.add_sink(ConsoleSink(level=Severity.DEBUG))
 LOG.dispatcher.add_sink(FileSink(filename="UniversalBaker.log", level=Severity.DEBUG))
+LOG.dispatcher.add_sink(UISink(level=Severity.INFO, channels={"uv_ownership", "bake", "mask", "accumulate", "pack"}))
 LOG.middleware.add(BakeSummaryMiddleware())
 LOG.middleware.add(StatisticsMiddleware())
 
