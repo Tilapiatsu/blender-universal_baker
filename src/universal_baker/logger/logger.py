@@ -4,6 +4,7 @@ from .dispatcher import Dispatcher
 from .event import LogEvent
 from .middleware.dispatcher import MiddlewareDispatcher
 from .scopes.scope_manager import ScopeManager
+from .scopes.task_scope import TaskScope
 from .scopes.task_status import ScopeState
 from .severity import Severity
 
@@ -49,7 +50,7 @@ class Logger:
 
         scope.set_progress(value)
 
-    def _emit_scope_event(self, scope, state: ScopeState):
+    def _emit_scope_event(self, scope: TaskScope, state: ScopeState):
         event = LogEvent(
             severity=Severity.INFO,
             message=scope.name,
