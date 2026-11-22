@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 from ..constant import LOG, UBK_SUBFOLDER_OBJECT_BUFFER
 from ..core.output_resolver import OutputResolver
-from ..logger.event import ScopeState
+from ..logger.scopes.task_status import ScopeState
 from ..logger_bake_middleware.bake_summary import BakeStatus, EventCategory
 from ..maskers.base import MaskerBase
 from ..runtime.task_ownership_mask import UvOwnershipTask
@@ -69,35 +69,33 @@ class MaskBufferTask(OutputTask):
         return f"{self.target_name}_{self.baker_name}"
 
     def notify_finished(self, time_elapsed: float) -> None:
-        with LOG.scope("Masking"):
-            LOG.info(
-                message=f"{self.task_name} succeeded{' ':30}",
-                category=EventCategory.BAKE,
-                scope_state=ScopeState.EXIT,
-                scope_duration=time_elapsed,
-                data={
-                    "status": BakeStatus.SUCCESS,
-                },
-            )
+        LOG.info(
+            message=f"{self.task_name} succeeded{' ':30}",
+            category=EventCategory.BAKE,
+            scope_state=ScopeState.EXIT,
+            scope_duration=time_elapsed,
+            data={
+                "status": BakeStatus.SUCCESS,
+            },
+        )
 
     def notify_failed(self, time_elapsed: float, error: str) -> None:
-        with LOG.scope("Masking"):
-            LOG.error(
-                message=f"{self.task_name} failed{' ':30}",
-                category=EventCategory.BAKE,
-                scope_state=ScopeState.EXIT,
-                scope_duration=time_elapsed,
-                data={
-                    "status": BakeStatus.FAIL,
-                },
-            )
-            LOG.error(
-                message=error,
-                category=EventCategory.BAKE,
-                data={
-                    "status": BakeStatus.FAIL,
-                },
-            )
+        LOG.error(
+            message=f"{self.task_name} failed{' ':30}",
+            category=EventCategory.BAKE,
+            scope_state=ScopeState.EXIT,
+            scope_duration=time_elapsed,
+            data={
+                "status": BakeStatus.FAIL,
+            },
+        )
+        LOG.error(
+            message=error,
+            category=EventCategory.BAKE,
+            data={
+                "status": BakeStatus.FAIL,
+            },
+        )
 
     def __repr__(self) -> str:
         result = f"MASK_{self.producer.id} | {self.uv_ownership_task.name}"

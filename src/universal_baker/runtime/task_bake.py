@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 from ..constant import LOG, UBK_SUBFOLDER_OBJECT_BUFFER
 from ..core.output_resolver import OutputResolver
-from ..logger.event import ScopeState
+from ..logger.scopes.task_status import ScopeState
 from ..logger_bake_middleware.bake_summary import BakeStatus, EventCategory
 from ..runtime.bake_targets import BakeTargets
 from ..runtime.settings_bake import BakeSettings
@@ -106,36 +106,34 @@ class BakeTask(OutputTask):
         return result
 
     def notify_finished(self, time_elapsed: float) -> None:
-        with LOG.scope("Baking"):
-            LOG.info(
-                message=f"{self.baker_id.capitalize()} succeeded",
-                category=EventCategory.BAKE,
-                scope_state=ScopeState.EXIT,
-                scope_duration=time_elapsed,
-                data={
-                    "status": BakeStatus.SUCCESS,
-                    "object": self.object_name,
-                    "image": self.image_name,
-                },
-            )
+        LOG.info(
+            message=f"{self.baker_id.capitalize()} succeeded",
+            category=EventCategory.BAKE,
+            scope_state=ScopeState.EXIT,
+            scope_duration=time_elapsed,
+            data={
+                "status": BakeStatus.SUCCESS,
+                "object": self.object_name,
+                "image": self.image_name,
+            },
+        )
 
     def notify_failed(self, time_elapsed: float, error: str) -> None:
-        with LOG.scope("Baking"):
-            LOG.error(
-                message=f"{self.baker_id.capitalize()} failed",
-                category=EventCategory.BAKE,
-                scope_state=ScopeState.EXIT,
-                scope_duration=time_elapsed,
-                data={
-                    "status": BakeStatus.FAIL,
-                    "object": self.object_name,
-                    "image": self.image_name,
-                },
-            )
-            LOG.error(
-                message=error,
-                category=EventCategory.BAKE,
-                data={
-                    "status": BakeStatus.FAIL,
-                },
-            )
+        LOG.error(
+            message=f"{self.baker_id.capitalize()} failed",
+            category=EventCategory.BAKE,
+            scope_state=ScopeState.EXIT,
+            scope_duration=time_elapsed,
+            data={
+                "status": BakeStatus.FAIL,
+                "object": self.object_name,
+                "image": self.image_name,
+            },
+        )
+        LOG.error(
+            message=error,
+            category=EventCategory.BAKE,
+            data={
+                "status": BakeStatus.FAIL,
+            },
+        )

@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 from ..constant import LOG, UBK_SUBFOLDER_MASK
 from ..enum.image_layout import ImageLayout
-from ..logger.event import ScopeState
+from ..logger.scopes.task_status import ScopeState
 from ..logger_bake_middleware.bake_summary import BakeStatus, EventCategory
 from .context_ownership_mask import OwnershipMaskContext
 from .task import OutputTask
@@ -21,7 +21,7 @@ class UvOwnership:
     name: str = "UvOwnership"
 
     def execute(self, ctx: OwnershipMaskContext) -> UvOwnershipMask:
-        with LOG.scope(LOG_SCOPE):
+        with LOG.scope(LOG_SCOPE, scope_id=1):
             from ..services.uv_ownership import UvOwnershipService
 
             LOG.info("Generting UV Ownership mask")
@@ -86,32 +86,30 @@ class UvOwnershipTask(OutputTask):
         return result
 
     def notify_finished(self, time_elapsed: float) -> None:
-        with LOG.scope("Ownership Mask"):
-            LOG.info(
-                message=f"{self.__repr__()} succeeded",
-                category=EventCategory.MASK,
-                scope_state=ScopeState.EXIT,
-                scope_duration=time_elapsed,
-                data={
-                    "status": BakeStatus.SUCCESS,
-                },
-            )
+        LOG.info(
+            message=f"{self.__repr__()} succeeded",
+            category=EventCategory.MASK,
+            scope_state=ScopeState.EXIT,
+            scope_duration=time_elapsed,
+            data={
+                "status": BakeStatus.SUCCESS,
+            },
+        )
 
     def notify_failed(self, time_elapsed: float, error: str) -> None:
-        with LOG.scope("Ownership Mask"):
-            LOG.error(
-                message="Ownership Mask failed",
-                category=EventCategory.MASK,
-                scope_state=ScopeState.EXIT,
-                scope_duration=time_elapsed,
-                data={
-                    "status": BakeStatus.FAIL,
-                },
-            )
-            LOG.error(
-                message=error,
-                category=EventCategory.BAKE,
-                data={
-                    "status": BakeStatus.FAIL,
-                },
-            )
+        LOG.error(
+            message="Ownership Mask failed",
+            category=EventCategory.MASK,
+            scope_state=ScopeState.EXIT,
+            scope_duration=time_elapsed,
+            data={
+                "status": BakeStatus.FAIL,
+            },
+        )
+        LOG.error(
+            message=error,
+            category=EventCategory.BAKE,
+            data={
+                "status": BakeStatus.FAIL,
+            },
+        )

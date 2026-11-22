@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 
 from ..constant import LOG
 from ..core.output_resolver import OutputResolver
-from ..logger.event import ScopeState
+from ..logger.scopes.task_status import ScopeState
 from ..logger_bake_middleware.bake_summary import BakeStatus, EventCategory
 from ..runtime.settings_accumulate import AccumulateSettings
 from .task import OutputTask
@@ -49,34 +49,32 @@ class AccumulateTask(OutputTask):
         return result
 
     def notify_finished(self, time_elapsed: float) -> None:
-        with LOG.scope("Accumulating"):
-            LOG.info(
-                message=f"{self.__repr__()} succeeded",
-                category=EventCategory.ACCUMULATE,
-                scope_state=ScopeState.EXIT,
-                scope_duration=time_elapsed,
-                data={
-                    "status": BakeStatus.SUCCESS,
-                    "image": self.image_name,
-                },
-            )
+        LOG.info(
+            message=f"{self.__repr__()} succeeded",
+            category=EventCategory.ACCUMULATE,
+            scope_state=ScopeState.EXIT,
+            scope_duration=time_elapsed,
+            data={
+                "status": BakeStatus.SUCCESS,
+                "image": self.image_name,
+            },
+        )
 
     def notify_failed(self, time_elapsed: float, error: str) -> None:
-        with LOG.scope("Accumulating"):
-            LOG.error(
-                message=f"{self.producer.name.capitalize()} failed",
-                category=EventCategory.ACCUMULATE,
-                scope_state=ScopeState.EXIT,
-                scope_duration=time_elapsed,
-                data={
-                    "status": BakeStatus.FAIL,
-                    "image": self.image_name,
-                },
-            )
-            LOG.error(
-                message=error,
-                category=EventCategory.BAKE,
-                data={
-                    "status": BakeStatus.FAIL,
-                },
-            )
+        LOG.error(
+            message=f"{self.producer.name.capitalize()} failed",
+            category=EventCategory.ACCUMULATE,
+            scope_state=ScopeState.EXIT,
+            scope_duration=time_elapsed,
+            data={
+                "status": BakeStatus.FAIL,
+                "image": self.image_name,
+            },
+        )
+        LOG.error(
+            message=error,
+            category=EventCategory.BAKE,
+            data={
+                "status": BakeStatus.FAIL,
+            },
+        )
