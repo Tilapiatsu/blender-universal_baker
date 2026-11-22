@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from universal_baker.executors.execution_target import ExecutionTarget
-
 from ..constant import LOG
 from ..core.registry_executor import registry_executor
-from ..logger.event import ScopeState
+from ..executors.execution_target import ExecutionTarget
+from ..logger.scopes.task_scope import TaskScope
+from ..logger.scopes.task_status import ScopeState
 from ..logger_bake_middleware.bake_summary import EventCategory
 from ..runtime.context import ExecutionContext
 from ..runtime.context_accumulate import AccumulateContext
@@ -23,8 +23,8 @@ class AccumulateExecutorInternal(TaskExecutor):
     def __init__(self):
         self._cancel_requested = False
 
-    def execute_task(self, session: ExecutionSession, execution: ExecutionTarget, task: AccumulateTask) -> None:
-        with LOG.scope(task.producer.name):
+    def execute_task(self, session: ExecutionSession, execution: ExecutionTarget, task: AccumulateTask) -> TaskScope:
+        with LOG.scope(task.producer.name, scope_id=1) as scope:
             ctx = AccumulateContext(
                 session=session,
                 task=task,
@@ -39,6 +39,8 @@ class AccumulateExecutorInternal(TaskExecutor):
                 task=task,
                 context=ctx,
             )
+
+        return scope
 
     def before_job(self, session: ExecutionSession) -> None:
         """

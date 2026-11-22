@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from ..constant import LOG
 from ..core.registry_executor import registry_executor
-from ..logger.event import ScopeState
+from ..logger.scopes.task_scope import TaskScope
+from ..logger.scopes.task_status import ScopeState
 from ..logger_bake_middleware.bake_summary import EventCategory
 from ..runtime.context import ExecutionContext
 from ..runtime.context_ownership_mask import OwnershipMaskContext
@@ -22,12 +23,13 @@ class OwnershipMaskExecutorInternal(TaskExecutor):
     def __init__(self):
         self._cancel_requested = False
 
-    def execute_task(self, session: ExecutionSession, execution: ExecutionTarget, task: UvOwnershipTask) -> None:
+    def execute_task(self, session: ExecutionSession, execution: ExecutionTarget, task: UvOwnershipTask) -> TaskScope:
         with LOG.scope(
             task.name,
+            scope_id=1,
             width=task.output_context.output_settings.path.width,
             height=task.output_context.output_settings.path.height,
-        ):
+        ) as scope:
             LOG.info(
                 self.init_task_message(session),
                 scope_state=ScopeState.ENTER,
@@ -42,6 +44,8 @@ class OwnershipMaskExecutorInternal(TaskExecutor):
                 task=task,
                 context=ctx,
             )
+
+        return scope
 
     def before_job(self, session: ExecutionSession) -> None:
         """

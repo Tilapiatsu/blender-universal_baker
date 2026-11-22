@@ -172,7 +172,7 @@ class ImageHandle:
     # ------------------------------------------------------------
 
     def save(self):
-        with LOG.scope(LOG_SCOPE):
+        with LOG.scope(LOG_SCOPE, scope_id=1):
             self._ensure_loaded()
 
             ImageCodec.export_tiles(

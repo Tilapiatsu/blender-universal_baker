@@ -45,7 +45,7 @@ class Executor:
 
         Returns the ExecutionSession containing execution statistics.
         """
-        with LOG.scope(self.execution.value):
+        with LOG.scope(self.execution.value, scope_id=1):
             session = ExecutionSession(context=context, job=job)
             session.initialize(context)
             job.notify_started()
@@ -89,12 +89,16 @@ class Executor:
 
                         executor = registry_executor[task.id]
 
-                        with LOG.scope(task.execution_scope):
-                            executor.execute_task(
+                        with LOG.scope(task.execution_scope, scope_id=1):
+                            result_scope = executor.execute_task(
                                 session=session,
                                 execution=execution,
                                 task=task,
                             )
+                            LOG.info(
+                                f"Task ended with {result_scope.status.name.capitalize()} in {result_scope.duration:.2f}s"
+                            )
+
                     except KeyboardInterrupt:
                         LOG.warning("Job interrupted")
                         break

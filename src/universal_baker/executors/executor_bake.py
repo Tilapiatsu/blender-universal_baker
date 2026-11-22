@@ -3,7 +3,8 @@ from __future__ import annotations
 from ..constant import LOG
 from ..core.registry_baker import registry_baker
 from ..core.registry_executor import registry_executor
-from ..logger.event import ScopeState
+from ..logger.scopes.task_scope import TaskScope
+from ..logger.scopes.task_status import ScopeState
 from ..logger_bake_middleware.bake_summary import EventCategory
 from ..runtime.bake_targets import BakeTargets
 from ..runtime.context import ExecutionContext
@@ -24,14 +25,15 @@ class BakeExecutorInternal(TaskExecutor):
     def __init__(self):
         self._cancel_requested = False
 
-    def execute_task(self, session: ExecutionSession, execution: ExecutionTarget, task: BakeTask) -> None:
+    def execute_task(self, session: ExecutionSession, execution: ExecutionTarget, task: BakeTask) -> TaskScope:
         with LOG.scope(
             task.baker_name,
             object=task.object_name,
+            scope_id=1,
             baker=task.producer.name,
             width=task.output_context.output_settings.path.width,
             height=task.output_context.output_settings.path.height,
-        ):
+        ) as scope:
             LOG.info(
                 self.init_task_message(session),
                 scope_state=ScopeState.ENTER,
@@ -67,6 +69,8 @@ class BakeExecutorInternal(TaskExecutor):
                     task=task,
                     context=ctx,
                 )
+
+        return scope
 
     def before_job(self, session: ExecutionSession) -> None:
         """
