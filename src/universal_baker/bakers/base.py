@@ -28,6 +28,7 @@ from ..services.visibility_override import VisibilityOverride
 
 if TYPE_CHECKING:
     from ..parameter.metadata import ParameterMetadata
+    from ..parameter.parameter_context import ParameterContext
     from ..runtime.context_bake import BakeContext
     from ..runtime.task import Task
 
@@ -331,6 +332,8 @@ class BakerBase(ABC):
 
     def apply_parameters(self, ctx: BakeContext):
         from ..core.registry_definition import registry_definition
+        from ..parameter.parameter_applier import ParameterApplier
+        from ..parameter.parameter_context import ParameterContext
 
         definition = registry_definition.get(self.id)
         if definition is None:
