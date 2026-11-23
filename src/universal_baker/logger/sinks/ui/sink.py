@@ -26,8 +26,9 @@ class UISink(BaseSink):
             severities=severities,
         )
 
-        self._roots = []
-        self._scope_entries = {}
+        self._roots: list[UIEntry] = []
+        self._scope_entries: dict[int, UIEntry] = {}
+        self._entries_by_id: dict[int, UIEntry] = {}
         self._ids = count(1)
         self._listeners = []
 
@@ -56,42 +57,17 @@ class UISink(BaseSink):
     def clear(self):
         self._roots.clear()
         self._scope_entries.clear()
+        self._entries_by_id.clear()
         self._notify_changed()
 
     # ---------------------------------------------------------
-    # Filtering
+    # Event acceptance and receiving
     # ---------------------------------------------------------
+
     def accepts(self, event: LogEvent) -> bool:
-        if event.scope_state is not None:
-            return event.display_in_ui
-
+        # Filtering is deliberately presentation-only. Do not discard events
+        # based on severity or channel when they enter the sink.
         return event.display_in_ui
-
-    # def accepts(self, event: LogEvent) -> bool:
-    #     # Scope lifecycle events are not filtered by severity.
-    #     if event.scope_state is not None:
-    #         if not getattr(event, "display_in_ui", True):
-    #             return False
-    #
-    #         channel = getattr(event, "ui_channel", None)
-    #
-    #         if channel is None:
-    #             channel = event.scope_metadata.get("ui_channel")
-    #
-    #         return self.filter.accepts_channel(channel)
-    #
-    #     # Ordinary log messages must explicitly opt into UI display.
-    #     if not getattr(event, "display_in_ui", False):
-    #         return False
-    #
-    #     if not self.filter.accepts_severity(event.severity):
-    #         return False
-    #
-    #     return self.filter.accepts_channel(getattr(event, "ui_channel", None))
-
-    # ---------------------------------------------------------
-    # Receiving events
-    # ---------------------------------------------------------
 
     def write(self, event: LogEvent):
         if event.scope_state is not None:
@@ -118,17 +94,27 @@ class UISink(BaseSink):
                 entry = self._create_scope_entry(event)
 
         elif entry is None:
+            # An UPDATE/EXIT without a corresponding CREATE is ignored.
             return
 
-        # Update the existing entry.
         entry.label = event.message
         entry.status = event.task_status
         entry.progress = event.progress
-        entry.duration = event.scope_duration
+
+        if event.scope_duration is not None:
+            entry.duration = event.scope_duration
+
+        # Metadata can be updated during the lifetime of a scope.
+        if event.ui_channel is not None:
+            entry.channel = event.ui_channel
+        elif event.scope_metadata.get("ui_channel") is not None:
+            entry.channel = event.scope_metadata["ui_channel"]
 
     def _create_scope_entry(self, event: LogEvent) -> UIEntry:
+        entry_id = next(self._ids)
+
         entry = UIEntry(
-            id=next(self._ids),
+            id=entry_id,
             type=EntryType.SCOPE,
             label=event.message,
             scope_id=event.scope_id,
@@ -139,6 +125,7 @@ class UISink(BaseSink):
         )
 
         self._scope_entries[event.scope_id] = entry
+        self._entries_by_id[entry_id] = entry
 
         parent = self._scope_entries.get(event.parent_scope_id)
 
@@ -154,13 +141,17 @@ class UISink(BaseSink):
     # ---------------------------------------------------------
 
     def _write_message_event(self, event: LogEvent):
+        entry_id = next(self._ids)
+
         entry = UIEntry(
-            id=next(self._ids),
+            id=entry_id,
             type=EntryType.MESSAGE,
             label=event.message,
             event=event,
             channel=event.ui_channel,
         )
+
+        self._entries_by_id[entry_id] = entry
 
         parent = self._scope_entries.get(event.scope_id)
 
@@ -175,6 +166,7 @@ class UISink(BaseSink):
 
     def set_filter(self, ui_filter: UIFilter):
         self.filter = ui_filter
+        self._notify_changed()
 
     def is_visible(self, entry: UIEntry) -> bool:
         if entry.is_scope:
@@ -183,7 +175,37 @@ class UISink(BaseSink):
         if entry.event is None:
             return False
 
-        return self.filter.accepts_channel(entry.channel) and self.filter.accepts_severity(entry.event.severity)
+        return (
+            self.filter.accepts_channel(entry.channel)
+            and self.filter.accepts_severity(entry.event.severity)
+        )
+
+    # ---------------------------------------------------------
+    # Entry interaction
+    # ---------------------------------------------------------
+
+    def get_entry(self, entry_id: int) -> UIEntry | None:
+        return self._entries_by_id.get(entry_id)
+
+    def toggle_entry(self, entry_id: int) -> bool:
+        entry = self.get_entry(entry_id)
+
+        if entry is None or not entry.is_scope:
+            return False
+
+        entry.expanded = not entry.expanded
+        self._notify_changed()
+        return True
+
+    def toggle_details(self, entry_id: int) -> bool:
+        entry = self.get_entry(entry_id)
+
+        if entry is None or not entry.is_message or not entry.has_details:
+            return False
+
+        entry.details_expanded = not entry.details_expanded
+        self._notify_changed()
+        return True
 
     # ---------------------------------------------------------
     # Listeners
@@ -197,7 +219,6 @@ class UISink(BaseSink):
         if callback in self._listeners:
             self._listeners.remove(callback)
 
-    # TODO: Need to run self._notify_changed() after changing filters if the filter is part of the sink's presentation state.
     def _notify_changed(self):
         for callback in tuple(self._listeners):
             callback()

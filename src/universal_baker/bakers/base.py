@@ -195,7 +195,7 @@ class BakerBase(ABC):
 
     def execute(self, ctx: BakeContext) -> None:
         """Prepare, bake and cleanup all at once."""
-        with LOG.scope(LOG_SCOPE):
+        with LOG.scope(LOG_SCOPE, ui_channel="bake"):
             LOG.info(f"{ctx.task!s}")
 
             try:
@@ -327,7 +327,7 @@ class BakerBase(ABC):
 
     def export_file(self, ctx: BakeContext) -> None:
         """Save Bake to disk."""
-        LOG.debug("Saving File to Disk ...")
+        LOG.info("Saving File to Disk ...", display_in_ui=True)
         ImageServiceBake.save(ctx.image, ctx.task.color_management_info)
 
     def apply_parameters(self, ctx: BakeContext):

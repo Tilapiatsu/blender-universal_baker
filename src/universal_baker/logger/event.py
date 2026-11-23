@@ -30,5 +30,11 @@ class LogEvent:
     timestamp: float = field(default_factory=time.time)
     addon: str | None = None
     category: str | None = None
+
+    # The exception is retained for consumers that need the original object.
+    # traceback_text is captured at log time so the UI does not need to retain
+    # or inspect traceback frames when drawing.
     exception: Exception | None = None
+    traceback_text: str | None = None
+
     data: dict[str, Any] = field(default_factory=dict)

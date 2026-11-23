@@ -30,8 +30,9 @@ class UIEntry:
     # Message information
     event: LogEvent | None = None
 
-    # UI presentation state
+    # UI presentation state. These values never affect task execution.
     expanded: bool = True
+    details_expanded: bool = False
     selected: bool = False
 
     channel: str | None = None
@@ -43,6 +44,17 @@ class UIEntry:
     @property
     def is_message(self) -> bool:
         return self.type is EntryType.MESSAGE
+
+    @property
+    def has_details(self) -> bool:
+        if self.event is None:
+            return False
+
+        return (
+            self.event.exception is not None
+            or self.event.traceback_text is not None
+            or bool(self.event.data)
+        )
 
     def add_child(self, child: UIEntry):
         child.parent = self

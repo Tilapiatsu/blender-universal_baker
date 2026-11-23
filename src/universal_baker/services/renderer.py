@@ -332,7 +332,7 @@ class RendererService:
             if use_skew_correction:
                 message += ", using skew correction"
 
-        LOG.info(message)
+        LOG.info(message, display_in_ui=True)
 
         cls.bake_regular(ctx)
 

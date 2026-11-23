@@ -1,10 +1,38 @@
 from __future__ import annotations
 
-import traceback
-
+from ..scopes.task_status import TaskStatus
 from ..severity import Severity
 from ..sinks.ui.entry import EntryType
+from ..sinks.ui.filter import UIFilter
 from .icons import SEVERITY_ICONS, STATUS_ICONS
+
+
+def build_ui_filter(settings) -> UIFilter:
+    severities = set()
+
+    if settings.show_debug:
+        severities.add(Severity.DEBUG)
+
+    if settings.show_info:
+        severities.add(Severity.INFO)
+
+    if settings.show_warning:
+        severities.add(Severity.WARNING)
+
+    if settings.show_error:
+        severities.update((Severity.ERROR, Severity.CRITICAL))
+
+    return UIFilter(severities=severities)
+
+
+def draw_filter_controls(layout, settings):
+    row = layout.row(align=True)
+    row.label(text="Severity")
+
+    row.prop(settings, "show_debug", text="Debug")
+    row.prop(settings, "show_info", text="Info")
+    row.prop(settings, "show_warning", text="Warning")
+    row.prop(settings, "show_error", text="Error")
 
 
 def _format_duration(duration: float | None) -> str:
@@ -17,8 +45,9 @@ def _format_duration(duration: float | None) -> str:
     return f"{duration:.2f} s"
 
 
-def _entry_matches_filter(entry, ui_filter) -> bool:
+def _entry_matches_filter(entry, ui_filter: UIFilter) -> bool:
     if entry.is_scope:
+        # Scope rows describe task structure and are not severity-filtered.
         return ui_filter.accepts_channel(entry.channel)
 
     if entry.event is None:
@@ -27,41 +56,58 @@ def _entry_matches_filter(entry, ui_filter) -> bool:
     return ui_filter.accepts_channel(entry.channel) and ui_filter.accepts_severity(entry.event.severity)
 
 
-def _has_visible_content(entry, ui_filter) -> bool:
+def _has_visible_content(entry, ui_filter: UIFilter) -> bool:
     if _entry_matches_filter(entry, ui_filter):
         return True
 
     return any(_has_visible_content(child, ui_filter) for child in entry.children)
 
 
-def draw_entry(layout, entry, ui_filter, depth=0):
-    """
-    Draw an entry and its visible descendants.
+def _draw_toggle(layout, entry, sink_key, action, expanded):
+    if not sink_key:
+        layout.label(
+            text="",
+            icon="TRIA_DOWN" if expanded else "TRIA_RIGHT",
+        )
+        return
 
-    Scope entries are drawn as boxes.
-    Message entries are drawn as diagnostic rows.
-    """
+    operator = layout.operator(
+        "logger.toggle_entry",
+        text="",
+        icon="TRIA_DOWN" if expanded else "TRIA_RIGHT",
+        emboss=False,
+    )
+    operator.sink_key = sink_key
+    operator.entry_id = entry.id
+    operator.action = action
 
+
+def draw_entry(layout, entry, ui_filter, sink_key=None):
     if not _has_visible_content(entry, ui_filter):
         return
 
     if entry.type is EntryType.SCOPE:
-        _draw_scope(layout, entry, ui_filter, depth)
+        _draw_scope(layout, entry, ui_filter, sink_key)
     else:
-        _draw_message(layout, entry)
+        _draw_message(layout, entry, sink_key)
 
 
-def _draw_scope(layout, entry, ui_filter, depth):
+def _draw_scope(layout, entry, ui_filter, sink_key):
     box = layout.box()
     column = box.column(align=True)
-
     row = column.row(align=True)
 
-    icon = STATUS_ICONS.get(entry.status, "DOT")
+    _draw_toggle(
+        row,
+        entry,
+        sink_key,
+        action="TOGGLE_EXPANDED",
+        expanded=entry.expanded,
+    )
 
     row.label(
         text=entry.label,
-        icon=icon,
+        icon=STATUS_ICONS.get(entry.status, "DOT"),
     )
 
     if entry.progress is not None:
@@ -70,141 +116,121 @@ def _draw_scope(layout, entry, ui_filter, depth):
     if entry.duration is not None:
         row.label(text=_format_duration(entry.duration))
 
-    # Progress bar for active or completed scopes.
     if entry.progress is not None:
-        progress = max(0.0, min(1.0, entry.progress))
-
         column.progress(
-            factor=progress,
+            factor=max(0.0, min(1.0, entry.progress)),
             type="BAR",
             text="",
         )
 
-    for child in entry.children:
-        draw_entry(
-            column,
-            child,
-            ui_filter,
-            depth + 1,
-        )
+    if entry.expanded:
+        children = column.column(align=True)
+        for child in entry.children:
+            draw_entry(children, child, ui_filter, sink_key)
 
 
-def _draw_message(layout, entry):
+def _draw_message(layout, entry, sink_key):
     event = entry.event
-
     if event is None:
         return
 
-    severity = event.severity
-    icon = SEVERITY_ICONS.get(severity, "INFO")
-
     row = layout.row(align=True)
 
-    row.label(
+    if entry.has_details:
+        _draw_toggle(
+            row,
+            entry,
+            sink_key,
+            action="TOGGLE_DETAILS",
+            expanded=entry.details_expanded,
+        )
+
+    row.label_multiline(
         text=event.message,
-        icon=icon,
+        icon=SEVERITY_ICONS.get(event.severity, "INFO"),
     )
 
     if event.category:
         row.label(text=event.category)
 
-    # Display additional information for warnings/errors.
-    if severity >= Severity.WARNING:
+    if entry.details_expanded and entry.has_details:
         _draw_message_details(layout, event)
 
 
 def _draw_message_details(layout, event):
-    has_details = event.exception is not None or bool(event.data)
-
-    if not has_details:
-        return
-
     box = layout.box()
     column = box.column(align=True)
 
     if event.exception is not None:
-        exception_text = "".join(
-            traceback.format_exception(
-                type(event.exception),
-                event.exception,
-                event.exception.__traceback__,
-            )
-        )
+        column.label(text=f"{type(event.exception).__name__}: {event.exception}")
 
-        column.label(text=str(event.exception))
-        column.label(text=exception_text[:1000])
+    if event.traceback_text:
+        column.label(text="Traceback:")
+        traceback_column = column.column(align=True)
 
-    for key, value in event.data.items():
-        column.label(
-            text=f"{key}: {value}",
-        )
+        for line in event.traceback_text.rstrip().splitlines():
+            traceback_column.label(text=line)
+
+    if event.data:
+        column.separator()
+        column.label(text="Additional data:")
+
+        for key, value in event.data.items():
+            value_lines = str(value).splitlines() or [""]
+            column.label(text=f"{key}: {value_lines[0]}")
+
+            for line in value_lines[1:]:
+                column.label(text=f"    {line}")
 
 
-def draw_log_tree(layout, sink):
+def draw_log_tree(layout, sink, ui_filter=None, sink_key=None):
     """
-    Entry point for addon panels.
+    Draw the complete UIEntry tree.
+
+    Every scope has its own expanded state, including root scopes. Messages
+    with exception/traceback/data have an independent details toggle.
     """
+
+    if ui_filter is None:
+        ui_filter = sink.filter
+
+    if sink_key is None:
+        sink_key = getattr(sink, "_blender_registry_key", None)
 
     if not sink.roots:
-        layout.label(
-            text="No log entries yet",
-            icon="INFO",
-        )
+        layout.label(text="No log entries yet", icon="INFO")
         return
 
-    ui_filter = sink.filter
+    visible_roots = [entry for entry in sink.roots if _has_visible_content(entry, ui_filter)]
 
-    for entry in sink.roots:
-        if not _has_visible_content(entry, ui_filter):
-            continue
+    if not visible_roots:
+        layout.label(text="No entries match the current filters", icon="INFO")
+        return
 
-        if entry.type is EntryType.SCOPE:
-            header, body = layout.panel(
-                f"logger_scope_{entry.id}",
-                default_closed=False,
-            )
+    for entry in visible_roots:
+        draw_entry(layout, entry, ui_filter, sink_key)
 
-            if header is None:
-                continue
 
-            header_row = header.row(align=True)
+def draw_logger_panel(layout, context, runtime):
+    """
+    Convenience entry point for addon panels using BlenderLoggerRuntime.
+    """
 
-            header_row.label(
-                text=entry.label,
-                icon=STATUS_ICONS.get(entry.status, "DOT"),
-            )
+    property_name = getattr(runtime, "filter_property_name", "logger_filter")
+    settings = getattr(context.window_manager, property_name, None)
 
-            if entry.progress is not None:
-                header_row.label(
-                    text=f"{entry.progress:.0%}",
-                )
+    if settings is not None:
+        draw_filter_controls(layout, settings)
+        layout.separator()
+        ui_filter = build_ui_filter(settings)
+    else:
+        ui_sink = runtime.get_sink("ui")
+        if ui_sink is not None:
+            ui_filter = ui_sink.filter
 
-            if entry.duration is not None:
-                header_row.label(
-                    text=_format_duration(entry.duration),
-                )
-
-            if body is not None:
-                if entry.progress is not None:
-                    body.progress(
-                        factor=max(
-                            0.0,
-                            min(1.0, entry.progress),
-                        ),
-                        type="BAR",
-                        text="",
-                    )
-
-                for child in entry.children:
-                    draw_entry(
-                        body,
-                        child,
-                        ui_filter,
-                    )
-
-        else:
-            draw_entry(
-                layout,
-                entry,
-                ui_filter,
-            )
+    draw_log_tree(
+        layout,
+        runtime.get_sink("ui"),
+        ui_filter=ui_filter,
+        sink_key=getattr(runtime, "ui_sink_key", None),
+    )

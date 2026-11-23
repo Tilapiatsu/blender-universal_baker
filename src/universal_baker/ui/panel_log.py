@@ -4,7 +4,7 @@ import bpy
 from bpy.types import Panel
 
 from ..constant import ICON_LOGGER, LOG
-from ..logger.blender.draw import draw_log_tree
+from ..logger.blender import draw_logger_panel
 
 
 class UBK_PT_Logger(Panel):
@@ -33,9 +33,10 @@ class UBK_PT_Logger(Panel):
             self.layout.label(text="Logger unavailable")
             return
 
-        draw_log_tree(
+        draw_logger_panel(
             layout,
-            ui_sink,
+            context,
+            LOG,
         )
 
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 from ..scopes.task_status import TaskStatus
 from ..severity import Severity
 
+
 STATUS_ICONS = {
     TaskStatus.PENDING: "DOT",
     TaskStatus.RUNNING: "TIME",
@@ -17,4 +18,5 @@ SEVERITY_ICONS = {
     Severity.INFO: "INFO",
     Severity.WARNING: "ERROR",
     Severity.ERROR: "CANCEL",
+    Severity.CRITICAL: "CANCEL",
 }

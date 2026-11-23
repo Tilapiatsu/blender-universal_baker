@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import traceback
+
 from ..logger.sinks.base import BaseSink
 from .dispatcher import Dispatcher
 from .event import LogEvent
@@ -25,6 +27,16 @@ class Logger:
             kwargs.setdefault("scope", scope.path)
             kwargs.setdefault("scope_id", scope.id)
             kwargs.setdefault("ui_channel", scope.metadata.get("ui_channel"))
+
+        exception = kwargs.get("exception")
+        if exception is not None and kwargs.get("traceback_text") is None:
+            kwargs["traceback_text"] = "".join(
+                traceback.format_exception(
+                    type(exception),
+                    exception,
+                    exception.__traceback__,
+                )
+            )
 
         event = LogEvent(
             severity=severity,
