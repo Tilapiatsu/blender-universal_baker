@@ -5,11 +5,13 @@ from . import (
     baker_menu,
     packer_list,
     panel,
+    panel_log,
     panel_settings_bake_group,
     panel_settings_baker,
     panel_settings_object,
     panel_settings_output,
     panel_settings_packer,
+    runtime,
     source_object_list,
     target_object_list,
 )
@@ -28,6 +30,8 @@ modules = (
     panel_settings_baker,
     panel_settings_packer,
     panel_settings_output,
+    panel_log,
+    runtime,
 )
 
 

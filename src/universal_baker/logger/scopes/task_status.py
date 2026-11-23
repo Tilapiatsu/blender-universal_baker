@@ -13,6 +13,7 @@ class TaskStatus(Enum):
 
 
 class ScopeState(Enum):
+    CREATE = auto()
     ENTER = auto()
     UPDATE = auto()
     EXIT = auto()

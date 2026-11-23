@@ -63,6 +63,8 @@ class ScopeManager:
         else:
             self._roots.append(scope)
 
+        self._emit(scope, ScopeState.CREATE)
+
         if parent is not None:
             self.notify_update(parent)
 

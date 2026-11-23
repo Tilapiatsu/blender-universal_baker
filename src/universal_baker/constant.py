@@ -15,9 +15,21 @@ from .logger_bake_middleware.bake_summary import BakeSummaryMiddleware
 from .resources.scene_view_transform import SceneViewTransform
 
 LOG = Logger("Universal Baker")
-LOG.dispatcher.add_sink(ConsoleSink(level=Severity.DEBUG))
-LOG.dispatcher.add_sink(FileSink(filename="UniversalBaker.log", level=Severity.DEBUG))
-LOG.dispatcher.add_sink(UISink(level=Severity.INFO, channels={"uv_ownership", "bake", "mask", "accumulate", "pack"}))
+LOG.dispatcher.add_sink(
+    name="console",
+    sink=ConsoleSink(level=Severity.DEBUG),
+)
+LOG.dispatcher.add_sink(
+    name="file",
+    sink=FileSink(filename="UniversalBaker.log", level=Severity.DEBUG),
+)
+LOG.dispatcher.add_sink(
+    name="ui",
+    sink=UISink(
+        level=Severity.INFO,
+        channels={"uv_ownership", "bake", "mask", "accumulate", "pack"},
+    ),
+)
 LOG.middleware.add(BakeSummaryMiddleware())
 LOG.middleware.add(StatisticsMiddleware())
 
@@ -61,6 +73,7 @@ ICON_BAKER = "TEXTURE"
 ICON_PACKER = "NODE_COMPOSITING"
 ICON_SETTINGS = "MODIFIER"
 ICON_BAKE_GROUP = "OUTLINER"
+ICON_LOGGER = "SORTSIZE"
 
 NAME_DICT_BAKE_GROUP: dict[Any, str] = {}
 NAME_DICT_BAKER: dict[Any, str] = {}

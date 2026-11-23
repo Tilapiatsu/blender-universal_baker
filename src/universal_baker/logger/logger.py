@@ -1,10 +1,10 @@
 from __future__ import annotations
 
+from ..logger.sinks.base import BaseSink
 from .dispatcher import Dispatcher
 from .event import LogEvent
 from .middleware.dispatcher import MiddlewareDispatcher
 from .scopes.scope_manager import ScopeManager
-from .scopes.task_scope import TaskScope
 from .scopes.task_status import ScopeState
 from .severity import Severity
 
@@ -36,6 +36,9 @@ class Logger:
 
         if event is not None:
             self.dispatcher.dispatch(event)
+
+    def get_sink(self, name: str) -> BaseSink | None:
+        return self.dispatcher.get(name)
 
     def scope(self, name: str, weight: float = 1.0, **metadata):
         return self.scope_manager.create_scope(

@@ -1,0 +1,56 @@
+from __future__ import annotations
+
+import bpy
+from bpy.types import Panel
+
+from ..constant import ICON_LOGGER, LOG
+from ..logger.blender.draw import draw_log_tree
+
+
+class UBK_PT_Logger(Panel):
+    bl_idname = "UBK_PT_logger"
+    bl_label = ""
+
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category = "Universal Baker"
+
+    bl_order = 100
+
+    @classmethod
+    def poll(cls, context):
+        return LOG is not None
+
+    def draw_header(self, context):
+        layout = self.layout
+
+        layout.label(text="Execution Progress", icon=ICON_LOGGER)
+
+    def draw(self, context):
+        layout = self.layout
+        ui_sink = LOG.get_sink("ui")
+        if ui_sink is None:
+            self.layout.label(text="Logger unavailable")
+            return
+
+        draw_log_tree(
+            layout,
+            ui_sink,
+        )
+
+
+classes = (UBK_PT_Logger,)
+
+
+def register():
+    from bpy.utils import register_class
+
+    for cls in classes:
+        register_class(cls)
+
+
+def unregister():
+    from bpy.utils import unregister_class
+
+    for cls in reversed(classes):
+        unregister_class(cls)

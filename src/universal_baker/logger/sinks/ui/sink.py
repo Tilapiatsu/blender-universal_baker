@@ -29,6 +29,7 @@ class UISink(BaseSink):
         self._roots = []
         self._scope_entries = {}
         self._ids = count(1)
+        self._listeners = []
 
     # ---------------------------------------------------------
     # Public access
@@ -55,13 +56,14 @@ class UISink(BaseSink):
     def clear(self):
         self._roots.clear()
         self._scope_entries.clear()
+        self._notify_changed()
 
     # ---------------------------------------------------------
     # Filtering
     # ---------------------------------------------------------
     def accepts(self, event: LogEvent) -> bool:
         if event.scope_state is not None:
-            return getattr(event, "display_in_ui", True)
+            return event.display_in_ui
 
         return event.display_in_ui
 
@@ -97,6 +99,8 @@ class UISink(BaseSink):
         else:
             self._write_message_event(event)
 
+        self._notify_changed()
+
     # ---------------------------------------------------------
     # Scope events
     # ---------------------------------------------------------
@@ -109,12 +113,11 @@ class UISink(BaseSink):
 
         entry = self._scope_entries.get(scope_id)
 
-        if event.scope_state is ScopeState.ENTER:
+        if event.scope_state in (ScopeState.CREATE, ScopeState.ENTER):
             if entry is None:
                 entry = self._create_scope_entry(event)
 
         elif entry is None:
-            # An UPDATE or EXIT without an ENTER is invalid.
             return
 
         # Update the existing entry.
@@ -181,3 +184,20 @@ class UISink(BaseSink):
             return False
 
         return self.filter.accepts_channel(entry.channel) and self.filter.accepts_severity(entry.event.severity)
+
+    # ---------------------------------------------------------
+    # Listeners
+    # ---------------------------------------------------------
+
+    def add_listener(self, callback):
+        if callback not in self._listeners:
+            self._listeners.append(callback)
+
+    def remove_listener(self, callback):
+        if callback in self._listeners:
+            self._listeners.remove(callback)
+
+    # TODO: Need to run self._notify_changed() after changing filters if the filter is part of the sink's presentation state.
+    def _notify_changed(self):
+        for callback in tuple(self._listeners):
+            callback()
