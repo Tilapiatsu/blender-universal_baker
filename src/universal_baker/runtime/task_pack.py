@@ -94,6 +94,7 @@ class PackingTask(OutputTask):
                 "status": BakeStatus.SUCCESS,
                 "image": self.image_name,
             },
+            display_in_ui=True,
         )
 
     def notify_failed(self, time_elapsed: float, error: str) -> None:
@@ -106,6 +107,7 @@ class PackingTask(OutputTask):
                 "status": BakeStatus.FAIL,
                 "image": self.image_name,
             },
+            display_in_ui=True,
         )
         LOG.error(
             message=error,
@@ -113,4 +115,5 @@ class PackingTask(OutputTask):
             data={
                 "status": BakeStatus.FAIL,
             },
+            display_in_ui=True,
         )

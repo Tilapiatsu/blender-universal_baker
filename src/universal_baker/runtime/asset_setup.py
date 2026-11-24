@@ -36,53 +36,52 @@ class AssetSetup:
         """
         Remove all temporary Blender datablocks created by this setup.
         """
-        with LOG.scope(LOG_SCOPE):
-            LOG.debug("Cleaning up AssetSetup")
+        LOG.debug("Cleaning up AssetSetup", display_in_ui=True)
 
-            if self.material_setup is not None:
-                self.material_setup.cleanup()
-                self.material_setup = None
+        if self.material_setup is not None:
+            self.material_setup.cleanup()
+            self.material_setup = None
 
-            # Objects first.
-            for obj in list(self.temporary_objects):
-                try:
-                    if obj is None:
-                        continue
-
-                    if obj.name in bpy.data.objects:
-                        ObjectRemoval.remove_object(obj)
-                except ReferenceError:
+        # Objects first.
+        for obj in list(self.temporary_objects):
+            try:
+                if obj is None:
                     continue
 
-            self.temporary_objects.clear()
+                if obj.name in bpy.data.objects:
+                    ObjectRemoval.remove_object(obj)
+            except ReferenceError:
+                continue
 
-            # Materials created specifically by the setup.
-            for material in list(self.temporary_materials):
-                if material is None:
-                    continue
+        self.temporary_objects.clear()
 
-                if material.name in bpy.data.materials:
-                    LOG.debug(f"Remove Temporary Material: {material.name}")
-                    MaterialRemoval.remove_material(material)
+        # Materials created specifically by the setup.
+        for material in list(self.temporary_materials):
+            if material is None:
+                continue
 
-            for library in self.temporary_libraries:
-                try:
-                    LOG.debug(f"Remove Temporary Library: {library.name}")
-                    LibraryRemoval.remove_library(library)
-                except ReferenceError:
-                    continue
+            if material.name in bpy.data.materials:
+                LOG.debug(f"Remove Temporary Material: {material.name}")
+                MaterialRemoval.remove_material(material)
 
-            self.temporary_materials.clear()
+        for library in self.temporary_libraries:
+            try:
+                LOG.debug(f"Remove Temporary Library: {library.name}")
+                LibraryRemoval.remove_library(library)
+            except ReferenceError:
+                continue
 
-            self.temporary_modifiers.clear()
+        self.temporary_materials.clear()
 
-            if self.object_offset_edit is not None:
-                self.object_offset_edit.revert()
-                self.object_offset_edit = None
+        self.temporary_modifiers.clear()
 
-            if self.object_offset_preview is not None:
-                self.object_offset_preview.revert()
-                self.object_offset_preview = None
+        if self.object_offset_edit is not None:
+            self.object_offset_edit.revert()
+            self.object_offset_edit = None
+
+        if self.object_offset_preview is not None:
+            self.object_offset_preview.revert()
+            self.object_offset_preview = None
 
     def __enter__(self):
         return self

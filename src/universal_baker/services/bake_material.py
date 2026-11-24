@@ -60,7 +60,7 @@ class BakeMaterialSetup:
     _restored: bool = False
 
     def restore(self) -> None:
-        LOG.debug("Restoring Initial Materials")
+        LOG.info("Restoring Initial Materials", display_in_ui=True)
         if self._restored:
             return
 
@@ -143,22 +143,21 @@ class BakeMaterialService:
 
     @classmethod
     def prepare(cls, targets: list[bpy.types.Object], sources: list[bpy.types.Object]) -> BakeMaterialSetup:
-        with LOG.scope(LOG_SCOPE):
-            LOG.debug("Preparing bake materials")
-            setup = BakeMaterialSetup()
+        LOG.info("Preparing bake materials", display_in_ui=True)
+        setup = BakeMaterialSetup()
 
-            try:
-                for obj in targets:
-                    cls._prepare_object(obj, setup)
+        try:
+            for obj in targets:
+                cls._prepare_object(obj, setup)
 
-                for obj in sources:
-                    cls._prepare_object(obj, setup)
+            for obj in sources:
+                cls._prepare_object(obj, setup)
 
-                return setup
+            return setup
 
-            except Exception:
-                setup.cleanup()
-                raise
+        except Exception:
+            setup.cleanup()
+            raise
 
     @classmethod
     def _prepare_object(

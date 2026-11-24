@@ -39,7 +39,7 @@ class MaskerBase(ABC):
 
     def execute(self, ctx: MaskContext) -> None:
         """Prepare, bake and cleanup all at once."""
-        with LOG.scope(LOG_SCOPE):
+        with LOG.scope(LOG_SCOPE, ui_channel="mask"):
             LOG.info(f"{ctx.task!s}")
 
             self.prepare(ctx)

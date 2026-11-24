@@ -33,6 +33,7 @@ class OwnershipMaskExecutorInternal(TaskExecutor):
                 self.init_task_message(session),
                 scope_state=ScopeState.ENTER,
                 category=EventCategory.OWNERSHIP,
+                display_in_ui=True,
             )
             ctx = OwnershipMaskContext(
                 session=session,

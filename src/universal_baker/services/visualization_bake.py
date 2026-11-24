@@ -53,114 +53,113 @@ def set_display_enabled(value: bool, set_mode=False):
 
 
 def update_visualization(self, context):
-    with LOG.scope("Visualization"):
-        from ..core.controller import BakeController
+    from ..core.controller import BakeController
 
-        project = BakeController.project(context)
+    project = BakeController.project(context)
 
-        viz = project.visualization
+    viz = project.visualization
 
-        if viz.refreshing:
-            return
+    if viz.refreshing:
+        return
 
-        if project is None:
-            LOG.warning("Project not found")
-            return
+    if project is None:
+        LOG.warning("Project not found")
+        return
 
-        bake_group = BakeController.active_bake_group(context)
+    bake_group = BakeController.active_bake_group(context)
 
-        if bake_group is None:
-            LOG.warning("Bake Group not found")
-            return
+    if bake_group is None:
+        LOG.warning("Bake Group not found")
+        return
 
-        baker = BakeController.active_baker(context)
+    baker = BakeController.active_baker(context)
 
-        if baker is None:
-            LOG.warning("Baker not found")
-            BakeVisualizationService.disable()
+    if baker is None:
+        LOG.warning("Baker not found")
+        BakeVisualizationService.disable()
 
-            return
+        return
 
-        # possibly need to refresh only when preview or display is ON:
-        # (viz.enabled_preview or viz.enabled_display) and
-        if viz.baker_idx != bake_group.active_baker_index:
-            viz.baker_idx = bake_group.active_baker_index
-            producer = registry_baker[baker.baker]
-
-            data = None
-            match BakeVisualizationService.mode():
-                case BakeVisualizationMode.PREVIEW:
-                    data = PreviewData(
-                        producer=producer,
-                        bake_group_uuid=bake_group.uuid,
-                        producer_uuid=baker.uuid,
-                        bake_targets=bake_group.bake_targets,
-                    )
-                case BakeVisualizationMode.DISPLAY:
-                    data = DisplayData(
-                        bake_group_uuid=bake_group.uuid,
-                        accumulated_uuid=baker.accumulated_uuid,
-                        objects=[o.object for o in bake_group.target_objects],
-                        producer=producer,
-                    )
-                case BakeVisualizationMode.PREVIEW_CAGE:
-                    if BakeVisualizationService.projection_target() is None:
-                        return
-                    data = PreviewData(
-                        producer=producer,
-                        bake_group_uuid=bake_group.uuid,
-                        producer_uuid=baker.uuid,
-                        mode=BakeVisualizationMode.PREVIEW_CAGE,
-                        projection_target=BakeVisualizationService.projection_target(),
-                        bake_targets=bake_group.bake_targets,
-                    )
-                case _:
-                    return
-
-            if not BakeVisualizationService.refresh(data):
-                viz.enabled_display = False
-                viz.enabled_preview = False
-                viz.mode = "NONE"
-
-            return
-
-        elif not viz.enabled_preview and not viz.enabled_display:
-            viz.mode = "NONE"
-            BakeVisualizationService.disable()
-            return
-
+    # possibly need to refresh only when preview or display is ON:
+    # (viz.enabled_preview or viz.enabled_display) and
+    if viz.baker_idx != bake_group.active_baker_index:
+        viz.baker_idx = bake_group.active_baker_index
         producer = registry_baker[baker.baker]
 
-        if viz.enabled_preview and viz.mode != "PREVIEW":
-            LOG.debug("Enabling Preview")
-            viz.refreshing = True
+        data = None
+        match BakeVisualizationService.mode():
+            case BakeVisualizationMode.PREVIEW:
+                data = PreviewData(
+                    producer=producer,
+                    bake_group_uuid=bake_group.uuid,
+                    producer_uuid=baker.uuid,
+                    bake_targets=bake_group.bake_targets,
+                )
+            case BakeVisualizationMode.DISPLAY:
+                data = DisplayData(
+                    bake_group_uuid=bake_group.uuid,
+                    accumulated_uuid=baker.accumulated_uuid,
+                    objects=[o.object for o in bake_group.target_objects],
+                    producer=producer,
+                )
+            case BakeVisualizationMode.PREVIEW_CAGE:
+                if BakeVisualizationService.projection_target() is None:
+                    return
+                data = PreviewData(
+                    producer=producer,
+                    bake_group_uuid=bake_group.uuid,
+                    producer_uuid=baker.uuid,
+                    mode=BakeVisualizationMode.PREVIEW_CAGE,
+                    projection_target=BakeVisualizationService.projection_target(),
+                    bake_targets=bake_group.bake_targets,
+                )
+            case _:
+                return
+
+        if not BakeVisualizationService.refresh(data):
             viz.enabled_display = False
-            viz.mode = "PREVIEW"
-
-            data = PreviewData(
-                producer=producer,
-                bake_group_uuid=bake_group.uuid,
-                producer_uuid=baker.uuid,
-                bake_targets=bake_group.bake_targets,
-            )
-
-            BakeVisualizationService.enable_preview(data)
-
-        elif viz.enabled_display and viz.mode != "DISPLAY":
-            LOG.debug("Enabling Display")
-            viz.refreshing = True
             viz.enabled_preview = False
-            viz.mode = "DISPLAY"
-            data = DisplayData(
-                bake_group_uuid=bake_group.uuid,
-                accumulated_uuid=baker.accumulated_uuid,
-                objects=[o.object for o in bake_group.target_objects],
-                producer=producer,
-            )
+            viz.mode = "NONE"
 
-            BakeVisualizationService.enable_display(data)
+        return
 
-        viz.refreshing = False
+    elif not viz.enabled_preview and not viz.enabled_display:
+        viz.mode = "NONE"
+        BakeVisualizationService.disable()
+        return
+
+    producer = registry_baker[baker.baker]
+
+    if viz.enabled_preview and viz.mode != "PREVIEW":
+        LOG.debug("Enabling Preview")
+        viz.refreshing = True
+        viz.enabled_display = False
+        viz.mode = "PREVIEW"
+
+        data = PreviewData(
+            producer=producer,
+            bake_group_uuid=bake_group.uuid,
+            producer_uuid=baker.uuid,
+            bake_targets=bake_group.bake_targets,
+        )
+
+        BakeVisualizationService.enable_preview(data)
+
+    elif viz.enabled_display and viz.mode != "DISPLAY":
+        LOG.debug("Enabling Display")
+        viz.refreshing = True
+        viz.enabled_preview = False
+        viz.mode = "DISPLAY"
+        data = DisplayData(
+            bake_group_uuid=bake_group.uuid,
+            accumulated_uuid=baker.accumulated_uuid,
+            objects=[o.object for o in bake_group.target_objects],
+            producer=producer,
+        )
+
+        BakeVisualizationService.enable_display(data)
+
+    viz.refreshing = False
 
 
 @dataclass(slots=True, frozen=True)

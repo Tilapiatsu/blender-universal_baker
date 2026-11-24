@@ -39,7 +39,7 @@ class AccumulatorBase(ABC):
 
     def execute(self, ctx: AccumulateContext) -> None:
         """Prepare, bake and cleanup all at once."""
-        with LOG.scope(LOG_SCOPE):
+        with LOG.scope(LOG_SCOPE, ui_channel="accumulate"):
             LOG.info(f"{ctx.task!s}")
 
             try:

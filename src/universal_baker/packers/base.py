@@ -61,7 +61,7 @@ class PackerBase(ABC):
     @abstractmethod
     def execute(self, ctx: PackContext) -> None:
         """Prepare, bake and cleanup all at once."""
-        with LOG.scope(LOG_SCOPE):
+        with LOG.scope(LOG_SCOPE, ui_channel="pack"):
             LOG.info(f"{ctx.task!s}")
 
             self.prepare(ctx)

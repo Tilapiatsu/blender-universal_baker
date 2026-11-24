@@ -94,33 +94,39 @@ def draw_entry(layout, entry, ui_filter, sink_key=None):
 
 def _draw_scope(layout, entry, ui_filter, sink_key):
     box = layout.box()
-    column = box.column(align=True)
-    row = column.row(align=True)
+    column = box.column()
+    row = column.row()
 
-    _draw_toggle(
-        row,
-        entry,
-        sink_key,
-        action="TOGGLE_EXPANDED",
-        expanded=entry.expanded,
-    )
+    if len(entry.children):
+        _draw_toggle(
+            row,
+            entry,
+            sink_key,
+            action="TOGGLE_EXPANDED",
+            expanded=entry.expanded,
+        )
+    else:
+        row.label(text="", icon="BLANK1")
 
     row.label(
         text=entry.label,
         icon=STATUS_ICONS.get(entry.status, "DOT"),
     )
 
-    if entry.progress is not None:
-        row.label(text=f"{entry.progress:.0%}")
+    # if entry.progress is not None:
+    #     row.label(text=f"{entry.progress:.0%}")
+    row = row.row()
+    row.alignment = "RIGHT"
 
     if entry.duration is not None:
         row.label(text=_format_duration(entry.duration))
 
-    if entry.progress is not None:
+    if entry.progress is not None and entry.progress < 1.0:
         column.progress(
             factor=max(0.0, min(1.0, entry.progress)),
             type="BAR",
-            text="",
+            text=f"{entry.progress:.0%}",
+            # text="",
         )
 
     if entry.expanded:
@@ -216,6 +222,11 @@ def draw_logger_panel(layout, context, runtime):
     Convenience entry point for addon panels using BlenderLoggerRuntime.
     """
 
+    ui_sink = getattr(runtime, "ui_sink", None)
+    if ui_sink is None:
+        layout.label(text="No UI sink is configured", icon="INFO")
+        return
+
     property_name = getattr(runtime, "filter_property_name", "logger_filter")
     settings = getattr(context.window_manager, property_name, None)
 
@@ -224,13 +235,11 @@ def draw_logger_panel(layout, context, runtime):
         layout.separator()
         ui_filter = build_ui_filter(settings)
     else:
-        ui_sink = runtime.get_sink("ui")
-        if ui_sink is not None:
-            ui_filter = ui_sink.filter
+        ui_filter = runtime.ui_sink.filter
 
     draw_log_tree(
         layout,
-        runtime.get_sink("ui"),
+        runtime.ui_sink,
         ui_filter=ui_filter,
         sink_key=getattr(runtime, "ui_sink_key", None),
     )

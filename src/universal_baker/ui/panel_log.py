@@ -3,7 +3,7 @@ from __future__ import annotations
 import bpy
 from bpy.types import Panel
 
-from ..constant import ICON_LOGGER, LOG
+from ..constant import ICON_LOGGER, LOG_RUNTIME
 from ..logger.blender import draw_logger_panel
 
 
@@ -19,7 +19,7 @@ class UBK_PT_Logger(Panel):
 
     @classmethod
     def poll(cls, context):
-        return LOG is not None
+        return LOG_RUNTIME is not None
 
     def draw_header(self, context):
         layout = self.layout
@@ -28,7 +28,7 @@ class UBK_PT_Logger(Panel):
 
     def draw(self, context):
         layout = self.layout
-        ui_sink = LOG.get_sink("ui")
+        ui_sink = LOG_RUNTIME.ui_sink
         if ui_sink is None:
             self.layout.label(text="Logger unavailable")
             return
@@ -36,7 +36,7 @@ class UBK_PT_Logger(Panel):
         draw_logger_panel(
             layout,
             context,
-            LOG,
+            LOG_RUNTIME,
         )
 
 

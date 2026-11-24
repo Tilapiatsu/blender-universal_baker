@@ -33,6 +33,7 @@ class AccumulateExecutorInternal(TaskExecutor):
                 self.init_task_message(session),
                 scope_state=ScopeState.ENTER,
                 category=EventCategory.ACCUMULATE,
+                display_in_ui=True,
             )
             execution.execute(
                 session=session,

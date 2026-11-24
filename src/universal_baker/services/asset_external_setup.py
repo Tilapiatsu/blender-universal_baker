@@ -161,54 +161,53 @@ class AssetExternalBakeSetup(AssetExternalSetupBase):
 
     @classmethod
     def prepare(cls, asset: AssetExtrenal, bake_objects: BakeObjects) -> AssetSetup:
-        with LOG.scope(LOG_SCOPE):
-            setup = AssetSetup()
+        setup = AssetSetup()
 
-            prototype = AssetExternalService.load_prototype(asset, setup)
+        prototype = AssetExternalService.load_prototype(asset, setup)
 
-            setup.temporary_objects.append(prototype)
-            proto_materials = [s.material for s in prototype.material_slots if s.material is not None]
-            for m in proto_materials:
-                LOG.debug(f"store prototype material : {m.name}")
-                setup.temporary_materials.append(m)
+        setup.temporary_objects.append(prototype)
+        proto_materials = [s.material for s in prototype.material_slots if s.material is not None]
+        for m in proto_materials:
+            LOG.debug(f"store prototype material : {m.name}")
+            setup.temporary_materials.append(m)
 
-            try:
-                if bake_objects.selected_to_active:
-                    duplicated_sources = []
-                    for o in bake_objects.source_objects:
-                        duplicated_source = cls._prepare_object(o, prototype, setup)
+        try:
+            if bake_objects.selected_to_active:
+                duplicated_sources = []
+                for o in bake_objects.source_objects:
+                    duplicated_source = cls._prepare_object(o, prototype, setup)
 
-                        # NOTE: render for original object need to be disabled to prevent overlapping with the
-                        # duplicated object
-                        o.hide_render = True
+                    # NOTE: render for original object need to be disabled to prevent overlapping with the
+                    # duplicated object
+                    o.hide_render = True
 
-                        duplicated_sources.append(duplicated_source)
+                    duplicated_sources.append(duplicated_source)
 
-                    setup.sources = duplicated_sources
-                    setup.target = bake_objects.target_object
-                    material_setup = BakeMaterialService.prepare(
-                        targets=[bake_objects.target_object], sources=duplicated_sources
-                    )
-                    setup.material_setup = material_setup
-                    setup.cage = bake_objects.cage_object
+                setup.sources = duplicated_sources
+                setup.target = bake_objects.target_object
+                material_setup = BakeMaterialService.prepare(
+                    targets=[bake_objects.target_object], sources=duplicated_sources
+                )
+                setup.material_setup = material_setup
+                setup.cage = bake_objects.cage_object
 
-                else:
-                    material_setup = BakeMaterialService.prepare(targets=[bake_objects.target_object], sources=[])
-                    setup.material_setup = material_setup
-                    setup.target = cls._prepare_object(bake_objects.target_object, prototype, setup)
+            else:
+                material_setup = BakeMaterialService.prepare(targets=[bake_objects.target_object], sources=[])
+                setup.material_setup = material_setup
+                setup.target = cls._prepare_object(bake_objects.target_object, prototype, setup)
 
-                bake_objects.target_object.hide_render = True
+            bake_objects.target_object.hide_render = True
 
-                return setup
+            return setup
 
-            except Exception:
-                LOG.error("Preparation Failed")
-                setup.cleanup()
+        except Exception:
+            LOG.error("Preparation Failed", display_in_ui=True)
+            setup.cleanup()
 
-                # The prototype itself was appended from the
-                # external blend and must also be removed.
-                cls._remove_object(prototype)
-                raise RuntimeError
+            # The prototype itself was appended from the
+            # external blend and must also be removed.
+            cls._remove_object(prototype)
+            raise RuntimeError
 
 
 class AssetExternalCagePortalSetup(AssetExternalSetupBase):
@@ -224,56 +223,55 @@ class AssetExternalCagePortalSetup(AssetExternalSetupBase):
         extrusion: float,
         skew_image: bpy.types.Image,
     ) -> AssetSetup:
-        with LOG.scope(LOG_SCOPE):
-            setup = AssetSetup()
+        setup = AssetSetup()
 
-            prototype_portal = AssetExternalService.load_prototype(asset_portal, setup)
-            prototype_projection_cage = AssetExternalService.load_prototype(asset_projection_cage, setup)
+        prototype_portal = AssetExternalService.load_prototype(asset_portal, setup)
+        prototype_projection_cage = AssetExternalService.load_prototype(asset_projection_cage, setup)
 
-            setup.temporary_objects.append(prototype_portal)
-            setup.temporary_objects.append(prototype_projection_cage)
+        setup.temporary_objects.append(prototype_portal)
+        setup.temporary_objects.append(prototype_projection_cage)
 
-            try:
-                projection_cage = cls._prepare_projection_cage(
-                    bake_objects.cage_object,
-                    prototype_projection_cage,
-                    setup,
-                )
+        try:
+            projection_cage = cls._prepare_projection_cage(
+                bake_objects.cage_object,
+                prototype_projection_cage,
+                setup,
+            )
 
-                setup.sources = bake_objects.source_objects
-                setup.target = bake_objects.target_object
-                setup.projection_cage = projection_cage
+            setup.sources = bake_objects.source_objects
+            setup.target = bake_objects.target_object
+            setup.projection_cage = projection_cage
 
-                setup.projection_target = cls._prepare_projection_target(
-                    bake_objects.target_object, prototype_portal, setup
-                )
-                setup.cage = bake_objects.cage_object
+            setup.projection_target = cls._prepare_projection_target(
+                bake_objects.target_object, prototype_portal, setup
+            )
+            setup.cage = bake_objects.cage_object
 
-                objects = list(bpy.context.scene.objects) + [setup.projection_cage]
+            objects = list(bpy.context.scene.objects) + [setup.projection_cage]
 
-                do_not_offset_objects_edit = setup.sources + [setup.cage, setup.target]
-                offset_objects_edit = [o for o in objects if o not in do_not_offset_objects_edit]
+            do_not_offset_objects_edit = setup.sources + [setup.cage, setup.target]
+            offset_objects_edit = [o for o in objects if o not in do_not_offset_objects_edit]
 
-                do_not_offset_objects_preview = [setup.projection_target, setup.cage]
-                offset_objects_preview = [o for o in objects if o not in do_not_offset_objects_preview]
+            do_not_offset_objects_preview = [setup.projection_target, setup.cage]
+            offset_objects_preview = [o for o in objects if o not in do_not_offset_objects_preview]
 
-                offset = (0, CAGE_SCENE_OFFSET, CAGE_SCENE_OFFSET)
+            offset = (0, CAGE_SCENE_OFFSET, CAGE_SCENE_OFFSET)
 
-                setup.object_offset_edit = cls._offset_objects(offset_objects_edit, offset)
-                setup.object_offset_preview = cls._offset_objects(offset_objects_preview, offset)
+            setup.object_offset_edit = cls._offset_objects(offset_objects_edit, offset)
+            setup.object_offset_preview = cls._offset_objects(offset_objects_preview, offset)
 
-                cls._apply_cage_portal_parameters(setup, uv_map, offset, extrusion, skew_image)
+            cls._apply_cage_portal_parameters(setup, uv_map, offset, extrusion, skew_image)
 
-                return setup
+            return setup
 
-            except Exception:
-                LOG.error("Preparation Failed")
-                setup.cleanup()
+        except Exception:
+            LOG.error("Preparation Failed", display_in_ui=True)
+            setup.cleanup()
 
-                # The prototype itself was appended from the
-                # external blend and must also be removed.
-                cls._remove_object(prototype_portal)
-                raise RuntimeError
+            # The prototype itself was appended from the
+            # external blend and must also be removed.
+            cls._remove_object(prototype_portal)
+            raise RuntimeError
 
     @classmethod
     def _prepare_projection_cage(
@@ -379,38 +377,37 @@ class AssetExternalCageClippingSetup(AssetExternalSetupBase):
         bake_objects: BakeObjects,
         max_ray_distance: float,
     ) -> AssetSetup:
-        with LOG.scope(LOG_SCOPE):
-            # ISSUE: Investigate why cage clipping is extremely slow -> it wasn't the case before
-            setup = AssetSetup()
+        # ISSUE: Investigate why cage clipping is extremely slow -> it wasn't the case before
+        setup = AssetSetup()
 
-            prototype_clipping = AssetExternalService.load_prototype(asset_clipping, setup)
+        prototype_clipping = AssetExternalService.load_prototype(asset_clipping, setup)
 
-            setup.temporary_objects.append(prototype_clipping)
+        setup.temporary_objects.append(prototype_clipping)
 
-            proto_materials = [s.material for s in prototype_clipping.material_slots if s.material is not None]
+        proto_materials = [s.material for s in prototype_clipping.material_slots if s.material is not None]
 
-            for m in proto_materials:
-                LOG.debug(f"store prototype material : {m.name}")
-                setup.temporary_materials.append(m)
+        for m in proto_materials:
+            LOG.debug(f"store prototype material : {m.name}")
+            setup.temporary_materials.append(m)
 
-            try:
-                setup.sources = bake_objects.source_objects
-                setup.target = bake_objects.target_object
-                setup.cage = bake_objects.cage_object
+        try:
+            setup.sources = bake_objects.source_objects
+            setup.target = bake_objects.target_object
+            setup.cage = bake_objects.cage_object
 
-                node = bpy.data.node_groups.get("SN_ClipRayDistance")
+            node = bpy.data.node_groups.get("SN_ClipRayDistance")
 
-                if node is None:
-                    node = cls.get_prototype_node(asset_clipping, "SN_ClipRayDistance")
+            if node is None:
+                node = cls.get_prototype_node(asset_clipping, "SN_ClipRayDistance")
 
-                cls._apply_cage_clipping_parameters(setup, node, max_ray_distance)
+            cls._apply_cage_clipping_parameters(setup, node, max_ray_distance)
 
-                return setup
+            return setup
 
-            except Exception:
-                LOG.error("Preparation Failed")
-                setup.cleanup()
-                raise RuntimeError
+        except Exception:
+            LOG.error("Preparation Failed", display_in_ui=True)
+            setup.cleanup()
+            raise RuntimeError
 
     @classmethod
     def _apply_cage_clipping_parameters(
@@ -421,7 +418,7 @@ class AssetExternalCageClippingSetup(AssetExternalSetupBase):
     ):
         definition = registry_definition.get_custom("BAKE_CLIPPING_PREVIEW")
         if definition is None:
-            LOG.error("Parameter definition not found")
+            LOG.error("Parameter definition not found", display_in_ui=True)
             return
 
         source_info = cls._get_source_info(max_ray_distance=max_ray_distance)
@@ -430,7 +427,7 @@ class AssetExternalCageClippingSetup(AssetExternalSetupBase):
         LOG.debug("Applying Cage Clipping parameters")
 
         if setup.sources is None:
-            LOG.error("Source Objects are not registered properly")
+            LOG.error("Source Objects are not registered properly", display_in_ui=True)
             return
 
         materials = []
@@ -528,30 +525,29 @@ class AssetExternalCageSkewRemesherSetup(AssetExternalSetupBase):
         is_cage: bool,
         copy: bool = False,
     ) -> AssetSetup:
-        with LOG.scope(LOG_SCOPE):
-            setup = AssetSetup()
+        setup = AssetSetup()
 
-            prototype_remesher = AssetExternalService.load_prototype(asset_remesher, setup)
+        prototype_remesher = AssetExternalService.load_prototype(asset_remesher, setup)
 
-            setup.temporary_objects.append(prototype_remesher)
+        setup.temporary_objects.append(prototype_remesher)
 
-            try:
-                setup.target = cls._prepare_skew_object(target_object, prototype_remesher, setup, copy)
+        try:
+            setup.target = cls._prepare_skew_object(target_object, prototype_remesher, setup, copy)
 
-                cls._apply_cage_skew_parameters(
-                    setup, uv_map, skew_image, precision, offset, offset_amount if is_cage else 0
-                )
+            cls._apply_cage_skew_parameters(
+                setup, uv_map, skew_image, precision, offset, offset_amount if is_cage else 0
+            )
 
-                return setup
+            return setup
 
-            except Exception:
-                LOG.error("Preparation Failed")
-                setup.cleanup()
+        except Exception:
+            LOG.error("Preparation Failed", display_in_ui=True)
+            setup.cleanup()
 
-                # NOTE: The prototype itself was appended from the
-                # external blend and must also be removed.
-                cls._remove_object(prototype_remesher)
-                raise RuntimeError
+            # NOTE: The prototype itself was appended from the
+            # external blend and must also be removed.
+            cls._remove_object(prototype_remesher)
+            raise RuntimeError
 
     @classmethod
     def _prepare_skew_object(
@@ -576,7 +572,7 @@ class AssetExternalCageSkewRemesherSetup(AssetExternalSetupBase):
     ):
         definition = registry_definition.get_custom("SKEW_REMESHER")
         if definition is None:
-            LOG.error("Parameter definition not found")
+            LOG.error("Parameter definition not found", display_in_ui=True)
             return
 
         # NOTE: Applying to Target

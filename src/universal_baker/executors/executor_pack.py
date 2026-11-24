@@ -24,13 +24,12 @@ class PackExecutorInternal(TaskExecutor):
         self._cancel_requested = False
 
     def execute_task(self, session: ExecutionSession, execution: ExecutionTarget, task: PackingTask) -> TaskScope:
-        with LOG.scope(
-            task.producer.name,
-        ) as scope:
+        with LOG.scope(task.producer.name) as scope:
             LOG.info(
                 self.init_task_message(session),
                 scope_state=ScopeState.ENTER,
                 category=EventCategory.PACK,
+                display_in_ui=True,
             )
             ctx = PackContext(
                 session=session,

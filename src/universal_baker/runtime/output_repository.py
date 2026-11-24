@@ -94,40 +94,39 @@ class OutputRepository:
         producer_uuid: str,
         materialize: bool = True,
     ) -> list[ImageHandle]:
-        with LOG.scope(LOG_SCOPE):
-            # First try RAM
-            LOG.debug("Resolving Output")
-            key = (bake_group_uuid, producer_uuid)
+        # First try RAM
+        LOG.debug("Resolving Output")
+        key = (bake_group_uuid, producer_uuid)
 
-            outputs = self._lookup_baker(key)
+        outputs = self._lookup_baker(key)
 
-            if outputs:
-                LOG.debug(f"{len(outputs)} found from memory")
-                return outputs
-
-            # Otherwise ask persistent artifacts.
-            artifacts = self._artifacts.resolve_baker(bake_group_uuid, producer_uuid)
-
-            LOG.debug(f"{len(artifacts)} found")
-
-            if not artifacts:
-                LOG.error(
-                    "Artifacts not found",
-                    data={
-                        "status": BakeStatus.FAIL,
-                    },
-                )
-                return []
-
-            outputs = []
-
-            for artifact in artifacts:
-                if materialize:
-                    outputs.append(self._materialize(artifact))
-                else:
-                    outputs.append(artifact)
-
+        if outputs:
+            LOG.debug(f"{len(outputs)} found from memory")
             return outputs
+
+        # Otherwise ask persistent artifacts.
+        artifacts = self._artifacts.resolve_baker(bake_group_uuid, producer_uuid)
+
+        LOG.debug(f"{len(artifacts)} found")
+
+        if not artifacts:
+            LOG.error(
+                "Artifacts not found",
+                data={
+                    "status": BakeStatus.FAIL,
+                },
+            )
+            return []
+
+        outputs = []
+
+        for artifact in artifacts:
+            if materialize:
+                outputs.append(self._materialize(artifact))
+            else:
+                outputs.append(artifact)
+
+        return outputs
 
     def resolve_target_object_outputs(
         self,
@@ -136,40 +135,39 @@ class OutputRepository:
         target_object_uuid: str,
         materialize: bool = True,
     ) -> list[ImageHandle]:
-        with LOG.scope(LOG_SCOPE):
-            # First try RAM
-            LOG.debug("Resolving Output")
-            key = (bake_group_uuid, producer_uuid, target_object_uuid)
+        # First try RAM
+        LOG.debug("Resolving Output")
+        key = (bake_group_uuid, producer_uuid, target_object_uuid)
 
-            outputs = self._lookup_target_object(key)
+        outputs = self._lookup_target_object(key)
 
-            if outputs:
-                LOG.debug(f"{len(outputs)} found from memory")
-                return outputs
-
-            # Otherwise ask persistent artifacts.
-            artifacts = self._artifacts.resolve_target_object(bake_group_uuid, producer_uuid, target_object_uuid)
-
-            LOG.debug(f"{len(artifacts)} found")
-
-            if not artifacts:
-                LOG.error(
-                    "Artifacts not found",
-                    data={
-                        "status": BakeStatus.FAIL,
-                    },
-                )
-                return []
-
-            outputs = []
-
-            for artifact in artifacts:
-                if materialize:
-                    outputs.append(self._materialize(artifact))
-                else:
-                    outputs.append(artifact)
-
+        if outputs:
+            LOG.debug(f"{len(outputs)} found from memory")
             return outputs
+
+        # Otherwise ask persistent artifacts.
+        artifacts = self._artifacts.resolve_target_object(bake_group_uuid, producer_uuid, target_object_uuid)
+
+        LOG.debug(f"{len(artifacts)} found")
+
+        if not artifacts:
+            LOG.error(
+                "Artifacts not found",
+                data={
+                    "status": BakeStatus.FAIL,
+                },
+            )
+            return []
+
+        outputs = []
+
+        for artifact in artifacts:
+            if materialize:
+                outputs.append(self._materialize(artifact))
+            else:
+                outputs.append(artifact)
+
+        return outputs
 
     def _lookup_baker(self, key: tuple[str, str]) -> list[ImageHandle]:
         return self._index_baker[key]

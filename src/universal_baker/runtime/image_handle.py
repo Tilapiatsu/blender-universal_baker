@@ -172,29 +172,28 @@ class ImageHandle:
     # ------------------------------------------------------------
 
     def save(self):
-        with LOG.scope(LOG_SCOPE):
-            self._ensure_loaded()
+        self._ensure_loaded()
 
-            ImageCodec.export_tiles(
-                artifact=self._artifact,
-                tiles=self._tiles,
-                output_settings=self._output_settings,
+        ImageCodec.export_tiles(
+            artifact=self._artifact,
+            tiles=self._tiles,
+            output_settings=self._output_settings,
+        )
+
+        if self._resource.image is None:
+            image = ImageResource.from_filepath(
+                name=self._artifact.name,
+                filepath=self._artifact.image.path,
+                output_settings=self._artifact.output_settings,
+                color_management_info=self._artifact.color_management_info,
+                is_udim=self._artifact.is_udim,
             )
+            if image is None:
+                return
 
-            if self._resource.image is None:
-                image = ImageResource.from_filepath(
-                    name=self._artifact.name,
-                    filepath=self._artifact.image.path,
-                    output_settings=self._artifact.output_settings,
-                    color_management_info=self._artifact.color_management_info,
-                    is_udim=self._artifact.is_udim,
-                )
-                if image is None:
-                    return
+            self._resource = image
 
-                self._resource = image
-
-            self._resource.reload()
+        self._resource.reload()
 
     def reload(self):
         """

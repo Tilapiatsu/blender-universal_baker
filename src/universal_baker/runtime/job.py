@@ -56,7 +56,7 @@ class Job:
         self.status = JobStatus.CANCELLED
 
     def notify_started(self) -> None:
-        LOG.info("Job Started")
+        LOG.info("Job Started", display_in_ui=True)
 
     def notify_finished(self) -> None:
         # TODO: Find a way to make LOG.middleware.get() return object with typehint
@@ -111,21 +111,20 @@ class Job:
         task.notify_failed(time_elapsed, error)
 
     def notify_failed(self, time_elapsed: float, error: str) -> None:
-        with LOG.scope("Execution"):
-            LOG.error(
-                message="Job Execution failed",
-                scope_duration=time_elapsed,
-                data={
-                    "status": BakeStatus.FAIL,
-                },
-            )
-            LOG.error(
-                message=error,
-                category=EventCategory.INIT,
-                data={
-                    "status": BakeStatus.FAIL,
-                },
-            )
+        LOG.error(
+            message="Job Execution failed",
+            scope_duration=time_elapsed,
+            data={
+                "status": BakeStatus.FAIL,
+            },
+        )
+        LOG.error(
+            message=error,
+            category=EventCategory.INIT,
+            data={
+                "status": BakeStatus.FAIL,
+            },
+        )
 
     def __repr__(self) -> str:
         return self.job_summary()

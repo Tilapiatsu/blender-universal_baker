@@ -185,8 +185,7 @@ class ImageResource:
 
     def reload(self) -> None:
         if self.image is None:
-            with LOG.scope(LOG_SCOPE):
-                LOG.warning("Image is None : Can't reload")
+            LOG.warning("Image is None : Can't reload")
             return
         LOG.debug(f"Reload Image : {self.filepath}")
         self.image.reload()

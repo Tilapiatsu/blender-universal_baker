@@ -148,7 +148,7 @@ class ExecutionPlanner:
                 ownership_task = UvOwnershipTask(
                     uuid=str(uuid4()),
                     name="UVOwnership",
-                    scope=LOG.scope("UV Ownership", ui_channel="uv_ownership"),
+                    scope=LOG.scope("UV Ownership", ui_channel="uv_ownership", parent=job.scope),
                     enabled=True,
                     output_context=output_context,
                     color_management_info=color_management_info.ColorManagementInfo(),
@@ -206,7 +206,7 @@ class ExecutionPlanner:
 
                     task = BakeTask(
                         name=baker.image_name,
-                        scope=LOG.scope(f"Baking {obj.object.name}", ui_channel="bake"),
+                        scope=LOG.scope(f"Baking {obj.object.name}", ui_channel="bake", parent=job.scope),
                         bake_group_uuid=group.uuid,
                         uuid=str(uuid4()),
                         baker_uuid=baker.uuid,
@@ -235,7 +235,7 @@ class ExecutionPlanner:
 
                         task = MaskBufferTask(
                             uv_ownership_task=ownership_task,
-                            scope=LOG.scope(f"Masking {obj.object.name}", ui_channel="mask"),
+                            scope=LOG.scope(f"Masking {obj.object.name}", ui_channel="mask", parent=job.scope),
                             uuid=str(uuid4()),
                             baker_uuid=baker.uuid,
                             target_object_uuid=obj.uuid,
@@ -266,7 +266,7 @@ class ExecutionPlanner:
 
                 task = AccumulateTask(
                     name=baker.image_name,
-                    scope=LOG.scope(f"Accumulate {baker.image_name}", ui_channel="accumulate"),
+                    scope=LOG.scope(f"Accumulate {baker.image_name}", ui_channel="accumulate", parent=job.scope),
                     uuid=str(uuid4()),
                     enabled=True,
                     output_context=output_context,
@@ -349,7 +349,7 @@ class ExecutionPlanner:
                 packer_produer = registry_packer[packer.packer]
                 task = PackingTask(
                     name=packer.name,
-                    scope=LOG.scope(f"Packing {packer.image_name}", ui_channel="pack"),
+                    scope=LOG.scope(f"Packing {packer.image_name}", ui_channel="pack", parent=job.scope),
                     uuid=str(uuid4()),
                     bake_group_uuid=group.uuid,
                     enabled=True,

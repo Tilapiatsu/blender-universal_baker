@@ -340,8 +340,7 @@ class RendererService:
     def bake_regular(cls, ctx: BakeContext):
         """Execute Blender bake."""
 
-        with LOG.scope("Buildin Bake"):
-            bpy.ops.object.bake(type=ctx.task.producer.blender_bake_type)
+        bpy.ops.object.bake(type=ctx.task.producer.blender_bake_type)
 
     @classmethod
     def get_skew_cage(cls, ctx: BakeContext) -> CustomCagePair:

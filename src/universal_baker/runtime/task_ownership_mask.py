@@ -21,45 +21,44 @@ class UvOwnership:
     name: str = "UvOwnership"
 
     def execute(self, ctx: OwnershipMaskContext) -> UvOwnershipMask:
-        with LOG.scope(LOG_SCOPE):
-            from ..services.uv_ownership import UvOwnershipService
+        from ..services.uv_ownership import UvOwnershipService
 
-            LOG.info("Generting UV Ownership mask")
-            result = UvOwnershipService.create_uv_ownership_mask(
-                ownership_datas=ctx.task.ownership_datas,
-                bake_objects=ctx.session.bake_objects,
-                resolution=(
-                    ctx.task.output_context.output_settings.path.width,
-                    ctx.task.output_context.output_settings.path.height,
-                ),
-                name=f"{ctx.task.bake_group_name}_UVOwnership",
-                use_udim=ctx.task.uv_layout.image_layout == ImageLayout.UDIM,
-            )
+        LOG.info("Generting UV Ownership mask", display_in_ui=True)
+        result = UvOwnershipService.create_uv_ownership_mask(
+            ownership_datas=ctx.task.ownership_datas,
+            bake_objects=ctx.session.bake_objects,
+            resolution=(
+                ctx.task.output_context.output_settings.path.width,
+                ctx.task.output_context.output_settings.path.height,
+            ),
+            name=f"{ctx.task.bake_group_name}_UVOwnership",
+            use_udim=ctx.task.uv_layout.image_layout == ImageLayout.UDIM,
+        )
 
-            ctx.task.ownership_mask.set(result)
+        ctx.task.ownership_mask.set(result)
 
-            # NOTE: Saving Map to disk : This is for debug purpose only
-            # Need to link to a global debug parameter
-            if True:
-                from ..core.output_resolver import OutputResolver
-                from ..services.image_codec import ImageCodec
+        # NOTE: Saving Map to disk : This is for debug purpose only
+        # Need to link to a global debug parameter
+        if True:
+            from ..core.output_resolver import OutputResolver
+            from ..services.image_codec import ImageCodec
 
-                for o in ctx.task.ownership_datas.values():
-                    LOG.debug(f"Writing mask for {o.object_name}")
-                    mask = ctx.task.ownership_mask.mask_for_object(o.object_uuid)
-                    if mask is None:
-                        continue
-                    for tile, buffer in mask.tile_buffers:
-                        LOG.debug(f"{tile}")
-                        output = OutputResolver.resolve(
-                            ctx.task.output_context,
-                            ImageLayout.SINGLE,
-                            suffix=f"{o.object_name}." + str(tile),
-                            sub_folder=UBK_SUBFOLDER_MASK,
-                        )
-                        ImageCodec.save(output.absolute_path, buffer, ctx.task.output_context.output_settings, False)
+            for o in ctx.task.ownership_datas.values():
+                LOG.debug(f"Writing mask for {o.object_name}")
+                mask = ctx.task.ownership_mask.mask_for_object(o.object_uuid)
+                if mask is None:
+                    continue
+                for tile, buffer in mask.tile_buffers:
+                    LOG.debug(f"{tile}")
+                    output = OutputResolver.resolve(
+                        ctx.task.output_context,
+                        ImageLayout.SINGLE,
+                        suffix=f"{o.object_name}." + str(tile),
+                        sub_folder=UBK_SUBFOLDER_MASK,
+                    )
+                    ImageCodec.save(output.absolute_path, buffer, ctx.task.output_context.output_settings, False)
 
-            return result
+        return result
 
 
 @dataclass(slots=True, frozen=True)
@@ -94,6 +93,7 @@ class UvOwnershipTask(OutputTask):
             data={
                 "status": BakeStatus.SUCCESS,
             },
+            display_in_ui=True,
         )
 
     def notify_failed(self, time_elapsed: float, error: str) -> None:
@@ -105,6 +105,7 @@ class UvOwnershipTask(OutputTask):
             data={
                 "status": BakeStatus.FAIL,
             },
+            display_in_ui=True,
         )
         LOG.error(
             message=error,
@@ -112,4 +113,5 @@ class UvOwnershipTask(OutputTask):
             data={
                 "status": BakeStatus.FAIL,
             },
+            display_in_ui=True,
         )

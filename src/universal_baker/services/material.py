@@ -14,11 +14,10 @@ class MaterialService:
 
     @classmethod
     def prepare(cls, ctx: BakeContext) -> None:
-        with LOG.scope(LOG_SCOPE):
-            cls.prepare_target(ctx)
+        cls.prepare_target(ctx)
 
-            if ctx.selected_to_active:
-                cls.prepare_sources(ctx)
+        if ctx.selected_to_active:
+            cls.prepare_sources(ctx)
 
     @classmethod
     def prepare_sources(cls, ctx: BakeContext) -> None:
@@ -53,13 +52,16 @@ class MaterialService:
         """Create all material ressources for each material slots"""
 
         if not obj.material_slots:
-            LOG.debug(f"{obj.name} have no Material Slots")
+            LOG.debug(f"{obj.name} have no Material Slots", display_in_ui=True)
             resources.clear()
             resources[-1] = MaterialResource(material_index=-1)
         else:
             resources.clear()
             for idx, slot in enumerate(obj.material_slots):
-                LOG.debug(f"Store {slot.material.name if slot.material is not None else 'EMPTY'} for index {idx}")
+                LOG.debug(
+                    f"Store {slot.material.name if slot.material is not None else 'EMPTY'} for index {idx}",
+                    display_in_ui=True,
+                )
                 resources[idx] = MaterialResource()
                 cls._store_material_info(resources[idx], obj, idx, slot.material)
 
@@ -71,7 +73,7 @@ class MaterialService:
         material = resource.material
 
         if material is None:
-            LOG.warning("Material is None")
+            LOG.warning("Material is None", display_in_ui=True)
             return
 
         if not material.use_nodes:
@@ -88,7 +90,7 @@ class MaterialService:
         tree = resource.node_tree
 
         if tree is None:
-            LOG.error("Tree is None")
+            LOG.error("Tree is None", display_in_ui=True)
             return
 
         for node in tree.nodes:
@@ -96,15 +98,15 @@ class MaterialService:
                 continue
 
             if node.label == BAKE_IMAGE_NODE_LABEL:
-                LOG.debug(f"Reuse Existig Image Node : {node.label}")
+                LOG.debug(f"Reuse Existig Image Node : {node.label}", display_in_ui=True)
                 resource.image_node = node
                 return
 
         if resource.material is None:
-            LOG.error("Ressource has invalid material")
+            LOG.error("Ressource has invalid material", display_in_ui=True)
             return
 
-        LOG.debug(f"Add Image node to bake material : {resource.material.name}")
+        LOG.debug(f"Add Image node to bake material : {resource.material.name}", display_in_ui=True)
         node = tree.nodes.new("ShaderNodeTexImage")
 
         node.label = BAKE_IMAGE_NODE_LABEL
@@ -119,7 +121,7 @@ class MaterialService:
             return
 
         if ctx.image.image is None:
-            LOG.error("Image is None")
+            LOG.error("Image is None", display_in_ui=True)
             return
 
         resource.image_node.image = ctx.image.image
@@ -166,10 +168,10 @@ class MaterialService:
     @classmethod
     def _assign_material_to_slot(cls, obj: bpy.types.Object, material: bpy.types.Material, slot: int | None) -> None:
         if slot is None:
-            LOG.debug(f"Add new slot and assign material {material.name} to {obj.name}")
+            LOG.debug(f"Add new slot and assign material {material.name} to {obj.name}", display_in_ui=True)
             obj.data.materials.append(material)
         elif isinstance(slot, int):
-            LOG.debug(f"Assign material {material.name} to {obj.name}'s slot {slot}")
+            LOG.debug(f"Assign material {material.name} to {obj.name}'s slot {slot}", display_in_ui=True)
             obj.material_slots[slot].material = material
         else:
             raise AttributeError

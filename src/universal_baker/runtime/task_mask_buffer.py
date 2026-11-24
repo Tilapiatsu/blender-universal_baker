@@ -77,6 +77,7 @@ class MaskBufferTask(OutputTask):
             data={
                 "status": BakeStatus.SUCCESS,
             },
+            display_in_ui=True,
         )
 
     def notify_failed(self, time_elapsed: float, error: str) -> None:
@@ -88,6 +89,7 @@ class MaskBufferTask(OutputTask):
             data={
                 "status": BakeStatus.FAIL,
             },
+            display_in_ui=True,
         )
         LOG.error(
             message=error,
@@ -95,6 +97,7 @@ class MaskBufferTask(OutputTask):
             data={
                 "status": BakeStatus.FAIL,
             },
+            display_in_ui=True,
         )
 
     def __repr__(self) -> str:

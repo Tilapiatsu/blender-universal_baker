@@ -195,26 +195,25 @@ class BakerBase(ABC):
 
     def execute(self, ctx: BakeContext) -> None:
         """Prepare, bake and cleanup all at once."""
-        with LOG.scope(LOG_SCOPE, ui_channel="bake"):
-            LOG.info(f"{ctx.task!s}")
+        LOG.info(f"{ctx.task!s}")
 
-            try:
-                visibility_overrides = self.get_visibility_overrides(ctx)
-                self.invalidate_previous_output(ctx)
-                self.prepare(ctx)
+        try:
+            visibility_overrides = self.get_visibility_overrides(ctx)
+            self.invalidate_previous_output(ctx)
+            self.prepare(ctx)
 
-                with ExitStack() as stack:
-                    for vo in visibility_overrides:
-                        stack.enter_context(vo)
+            with ExitStack() as stack:
+                for vo in visibility_overrides:
+                    stack.enter_context(vo)
 
-                    self.bake(ctx)
+                self.bake(ctx)
 
-                self.update_baker(ctx)
-                self.export_file(ctx)
-                self.create_artifact(ctx)
+            self.update_baker(ctx)
+            self.export_file(ctx)
+            self.create_artifact(ctx)
 
-            finally:
-                self.cleanup(ctx)
+        finally:
+            self.cleanup(ctx)
 
     def invalidate_previous_output(self, ctx: BakeContext):
         if not ctx.session.output_invalidated:
@@ -319,7 +318,7 @@ class BakerBase(ABC):
 
         ctx.output = ctx.session.runtime.outputs.get(artifact)
         if ctx.output is None:
-            LOG.debug("Output Artifact not found")
+            LOG.error("Output Artifact not found", display_in_ui=True)
             return
 
         ctx.task.result.set_tileset(ctx.output.tileset, clear=True)
@@ -327,7 +326,7 @@ class BakerBase(ABC):
 
     def export_file(self, ctx: BakeContext) -> None:
         """Save Bake to disk."""
-        LOG.info("Saving File to Disk ...", display_in_ui=True)
+        LOG.info("Saving File to Disk ...")
         ImageServiceBake.save(ctx.image, ctx.task.color_management_info)
 
     def apply_parameters(self, ctx: BakeContext):

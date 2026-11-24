@@ -45,30 +45,28 @@ class Executor:
 
         Returns the ExecutionSession containing execution statistics.
         """
-        with LOG.scope(self.execution.value.capitalize()):
-            session = ExecutionSession(context=context, job=job)
-            session.initialize(context)
-            job.notify_started()
-            self.start = perf_counter()
+        session = ExecutionSession(context=context, job=job)
+        session.initialize(context)
+        job.notify_started()
+        self.start = perf_counter()
 
-            execution = registry_execution[self.execution]
+        execution = registry_execution[self.execution]
 
-            print(job.scope)
-            with job.scope:
-                try:
-                    if BakeTask in self.task_types:
-                        cage_visualization = RuntimeManager.current(context).cage_visualization
-                        cage_visualization.do_suspend()
+        with job.scope:
+            try:
+                if BakeTask in self.task_types:
+                    cage_visualization = RuntimeManager.current(context).cage_visualization
+                    cage_visualization.do_suspend()
 
-                        with session.runtime.bake_visualization.suspend():
-                            self.exectue_tasks(session, execution, job)
-                    else:
+                    with session.runtime.bake_visualization.suspend():
                         self.exectue_tasks(session, execution, job)
+                else:
+                    self.exectue_tasks(session, execution, job)
 
-                finally:
-                    self.finish(session, context, job)
+            finally:
+                self.finish(session, context, job)
 
-            return session
+        return session
 
     def exectue_tasks(self, session: ExecutionSession, execution: ExecutionTarget, job: Job):
         self.before_job(session)
@@ -98,7 +96,8 @@ class Executor:
                                 task=task,
                             )
                             LOG.info(
-                                f"Task ended with {result_scope.status.name.capitalize()} in {result_scope.duration:.2f}s"
+                                f"Task ended with {result_scope.status.name.capitalize()} in {result_scope.duration:.2f}s",
+                                display_in_ui=True,
                             )
 
                     except KeyboardInterrupt:

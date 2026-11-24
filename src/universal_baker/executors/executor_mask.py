@@ -33,6 +33,7 @@ class MaskExecutorInternal(TaskExecutor):
                 self.init_task_message(session),
                 scope_state=ScopeState.ENTER,
                 category=EventCategory.MASK,
+                display_in_ui=True,
             )
             ctx = MaskContext(
                 session=session,

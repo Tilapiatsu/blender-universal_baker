@@ -104,43 +104,41 @@ class ImageCodec:
 
     @classmethod
     def export_tiles(cls, artifact: OutputArtifact, tiles: TileSet, output_settings: OutputSettings):
-        with LOG.scope(LOG_SCOPE):
-            for tile, buffer in tiles.tile_buffers:
-                cls.save(
-                    artifact.image.tile_path(tile),
-                    buffer,
-                    output_settings,
-                    artifact.is_udim,
-                    artifact.color_management_info,
-                )
-                tiles.set_dirty(tile, False)
+        for tile, buffer in tiles.tile_buffers:
+            cls.save(
+                artifact.image.tile_path(tile),
+                buffer,
+                output_settings,
+                artifact.is_udim,
+                artifact.color_management_info,
+            )
+            tiles.set_dirty(tile, False)
 
     @classmethod
     def import_tiles(cls, artifact: OutputArtifact) -> TileSet:
         tile_set = TileSet()
 
         for t in artifact.image.files():
-            with LOG.scope(LOG_SCOPE):
-                buffer = cls.load(t.path, artifact.output_settings.color)
+            buffer = cls.load(t.path, artifact.output_settings.color)
             if buffer is not None:
                 tile_set.add_tile(t.tile, buffer)
             else:
-                with LOG.scope(LOG_SCOPE):
-                    LOG.debug("Create Empty Tile")
-                    tile_set.add_empty_tile(
-                        t.tile,
-                        (
-                            artifact.output_settings.path.width,
-                            artifact.output_settings.path.height,
-                        ),
-                    )
-                    cls.save(
-                        artifact.image.tile_path(t.tile),
-                        tile_set[t.tile],
-                        artifact.output_settings,
-                        artifact.is_udim,
-                        artifact.color_management_info,
-                    )
+                LOG.debug("Create Empty Tile")
+                tile_set.add_empty_tile(
+                    t.tile,
+                    (
+                        artifact.output_settings.path.width,
+                        artifact.output_settings.path.height,
+                    ),
+                )
+                cls.save(
+                    artifact.image.tile_path(t.tile),
+                    tile_set[t.tile],
+                    artifact.output_settings,
+                    artifact.is_udim,
+                    artifact.color_management_info,
+                )
+
             tile_set.set_dirty(t.tile, False)
 
         return tile_set

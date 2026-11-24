@@ -6,6 +6,7 @@ from typing import Any
 import bpy
 
 from .logger import Logger
+from .logger.blender import BlenderLoggerRuntime
 from .logger.middleware.statistics import StatisticsMiddleware
 from .logger.severity import Severity
 from .logger.sinks.console import ConsoleSink
@@ -23,15 +24,24 @@ LOG.dispatcher.add_sink(
     name="file",
     sink=FileSink(filename="UniversalBaker.log", level=Severity.DEBUG),
 )
+ui_sink = UISink(
+    level=Severity.INFO,
+    channels={"uv_ownership", "bake", "mask", "accumulate", "pack"},
+)
+
+
 LOG.dispatcher.add_sink(
     name="ui",
-    sink=UISink(
-        level=Severity.INFO,
-        channels={"uv_ownership", "bake", "mask", "accumulate", "pack"},
-    ),
+    sink=ui_sink,
 )
 LOG.middleware.add(BakeSummaryMiddleware())
 LOG.middleware.add(StatisticsMiddleware())
+LOG_RUNTIME = BlenderLoggerRuntime(
+    logger=LOG,
+    ui_sink=ui_sink,
+    filter_property_name="ubk_logger_filter",
+    space_types={"VIEW_3D"},
+)
 
 BAKE_IMAGE_NODE_NAME = "UBK_BakeImage"
 BAKE_IMAGE_NODE_LABEL = "Universal Baker"
