@@ -82,29 +82,29 @@ def _draw_toggle(layout, entry, sink_key, action, expanded):
     operator.action = action
 
 
-def draw_entry(layout, entry, ui_filter, sink_key=None):
+def draw_entry(layout, entry, ui_filter, sink_key=None, indent: int = 0):
     if not _has_visible_content(entry, ui_filter):
         return
 
     if entry.type is EntryType.SCOPE:
-        _draw_scope(layout, entry, ui_filter, sink_key)
+        _draw_scope(layout, entry, ui_filter, sink_key, indent)
     else:
-        _draw_message(layout, entry, sink_key)
+        _draw_message(layout, entry, sink_key, indent)
 
 
-def _draw_scope(layout, entry, ui_filter, sink_key):
-    box = layout.box()
-    column = box.column()
+def _draw_scope(layout, entry, ui_filter, sink_key, indent: int):
+    column = layout.column()
     row = column.row()
 
     if len(entry.children):
-        _draw_toggle(
-            row,
-            entry,
-            sink_key,
-            action="TOGGLE_EXPANDED",
-            expanded=entry.expanded,
-        )
+        _draw_indent(sink_key, entry, row, indent)
+        # _draw_toggle(
+        #     row,
+        #     entry,
+        #     sink_key,
+        #     action="TOGGLE_EXPANDED",
+        #     expanded=entry.expanded,
+        # )
     else:
         row.label(text="", icon="BLANK1")
 
@@ -132,10 +132,10 @@ def _draw_scope(layout, entry, ui_filter, sink_key):
     if entry.expanded:
         children = column.column(align=True)
         for child in entry.children:
-            draw_entry(children, child, ui_filter, sink_key)
+            draw_entry(children, child, ui_filter, sink_key, indent)
 
 
-def _draw_message(layout, entry, sink_key):
+def _draw_message(layout, entry, sink_key, indent: int):
     event = entry.event
     if event is None:
         return
@@ -143,13 +143,14 @@ def _draw_message(layout, entry, sink_key):
     row = layout.row(align=True)
 
     if entry.has_details:
-        _draw_toggle(
-            row,
-            entry,
-            sink_key,
-            action="TOGGLE_DETAILS",
-            expanded=entry.details_expanded,
-        )
+        _draw_indent(sink_key, entry, row, indent)
+        # _draw_toggle(
+        #     row,
+        #     entry,
+        #     sink_key,
+        #     action="TOGGLE_DETAILS",
+        #     expanded=entry.details_expanded,
+        # )
 
     row.label_multiline(
         text=event.message,
@@ -164,8 +165,7 @@ def _draw_message(layout, entry, sink_key):
 
 
 def _draw_message_details(layout, event):
-    box = layout.box()
-    column = box.column(align=True)
+    column = layout.column(align=True)
 
     if event.exception is not None:
         column.label(text=f"{type(event.exception).__name__}: {event.exception}")
@@ -187,6 +187,24 @@ def _draw_message_details(layout, event):
 
             for line in value_lines[1:]:
                 column.label(text=f"    {line}")
+
+
+def _draw_indent(sink_key, entry, layout, indent: int, draw_indent: bool = True):
+    for _ in range(indent):
+        layout.label(text="", icon="BLANK1")
+
+    if draw_indent:
+        _draw_toggle(
+            layout,
+            entry,
+            sink_key,
+            action="TOGGLE_DETAILS",
+            expanded=entry.details_expanded,
+        )
+    else:
+        layout.label(text="", icon="BLANK1")
+
+    indent += 1
 
 
 def draw_log_tree(layout, sink, ui_filter=None, sink_key=None):
@@ -214,7 +232,7 @@ def draw_log_tree(layout, sink, ui_filter=None, sink_key=None):
         return
 
     for entry in visible_roots:
-        draw_entry(layout, entry, ui_filter, sink_key)
+        draw_entry(layout, entry, ui_filter, sink_key, 0)
 
 
 def draw_logger_panel(layout, context, runtime):
