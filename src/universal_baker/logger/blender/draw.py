@@ -123,14 +123,15 @@ def _draw_scope(layout: bpy.types.UILayout, entry: UIEntry, ui_filter: UIFilter,
 
     # if entry.progress is not None:
     #     row.label(text=f"{entry.progress:.0%}")
-    row = row.row()
-    row.alignment = "RIGHT"
+    row = row.row(align=True)
 
     if entry.duration is not None:
+        row.alignment = "RIGHT"
         row.label(text=_format_duration(entry.duration))
 
-    if entry.progress is not None and entry.progress < 1.0:
-        column.progress(
+    if entry.progress is not None:
+        row.alignment = "EXPAND"
+        row.progress(
             factor=max(0.0, min(1.0, entry.progress)),
             type="BAR",
             text=f"{entry.progress:.0%}",
@@ -215,7 +216,7 @@ def _draw_indent(
     for _ in range(indent):
         if not draw_indent:
             layout = layout.row()
-        layout.label(text="", icon="GRIP_V")
+        layout.label(text="", icon="BLANK1")
 
     if draw_indent and sink_key is not None and entry is not None:
         _draw_toggle(
@@ -226,7 +227,7 @@ def _draw_indent(
             expanded=entry.expanded if action == "TOGGLE_EXPANDED" else entry.details_expanded,
         )
     else:
-        layout.label(text="", icon="GRIP_V")
+        layout.label(text="", icon="BLANK1")
 
     indent += 1
     return indent
