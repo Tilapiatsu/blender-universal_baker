@@ -98,7 +98,13 @@ def _draw_scope(layout: bpy.types.UILayout, entry: UIEntry, ui_filter: UIFilter,
     row = column.row()
 
     if len(entry.children) > 1:
-        indent = _draw_indent(sink_key, entry, row, indent, action="TOGGLE_EXPANDED")
+        indent = _draw_indent(
+            sink_key,
+            entry,
+            row,
+            indent,
+            action="TOGGLE_EXPANDED",
+        )
 
     else:
         indent = _draw_indent(
@@ -208,8 +214,6 @@ def _draw_indent(
 ) -> int:
     for _ in range(indent):
         layout.label(text="", icon="GRIP_V")
-        # if not draw_indent:
-        #     layout.label(text="", icon="BLANK1")
 
     if draw_indent and sink_key is not None and entry is not None:
         _draw_toggle(
@@ -220,7 +224,7 @@ def _draw_indent(
             expanded=entry.expanded if action == "TOGGLE_EXPANDED" else entry.details_expanded,
         )
     else:
-        layout.label(text="", icon="BLANK1")
+        layout.label(text="", icon="GRIP_V")
 
     indent += 1
     return indent
