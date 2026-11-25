@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from ..scopes.task_status import TaskStatus
+import bpy
+
 from ..severity import Severity
-from ..sinks.ui.entry import EntryType
+from ..sinks.ui.entry import EntryType, UIEntry
 from ..sinks.ui.filter import UIFilter
 from .icons import SEVERITY_ICONS, STATUS_ICONS
 
@@ -82,7 +83,7 @@ def _draw_toggle(layout, entry, sink_key, action, expanded):
     operator.action = action
 
 
-def draw_entry(layout, entry, ui_filter, sink_key=None, indent: int = 0):
+def draw_entry(layout, entry, ui_filter, indent: int, sink_key=None):
     if not _has_visible_content(entry, ui_filter):
         return
 
@@ -97,7 +98,8 @@ def _draw_scope(layout, entry, ui_filter, sink_key, indent: int):
     row = column.row()
 
     if len(entry.children):
-        _draw_indent(sink_key, entry, row, indent)
+        indent = _draw_indent(sink_key, entry, row, indent)
+
         # _draw_toggle(
         #     row,
         #     entry,
@@ -132,7 +134,7 @@ def _draw_scope(layout, entry, ui_filter, sink_key, indent: int):
     if entry.expanded:
         children = column.column(align=True)
         for child in entry.children:
-            draw_entry(children, child, ui_filter, sink_key, indent)
+            draw_entry(children, child, ui_filter, indent, sink_key)
 
 
 def _draw_message(layout, entry, sink_key, indent: int):
@@ -143,7 +145,7 @@ def _draw_message(layout, entry, sink_key, indent: int):
     row = layout.row(align=True)
 
     if entry.has_details:
-        _draw_indent(sink_key, entry, row, indent)
+        indent = _draw_indent(sink_key, entry, row, indent)
         # _draw_toggle(
         #     row,
         #     entry,
@@ -161,10 +163,17 @@ def _draw_message(layout, entry, sink_key, indent: int):
         row.label(text=event.category)
 
     if entry.details_expanded and entry.has_details:
-        _draw_message_details(layout, event)
+        _draw_message_details(layout, event, indent)
 
 
-def _draw_message_details(layout, event):
+def _draw_message_details(layout, event, indent: int):
+    _draw_indent(
+        sink_key=None,
+        entry=None,
+        layout=layout,
+        indent=indent,
+        draw_indent=False,
+    )
     column = layout.column(align=True)
 
     if event.exception is not None:
@@ -189,11 +198,17 @@ def _draw_message_details(layout, event):
                 column.label(text=f"    {line}")
 
 
-def _draw_indent(sink_key, entry, layout, indent: int, draw_indent: bool = True):
+def _draw_indent(
+    sink_key: str | None,
+    entry: UIEntry | None,
+    layout: bpy.types.UILayout,
+    indent: int,
+    draw_indent: bool = True,
+) -> int:
     for _ in range(indent):
         layout.label(text="", icon="BLANK1")
 
-    if draw_indent:
+    if draw_indent and sink_key is not None and entry is not None:
         _draw_toggle(
             layout,
             entry,
@@ -205,6 +220,7 @@ def _draw_indent(sink_key, entry, layout, indent: int, draw_indent: bool = True)
         layout.label(text="", icon="BLANK1")
 
     indent += 1
+    return indent
 
 
 def draw_log_tree(layout, sink, ui_filter=None, sink_key=None):
@@ -232,7 +248,7 @@ def draw_log_tree(layout, sink, ui_filter=None, sink_key=None):
         return
 
     for entry in visible_roots:
-        draw_entry(layout, entry, ui_filter, sink_key, 0)
+        draw_entry(layout, entry, ui_filter, 0, sink_key)
 
 
 def draw_logger_panel(layout, context, runtime):
