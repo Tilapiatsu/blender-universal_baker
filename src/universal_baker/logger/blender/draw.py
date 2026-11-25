@@ -213,6 +213,8 @@ def _draw_indent(
     action: str = "TOGGLE_DETAILS",
 ) -> int:
     for _ in range(indent):
+        if not draw_indent:
+            layout = layout.row()
         layout.label(text="", icon="GRIP_V")
 
     if draw_indent and sink_key is not None and entry is not None:
