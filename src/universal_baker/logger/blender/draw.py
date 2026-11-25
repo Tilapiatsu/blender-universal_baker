@@ -93,22 +93,22 @@ def draw_entry(layout, entry, ui_filter, indent: int, sink_key=None):
         _draw_message(layout, entry, sink_key, indent)
 
 
-def _draw_scope(layout, entry, ui_filter, sink_key, indent: int):
+def _draw_scope(layout: bpy.types.UILayout, entry: UIEntry, ui_filter: UIFilter, sink_key: str | None, indent: int):
     column = layout.column()
     row = column.row()
 
-    if len(entry.children):
-        indent = _draw_indent(sink_key, entry, row, indent)
+    if len(entry.children) > 1:
+        indent = _draw_indent(sink_key, entry, row, indent, action="TOGGLE_EXPANDED")
 
-        # _draw_toggle(
-        #     row,
-        #     entry,
-        #     sink_key,
-        #     action="TOGGLE_EXPANDED",
-        #     expanded=entry.expanded,
-        # )
     else:
-        row.label(text="", icon="BLANK1")
+        indent = _draw_indent(
+            None,
+            None,
+            row,
+            indent,
+            action="TOGGLE_EXPANDED",
+            draw_indent=False,
+        )
 
     row.label(
         text=entry.label,
@@ -143,16 +143,16 @@ def _draw_message(layout, entry, sink_key, indent: int):
         return
 
     row = layout.row(align=True)
+    indent = _draw_indent(
+        sink_key=None,
+        entry=None,
+        layout=row,
+        indent=indent,
+        draw_indent=False,
+    )
 
     if entry.has_details:
-        indent = _draw_indent(sink_key, entry, row, indent)
-        # _draw_toggle(
-        #     row,
-        #     entry,
-        #     sink_key,
-        #     action="TOGGLE_DETAILS",
-        #     expanded=entry.details_expanded,
-        # )
+        indent = _draw_indent(sink_key, entry, row, indent, action="TOGGLE_DETAILS")
 
     row.label_multiline(
         text=event.message,
@@ -204,17 +204,20 @@ def _draw_indent(
     layout: bpy.types.UILayout,
     indent: int,
     draw_indent: bool = True,
+    action: str = "TOGGLE_DETAILS",
 ) -> int:
     for _ in range(indent):
-        layout.label(text="", icon="BLANK1")
+        layout.label(text="", icon="GRIP_V")
+        # if not draw_indent:
+        #     layout.label(text="", icon="BLANK1")
 
     if draw_indent and sink_key is not None and entry is not None:
         _draw_toggle(
             layout,
             entry,
             sink_key,
-            action="TOGGLE_DETAILS",
-            expanded=entry.details_expanded,
+            action=action,
+            expanded=entry.expanded if action == "TOGGLE_EXPANDED" else entry.details_expanded,
         )
     else:
         layout.label(text="", icon="BLANK1")

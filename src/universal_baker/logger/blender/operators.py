@@ -28,26 +28,27 @@ class LOGGER_OT_ToggleEntry(bpy.types.Operator):
     bl_idname = "logger.toggle_entry"
     bl_label = "Toggle Log Entry"
     bl_description = "Expand or collapse this log entry"
-    bl_options = {'INTERNAL'}
+    bl_options = {"INTERNAL"}
 
-    sink_key: bpy.props.StringProperty(options={'HIDDEN'})
-    entry_id: bpy.props.IntProperty(options={'HIDDEN'})
+    sink_key: bpy.props.StringProperty(options={"HIDDEN"})
+    entry_id: bpy.props.IntProperty(options={"HIDDEN"})
     action: bpy.props.EnumProperty(
         items=(
-            ('TOGGLE_EXPANDED', "Toggle Entry", ""),
-            ('TOGGLE_DETAILS', "Toggle Details", ""),
+            ("TOGGLE_EXPANDED", "Toggle Entry", ""),
+            ("TOGGLE_DETAILS", "Toggle Details", ""),
         ),
-        options={'HIDDEN'},
+        options={"HIDDEN"},
     )
 
     def execute(self, context):
         sink = _SINKS.get(self.sink_key)
         if sink is None:
-            return {'CANCELLED'}
+            print("sink is None")
+            return {"CANCELLED"}
 
-        if self.action == 'TOGGLE_EXPANDED':
+        if self.action == "TOGGLE_EXPANDED":
             changed = sink.toggle_entry(self.entry_id)
         else:
             changed = sink.toggle_details(self.entry_id)
 
-        return {'FINISHED'} if changed else {'CANCELLED'}
+        return {"FINISHED"} if changed else {"CANCELLED"}
