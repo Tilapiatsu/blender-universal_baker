@@ -121,8 +121,6 @@ def _draw_scope(layout: bpy.types.UILayout, entry: UIEntry, ui_filter: UIFilter,
         icon=STATUS_ICONS.get(entry.status, "DOT"),
     )
 
-    # if entry.progress is not None:
-    #     row.label(text=f"{entry.progress:.0%}")
     row = row.row(align=True)
 
     if entry.duration is not None:
