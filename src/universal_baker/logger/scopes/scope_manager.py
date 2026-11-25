@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import contextvars
 import time
+from contextlib import contextmanager
 from itertools import count
 
 from .task_scope import TaskScope
@@ -8,19 +10,28 @@ from .task_status import ScopeState, TaskStatus
 
 
 class ScopeManager:
+    """Owns scope trees and context-local synchronous scope bindings.
+
+    Detached scopes are ordinary scope-tree roots (or explicitly parented
+    scopes) that do not become the current scope until temporarily bound.
+    ContextVar keeps bindings isolated between independent execution contexts.
+    """
+
     def __init__(self, emit_callback):
         self._emit_callback = emit_callback
-        self._stack: list[TaskScope] = []
+        self._current_stack = contextvars.ContextVar(f"logger_scope_stack_{id(self)}", default=())
         self._roots: list[TaskScope] = []
         self._ids = count(1)
 
-    # ---------------------------------------------------------
-    # Properties
-    # ---------------------------------------------------------
+    @property
+    def _stack(self):
+        """Compatibility/read-only view of the current context's stack."""
+        return self._current_stack.get()
 
     @property
     def current(self) -> TaskScope | None:
-        return self._stack[-1] if self._stack else None
+        stack = self._current_stack.get()
+        return stack[-1] if stack else None
 
     @property
     def current_path(self) -> tuple[str, ...]:
@@ -31,22 +42,19 @@ class ScopeManager:
     def roots(self) -> tuple[TaskScope, ...]:
         return tuple(self._roots)
 
-    # ---------------------------------------------------------
-    # Creation
-    # ---------------------------------------------------------
-
     def create_scope(
         self,
         name: str,
         parent: TaskScope | None = None,
         weight: float = 1.0,
+        detached: bool = False,
         **metadata,
     ) -> TaskScope:
-
         if weight <= 0:
             raise ValueError("Scope weight must be greater than zero")
-
-        if parent is None:
+        if detached and parent is None:
+            parent = None
+        elif parent is None:
             parent = self.current
 
         scope = TaskScope(
@@ -56,74 +64,68 @@ class ScopeManager:
             parent=parent,
             weight=weight,
             metadata=metadata,
+            detached=detached,
         )
-
         if parent is not None:
             parent.children.append(scope)
         else:
             self._roots.append(scope)
-
         self._emit(scope, ScopeState.CREATE)
-
         if parent is not None:
             self.notify_update(parent)
-
         return scope
-
-    # ---------------------------------------------------------
-    # Lifecycle
-    # ---------------------------------------------------------
 
     def enter(self, scope: TaskScope):
         if scope.status is not TaskStatus.PENDING:
             raise RuntimeError(f"Cannot enter scope '{scope.name}' with status {scope.status.name}")
-
-        if scope.parent is not self.current and scope.parent is not None:
+        stack = self._current_stack.get()
+        if scope.parent is not None and scope.parent is not (stack[-1] if stack else None):
             raise RuntimeError(f"Scope '{scope.name}' must be entered while its parent is active")
-
-        if scope in self._stack:
+        if scope in stack:
             raise RuntimeError("Scope is already active")
-
         scope.status = TaskStatus.RUNNING
         scope.start_time = time.perf_counter()
-
-        self._stack.append(scope)
-
+        self._current_stack.set((*stack, scope))
         self._emit(scope, ScopeState.ENTER)
         self._notify_parent(scope)
 
     def exit(self, scope: TaskScope, error=None):
-        if not self._stack or self._stack[-1] is not scope:
+        stack = self._current_stack.get()
+        if not stack or stack[-1] is not scope:
             raise RuntimeError(f"Scope stack mismatch while exiting '{scope.name}'")
-
         if error is not None:
             scope.error = error
             scope.status = TaskStatus.ERROR
-
         elif scope.status is TaskStatus.RUNNING:
             scope.status = TaskStatus.SUCCESS
-
         scope.end_time = time.perf_counter()
-
         if scope.status is TaskStatus.SUCCESS:
             scope._progress = 1.0
-
-        self._stack.pop()
-
+        self._current_stack.set(stack[:-1])
         self._emit(scope, ScopeState.EXIT)
         self._notify_parent(scope)
 
-    # ---------------------------------------------------------
-    # Updates
-    # ---------------------------------------------------------
+    @contextmanager
+    def bind(self, scope: TaskScope):
+        """Temporarily make an already-created scope the current scope.
+
+        Binding does not enter/exit or alter lifecycle state. It is intended
+        for logging from callbacks that belong to a detached operation.
+        """
+        stack = self._current_stack.get()
+        if scope.status is not TaskStatus.RUNNING:
+            raise RuntimeError("Only a running scope can be bound")
+        if scope.parent is not None and scope.parent not in stack:
+            raise RuntimeError("A child scope can only be bound while its parent is active")
+        token = self._current_stack.set((*stack, scope))
+        try:
+            yield scope
+        finally:
+            self._current_stack.reset(token)
 
     def set_status(self, scope: TaskScope, status: TaskStatus):
-        if scope.status not in (
-            TaskStatus.PENDING,
-            TaskStatus.RUNNING,
-        ):
+        if scope.status not in (TaskStatus.PENDING, TaskStatus.RUNNING):
             raise RuntimeError(f"Cannot change completed scope '{scope.name}'")
-
         scope.status = status
         self.notify_update(scope)
 
@@ -135,12 +137,5 @@ class ScopeManager:
         if scope.parent is not None:
             self.notify_update(scope.parent)
 
-    # ---------------------------------------------------------
-    # Event dispatch
-    # ---------------------------------------------------------
-
     def _emit(self, scope: TaskScope, state: ScopeState):
-        self._emit_callback(
-            scope=scope,
-            state=state,
-        )
+        self._emit_callback(scope=scope, state=state)

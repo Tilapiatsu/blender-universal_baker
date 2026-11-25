@@ -20,7 +20,7 @@ from .execution_target import ExecutionTarget
 
 class Executor:
     """
-    Executes a Job and makes sure it executes the with the prope execution method.
+    Executes a Job and makes sure it executes the with the proper execution method.
     """
 
     task_types: list[Callable]

@@ -100,6 +100,7 @@ class UISink(BaseSink):
         entry.label = event.message
         entry.status = event.task_status
         entry.progress = event.progress
+        entry.cancellation_requested = event.cancellation_requested
 
         if event.scope_duration is not None:
             entry.duration = event.scope_duration
@@ -120,6 +121,7 @@ class UISink(BaseSink):
             scope_id=event.scope_id,
             status=event.task_status,
             progress=event.progress,
+            cancellation_requested=event.cancellation_requested,
             duration=event.scope_duration,
             channel=event.ui_channel or event.scope_metadata.get("ui_channel"),
         )

@@ -1,4 +1,5 @@
 from __future__ import annotations
+from universal_baker.logger.blender import TaskProgress
 
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
@@ -59,17 +60,20 @@ class PackerBase(ABC):
         )
 
     @abstractmethod
-    def execute(self, ctx: PackContext) -> None:
+    def execute(self, ctx: PackContext):
         """Prepare, bake and cleanup all at once."""
         with LOG.scope(LOG_SCOPE, ui_channel="pack"):
             LOG.info(f"{ctx.task!s}")
 
             self.prepare(ctx)
             self.pack(ctx)
+            yield TaskProgress(1.0, f"Packing {ctx.task.image_name}")
             self.update_pack(ctx)
             self.create_artifact(ctx)
             self.cleanup(ctx)
             self.export_file(ctx)
+
+        return "Packing Complete"
 
     @abstractmethod
     def prepare(self, ctx: PackContext) -> None:

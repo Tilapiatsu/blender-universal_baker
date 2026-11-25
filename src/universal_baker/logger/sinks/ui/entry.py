@@ -25,6 +25,7 @@ class UIEntry:
     scope_id: int | None = None
     status: TaskStatus | None = None
     progress: float | None = None
+    cancellation_requested: bool = False
     duration: float | None = None
 
     # Message information

@@ -117,7 +117,7 @@ def _draw_scope(layout: bpy.types.UILayout, entry: UIEntry, ui_filter: UIFilter,
         )
 
     row.label(
-        text=entry.label,
+        text=entry.label + (" (cancelling…)" if entry.cancellation_requested else ""),
         icon=STATUS_ICONS.get(entry.status, "DOT"),
     )
 

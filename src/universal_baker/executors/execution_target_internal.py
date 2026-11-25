@@ -3,9 +3,12 @@ from __future__ import annotations
 import traceback
 from time import perf_counter
 
+import bpy
+
 from ..constant import LOG
 from ..core.registry_execution import registry_execution
 from ..enum.execution import Execution
+from ..logger.blender import ModalTaskRunner
 from ..runtime.context import ExecutionContext
 from ..runtime.session import ExecutionSession
 from .execution_target import ExecutionTarget
@@ -28,7 +31,16 @@ class ExecutorInternal(ExecutionTarget):
 
         try:
             self.before_task(ctx)
-            task.producer.execute(ctx)
+
+            runner = ModalTaskRunner(
+                logger=LOG,
+                interval=0.05,
+                steps_per_tick=1,
+                on_complete=lambda result: print(result),
+            )
+
+            runner.start(context=bpy.context, task=task.producer.execute(ctx))
+
             ctx.succeed(f"{task.producer.name} succeeded")
             session.job.notify_task_finished(task, True, perf_counter() - start)
 
@@ -51,25 +63,21 @@ class ExecutorInternal(ExecutionTarget):
         """
         Hook called before the first task.
         """
-        pass
 
     def after_job(self, session: ExecutionSession) -> None:
         """
         Hook called after the last task.
         """
-        pass
 
     def before_task(self, ctx: ExecutionContext) -> None:
         """
         Hook called before every task.
         """
-        pass
 
     def after_task(self, ctx: ExecutionContext) -> None:
         """
         Hook called after every task.
         """
-        pass
 
     def cancel(self) -> None:
         self._cancel_requested = True

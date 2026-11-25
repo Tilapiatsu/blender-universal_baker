@@ -24,6 +24,7 @@ class LogEvent:
     task_status: TaskStatus | None = None
 
     progress: float | None = None
+    cancellation_requested: bool = False
     scope_duration: float | None = None
     scope_metadata: dict[str, Any] = field(default_factory=dict)
 

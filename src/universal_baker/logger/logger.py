@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import traceback
 
-from ..logger.sinks.base import BaseSink
+from .sinks.base import BaseSink
 from .dispatcher import Dispatcher
 from .event import LogEvent
 from .middleware.dispatcher import MiddlewareDispatcher
@@ -52,15 +52,21 @@ class Logger:
     def get_sink(self, name: str) -> BaseSink | None:
         return self.dispatcher.get(name)
 
-    def scope(self, name: str, weight: float = 1.0, **metadata):
+    def scope(self, name: str, weight: float = 1.0, *, detached: bool = False, parent=None, **metadata):
         return self.scope_manager.create_scope(
-            name=name,
-            weight=weight,
-            **metadata,
+            name=name, weight=weight, detached=detached, parent=parent, **metadata,
         )
 
-    def progress(self, value: float):
-        scope = self.scope_manager.current
+    def detached_scope(self, name: str, weight: float = 1.0, *, parent=None, **metadata):
+        """Create a scope without implicitly attaching it to the active stack."""
+        return self.scope(name, weight, detached=True, parent=parent, **metadata)
+
+    def bind_scope(self, scope):
+        """Temporarily bind a running detached scope for log attribution."""
+        return self.scope_manager.bind(scope)
+
+    def progress(self, value: float, scope=None):
+        scope = scope or self.scope_manager.current
 
         if scope is None:
             raise RuntimeError("No active scope")
@@ -78,7 +84,8 @@ class Logger:
             scope_state=state,
             task_status=scope.status,
             progress=scope.progress,
-            scope_duration=scope.duration if state is ScopeState.EXIT else None,
+            cancellation_requested=scope.cancellation_requested,
+            scope_duration=scope.duration,
             scope_metadata=dict(scope.metadata),
             display_in_ui=scope.metadata.get("display_in_ui", True),
             ui_channel=scope.metadata.get("ui_channel"),

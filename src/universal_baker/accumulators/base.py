@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import ABC
 from typing import TYPE_CHECKING
 
 from ..constant import ICON_BAKE, LOG
 from ..core.accumulator import ImageAccumulator
 from ..core.registry_compositor import registry_compositor
 from ..enum.output_stage import OutputStage
+from ..logger.blender import TaskProgress
 from ..logger_bake_middleware.bake_summary import BakeStatus, EventCategory
 from ..resources.image import ImageResource
 from ..runtime.color_management_info import ColorManagementInfo
@@ -37,7 +38,7 @@ class AccumulatorBase(ABC):
         """Whether this baker can execute this task."""
         return True
 
-    def execute(self, ctx: AccumulateContext) -> None:
+    def execute(self, ctx: AccumulateContext):
         """Prepare, bake and cleanup all at once."""
         with LOG.scope(LOG_SCOPE, ui_channel="accumulate"):
             LOG.info(f"{ctx.task!s}")
@@ -46,12 +47,15 @@ class AccumulatorBase(ABC):
                 self.invalidate_previous_output(ctx)
                 self.prepare(ctx)
                 self.accumulate(ctx)
+                yield TaskProgress(1.0, f"Accumulating {ctx.task.image_name}")
                 self.update_baker(ctx)
                 self.create_artifact(ctx)
                 self.export_file(ctx)
                 self.update_preview_images(ctx)
             finally:
                 self.cleanup(ctx)
+
+        return "Accumulate Complete"
 
     def invalidate_previous_output(self, ctx: AccumulateContext):
         LOG.debug("Invalidate Previous Output ...")

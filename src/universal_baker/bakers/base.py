@@ -12,6 +12,7 @@ from ..core.property_class_factory import ClassFactory
 from ..core.registry_baker import registry_baker
 from ..enum.image_colorspace import ImageColorSpace
 from ..enum.output_stage import OutputStage
+from ..logger.blender import TaskProgress
 from ..runtime.asset_setup import AssetSetup, BakerExecution
 from ..runtime.bake_objects import BakeObjects
 from ..runtime.bake_targets import BakeTargets
@@ -193,7 +194,7 @@ class BakerBase(ABC):
     def parameter_value(self, value_name: str, context: ParameterContext) -> Any:
         return None
 
-    def execute(self, ctx: BakeContext) -> None:
+    def execute(self, ctx: BakeContext):
         """Prepare, bake and cleanup all at once."""
         LOG.info(f"{ctx.task!s}")
 
@@ -208,12 +209,16 @@ class BakerBase(ABC):
 
                 self.bake(ctx)
 
+            yield TaskProgress(1.0, f"Baking {ctx.target.name}")
+
             self.update_baker(ctx)
             self.export_file(ctx)
             self.create_artifact(ctx)
 
         finally:
             self.cleanup(ctx)
+
+        return "Baking Complete"
 
     def invalidate_previous_output(self, ctx: BakeContext):
         if not ctx.session.output_invalidated:

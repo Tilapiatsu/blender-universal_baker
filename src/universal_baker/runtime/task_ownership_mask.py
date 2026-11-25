@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 from ..constant import LOG, UBK_SUBFOLDER_MASK
 from ..enum.image_layout import ImageLayout
+from ..logger.blender import TaskProgress
 from ..logger.scopes.task_status import ScopeState
 from ..logger_bake_middleware.bake_summary import BakeStatus, EventCategory
 from .context_ownership_mask import OwnershipMaskContext
@@ -20,7 +21,7 @@ LOG_SCOPE = "Uv Ownership"
 class UvOwnership:
     name: str = "UvOwnership"
 
-    def execute(self, ctx: OwnershipMaskContext) -> UvOwnershipMask:
+    def execute(self, ctx: OwnershipMaskContext):
         from ..services.uv_ownership import UvOwnershipService
 
         LOG.info("Generting UV Ownership mask", display_in_ui=True)
@@ -36,6 +37,7 @@ class UvOwnership:
         )
 
         ctx.task.ownership_mask.set(result)
+        yield TaskProgress(1.0, f"UV Ownership {ctx.task.bake_group_name}")
 
         # NOTE: Saving Map to disk : This is for debug purpose only
         # Need to link to a global debug parameter
@@ -58,7 +60,7 @@ class UvOwnership:
                     )
                     ImageCodec.save(output.absolute_path, buffer, ctx.task.output_context.output_settings, False)
 
-        return result
+        return "UV Ownership Complete"
 
 
 @dataclass(slots=True, frozen=True)
