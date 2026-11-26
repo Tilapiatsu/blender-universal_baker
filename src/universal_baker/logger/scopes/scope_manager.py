@@ -91,8 +91,23 @@ class ScopeManager:
 
     def exit(self, scope: TaskScope, error=None):
         stack = self._current_stack.get()
-        if not stack or stack[-1] is not scope:
-            raise RuntimeError(f"Scope stack mismatch while exiting '{scope.name}'")
+        if not self._stack or self._stack[-1] is not scope:
+            stack_info = [
+                {
+                    "name": item.name,
+                    "id": item.id,
+                    "object_id": id(item),
+                    "status": item.status.name,
+                }
+                for item in self._stack
+            ]
+
+            raise RuntimeError(
+                f"Scope stack mismatch while exiting '{scope.name}' "
+                f"(id={scope.id}, object_id={id(scope)}).\n"
+                f"Current stack: {stack_info}\n"
+                f"Original exception: {error!r}"
+            )
         if error is not None:
             scope.error = error
             scope.status = TaskStatus.ERROR
