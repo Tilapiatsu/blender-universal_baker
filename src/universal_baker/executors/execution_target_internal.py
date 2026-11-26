@@ -39,7 +39,7 @@ class ExecutorInternal(ExecutionTarget):
                 on_complete=lambda result: print(result),
             )
 
-            runner.start(context=bpy.context, task=task.producer.execute(ctx))
+            runner.start(context=bpy.context, task=task.producer.execute(ctx), scope=session.job.scope)
 
             ctx.succeed(f"{task.producer.name} succeeded")
             session.job.notify_task_finished(task, True, perf_counter() - start)
