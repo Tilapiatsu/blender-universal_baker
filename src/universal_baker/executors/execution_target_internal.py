@@ -8,7 +8,7 @@ import bpy
 from ..constant import LOG
 from ..core.registry_execution import registry_execution
 from ..enum.execution import Execution
-from ..logger.blender import ModalTaskRunner
+from ..logger.blender.modal import TaskProgress
 from ..runtime.context import ExecutionContext
 from ..runtime.session import ExecutionSession
 from .execution_target import ExecutionTarget
@@ -32,14 +32,11 @@ class ExecutorInternal(ExecutionTarget):
         try:
             self.before_task(ctx)
 
-            runner = ModalTaskRunner(
-                logger=LOG,
-                interval=0.05,
-                steps_per_tick=1,
-                on_complete=lambda result: print(result),
-            )
+            result = task.producer.execute(ctx)
 
-            runner.start(context=bpy.context, task=task.producer.execute(ctx), scope=session.job.scope)
+            for update in result:
+                if isinstance(update, TaskProgress) and update.message:
+                    LOG.info(update.message, display_in_ui=True)
 
             ctx.succeed(f"{task.producer.name} succeeded")
             session.job.notify_task_finished(task, True, perf_counter() - start)

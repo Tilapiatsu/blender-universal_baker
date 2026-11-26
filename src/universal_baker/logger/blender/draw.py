@@ -126,6 +126,7 @@ def _draw_scope(layout: bpy.types.UILayout, entry: UIEntry, ui_filter: UIFilter,
     if entry.duration is not None:
         row.alignment = "RIGHT"
         row.label(text=_format_duration(entry.duration))
+        row.separator()
 
     if entry.progress is not None:
         row.alignment = "EXPAND"
@@ -172,13 +173,13 @@ def _draw_message(layout, entry, sink_key, indent: int):
 
 
 def _draw_message_details(layout, event, indent: int):
-    _draw_indent(
-        sink_key=None,
-        entry=None,
-        layout=layout,
-        indent=indent,
-        draw_indent=False,
-    )
+    # _draw_indent(
+    #     sink_key=None,
+    #     entry=None,
+    #     layout=layout,
+    #     indent=indent,
+    #     draw_indent=False,
+    # )
     column = layout.column(align=True)
 
     if event.exception is not None:
