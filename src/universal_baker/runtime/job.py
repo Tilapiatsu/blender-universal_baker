@@ -43,7 +43,7 @@ class Job:
         self.current_task = 0
         self.progress = 0.0
         self.errors = []
-        self.scope = LOG.scope("Job", channel_id="main")
+        self.scope = LOG.detached_scope("Job", channel_id="main")
 
     @property
     def total_tasks(self) -> int:

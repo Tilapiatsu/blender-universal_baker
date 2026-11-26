@@ -37,11 +37,16 @@ class LOGGER_OT_RunModalTask(bpy.types.Operator):
         if context.window is None:
             runner._finish(error=RuntimeError("A Blender window is required for modal execution"))
             return {"CANCELLED"}
+
         self._runner = runner
-        self._timer = context.window_manager.event_timer_add(runner.interval, window=context.window)
+        self._timer = context.window_manager.event_timer_add(
+            runner.interval,
+            window=context.window,
+        )
         runner._operator = self
         runner._window_manager = context.window_manager
         runner._timer_handle = self._timer
+
         try:
             runner._start_scope()
             context.window_manager.modal_handler_add(self)
@@ -80,11 +85,12 @@ class LOGGER_OT_RunModalTask(bpy.types.Operator):
 
 
 class ModalTaskRunner:
-    """Run a generator/iterator incrementally through Blender modal TIMER events.
+    """Advance a generator in bounded batches on Blender TIMER events.
 
-    The iterator must yield control regularly. Each TIMER event advances at
-    most ``steps_per_tick`` yields, allowing Blender to process redraws and
-    input between batches. Yield TaskProgress(...) to report progress.
+    The root scope has a detached lifecycle: it is started once, but is only
+    temporarily bound while a generator step executes. Do not yield while a
+    synchronous ``with logger.scope(...)`` block is still open; each yielded
+    step must return with its nested scope stack balanced.
     """
 
     def __init__(
@@ -108,7 +114,7 @@ class ModalTaskRunner:
         self.on_cancel = on_cancel
         self.on_error = on_error
         self._finished = True
-        self._scope_entered = False
+        self._scope_started = False
 
     def start(self, context, task, *, scope: TaskScope | None = None):
         """Start ``task`` (a generator or iterator) as a modal operation."""
@@ -120,6 +126,9 @@ class ModalTaskRunner:
         self.scope = scope or self.logger.detached_scope(getattr(task, "__name__", "Background task"))
         if self.scope.status is not TaskStatus.PENDING:
             raise RuntimeError("The supplied task scope must be pending")
+        if not self.scope.detached or self.scope.parent is not None:
+            raise RuntimeError("ModalTaskRunner requires a detached root scope")
+
         self._key = str(next(_RUNNER_IDS))
         self._finished = False
         self._result = None
@@ -144,8 +153,8 @@ class ModalTaskRunner:
         self._finish(cancelled=True)
 
     def _start_scope(self):
-        self.logger.scope_manager.enter(self.scope)
-        self._scope_entered = True
+        self.logger.scope_manager.start_detached(self.scope)
+        self._scope_started = True
 
     def _advance(self):
         self.scope.raise_if_cancelled()
@@ -156,6 +165,7 @@ class ModalTaskRunner:
             except StopIteration as stop:
                 self._result = stop.value
                 raise
+
             if isinstance(yielded, TaskProgress):
                 with self.logger.bind_scope(self.scope):
                     if yielded.message:
@@ -165,40 +175,53 @@ class ModalTaskRunner:
             elif isinstance(yielded, (int, float)):
                 with self.logger.bind_scope(self.scope):
                     self.scope.set_progress(float(yielded))
+
         # Refresh elapsed duration even when no explicit progress was yielded.
-        self.scope.manager.notify_update(self.scope)
+        self.logger.scope_manager.notify_update(self.scope)
+
+    def _close_iterator(self):
+        iterator = getattr(self, "_iterator", None)
+        close = getattr(iterator, "close", None)
+        if close is None:
+            return
+        if self._scope_started and self.scope.status is TaskStatus.RUNNING:
+            with self.logger.bind_scope(self.scope):
+                close()
+        else:
+            close()
 
     def _finish(self, *, error=None, cancelled=False):
         if self._finished:
             return
         self._finished = True
         _ACTIVE_RUNNERS.pop(getattr(self, "_key", ""), None)
+
+        # Closing a suspended generator runs its finally blocks. This is vital
+        # for releasing the executor's ScenePrepare and ExecutionSession state
+        # when the user cancels between task steps.
+        if error is not None or cancelled:
+            try:
+                self._close_iterator()
+            except BaseException as cleanup_error:
+                if error is None:
+                    error = cleanup_error
+                    cancelled = False
+
         try:
-            if error is not None and getattr(self, "_scope_entered", False):
-                # Attach the failure message to the task before it becomes terminal.
-                with self.logger.bind_scope(self.scope):
-                    self.logger.error(
-                        f"Task failed: {error}",
-                        exception=error,
-                        display_in_ui=True,
-                    )
-            if cancelled:
-                self.scope.cancellation_requested = True
-                if self.scope.status in (TaskStatus.PENDING, TaskStatus.RUNNING):
-                    self.scope.status = TaskStatus.CANCELLED
-            elif error is not None:
-                self.scope.error = error
-                if self.scope.status in (TaskStatus.PENDING, TaskStatus.RUNNING):
-                    self.scope.status = TaskStatus.ERROR
-            if getattr(self, "_scope_entered", False):
-                # exit() preserves ERROR/CANCELLED and closes duration/stack.
-                self.logger.scope_manager.exit(self.scope, error if error is not None else None)
-                self._scope_entered = False
-            elif self.scope.status is TaskStatus.PENDING:
-                # Startup failed before entering the scope; still make the
-                # lifecycle visible and terminal rather than leaving a ghost.
-                self.logger.scope_manager.enter(self.scope)
-                self.logger.scope_manager.exit(self.scope, error)
+            if self._scope_started:
+                if error is not None:
+                    with self.logger.bind_scope(self.scope):
+                        self.logger.error(
+                            f"Task failed: {error}",
+                            exception=error,
+                            display_in_ui=True,
+                        )
+                self.logger.scope_manager.finish_detached(
+                    self.scope,
+                    error,
+                    cancelled=cancelled,
+                )
+                self._scope_started = False
         finally:
             wm = getattr(self, "_window_manager", None)
             timer = getattr(self, "_timer_handle", None)
@@ -220,7 +243,6 @@ class ModalTaskRunner:
             elif self.on_complete:
                 self.on_complete(self._result)
         except BaseException as callback_error:
-            # Callback failures are reported but cannot undo task cleanup.
             self.logger.error(
                 f"Task completion callback failed: {callback_error}",
                 exception=callback_error,

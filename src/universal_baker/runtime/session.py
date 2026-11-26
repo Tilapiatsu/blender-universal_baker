@@ -68,6 +68,7 @@ class ExecutionSession:
 
     def initialize(self, context: bpy.types.Context) -> None:
         """Capture the current Blender state."""
+        self.cancelled = False
 
         self.capture_scene(context)
         self.capture_render_settings(context)

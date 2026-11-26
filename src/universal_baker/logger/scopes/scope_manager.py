@@ -5,7 +5,7 @@ import time
 from contextlib import contextmanager
 from itertools import count
 
-from .task_scope import TaskScope
+from .task_scope import TaskCancelled, TaskScope
 from .task_status import ScopeState, TaskStatus
 
 
@@ -91,24 +91,12 @@ class ScopeManager:
 
     def exit(self, scope: TaskScope, error=None):
         stack = self._current_stack.get()
-        if not self._stack or self._stack[-1] is not scope:
-            stack_info = [
-                {
-                    "name": item.name,
-                    "id": item.id,
-                    "object_id": id(item),
-                    "status": item.status.name,
-                }
-                for item in self._stack
-            ]
-
-            raise RuntimeError(
-                f"Scope stack mismatch while exiting '{scope.name}' "
-                f"(id={scope.id}, object_id={id(scope)}).\n"
-                f"Current stack: {stack_info}\n"
-                f"Original exception: {error!r}"
-            )
-        if error is not None:
+        if not stack or stack[-1] is not scope:
+            raise RuntimeError(f"Scope stack mismatch while exiting '{scope.name}'")
+        if isinstance(error, TaskCancelled):
+            scope.cancellation_requested = True
+            scope.status = TaskStatus.CANCELLED
+        elif error is not None:
             scope.error = error
             scope.status = TaskStatus.ERROR
         elif scope.status is TaskStatus.RUNNING:
@@ -117,6 +105,45 @@ class ScopeManager:
         if scope.status is TaskStatus.SUCCESS:
             scope._progress = 1.0
         self._current_stack.set(stack[:-1])
+        self._emit(scope, ScopeState.EXIT)
+        self._notify_parent(scope)
+
+    def start_detached(self, scope: TaskScope):
+        """Start a detached root scope without retaining a context-local stack entry.
+
+        Modal operations span multiple Blender event callbacks. A ContextVar
+        binding must never be left open across those callbacks, so their root
+        lifecycle is managed independently from temporary log attribution.
+        """
+        if not scope.detached or scope.parent is not None:
+            raise RuntimeError("A modal lifecycle requires a detached root scope")
+        if scope.status is not TaskStatus.PENDING:
+            raise RuntimeError(f"Cannot start detached scope '{scope.name}' with status {scope.status.name}")
+        scope.status = TaskStatus.RUNNING
+        scope.start_time = time.perf_counter()
+        self._emit(scope, ScopeState.ENTER)
+        self._notify_parent(scope)
+
+    def finish_detached(self, scope: TaskScope, error=None, *, cancelled=False):
+        """Finish a detached root scope without touching the current stack."""
+        if not scope.detached or scope.parent is not None:
+            raise RuntimeError("A modal lifecycle requires a detached root scope")
+        if scope.status is not TaskStatus.RUNNING:
+            # Make repeated cleanup harmless, but reject an unrelated pending
+            # or already-terminal scope rather than silently corrupting it.
+            if scope.end_time is not None:
+                return
+            raise RuntimeError(f"Cannot finish detached scope '{scope.name}' with status {scope.status.name}")
+        if error is not None:
+            scope.error = error
+            scope.status = TaskStatus.ERROR
+        elif cancelled:
+            scope.cancellation_requested = True
+            scope.status = TaskStatus.CANCELLED
+        else:
+            scope.status = TaskStatus.SUCCESS
+            scope._progress = 1.0
+        scope.end_time = time.perf_counter()
         self._emit(scope, ScopeState.EXIT)
         self._notify_parent(scope)
 

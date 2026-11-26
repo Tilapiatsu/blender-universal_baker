@@ -61,7 +61,12 @@ def register():
 
 
 def unregister():
+    # Close active modal jobs while Blender classes, the logger and its sinks
+    # are still available. Their generator finally blocks restore scene state.
     from .constant import LOG, LOG_RUNTIME
+    from .logger.blender.modal import cancel_all_modal_tasks
+
+    cancel_all_modal_tasks()
 
     if LOG_RUNTIME is not None:
         LOG_RUNTIME.close()

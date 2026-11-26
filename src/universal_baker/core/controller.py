@@ -469,7 +469,7 @@ class BakeController:
             execution=execution,
             task_types=task_types,
         )
-        executor.execute(context, job)
+        executor.start_job(context, job)
 
         return (
             True,
@@ -511,7 +511,7 @@ class BakeController:
             execution=execution,
             task_types=task_types,
         )
-        executor.execute(context, job)
+        executor.start_job(context, job)
 
         return (
             True,
@@ -553,7 +553,7 @@ class BakeController:
             execution=execution,
             task_types=task_types,
         )
-        executor.execute(context, job)
+        executor.start_job(context, job)
 
         return (
             True,
@@ -595,7 +595,7 @@ class BakeController:
             execution=execution,
             task_types=task_types,
         )
-        executor.execute(context, job)
+        executor.start_job(context, job)
 
         return (
             True,
@@ -631,7 +631,7 @@ class BakeController:
                 PackingTask,
             ],
         )
-        executor.execute(context, job)
+        executor.start_job(context, job)
 
         return (
             True,
@@ -673,7 +673,7 @@ class BakeController:
             execution=execution,
             task_types=task_types,
         )
-        executor.execute(context, job)
+        executor.start_job(context, job)
         return (
             True,
             job,
@@ -704,7 +704,7 @@ class BakeController:
                 PackingTask,
             ],
         )
-        executor.execute(context, job)
+        executor.start_job(context, job)
 
         return (
             True,

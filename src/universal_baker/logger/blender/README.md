@@ -197,9 +197,9 @@ runner.start(bpy.context, export_task())
 Press **Esc** or **Right Mouse** to cancel. A task can also observe
 `scope.raise_if_cancelled()` if it receives/uses its scope. The runner creates a
 detached root scope automatically; pass `scope=...` to supply a pre-created
-pending scope. Keep individual yielded steps short: modal execution prevents
-Blender's UI from being blocked between steps, but cannot interrupt a single
-long-running Python or Blender API call.
+pending scope. Keep individual yielded steps short, and ensure each yielded step has exited all
+synchronous nested logger scopes. Modal execution prevents Blender's UI from being blocked
+between steps, but cannot interrupt a single long-running Python or Blender API call.
 
 `TaskProgress.progress` is normalized to 0..1. Yielding a number is shorthand
 for a progress update. Yield `TaskProgress(message="...")` to update the task
