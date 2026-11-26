@@ -2,7 +2,7 @@ bl_info = {
     "name": "Universal Baker",
     "author": "Tilapiatsu",
     "version": (1, 0, 0),
-    "blender": (4, 5, 0),
+    "blender": (5, 3, 0),
     "description": "Blender Baking Made Easy",
     "category": "Render",
 }

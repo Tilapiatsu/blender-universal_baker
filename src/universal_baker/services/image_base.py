@@ -253,7 +253,7 @@ class ImageServiceBase:
                 r.scale(width, height)
 
     @classmethod
-    def add_udim_tiles_bak(cls, resource: ImageResource, tiles: tuple[tuple[int, int], ...]) -> None:
+    def add_udim_tiles(cls, resource: ImageResource, tiles: tuple[tuple[int, int], ...]) -> None:
         LOG.debug("Adding UDIM Tile")
         image = resource.image
 
@@ -279,7 +279,7 @@ class ImageServiceBase:
 
     # https://blender.stackexchange.com/questions/274964/how-to-add-udim-tiles-to-an-image-and-fill-them-via-python
     @classmethod
-    def add_udim_tiles(cls, resource: ImageResource, tiles: tuple[tuple[int, int], ...]) -> None:
+    def add_udim_tiles_bak_00(cls, resource: ImageResource, tiles: tuple[tuple[int, int], ...]) -> None:
         LOG.debug(f"Add tiles to ressource : {tiles}")
         context = bpy.context
         areas = context.screen.areas
@@ -341,6 +341,25 @@ class ImageServiceBase:
         # if context.area changed, restore back
         if context.area.ui_type != old_area_type and old_area_type is not None:
             context.area.ui_type = old_area_type
+
+    @classmethod
+    def add_udim_tiles_bak(cls, resource: ImageResource, tiles: tuple[tuple[int, int], ...]) -> None:
+        LOG.debug(f"Add tiles to ressource : {tiles}")
+        if resource.image is None:
+            return
+
+        image = resource.image
+        existing = {tile.number for tile in image.tiles}
+
+        for tile_number in sorted(tiles):
+            tile = UVService.tile_number(*tile_number)
+
+            if tile in existing:
+                continue
+
+            image.tiles.new(tile)
+
+        image.update()
 
     @classmethod
     def clear_tiles(cls, resource: ImageResource):
