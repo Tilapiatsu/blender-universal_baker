@@ -43,7 +43,11 @@ class Job:
         self.current_task = 0
         self.progress = 0.0
         self.errors = []
-        self.scope = LOG.detached_scope("Job", channel_id="main")
+        self.scope = LOG.detached_scope(
+            "Job",
+            channel_id="main",
+            clear_ui_logs=True,
+        )
 
     @property
     def total_tasks(self) -> int:

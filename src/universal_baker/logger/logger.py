@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import traceback
 
-from .sinks.base import BaseSink
 from .dispatcher import Dispatcher
 from .event import LogEvent
 from .middleware.dispatcher import MiddlewareDispatcher
 from .scopes.scope_manager import ScopeManager
 from .scopes.task_status import ScopeState
 from .severity import Severity
+from .sinks.base import BaseSink
+from .sinks.ui.sink import UISink
 
 
 class Logger:
@@ -52,13 +53,27 @@ class Logger:
     def get_sink(self, name: str) -> BaseSink | None:
         return self.dispatcher.get(name)
 
+    @property
+    def ui_sinks(self) -> list[UISink]:
+        return self.dispatcher.get_by_type(UISink.__name__)
+
     def scope(self, name: str, weight: float = 1.0, *, detached: bool = False, parent=None, **metadata):
         return self.scope_manager.create_scope(
-            name=name, weight=weight, detached=detached, parent=parent, **metadata,
+            name=name,
+            weight=weight,
+            detached=detached,
+            parent=parent,
+            **metadata,
         )
 
     def detached_scope(self, name: str, weight: float = 1.0, *, parent=None, **metadata):
         """Create a scope without implicitly attaching it to the active stack."""
+        clear_ui_logs = metadata.get("clear_ui_logs", None)
+        if clear_ui_logs:
+            ui_sinks = self.ui_sinks
+            for s in ui_sinks:
+                s.clear()
+
         return self.scope(name, weight, detached=True, parent=parent, **metadata)
 
     def bind_scope(self, scope):

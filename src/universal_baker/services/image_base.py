@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import shutil
+from pathlib import Path
+
 import bpy
 
 from ..constant import LOG
@@ -154,7 +157,7 @@ class ImageServiceBase:
                 height=resource.height,
                 alpha=resource.image_format_settings.alpha,
                 float_buffer=resource.image_format_settings.float_buffer,
-                tiled=resource.is_udim,
+                tiled=False,
             )
             image.colorspace_settings.name = resource.colorspace
 
@@ -264,18 +267,28 @@ class ImageServiceBase:
         assert image is not None
         assert image.tiles is not None
 
+        # Fisrt set filepath to single image
+        tiled_image_filepath = str(resource.filepath)
+        single_image_filepath = Path(str(resource.filepath).replace(".<UDIM>", ""))
+        image.filepath_raw = str(single_image_filepath)
+        image.save()
         cls.clear_tiles(resource)
 
         for tile in tiles:
             number = UVService.tile_number(*tile)
             LOG.debug(f"create UDIM Tile {number}")
-            image_tile = image.tiles.new(number, label=str(number))
 
-        first_tile = image.tiles.get(1001)
-        if first_tile is not None and 1001 not in UVService.tile_numbers(tiles):
-            image.tiles.remove(first_tile)
+            shutil.copy(
+                single_image_filepath,
+                single_image_filepath.parent
+                / (single_image_filepath.stem + f".{number}" + single_image_filepath.suffix),
+            )
 
+        image.filepath_raw = tiled_image_filepath
+        image.source = "TILED"
+        image.reload()
         image.update()
+        # single_image_filepath.unlink(missing_ok=True)
 
     # https://blender.stackexchange.com/questions/274964/how-to-add-udim-tiles-to-an-image-and-fill-them-via-python
     @classmethod
@@ -343,7 +356,7 @@ class ImageServiceBase:
             context.area.ui_type = old_area_type
 
     @classmethod
-    def add_udim_tiles_bak(cls, resource: ImageResource, tiles: tuple[tuple[int, int], ...]) -> None:
+    def add_udim_tiles_bak_01(cls, resource: ImageResource, tiles: tuple[tuple[int, int], ...]) -> None:
         LOG.debug(f"Add tiles to ressource : {tiles}")
         if resource.image is None:
             return

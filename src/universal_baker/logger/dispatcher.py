@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from collections.abc import Callable
+
 from .event import LogEvent
 from .sinks.base import BaseSink
 
@@ -10,6 +12,14 @@ class Dispatcher:
 
     def get(self, name: str) -> BaseSink | None:
         return self._sinks.get(name)
+
+    def get_by_type(self, sink_type: str) -> list[BaseSink]:
+        sinks: list[BaseSink] = []
+        for s in self._sinks.values():
+            if type(s).__name__ == sink_type:
+                sinks.append(s)
+
+        return sinks
 
     def add_sink(self, name: str, sink: BaseSink) -> None:
         self._sinks[name] = sink
