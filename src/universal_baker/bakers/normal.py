@@ -19,7 +19,7 @@ class Normal(BakerBase):
     accumulator_id = "ALPHA_OVER"
     clear_preview_material: bool = True
     bake_colorspace: ImageColorSpace = ImageColorSpace.NON_COLOR
-    image_colorspace: ImageColorSpace = ImageColorSpace.NON_COLOR
+    image_colorspace: ImageColorSpace = ImageColorSpace.SRGB
     color_management_info = ColorManagementInfo(
         apply_view_transform=True,
         display_device=DisplayDevice.SRGB,
