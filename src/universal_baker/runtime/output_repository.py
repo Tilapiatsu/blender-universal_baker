@@ -37,7 +37,7 @@ class OutputRepository:
         self._index_baker = defaultdict(list)
         self._index_target_object = defaultdict(list)
         self._materialized = {}
-        self._artifacts.clear()
+        # self._artifacts.clear()
 
     def add(self, output: ImageHandle) -> None:
         self._outputs[output.uuid] = output
