@@ -75,6 +75,21 @@ class ImageResource:
     def image(self, image: bpy.types.Image) -> None:
         self._image = image.name
 
+    @property
+    def image_exists(self) -> bool:
+        if self.image is None or not len(self.image.filepath_raw):
+            return False
+
+        filepath = self.image.filepath_raw
+
+        if ".<UDIM>" in filepath:
+            path = Path(filepath).parent
+            pattern = str(Path(filepath.replace(".<UDIM>", "")).stem) + "*"
+            files = list(path.glob(pattern))
+            return len(files) > 0
+        else:
+            return Path(filepath).exists()
+
     @classmethod
     def create(
         cls,
@@ -248,7 +263,7 @@ class ImageResource:
         self.colorspace = self.image.colorspace_settings.name
 
     def get_tileset(self) -> TileSet | None:
-        if not self.is_valid:
+        if not self.is_valid or self.image is None or not self.image_exists:
             return None
 
         return TileSet.from_blender_image(self.image)

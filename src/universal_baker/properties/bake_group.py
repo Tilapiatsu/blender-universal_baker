@@ -23,6 +23,7 @@ updating = False
 
 
 def update_name(self, context):
+    # ISSUE: Need to rename Artifacts when renaming baker Group ?
     from ..core.controller import BakeController
 
     global updating
