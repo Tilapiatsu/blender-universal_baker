@@ -288,7 +288,7 @@ class ImageServiceBase:
         image.source = "TILED"
         image.reload()
         image.update()
-        # single_image_filepath.unlink(missing_ok=True)
+        single_image_filepath.unlink(missing_ok=True)
 
     # https://blender.stackexchange.com/questions/274964/how-to-add-udim-tiles-to-an-image-and-fill-them-via-python
     @classmethod

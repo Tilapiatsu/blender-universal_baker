@@ -15,6 +15,10 @@ class ImagePreviewRuntime:
         if image is None:
             return
 
+        filepath = self._get_image_path(image)
+        if filepath is None:
+            return
+
         pcoll = previews.new()
         pcoll.load(image.name, str(self._get_image_path(image)), "IMAGE")
 
@@ -42,11 +46,11 @@ class ImagePreviewRuntime:
         self._preview_coll.clear()
 
     @classmethod
-    def _get_image_path(cls, image: bpy.types.Image) -> Path:
+    def _get_image_path(cls, image: bpy.types.Image) -> Path | None:
         if ".<UDIM>" in image.filepath_raw:
             p = Path(image.filepath_raw)
             file_pattern = p.name.replace(".<UDIM>", "").split(".")[0]
             filepath = list(p.parent.glob(f"{file_pattern}*"))
-            return filepath[0]
+            return filepath[0] if len(filepath) else None
         else:
             return image.filepath_raw

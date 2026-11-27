@@ -92,7 +92,7 @@ def update_image_name(self, context):
     from ..runtime.runtime_manager import RuntimeManager
 
     runtime = RuntimeManager.current(context)
-    runtime.image_preview.update(self.accumulated_image, self.accumulated_producer_uuid)
+    runtime.image_preview.update(self.accumulated_image, self.accumulated_uuid)
 
     from ..services.artifact_service import ArtifactService
 

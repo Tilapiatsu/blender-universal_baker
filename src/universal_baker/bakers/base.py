@@ -300,6 +300,11 @@ class BakerBase(ABC):
         if not ctx.task.has_multiple_targets:
             baker.accumulated_image = ctx.image.image
 
+            from ..runtime.runtime_manager import RuntimeManager
+
+            runtime = RuntimeManager.current(bpy.context)
+            runtime.image_preview.update(ctx.image.image, baker.accumulated_uuid)
+
     def create_artifact(self, ctx: BakeContext) -> None:
         LOG.debug("Creating Artifact ...")
 
