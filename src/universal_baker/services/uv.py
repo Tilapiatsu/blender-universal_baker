@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import math
 
+from ..constant import LOG
+
 
 class UVService:
     @staticmethod
@@ -11,11 +13,13 @@ class UVService:
         mesh = obj.data
 
         if mesh is None:
+            LOG.critical(f"Object {obj.name} doesn't have data", display_in_ui=True)
             return tuple(tiles)
 
-        uv_layer = obj.data.uv_layers[uv_name]
+        uv_layer = obj.data.uv_layers.get(uv_name)
 
         if uv_layer is None:
+            LOG.critical(f"Object {obj.name} doesn't have uv named {uv_name}", display_in_ui=True)
             return tuple(tiles)
 
         for loop in mesh.loops:

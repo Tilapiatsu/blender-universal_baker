@@ -110,6 +110,9 @@ class ExecutionPlanner:
             for index, obj in enumerate(bake_targets):
                 udim_tiles = ()
                 udim_tiles = UVService.detect_udim_tiles(obj.object, obj.uv_layer)
+                if not len(udim_tiles):
+                    return job
+
                 LOG.info(f"{len(udim_tiles)} udim tile(s) detected for {obj.object.name}:")
                 LOG.info(f"{udim_tiles}")
                 for u in udim_tiles:
@@ -188,7 +191,7 @@ class ExecutionPlanner:
 
                 for trt_idx, obj in enumerate(bake_targets):
                     if obj.object.name not in object_tiles:
-                        LOG.error(f"{obj.object.name} have invalid UV.")
+                        LOG.critical(f"{obj.object.name} have invalid UV.", display_in_ui=True)
                         # TODO: need to properly deal with the case of one object doesn't have UV -> Should skip the
                         # obj, not the entire tasks
                         # TODO: Need to deeper test non UDIM cases
